@@ -114,7 +114,7 @@ user:    <now> <context> <recent_turns> <actions> <message>   rebuilt every turn
 - **Nothing that changes per request goes before the breakpoint**: no timestamp, user name or retrieved cards.
 - **`<now>`** holds the date, the timezone and precomputed ranges (today, tomorrow, this week, last week). The model picks a range and never does calendar math.
 - **Across user turns the request is rebuilt from scratch.** History arrives only as `<context>` (the working set) and `<recent_turns>` (the last 2–3 exchanges as text). So the size of turn 10 stays close to turn 2.
-- **Within one turn** (the observe loop), rounds append `assistant: tool_use` and then `user: tool_result` with a digest, with a second cache breakpoint. Extra cards from `search_tools` go in the tool_result rather than replacing `<actions>`.
+- **Within one turn** (the observe loop), the next round appends an `<observations>` block (previous plan + result digest) after `<message>`. The prefix stays byte-identical, so the cache still hits, and no provider-specific tool-result format is needed (see [Model providers and routing](#model-providers-and-routing)). Extra cards from `search_tools` go inside `<observations>` rather than replacing `<actions>`.
 
 ```json
 { "type": "plan", "steps": [
@@ -193,6 +193,100 @@ The expectation to verify: most scenarios finish in 1 iteration, and indirect or
 - Complex requests: the plan rendered as a checklist, which arrives after about one LLM call.
 - Direct requests: the result itself.
 - A spinner does not count.
+
+### Model providers and routing
+
+#### One planner interface, thin adapters
+Retrieval, `<context>` rebuilding, the plan grammar, validation, execution, the risk policy and the observe loop are all app code. The model has one job: return one valid `submit_plan` object. So the provider boundary is small:
+
+```ts
+interface Planner {
+  readonly id: string                      // "anthropic:claude-sonnet-5-5"
+  readonly caps: { forcedTool: boolean; strictSchema: boolean; explicitCache: boolean }
+  plan(req: { system: string; user: string }): Promise<{ decision: unknown; usage: Usage; raw: unknown }>
+}
+type Usage = { input: number; cachedRead: number; cacheWrite: number; output: number; costUsd: number }
+```
+
+- **Two adapters**, each ~100–150 lines, written directly against the provider SDK:
+  - `anthropic`;
+  - `openai-compatible`, which covers OpenAI, DeepSeek, Groq, Together and local vLLM/Ollama by changing `baseURL`.
+- **Why not a unified SDK:** it would hide the things the benchmark needs, which are exact cache-token fields, raw requests for traces, and control over `cache_control`.
+- **Caching is mostly the layout, not adapter code.** Anthropic needs explicit `cache_control` breakpoints, so its adapter adds them. OpenAI and DeepSeek cache shared prefixes automatically (OpenAI only above ~1,024 tokens). The static-first layout already suits all three, so other adapters add nothing.
+- **What does differ is reading usage back.** Each provider names the cache counters differently:
+
+  | Provider | Cache read | Cache write |
+  |---|---|---|
+  | Anthropic | `cache_read_input_tokens` | `cache_creation_input_tokens` |
+  | OpenAI | `prompt_tokens_details.cached_tokens` | n/a |
+  | DeepSeek | `prompt_cache_hit_tokens` | n/a (`prompt_cache_miss_tokens` is the uncached part) |
+
+  Normalise these into `Usage`. Prices live in `pricing.json` per model, with the date checked. The cost report depends on this.
+
+#### The schema works in every provider's dialect
+- **One source of truth:** the plan schema is written in Zod. Each adapter generates the JSON Schema form its provider accepts.
+- **OpenAI strict mode** (Structured Outputs) is more limited than full JSON Schema, as far as we know (verify on day 2):
+  - every property must be in `required`, so optional fields become nullable;
+  - `additionalProperties: false` is required everywhere;
+  - `anyOf` is allowed, `oneOf` is not.
+
+  So step variants are written as `anyOf`, and the canonical Zod type is a discriminated union.
+- **Always validate with Zod afterwards**, whatever the provider guarantees. DeepSeek and local models don't enforce schemas, and the existing single repair call covers them.
+- **Adapter settings:**
+  - OpenAI returns `arguments` as a JSON string, so parse it in the adapter.
+  - Set `parallel_tool_calls: false`.
+  - Some models don't support forced tool choice. Reasoning models have often lacked it. For those, `caps.forcedTool = false`, and the adapter falls back to JSON output plus Zod. These are per-model flags, not assumptions.
+
+#### The observe loop doesn't use native tool-result messages
+- The observe loop doesn't thread native `tool_use`/`tool_result` messages, whose format differs by provider.
+- Instead, the next round **appends an `<observations>` block after `<message>`** in the same user block. It holds the previous plan and its digest.
+- Everything before it stays byte-identical, so both explicit and automatic caching still hit. There's nothing to translate between formats.
+- Native threading stays available as an adapter option, if a model does measurably better with it.
+
+#### Prompt overrides per model
+- The prompt's structure carries over between models, but its wording may not. Smaller or non-Anthropic models follow rules differently and need different examples.
+- Each model gets an optional override file (`prompts/<model>.md`) for extra examples or rule emphasis. The core prompt is never forked.
+- Every model is a separate benchmark variant on the same scenarios.
+- Compare models on **cost per successful task**, not raw token counts, because tokenizers differ.
+
+#### Routing by difficulty
+There's essentially one LLM call per turn, the planner. The summary is templated and retrieval uses no model. So the saving comes from choosing **which model plans each request**, not from moving "other work" to a cheaper model.
+
+**Two tiers:** `fast` and `strong`. To start, `fast` is Haiku and `strong` is Sonnet: same provider, same tokenizer, one adapter, so the routing effect is measured on its own.
+
+**1. Feature routing (no LLM, from the retrieval output)**
+
+| Signal | Leans `fast` | Leans `strong` |
+|---|---|---|
+| Clauses after splitting | 1 | ≥ 2 |
+| Distinct modules in the shortlist | 1–2 | ≥ 3 |
+| Gap between top-1 and top-2 score | clear winner | close |
+| Words like "unless", "skip", "except", "only", "if" | absent | present |
+| Follow-up that changes `$ctx` | n/a | present |
+
+The rules are plain thresholds, logged with every decision. They're explainable and hard to overfit to 100 scenarios. A trained classifier only gets considered if the rules clearly fail.
+
+**2. Validation cascade (for requests routed to `fast`)**
+- `fast` plans first.
+- If the plan fails Zod or the reference checks, or the model returns `search_tools` or `unsupported`, **escalate to `strong`** instead of making the usual repair call. Most model-routing setups lack a deterministic check; we have one for free.
+- **Limit:** a valid plan isn't always a correct plan. For example, `waitingOn: "team"` would pass validation. That's why requests that look complex go straight to `strong`, and why misroutes are measured.
+
+**3. What's measured**
+- The share of requests on each tier.
+- The escalation rate.
+- **Misroutes:** scenarios that failed on `fast` but pass on `strong`.
+- Cost per successful task, and p50/p95 latency.
+- Thresholds are tuned on a pilot split, then **frozen before the final run**, so they aren't fitted to the scenarios they're scored on.
+
+Illustrative only: if `fast` costs ~1/10 as much, takes 60% of traffic and escalates 10% of that, cost is `0.4 + 0.06 + 0.06 ≈ 0.52×`, about half. The benchmark gives the real number.
+
+#### Variants in the benchmark
+- `routed`: Haiku → Sonnet. This is the candidate default.
+- `strong-only`: Sonnet.
+- `ceiling`: Opus 5.5 as the planner. It's probably overkill for writing ~9 steps from 15 cards, so it's the quality reference, reported as "X% of Opus's quality at Y% of its cost".
+- `routed-deepseek`: DeepSeek as `fast`, through the OpenAI-compatible adapter. It runs separately so a provider difference isn't mistaken for a routing effect.
+  - **Data handling note for the README:** DeepSeek's hosted API sends CRM contact data to servers in China. For a real deployment that points to self-hosting or a US inference host.
+- **Caches are per model**, so routing splits traffic across two prefix caches and lowers each one's hit rate at low volume. Report it.
 
 ---
 
@@ -323,6 +417,7 @@ Report p50 and p95, split into **direct** vs **complex**. Report cost **per requ
 ### Variants (same scenarios)
 - `baseline`: a big model in a ReAct loop with the full catalog.
 - `optimized`: retrieval + plan-execute + bounded observe loop.
+- Model variants: `routed`, `strong-only`, `ceiling` (Opus), `routed-deepseek` (see [Model providers and routing](#model-providers-and-routing)).
 - Ablations: retrieval off, loop off (single plan only), small vs large planner model, prompt cache off.
 - Retrieval ablations (no LLM, see [Retrieval and embeddings](#retrieval-and-embeddings)): BM25 only, embeddings only, hybrid, hybrid with module routing.
 
@@ -346,7 +441,7 @@ Commit to these after a small pilot run, **before** the full benchmark. The valu
 
 - **Backend:** Node 22 + TypeScript, Fastify (SSE), Zod + `zod-to-json-schema`, better-sqlite3, `@faker-js/faker` (fixed seed).
 - **Retrieval:** MiniSearch (BM25) plus local embeddings via transformers.js (free, deterministic, offline). A provider's embeddings can be swapped in later.
-- **LLM:** the provider SDK directly, no LangChain. That gives exact token accounting, prompt-cache control and less overhead. Use a fast, cheap model for direct requests and a stronger one when the request looks complex; measure the split.
+- **LLM:** the provider SDKs directly (Anthropic, plus one OpenAI-compatible adapter), no LangChain. That gives exact token accounting, prompt-cache control and less overhead. A two-tier router (Haiku → Sonnet) with a validation cascade, as described in [Model providers and routing](#model-providers-and-routing).
 - **Testing and UI:** Vitest for the smoke tests. Vue 3 + Vite for the web app.
 
 ---
@@ -356,9 +451,9 @@ Commit to these after a small pilot run, **before** the full benchmark. The valu
 | Day | Build | Done when |
 |---|---|---|
 | **1 · Tue 20** | Repo, registry, `defineAction`, CRUD factory, SQLite store, seed, clock, faults. Draft all 500 action definitions from the catalog (LLM-assisted, reviewed) | ~250 CRUD actions pass the smoke test |
-| **2 · Wed 21** | Remaining domain handlers. Retriever, planner, executor for direct requests. CLI `ask "..."` | 500/500 smoke green; direct requests work end to end |
+| **2 · Wed 21** | Remaining domain handlers. Retriever, `Planner` interface + Anthropic adapter, executor for direct requests. CLI `ask "..."` | 500/500 smoke green; direct requests work end to end |
 | **3 · Thu 22** | References + built-in ops, entity resolution, clarification, confirmations, follow-up context, replan. SSE + Vue UI. Start drafting scenarios | The brief's 5 example prompts work in the UI |
-| **4 · Fri 23** | Finish 100+ scenarios, eval runner, baseline agent. Pilot → write targets → full benchmark → fix top failure classes | Benchmark JSON + first report |
+| **4 · Fri 23** | Finish 100+ scenarios, eval runner, baseline agent, router + OpenAI-compatible adapter. Pilot → write targets → full benchmark → fix top failure classes | Benchmark JSON + first report |
 | **5 · Sat 24** | Final benchmark, README, demo video (2–5 min), buffer | Submitted |
 
 ### Risks

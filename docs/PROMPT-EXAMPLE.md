@@ -18,7 +18,7 @@ messages:
 
 - The provider caches in the order **tools → system → messages**, and only for a byte-identical prefix. So anything that changes per request goes after the breakpoint. That includes the timestamp and the retrieved cards.
 - **Across user turns** the request is rebuilt from scratch. Earlier turns arrive only as `<context>` and `<recent_turns>`, never as a growing list of messages.
-- **Within one turn**, observe-loop rounds append (`assistant: tool_use` → `user: tool_result` with a digest), and each round gets a cache hit on the round before it. This is shown at the end.
+- **Within one turn**, observe-loop rounds append an `<observations>` block (previous plan + digest) after `<message>`, so each round gets a cache hit on the round before it. This is shown at the end.
 
 ---
 
@@ -60,7 +60,7 @@ messages:
       "query":    { "type": "string" },                                       // type = search_tools
       "text":     { "type": "string" }                                        // type = answer
     },
-    "$defs": { "step": { "oneOf": [
+    "$defs": { "step": { "anyOf": [   // anyOf, not oneOf: OpenAI strict mode rejects oneOf
       { "required": ["id", "action", "args"] },          // run a catalog action
       { "required": ["id", "resolve"] },                 // name → id, done by our code
       { "required": ["id", "op", "in"] }                 // filter | exclude | forEach | if | observe
@@ -311,16 +311,17 @@ These are estimates. The benchmark measures the real numbers. Turn 10 costs abou
 
 ## Within a turn: the observe loop
 
-When a plan ends in `observe`, the next round **appends** instead of rebuilding, because the model needs its own earlier plan in front of it:
+When a plan ends in `observe`, the next round keeps the same request and **appends an `<observations>` block after `<message>`**. The model needs its own earlier plan in front of it, so the block carries that plan plus the result digest:
 
 ```
-Round 1:  [tools][system] | user{…}                                   → tool_use: submit_plan (… observe)
-Round 2:  [tools][system] | user{…} | assistant{tool_use} | user{tool_result: digest}
-                            └─────── identical to round 1 ───────┘    → cache hit (2nd breakpoint)
+Round 1:  [tools][system] | user{ <now> … <actions> <message> }                              → plan (… observe)
+Round 2:  [tools][system] | user{ <now> … <actions> <message> <observations>plan + digest</observations> }
+                            └──────────── same bytes as round 1 ────────────┘                  → prefix cache hit
 ```
 
-- The `tool_result` holds a **digest**: summaries, ids, counts and at most 5 sample rows.
-- If round 1 returned `search_tools`, the new cards go *inside* the `tool_result`. Replacing the original `<actions>` block would break the cache.
+- `<observations>` holds a **digest**: summaries, ids, counts and at most 5 sample rows.
+- If round 1 returned `search_tools`, the new cards go *inside* `<observations>`. Replacing the original `<actions>` block would break the cache.
+- This avoids native `tool_use`/`tool_result` threading, whose format differs by provider. The same loop runs on Anthropic, OpenAI and DeepSeek. Anthropic needs a second `cache_control` breakpoint at the end of round 1's content; OpenAI and DeepSeek match the prefix automatically. See [PLAN.md: Model providers and routing](PLAN.md#model-providers-and-routing).
 - When the turn ends, all of this is dropped. Only the working set and the text summary carry forward.
 
 ---
