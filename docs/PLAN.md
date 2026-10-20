@@ -61,13 +61,43 @@ Example: *"Find leads created last week who haven't replied, exclude anyone with
 - Hybrid search (BM25 + embeddings) over **action cards**. Each card holds id, module, name, description, synonyms and entity types.
 - Return the top ~15, spread across modules, plus actions carried over from the session context.
 - Result here: M03.A03 Search leads, M11.A10 List unanswered conversations, M21.A03 Search appointments, M49.A09 Get team workload, M03.A05 Assign lead owner, M06.A01 Create task. Look-alike siblings such as M01.A07 Assign contact owner come along too.
-- **Selection details:**
-  - Each action embeds several example utterances, and an action scores by its best-matching one.
-  - The BM25 and embedding rankings are combined with Reciprocal Rank Fusion.
-  - Each module gets at most ~4 cards.
-  - Multi-intent messages are split into clauses, and each clause is retrieved separately.
-  - Dependency expansion uses an entity-type graph built from the schemas: an action that needs a `teamId` pulls in the action that produces one.
-  - k is chosen from the measured recall@k curve.
+- For how the shortlist is built, see [Retrieval and embeddings](#retrieval-and-embeddings) below.
+
+#### Retrieval and embeddings
+
+**Model and setup**
+- `all-MiniLM-L6-v2`, run locally through transformers.js. It outputs 384-dimensional, normalised vectors. It's free, offline and deterministic, which keeps evals reproducible.
+- Vectors are computed at boot and cached on disk. The cache key is a hash of the text plus the model name, so only changed cards are re-embedded.
+- About 500 actions × ~5 utterances gives ~2,500 vectors, roughly 4 MB as Float32. A brute-force dot-product scan over all of them takes well under a millisecond, so there's **no vector database and no ANN index**. Embedding the query costs a few ms on CPU. The latency budget is measured, not assumed.
+- The embedder sits behind an interface, so a hosted model (OpenAI or Voyage) can be swapped in as a benchmark variant.
+
+**What gets embedded**
+- **Example utterances per action**, such as "who hasn't got back to us" or "leads gone quiet" for M11.A10. Utterances look like user messages, so they match queries better than API-style descriptions do.
+  - They're generated once by an LLM, reviewed, and committed.
+  - They must not reuse the brief's example prompts or the eval scenarios. A lint check enforces this with a near-duplicate check against the scenarios.
+- **An action scores by its best-matching utterance** (max-sim), not by an average. An average would blur an action that people phrase in very different ways.
+- Descriptions are written for the planner prompt and for BM25. BM25 indexes name, description, synonyms and module name. MiniSearch fuzzy matching (edit distance 1–2 on longer terms) absorbs typos like "apointment" or "invocie".
+
+**Merging and shaping the shortlist**
+1. Run BM25 and embeddings over the same query, and take the top ~40 from each.
+2. Merge them with **Reciprocal Rank Fusion**: `score = Σ 1 / (60 + rank)`. It uses ranks only, so the two scores don't need to be on the same scale.
+3. **Module cap:** at most ~4 cards per module. This keeps one strong module from crowding out the others in a multi-module request.
+4. **Always include look-alike siblings.** If M03.A05 Assign lead owner makes the list, so does M01.A07 Assign contact owner. The sibling pairs are declared in the registry. This puts the choice in front of the planner instead of in front of retrieval.
+5. **Dependency expansion:** an entity-type graph is built from the input and output schemas. If a shortlisted action needs a `teamId` and no shortlisted action produces one, add the best-scoring producer, e.g. M49.A03 List teams.
+6. Cut to k (~15). **k is picked from the measured recall@k curve**, as the smallest k where recall levels off. It isn't guessed.
+
+**Query construction**
+- **Multi-intent messages:** split on clause boundaries ("…, exclude …, assign …, and create …"). Retrieve per clause with a small quota each, then merge. Without this, the longest clause dominates the single query vector.
+- **Short follow-ups** ("make those due tomorrow") have almost nothing to search on. Add the entity types from the working set ("tasks, leads") and the last user message to the query.
+- The `search_tools` escape hatch runs the same pipeline on the model's own query, excluding cards it has already seen.
+
+**Measuring it without an LLM**
+- `eval/retrieval.ts` runs every scenario's message through retrieval alone. It reports recall@k, MRR and which expected action was missed. The full suite takes seconds and costs nothing, so tuning utterances, k and caps happens here, not in end-to-end runs.
+- **Ablations in the benchmark:** BM25 only, embeddings only, hybrid, and hybrid with two-stage module routing (pick 3–5 modules first, then actions within them).
+
+**What embeddings can't do**
+- **Embeddings encode topic, not direction or negation.** "Haven't replied" and "unanswered" land close together but mean opposite things. "Exclude booked" and "booked" look alike too. Those cases are handled in card wording and params (`waitingOn`), and by the planner's ops, never by retrieval.
+- **The vectors don't know your data.** "The Facebook campaign" can't tell retrieval whether a Campaign record exists. Entity resolution (③) checks that.
 
 ### ② Plan (1 LLM call)
 - Output, forced through a single `submit_plan` tool: `answer | clarify | unsupported | plan | search_tools`.
@@ -216,7 +246,8 @@ web/           Vue 3 + Vite
 export const createContact = defineAction({
   id: "M01.A01", module: "contacts", name: "create_contact",
   description: "Create a new contact person with name, email, phone, tags.",
-  synonyms: ["add person", "new customer", "save lead details"],
+  synonyms: ["add person", "new customer", "save lead details"],   // BM25
+  utterances: ["put this person in my contacts", "new client just signed up, save them"],   // embedded
   risk: "write",                       // read | write | destructive | external | bulk
   input:  z.object({ firstName: z.string(), lastName: z.string().optional(),
                      email: z.string().email().optional(), ownerId: z.string().optional() }),
@@ -236,7 +267,7 @@ export const createContact = defineAction({
 - **Descriptions in user language**, not REST language. They're the retrieval surface and the main quality lever.
   - Spell out direction and meaning wherever everyday words are ambiguous. For example, M11.A10 takes `waitingOn: "contact" | "team"`, and its description says which side wrote last in each case.
   - Look-alike siblings in other modules cross-reference each other, e.g. "(For contacts use M01.A07.)"
-- **Synonyms:** generated once by an LLM, reviewed, and committed. They describe the action in general terms, not the brief's example prompts. Disclose this in the README.
+- **Synonyms and utterances:** generated once by an LLM, reviewed, and committed. They describe the action in general terms, not the brief's example prompts. Disclose this in the README.
 - **Frozen clock:** `clock.now()` is pinned during evals, so "last week" and "tomorrow" give the same result every run.
 - **Fault injection** (`faults.ts`): a scenario can force a handler to time out or return a permission or not-found error.
 - **Handlers never always-succeed.** Validate, return typed `ActionError`s, and mutate state for every write.
@@ -293,6 +324,7 @@ Report p50 and p95, split into **direct** vs **complex**. Report cost **per requ
 - `baseline`: a big model in a ReAct loop with the full catalog.
 - `optimized`: retrieval + plan-execute + bounded observe loop.
 - Ablations: retrieval off, loop off (single plan only), small vs large planner model, prompt cache off.
+- Retrieval ablations (no LLM, see [Retrieval and embeddings](#retrieval-and-embeddings)): BM25 only, embeddings only, hybrid, hybrid with module routing.
 
 ### Report
 - `report.ts` generates `BENCHMARK.md` from the results JSON: tables by category, cost per task, and every failure and missed target listed.

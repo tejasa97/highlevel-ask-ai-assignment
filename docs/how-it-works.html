@@ -220,7 +220,7 @@ dd{margin:0; color:var(--muted)}
     <article class="concept">
       <header><div class="eyebrow">Idea 2</div><h3>Embeddings: search by meaning</h3></header>
       <p>An <strong>embedding model</strong> turns text into a vector, a list of a few hundred numbers. Texts that mean similar things land close together, even with no words in common. “Add Sarah as a new person” lands near “Create contact” although it never says “contact”.</p>
-      <p>We embed all 500 action descriptions <strong>once</strong>, at startup, and store the vectors. Per message we embed only the message (one cheap call, or free with a local model) and take the nearest actions by cosine similarity. That is the <em>Retrieve</em> stage.</p>
+      <p>We embed every action <strong>once</strong>, at startup, and store the vectors. Per message we embed only the message (free and a few milliseconds with a local model) and take the nearest actions by cosine similarity. That is the <em>Retrieve</em> stage.</p>
       <div class="emb">
         <div class="btnrow" role="group" aria-label="Pick a user message">
           <button type="button" data-q="0" aria-pressed="true">add Sarah as a new person</button>
@@ -232,6 +232,12 @@ dd{margin:0; color:var(--muted)}
         <div class="ranking" id="ranking" aria-live="polite"></div>
         <p class="caption">Real vectors have 384 to 3,000+ dimensions; this is a hand-drawn 2-D picture of the idea. Scores here are illustrative.</p>
       </div>
+      <ul class="facts">
+        <li><strong>We embed example requests, not descriptions.</strong> Each action gets ~5 phrasings a user might type, e.g. “who hasn't got back to us” and “leads gone quiet” for List unanswered conversations. A message is compared with phrasings that look like messages, and an action scores by its <em>best</em> match, so one action can be reached by very different wordings. They never reuse the brief's or the evals' prompts.</li>
+        <li><strong>Short follow-ups borrow context.</strong> “Make those due tomorrow” has almost nothing to search on, so before embedding we add what the conversation is about (“tasks, leads”) to the query.</li>
+        <li><strong>Long requests are split.</strong> A four-part request becomes four clauses, each retrieved on its own, so the longest clause doesn't drown the others in one averaged vector.</li>
+        <li><strong>What embeddings can't see:</strong> direction and negation. “Haven't replied” sits right next to “unanswered”, though one means <em>we</em> wrote last and the other means the customer did. That's fixed in the action's wording and parameters (<code>waitingOn</code>), not in search.</li>
+      </ul>
       <p class="backend">Backend analogy: a vector index is a nearest-neighbour lookup instead of a B-tree lookup. With only 500 rows, a plain loop over an in-memory array is fast enough; no vector database needed.</p>
     </article>
 
