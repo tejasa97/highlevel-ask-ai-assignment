@@ -60,31 +60,56 @@ Example: *"Find leads created last week who haven't replied, exclude anyone with
 ### ① Retrieve (~20 ms, no LLM)
 - Hybrid search (BM25 + embeddings) over **action cards**. Each card holds id, module, name, description, synonyms and entity types.
 - Return the top ~15, spread across modules, plus actions carried over from the session context.
-- Result here: `leads.search`, `conversations.list_unanswered`, `appointments.search`, `teams.get_workload`, `leads.assign_owner`, `tasks.create`, …
+- Result here: M03.A03 Search leads, M11.A10 List unanswered conversations, M21.A03 Search appointments, M49.A09 Get team workload, M03.A05 Assign lead owner, M06.A01 Create task. Look-alike siblings such as M01.A07 Assign contact owner come along too.
+- **Selection details:**
+  - Each action embeds several example utterances, and an action scores by its best-matching one.
+  - The BM25 and embedding rankings are combined with Reciprocal Rank Fusion.
+  - Each module gets at most ~4 cards.
+  - Multi-intent messages are split into clauses, and each clause is retrieved separately.
+  - Dependency expansion uses an entity-type graph built from the schemas: an action that needs a `teamId` pulls in the action that produces one.
+  - k is chosen from the measured recall@k curve.
 
 ### ② Plan (1 LLM call)
-- Inputs: system prompt and plan grammar (static, so prompt-cacheable), context summary, retrieved tool cards with input schemas, user message.
-- Output, constrained to one of: `answer | clarify | unsupported | plan | search_tools`.
+- Output, forced through a single `submit_plan` tool: `answer | clarify | unsupported | plan | search_tools`.
+
+#### Prompt structure
+For a full two-turn example with real payloads and token counts, see [PROMPT-EXAMPLE.md](PROMPT-EXAMPLE.md).
+
+```
+tools:   [ submit_plan ]                          static, forced via tool_choice
+system:  role + rules + plan grammar + examples   static   ── cache breakpoint ──
+user:    <now> <context> <recent_turns> <actions> <message>   rebuilt every turn
+```
+- **Retrieved actions are prompt text, not tool definitions.** The model's only tool is `submit_plan`. That keeps the tool list static and cacheable, and the model plans instead of calling tools.
+- **Nothing that changes per request goes before the breakpoint**: no timestamp, user name or retrieved cards.
+- **`<now>`** holds the date, the timezone and precomputed ranges (today, tomorrow, this week, last week). The model picks a range and never does calendar math.
+- **Across user turns the request is rebuilt from scratch.** History arrives only as `<context>` (the working set) and `<recent_turns>` (the last 2–3 exchanges as text). So the size of turn 10 stays close to turn 2.
+- **Within one turn** (the observe loop), rounds append `assistant: tool_use` and then `user: tool_result` with a digest, with a second cache breakpoint. Extra cards from `search_tools` go in the tool_result rather than replacing `<actions>`.
 
 ```json
 { "type": "plan", "steps": [
-  { "id": "s1", "action": "M03.A03", "args": { "createdAfter": "{{lastWeek.start}}", "createdBefore": "{{lastWeek.end}}" } },
-  { "id": "s2", "action": "M11.A10", "args": {} },
-  { "id": "s3", "action": "M21.A03", "args": { "status": "booked" } },
-  { "id": "s4", "op": "filter",  "in": "$s1.items", "where": { "contactId": { "in": "$s2.items[*].contactId" } } },
-  { "id": "s5", "op": "exclude", "in": "$s4", "by": "contactId", "set": "$s3.items[*].contactId" },
-  { "id": "s6", "action": "M49.A09", "args": { "teamName": "Sales" } },
-  { "id": "s7", "op": "forEach", "in": "$s5", "roundRobin": "$s6.availableUsers", "do": [
-      { "action": "M03.A05", "args": { "leadId": "$item.id", "ownerId": "$rr.id" } },
-      { "action": "M06.A01", "args": { "title": "Follow up with {{$item.name}}", "assigneeId": "$rr.id", "relatedId": "$item.id" } } ] }
-], "confirm": ["s7"] }
+  { "id": "s1", "action": "M03.A03", "args": { "createdAfter": "2026-10-12", "createdBefore": "2026-10-18" } },
+  { "id": "s2", "action": "M11.A10", "args": { "waitingOn": "contact" } },
+  { "id": "s3", "action": "M21.A03", "args": { "status": "booked", "from": "2026-10-20" } },
+  { "id": "s4", "resolve": { "entity": "team", "name": "Sales" } },
+  { "id": "s5", "action": "M49.A09", "args": { "teamId": "$s4.id" } },
+  { "id": "s6", "op": "filter",  "in": "$s1.items", "where": { "contactId": { "in": "$s2.items[*].contactId" } } },
+  { "id": "s7", "op": "exclude", "in": "$s6", "by": "contactId", "set": "$s3.items[*].contactId" },
+  { "id": "s8", "op": "filter",  "in": "$s5.members", "where": { "available": true } },
+  { "id": "s9", "op": "forEach", "in": "$s7", "roundRobin": "$s8", "do": [
+      { "action": "M03.A05", "args": { "leadId": "$item.id", "ownerId": "$rr.userId" } },
+      { "action": "M06.A01", "args": { "title": "Follow up with {{$item.name}}", "assigneeId": "$rr.userId",
+                                       "relatedTo": { "type": "lead", "id": "$item.id" } } } ] }
+] }
 ```
+- The dates come from `<now>`. There's no `dueDate` because the user didn't give one, and there's no `confirm` field: see ③.
+- **`waitingOn: "contact"` is the trap in this prompt.** "Haven't replied" means *we* wrote last. "Unanswered" normally means the *customer* wrote last. The M11.A10 card states both cases plainly.
 
 ### ③ Validate (no LLM)
 - Check every action's args against its Zod schema, and check that every reference resolves.
 - **Entity resolution:** names become IDs through the module's own search actions. More than one match means a clarification question, decided deterministically and not by the LLM.
 - A missing required param that can't be inferred also means clarify.
-- The risk policy (`destructive | bulk | external`) marks which steps need confirmation.
+- The risk policy (`destructive | bulk | external`) marks which steps need confirmation. **This is decided only in code**: the model never emits a `confirm` field, so it can't skip a gate or invent one. Here s9 writes 12 records, so it's bulk.
 - If validation fails, make **one** repair call with the validation error attached.
 
 ### ④ Execute
@@ -146,17 +171,23 @@ The expectation to verify: most scenarios finish in 1 iteration, and indirect or
 Per-session **working set**:
 
 ```ts
-{ lastPlan, lastQuery: { module: "leads", filters: {...} },
+{ summary: "leads created 2026-10-12..18, waiting on contact, no booked appt → 6 leads …",
+  sets: {                       // addressable as $ctx.<name> in plans
+    leads: [{ id: "ld_88", name: "Ana Ruiz", source: "facebook_ads", ownerId: "us_3" }, ...],
+    tasks: [{ id: "tk_201", leadId: "ld_88", assigneeId: "us_3", dueDate: null }, ...] },
   entities: { "Sarah": "ct_812" },
-  created:  { tasks: ["tk_1", ...], leadsAssigned: [...] },
-  pendingConfirmation: null }
+  lastPlan, pendingConfirmation: null }
 ```
 
-- The planner receives a compact summary of this, never the raw history.
-- Example: "Only include leads from the Facebook campaign, and make those tasks due tomorrow" becomes a plan over `$ctx`:
-  1. Filter the previous lead set by `source = facebook`.
-  2. Cancel the tasks created for leads that fall outside the filter. This is destructive, so it needs confirmation.
-  3. Set `due = tomorrow` on the remaining tasks.
+- The planner receives a compact summary of this in `<context>`, never the raw history.
+- **Size cap:** a set is listed item by item, with its filterable fields only, while it holds ≤ ~20 items. Past that, the prompt shows the count, the field names and the `$ctx` handle, and the rows stay in the executor.
+- **No special syntax.** Follow-ups use `$ctx.<name>` with the same `filter` / `exclude` / `forEach` ops. For example, "Only include leads from the Facebook campaign, and make those tasks due tomorrow" becomes:
+  1. `filter $ctx.leads` where `source = facebook_ads`, plus the complement with `exclude`.
+  2. `filter $ctx.tasks` by `leadId` for each half.
+  3. `forEach` complement task → M06.A10 Cancel task. This is destructive, so code asks for confirmation.
+  4. `forEach` kept task → M06.A06 Set task due date `2026-10-21`.
+  5. The reply notes that the 2 dropped leads still have owners, and offers to unassign them.
+- **Ambiguity to test:** "Facebook campaign" could mean the lead source or an M15 Campaign record. The demo assumes the source field. An eval scenario covers both readings: with a campaign named "Facebook" seeded, the planner should clarify.
 - Good demo moment: the assistant amends work it already did instead of redoing everything.
 
 ---
@@ -203,6 +234,8 @@ export const createContact = defineAction({
 - **`crudFactory(entity)`** generates create, get, search, update and archive from each module's entity schema, about 250 actions in total. Hand-write the domain actions: merge, convert quote to invoice, find slots, refundable balance, workload, and so on.
 - **Auto-registration:** modules are discovered by directory scan. A new module is one folder with no core change (the extensibility requirement).
 - **Descriptions in user language**, not REST language. They're the retrieval surface and the main quality lever.
+  - Spell out direction and meaning wherever everyday words are ambiguous. For example, M11.A10 takes `waitingOn: "contact" | "team"`, and its description says which side wrote last in each case.
+  - Look-alike siblings in other modules cross-reference each other, e.g. "(For contacts use M01.A07.)"
 - **Synonyms:** generated once by an LLM, reviewed, and committed. They describe the action in general terms, not the brief's example prompts. Disclose this in the README.
 - **Frozen clock:** `clock.now()` is pinned during evals, so "last week" and "tomorrow" give the same result every run.
 - **Fault injection** (`faults.ts`): a scenario can force a handler to time out or return a permission or not-found error.
@@ -301,6 +334,7 @@ Commit to these after a small pilot run, **before** the full benchmark. The valu
 2. **500 handlers eat days 1–2.** Keep domain logic simple but real; the CRUD factory does the bulk.
 3. **Retrieval misses on look-alike actions** (contacts vs leads, email vs conversations). Track recall@k as its own metric and tune descriptions and synonyms against it.
 4. **Non-determinism.** Temperature 0, repeated runs, and report variance instead of hiding it.
+5. **Semantic traps that retrieval can't catch.** The action is right but its meaning is inverted, e.g. "haven't replied" vs "unanswered", or "Facebook campaign" as a lead source vs a Campaign record. Keep a named eval category for these and fix them in card descriptions and params, not in the prompt.
 
 ---
 
