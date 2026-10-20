@@ -308,8 +308,8 @@ dd{margin:0; color:var(--muted)}
     </article>
 
     <article class="concept">
-      <header><div class="eyebrow">Idea 5</div><h3>Our twist: one tool called <code>submit_plan</code></h3></header>
-      <p>Instead of handing the model 15 tools and looping, we give it <strong>one</strong> tool, <code>submit_plan</code>, and force it to call that. Its JSON Schema is our plan grammar. The 15 retrieved actions go in the prompt as cards it can reference. So the model writes the <em>whole</em> program in one go:</p>
+      <header><div class="eyebrow">Idea 5</div><h3>Our twist: no tools, one <code>submit_plan</code> reply</h3></header>
+      <p>Instead of handing the model 15 tools and looping, we give it <strong>no</strong> tools. Its reply must match one JSON Schema, <code>submit_plan</code>, using the provider's structured-output mode. That schema is our plan grammar. (We first planned to force a single tool call, but Claude Sonnet 5.5 and Opus 5.5 reject forced tool choice with an error, and structured output works on Anthropic and OpenAI alike.) The 15 retrieved actions go in the prompt as cards it can reference. So the model writes the <em>whole</em> program in one go:</p>
       <pre data-json>{
   "type": "plan",
   "steps": [
@@ -367,7 +367,7 @@ dd{margin:0; color:var(--muted)}
     <dt>BM25</dt><dd>Classic keyword relevance scoring. Good at exact terms, blind to synonyms.</dd>
     <dt>Tool / function calling</dt><dd>The model replies with a structured request to call a named function with JSON arguments; your code runs it.</dd>
     <dt>ReAct loop</dt><dd>Reason → act (call one tool) → observe the result → repeat. Simple, but one model call per step.</dd>
-    <dt>Structured output</dt><dd>Forcing the reply to match a JSON Schema, here by forcing a call to <code>submit_plan</code>.</dd>
+    <dt>Structured output</dt><dd>Making the reply match a JSON Schema, here the <code>submit_plan</code> schema (Anthropic <code>output_config.format</code>, OpenAI <code>text.format</code>).</dd>
     <dt>Temperature</dt><dd>Randomness of the model's choices. We use 0 for planning and evals, so runs repeat as closely as possible.</dd>
     <dt>Hallucination</dt><dd>The model stating something untrue with confidence. We contain it by never letting the model report results; code does.</dd>
     <dt>TTFUR</dt><dd>Time to first useful response: the plan checklist, a result, or a question. A spinner doesn't count.</dd>
@@ -430,7 +430,7 @@ dd{margin:0; color:var(--muted)}
    steps:[
     {k:"code",tag:"retrieve",t:"Shortlist 15 of 500 actions",p:"Hybrid search scores every action card. “Create lead” scores high too; both go to the model with their descriptions so it can tell them apart.",
      ev:["M01.A01  Create contact        0.91","M03.A01  Create lead           0.84","M02.A01  Create company        0.71","M01.A03  Search contacts       0.66","…  11 more"]},
-    {k:"llm",tag:"plan · call 1",t:"Model calls submit_plan",j:'{ "type": "plan", "steps": [\n  { "id": "s1", "action": "M01.A01",\n    "args": { "firstName": "Sarah", "lastName": "Lee",\n              "email": "sarah.lee@acme.io" } } ] }',
+    {k:"llm",tag:"plan · call 1",t:"Model replies with submit_plan",j:'{ "type": "plan", "steps": [\n  { "id": "s1", "action": "M01.A01",\n    "args": { "firstName": "Sarah", "lastName": "Lee",\n              "email": "sarah.lee@acme.io" } } ] }',
      why:"Why contact, not lead? The lead card says “a prospect being qualified, with source and score”. The user asked for a contact by name, and the model follows the descriptions. That's why descriptions are the main quality lever."},
     {k:"code",tag:"validate",t:"Schema and risk check",p:"Zod accepts the args and the email format. Risk level is <code>write</code> (not destructive, bulk or external), so no confirmation is needed."},
     {k:"code",tag:"execute",t:"Run the handler",ev:["▶ s1 M01.A01 Create contact","✓ s1 ok  4 ms  → ct_0142"]},

@@ -5,7 +5,7 @@ What the planner call actually looks like, over two turns of the brief's showcas
 ## The layout
 
 ```
-tools:   [ submit_plan ]                           static, forced via tool_choice
+format:  submit_plan JSON schema                   static, structured output (no tools)
 system:  role + rules + plan grammar + examples    static
          ── cache breakpoint ──
 messages:
@@ -16,7 +16,7 @@ messages:
          <message>       what the user just typed
 ```
 
-- The provider caches in the order **tools → system → messages**, and only for a byte-identical prefix. So anything that changes per request goes after the breakpoint. That includes the timestamp and the retrieved cards.
+- The provider caches in the order **tools → system → messages**, and only for a byte-identical prefix. So anything that changes per request goes after the breakpoint. That includes the timestamp and the retrieved cards. Keep the output schema constant too: OpenAI documents that changing `text.format` changes the cached prefix.
 - **Across user turns** the request is rebuilt from scratch. Earlier turns arrive only as `<context>` and `<recent_turns>`, never as a growing list of messages.
 - **Within one turn**, observe-loop rounds append an `<observations>` block (previous plan + digest) after `<message>`, so each round gets a cache hit on the round before it. This is shown at the end.
 
@@ -33,41 +33,41 @@ messages:
   "model": "claude-sonnet-5-5",
   "temperature": 0,
   "max_tokens": 1500,
-  "tool_choice": { "type": "tool", "name": "submit_plan" },   // must call it; no free prose
-  "tools": [ SUBMIT_PLAN ],                                    // static
+  "output_config": { "format": {                              // reply must match the schema; no free prose
+    "type": "json_schema", "schema": SUBMIT_PLAN } },          // static
   "system": [{ "type": "text", "text": SYSTEM_PROMPT,          // static
                "cache_control": { "type": "ephemeral" } }],    // cache everything up to here
   "messages": [{ "role": "user", "content": USER_BLOCK_1 }]    // rebuilt every turn
 }
 ```
 
-### `SUBMIT_PLAN`: the only tool (~400 tokens)
+### `SUBMIT_PLAN`: the output schema (~400 tokens; abridged)
 
 ```jsonc
 {
-  "name": "submit_plan",
-  "description": "Submit your decision for this turn. Call exactly once.",
-  "input_schema": {
-    "type": "object",
-    "required": ["type"],
-    "properties": {
-      "type":     { "enum": ["plan", "clarify", "unsupported", "answer", "search_tools"] },
-      "steps":    { "type": "array", "items": { "$ref": "#/$defs/step" } },  // type = plan
-      "question": { "type": "string" },                                       // type = clarify
-      "options":  { "type": "array", "items": { "type": "string" } },
-      "reason":   { "type": "string" },                                       // type = unsupported
-      "alternatives": { "type": "array", "items": { "type": "string" } },
-      "query":    { "type": "string" },                                       // type = search_tools
-      "text":     { "type": "string" }                                        // type = answer
-    },
-    "$defs": { "step": { "anyOf": [   // anyOf, not oneOf: OpenAI strict mode rejects oneOf
-      { "required": ["id", "action", "args"] },          // run a catalog action
-      { "required": ["id", "resolve"] },                 // name → id, done by our code
-      { "required": ["id", "op", "in"] }                 // filter | exclude | forEach | if | observe
-    ] } }
-  }
+  "type": "object",                     // root is an object, not anyOf (OpenAI strict requires this)
+  "additionalProperties": false,
+  "required": ["type", "steps", "question", "options", "reason", "alternatives", "query", "text"],
+  "properties": {                       // every field required; unused ones are null
+    "type":     { "enum": ["plan", "clarify", "unsupported", "answer", "search_tools"] },
+    "steps":    { "type": ["array", "null"], "items": { "$ref": "#/$defs/step" } },  // type = plan
+    "question": { "type": ["string", "null"] },                                       // type = clarify
+    "options":  { "type": ["array", "null"], "items": { "type": "string" } },
+    "reason":   { "type": ["string", "null"] },                                       // type = unsupported
+    "alternatives": { "type": ["array", "null"], "items": { "type": "string" } },
+    "query":    { "type": ["string", "null"] },                                       // type = search_tools
+    "text":     { "type": ["string", "null"] }                                        // type = answer
+  },
+  "$defs": { "step": { "anyOf": [       // anyOf: supported by all three providers; oneOf isn't listed by any
+    { "$ref": "#/$defs/actionStep" },   // { id, action, args }: run a catalog action
+    { "$ref": "#/$defs/resolveStep" },  // { id, resolve }: name → id, done by our code
+    { "$ref": "#/$defs/opStep" }        // { id, op, in, ... }: filter | exclude | forEach | if | observe
+  ] } }                                 // no recursion: forEach.do lists action calls; if.then/else name step ids
 }
 ```
+
+- `args` differs per action, so here it's a loose object. Zod checks it against the action's own schema after the reply.
+- The adapter derives this from the canonical Zod type. DeepSeek gets the same schema as a strict function, with `$defs` renamed to `$def` (see [PLAN.md: Model providers and routing](PLAN.md#model-providers-and-routing)).
 
 There's no `confirm` field. Confirmations are decided by the risk policy in code (PLAN.md §2 ③).
 
@@ -75,7 +75,7 @@ There's no `confirm` field. Confirmations are decided by the risk policy in code
 
 ```text
 You are Ask AI, the assistant inside a CRM. You never run anything yourself.
-Every turn, call submit_plan once with one of:
+Every turn, reply with one submit_plan object of one of these types:
   plan          steps for the executor to run
   clarify       ONE question, only when a required detail is missing and no search can find it
   unsupported   no action in <actions> can do this; suggest the closest ones
@@ -177,7 +177,8 @@ The lines in brackets in a card description, such as "(For contacts use M01.A07.
 ### Response (~380 output tokens)
 
 ```jsonc
-{ "type": "tool_use", "name": "submit_plan", "input": {
+// content[0].text, parsed; the null fields are left out here
+{
   "type": "plan",
   "steps": [
     { "id": "s1", "action": "M03.A03", "args": { "createdAfter": "2026-10-12", "createdBefore": "2026-10-18" } },
@@ -193,7 +194,8 @@ The lines in brackets in a card description, such as "(For contacts use M01.A07.
         { "action": "M06.A01", "args": { "title": "Follow up with {{$item.name}}",
             "assigneeId": "$rr.userId", "relatedTo": { "type": "lead", "id": "$item.id" } } }
     ] }
-  ] } }
+  ]
+}
 ```
 
 ### What happens in code after that
@@ -216,13 +218,13 @@ There's no `dueDate` on the tasks. The user didn't give one, and rule 6 says not
 
 ```jsonc
 {
-  "tools":  [ SUBMIT_PLAN ],      // ┐ byte-identical to turn 1
-  "system": [ SYSTEM_PROMPT ],    // ┘ → cache read, ~10% of normal input price
+  "output_config": { ... SUBMIT_PLAN ... },  // ┐ byte-identical to turn 1
+  "system": [ SYSTEM_PROMPT ],                // ┘ → cache read, 5% of normal input price on Sonnet 5.5
   "messages": [{ "role": "user", "content": USER_BLOCK_2 }]   // only this is new
 }
 ```
 
-Turn 1's messages are **not** resent: no turn-1 `tool_use` and no step results. What turn 2 needs from turn 1 is in `<context>`.
+Turn 1's messages are **not** resent: no turn-1 plan and no step results. What turn 2 needs from turn 1 is in `<context>`.
 
 ### `USER_BLOCK_2`
 
@@ -314,14 +316,14 @@ These are estimates. The benchmark measures the real numbers. Turn 10 costs abou
 When a plan ends in `observe`, the next round keeps the same request and **appends an `<observations>` block after `<message>`**. The model needs its own earlier plan in front of it, so the block carries that plan plus the result digest:
 
 ```
-Round 1:  [tools][system] | user{ <now> … <actions> <message> }                              → plan (… observe)
-Round 2:  [tools][system] | user{ <now> … <actions> <message> <observations>plan + digest</observations> }
-                            └──────────── same bytes as round 1 ────────────┘                  → prefix cache hit
+Round 1:  [format][system] | user{ <now> … <actions> <message> }                              → plan (… observe)
+Round 2:  [format][system] | user{ <now> … <actions> <message> <observations>plan + digest</observations> }
+                             └──────────── same bytes as round 1 ────────────┘                 → prefix cache hit
 ```
 
 - `<observations>` holds a **digest**: summaries, ids, counts and at most 5 sample rows.
 - If round 1 returned `search_tools`, the new cards go *inside* `<observations>`. Replacing the original `<actions>` block would break the cache.
-- This avoids native `tool_use`/`tool_result` threading, whose format differs by provider. The same loop runs on Anthropic, OpenAI and DeepSeek. Anthropic needs a second `cache_control` breakpoint at the end of round 1's content; OpenAI and DeepSeek match the prefix automatically. See [PLAN.md: Model providers and routing](PLAN.md#model-providers-and-routing).
+- This avoids native `tool_use`/`tool_result` threading, whose format differs by provider. The same loop runs on Anthropic, OpenAI and DeepSeek. Anthropic needs a second `cache_control` breakpoint at the end of round 1's content (up to 4 are allowed); OpenAI's implicit mode and DeepSeek match the prefix automatically. See [PLAN.md: Model providers and routing](PLAN.md#model-providers-and-routing).
 - When the turn ends, all of this is dropped. Only the working set and the text summary carry forward.
 
 ---

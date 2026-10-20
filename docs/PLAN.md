@@ -103,17 +103,19 @@ Example: *"Find leads created last week who haven't replied, exclude anyone with
 - **The vectors don't know your data.** "The Facebook campaign" can't tell retrieval whether a Campaign record exists. Entity resolution (③) checks that.
 
 ### ② Plan (1 LLM call)
-- Output, forced through a single `submit_plan` tool: `answer | clarify | unsupported | plan | search_tools`.
+- Output: one JSON object matching the `submit_plan` schema, enforced through the provider's structured-output mode. It's one of `answer | clarify | unsupported | plan | search_tools`.
+- **Why structured output, not a forced tool:** on Claude Opus 5.5 and Sonnet 5.5, forcing a tool (`tool_choice` of `tool` or `any`) returns a 400 error. Anthropic's docs point to structured outputs instead, and OpenAI supports the same idea, so it's the most portable mechanism (checked 2026-10-21, see [Model providers and routing](#model-providers-and-routing)).
 
 #### Prompt structure
 For a full two-turn example with real payloads and token counts, see [PROMPT-EXAMPLE.md](PROMPT-EXAMPLE.md).
 
 ```
-tools:   [ submit_plan ]                          static, forced via tool_choice
+format:  submit_plan JSON schema                  static, structured-output mode (no tools)
 system:  role + rules + plan grammar + examples   static   ── cache breakpoint ──
 user:    <now> <context> <recent_turns> <actions> <message>   rebuilt every turn
 ```
-- **Retrieved actions are prompt text, not tool definitions.** The model's only tool is `submit_plan`. That keeps the tool list static and cacheable, and the model plans instead of calling tools.
+- **Retrieved actions are prompt text, not tool definitions.** The model gets no tools at all; it must answer in the `submit_plan` schema. That keeps the request prefix static and cacheable, and the model plans instead of calling tools.
+- **Cache minimums are well below our prefix:** 512 tokens for Opus 5.5, Sonnet 5.5 and Haiku 5.5, and 1,024 for GPT-5.6 and later. Our static prefix is ~1,500 tokens.
 - **Nothing that changes per request goes before the breakpoint**: no timestamp, user name or retrieved cards.
 - **`<now>`** holds the date, the timezone and precomputed ranges (today, tomorrow, this week, last week). The model picks a range and never does calendar math.
 - **Across user turns the request is rebuilt from scratch.** History arrives only as `<context>` (the working set) and `<recent_turns>` (the last 2–3 exchanges as text). So the size of turn 10 stays close to turn 2.
@@ -205,7 +207,7 @@ Retrieval, `<context>` rebuilding, the plan grammar, validation, execution, the 
 ```ts
 interface Planner {
   readonly id: string                      // "anthropic:claude-sonnet-5-5"
-  readonly caps: { forcedTool: boolean; strictSchema: boolean; explicitCache: boolean }
+  readonly caps: { mode: "json_schema" | "forced_tool"; strictSchema: boolean; explicitCache: boolean }
   plan(req: { system: string; user: string }): Promise<{ decision: unknown; usage: Usage; raw: unknown }>
 }
 type Usage = { input: number; cachedRead: number; cacheWrite: number; output: number; costUsd: number }
@@ -214,31 +216,50 @@ type Usage = { input: number; cachedRead: number; cacheWrite: number; output: nu
 - **Two adapters**, each ~100–150 lines, written directly against the provider SDK:
   - `anthropic`;
   - `openai-compatible`, which covers OpenAI, DeepSeek, Groq, Together and local vLLM/Ollama by changing `baseURL`.
+- **How each provider is made to return `submit_plan`** (checked against the official docs on 2026-10-21):
+
+  | Provider | Mechanism | Notes |
+  |---|---|---|
+  | Anthropic (Sonnet 5.5, Opus 5.5) | `output_config.format: { type: "json_schema", schema }` | Forced `tool_choice` (`tool` / `any`) returns 400 on these models. Haiku 5.5 still allows it, but we use one mechanism for both tiers |
+  | OpenAI (Responses API) | `text.format: { type: "json_schema", strict: true, schema }` | Schema root must be an object, not `anyOf` |
+  | DeepSeek (`deepseek-flash`, `deepseek-v4-pro`) | Forced function: `tool_choice: { type: "function", function: { name: "submit_plan" } }` with `strict: true` | Strict is beta and needs `baseURL` `https://api.deepseek.com/beta`. A named `tool_choice` returns 400 in thinking mode, which is on by default, so send `thinking: { type: "disabled" }`. We found no documented JSON-schema response format |
+
 - **Why not a unified SDK:** it would hide the things the benchmark needs, which are exact cache-token fields, raw requests for traces, and control over `cache_control`.
-- **Caching is mostly the layout, not adapter code.** Anthropic needs explicit `cache_control` breakpoints, so its adapter adds them. OpenAI and DeepSeek cache shared prefixes automatically (OpenAI only above ~1,024 tokens). The static-first layout already suits all three, so other adapters add nothing.
+- **Caching is mostly the layout, not adapter code.** All three caches match on a byte-identical prefix, so the static-first layout suits every provider:
+  - **Anthropic:** explicit `cache_control` breakpoints, up to 4 per request. Order is `tools` → `system` → `messages`. TTL is 5 minutes by default, or 1 hour. Writes cost 1.25× input (2× for 1 hour); reads cost 0.05× on Opus 5.5 and Sonnet 5.5, and 0.1× on Haiku 5.5. Changing `tool_choice` only invalidates the messages cache.
+  - **OpenAI:** on by default. GPT-5.6 and later have implicit mode (the default, with a breakpoint at the end of the latest message) or explicit breakpoints. Minimum 1,024 tokens. TTL is `30m` by default or `12h`. Writes cost 1.25× (2.5× for 12h) and reads 0.1× on most models. Earlier models have no write charge. Changing `tools`, `parallel_tool_calls`, `text.format` or reasoning effort can change the cached prefix, so keep them constant.
+  - **DeepSeek:** automatic and best-effort, with no stated minimum. Caches are cleared after "a few hours to a few days" of disuse.
 - **What does differ is reading usage back.** Each provider names the cache counters differently:
 
   | Provider | Cache read | Cache write |
   |---|---|---|
-  | Anthropic | `cache_read_input_tokens` | `cache_creation_input_tokens` |
-  | OpenAI | `prompt_tokens_details.cached_tokens` | n/a |
-  | DeepSeek | `prompt_cache_hit_tokens` | n/a (`prompt_cache_miss_tokens` is the uncached part) |
+  | Anthropic | `cache_read_input_tokens` | `cache_creation_input_tokens` (`input_tokens` = tokens after the last breakpoint; total = read + write + input) |
+  | OpenAI (Responses) | `usage.input_tokens_details.cached_tokens` | `usage.input_tokens_details.cache_write_tokens` (GPT-5.6+; reads exclude tokens billed as writes) |
+  | DeepSeek | `prompt_cache_hit_tokens` (also `prompt_tokens_details.cached_tokens`) | n/a (`prompt_tokens` = hit + miss) |
 
   Normalise these into `Usage`. Prices live in `pricing.json` per model, with the date checked. The cost report depends on this.
 
 #### The schema works in every provider's dialect
 - **One source of truth:** the plan schema is written in Zod. Each adapter generates the JSON Schema form its provider accepts.
-- **OpenAI strict mode** (Structured Outputs) is more limited than full JSON Schema, as far as we know (verify on day 2):
-  - every property must be in `required`, so optional fields become nullable;
-  - `additionalProperties: false` is required everywhere;
-  - `anyOf` is allowed, `oneOf` is not.
-
-  So step variants are written as `anyOf`, and the canonical Zod type is a discriminated union.
+- **What the strict modes share** (OpenAI, DeepSeek; Anthropic's list overlaps):
+  - every property must be in `required`, so optional fields become nullable (`"type": ["string", "null"]`);
+  - `additionalProperties: false` on every object;
+  - `anyOf` is supported. `oneOf` isn't listed as supported by any of the three, so we don't use it.
+- **Provider-specific limits that shape our schema:**
+  - **OpenAI:** the root must be an object, not `anyOf`. A Zod discriminated union at the root "won't work". `$defs`, `$ref` and recursion are supported. Up to 5,000 properties and 10 levels of nesting.
+  - **DeepSeek:** definitions use `$def`, not `$defs` (`"$ref": "#/$def/step"`). `minLength`, `maxLength`, `minItems` and `maxItems` are unsupported.
+  - **Anthropic:** recursive schemas, numeric limits and string length limits are unsupported. `minItems` is only allowed as 0 or 1. This came from a summary of the docs page, so check the exact text when building the adapter.
+- **So the wire schema is shaped as follows:**
+  - The root is an object: `type` enum plus nullable fields for each variant.
+  - Steps are an `anyOf` of three flat shapes: action, resolve and op.
+  - **No recursion.** `forEach.do` holds a list of action calls (its own non-recursive shape), and `if.then` / `if.else` name step ids instead of nesting steps.
+  - The canonical Zod type stays a discriminated union, and each adapter converts it.
 - **Always validate with Zod afterwards**, whatever the provider guarantees. DeepSeek and local models don't enforce schemas, and the existing single repair call covers them.
 - **Adapter settings:**
-  - OpenAI returns `arguments` as a JSON string, so parse it in the adapter.
-  - Set `parallel_tool_calls: false`.
-  - Some models don't support forced tool choice. Reasoning models have often lacked it. For those, `caps.forcedTool = false`, and the adapter falls back to JSON output plus Zod. These are per-model flags, not assumptions.
+  - Function-call `arguments` arrive as a JSON string (OpenAI, DeepSeek), so parse them in the adapter.
+  - Where a forced function is used (DeepSeek), set `parallel_tool_calls: false`.
+  - DeepSeek's docs warn the model "does not always generate valid JSON, and may hallucinate parameters" outside strict mode. Zod catches this.
+  - Capabilities are per-model flags (`caps.mode`), filled from the docs and confirmed by an adapter smoke test, not assumed.
 
 #### The observe loop doesn't use native tool-result messages
 - The observe loop doesn't thread native `tool_use`/`tool_result` messages, whose format differs by provider.
@@ -255,7 +276,15 @@ type Usage = { input: number; cachedRead: number; cacheWrite: number; output: nu
 #### Routing by difficulty
 There's essentially one LLM call per turn, the planner. The summary is templated and retrieval uses no model. So the saving comes from choosing **which model plans each request**, not from moving "other work" to a cheaper model.
 
-**Two tiers:** `fast` and `strong`. To start, `fast` is Haiku and `strong` is Sonnet: same provider, same tokenizer, one adapter, so the routing effect is measured on its own.
+**Two tiers:** `fast` and `strong`. To start, `fast` is Haiku 5.5 and `strong` is Sonnet 5.5: same provider, same tokenizer, one adapter, so the routing effect is measured on its own.
+
+| Model (per MTok, checked 2026-10-21) | Input | Cache read | Output |
+|---|---|---|---|
+| Haiku 5.5 (prompts ≤ 100k tokens) | $0.10 | $0.01 | $0.50 |
+| Sonnet 5.5 | $2.00 | $0.10 | $10.00 |
+| Opus 5.5 | $4.00 | $0.20 | $20.00 |
+
+Haiku 5.5 costs about 1/20 of Sonnet 5.5, and Opus 5.5 costs only 2× Sonnet 5.5.
 
 **1. Feature routing (no LLM, from the retrieval output)**
 
@@ -281,14 +310,15 @@ The rules are plain thresholds, logged with every decision. They're explainable 
 - Cost per successful task, and p50/p95 latency.
 - Thresholds are tuned on a pilot split, then **frozen before the final run**, so they aren't fitted to the scenarios they're scored on.
 
-Illustrative only: if `fast` costs ~1/10 as much, takes 60% of traffic and escalates 10% of that, cost is `0.4 + 0.06 + 0.06 ≈ 0.52×`, about half. The benchmark gives the real number.
+Illustrative only: `fast` costs ~1/20 as much. If it takes 60% of traffic and escalates 10% of that, cost is `0.4 + 0.6 × 0.05 + 0.06 ≈ 0.49×`, about half. The benchmark gives the real number. Most of the remaining cost is the 40% routed straight to `strong`, so the feature thresholds matter more than Haiku's price.
 
 #### Variants in the benchmark
 - `routed`: Haiku → Sonnet. This is the candidate default.
 - `strong-only`: Sonnet.
-- `ceiling`: Opus 5.5 as the planner. It's probably overkill for writing ~9 steps from 15 cards, so it's the quality reference, reported as "X% of Opus's quality at Y% of its cost".
-- `routed-deepseek`: DeepSeek as `fast`, through the OpenAI-compatible adapter. It runs separately so a provider difference isn't mistaken for a routing effect.
-  - **Data handling note for the README:** DeepSeek's hosted API sends CRM contact data to servers in China. For a real deployment that points to self-hosting or a US inference host.
+- `ceiling`: Opus 5.5 as the planner, reported as "X% of Opus's quality at Y% of its cost". At only 2× Sonnet 5.5, it's also a real candidate for the `strong` tier if it clearly wins on complex scenarios.
+- `routed-deepseek`: `deepseek-flash` as `fast`, through the OpenAI-compatible adapter. It runs separately so a provider difference isn't mistaken for a routing effect. The legacy `deepseek-chat` and `deepseek-reasoner` ids were discontinued on 2026-07-24.
+  - **Data handling note for the README:** DeepSeek's privacy policy, as quoted by secondary sources, says it stores data on servers in the People's Republic of China. The API docs don't say where API data is processed, so check the policy and API terms directly before the README cites it. Either way, a real deployment would point to self-hosting the open weights or a US inference host.
+  - DeepSeek prices weren't retrievable from its docs on 2026-10-21. Its change log says off-peak prices are half the peak rate, so record the time window in `pricing.json`.
 - **Caches are per model**, so routing splits traffic across two prefix caches and lowers each one's hit rate at low volume. Report it.
 
 ---
