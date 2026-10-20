@@ -79,7 +79,10 @@ Example: *"Find leads created last week who haven't replied, exclude anyone with
 - Descriptions are written for the planner prompt and for BM25. BM25 indexes name, description, synonyms and module name. MiniSearch fuzzy matching (edit distance 1–2 on longer terms) absorbs typos like "apointment" or "invocie".
 
 **Merging and shaping the shortlist**
-1. Run BM25 and embeddings over the same query, and take the top ~40 from each.
+1. Run BM25 and embeddings over the same query, and take the top ~40 **distinct actions** from each. The unit being ranked is always the action, never the utterance row:
+   - **Embeddings:** score all ~2,500 utterance vectors, group them by action, keep each action's highest score (max-sim), and *then* sort and cut to 40. Cutting the utterance rows first would let several utterances from one action fill the slots and push out other candidates.
+   - **BM25:** each action is already one document (name, description, synonyms, module), so its ranking is per action.
+   - Keep the number of utterances per action roughly equal (~5). Max-sim favours actions with more utterances, since each extra phrasing is another chance at a lucky match. A lint check flags outliers.
 2. Merge them with **Reciprocal Rank Fusion**: `score = Σ 1 / (60 + rank)`. It uses ranks only, so the two scores don't need to be on the same scale.
 3. **Module cap:** at most ~4 cards per module. This keeps one strong module from crowding out the others in a multi-module request.
 4. **Always include look-alike siblings.** If M03.A05 Assign lead owner makes the list, so does M01.A07 Assign contact owner. The sibling pairs are declared in the registry. This puts the choice in front of the planner instead of in front of retrieval.
