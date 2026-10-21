@@ -8,7 +8,7 @@ import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
 import { planTurn, type TurnEvent } from "./turn.js";
-import type { PlanRequest, Planner } from "./types.js";
+import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
 let retriever: Retriever;
@@ -170,6 +170,37 @@ describe("planTurn", () => {
     await run("send an invoice reminder to Priya", planner);
     const user = planner.requests[0]!.user;
     assert.match(user, /<not_available>[\s\S]*invoice[\s\S]*<\/not_available>/i);
+  });
+});
+
+describe("a planner that fails", () => {
+  const failing = (err: Error): Planner => ({ name: "failing", plan: async () => Promise.reject(err) });
+
+  test("a provider error ends the turn with a failed reply instead of throwing", async () => {
+    const { out } = await run("create a task to call Ana", failing(new PlannerError("claude exited 1: overloaded", "provider")));
+    assert.ok(out.kind === "reply" && out.status === "failed");
+    assert.match(out.text, /The planner failed: claude exited 1: overloaded/);
+  });
+
+  test("a call that never returns is abandoned after the deadline, and told to stop", async () => {
+    let signal: AbortSignal | undefined;
+    const hung: Planner = { name: "hung", plan: (req) => ((signal = req.signal), new Promise(() => {})) };
+    const events: TurnEvent[] = [];
+    const out = await planTurn({ message: "create a task to call Ana", tier: "fast" }, { registry, retriever, planner: hung, clock: frozenClock(), plannerTimeoutMs: 20 }, (e) => events.push(e));
+    assert.ok(out.kind === "reply" && out.status === "failed");
+    assert.match(out.text, /didn't answer within \d+ s\. Nothing was changed/);
+    assert.equal(signal?.aborted, true);
+    assert.ok(events.some((e) => e.type === "planner.request"), "the request was traced before the wait");
+  });
+
+  test("a reply inside the deadline is not affected by it", async () => {
+    const planner = scripted(createTask());
+    const out = await planTurn({ message: "create a task to call Ana", tier: "fast" }, { registry, retriever, planner, clock: frozenClock(), plannerTimeoutMs: 5_000 });
+    assert.equal(out.kind, "plan");
+  });
+
+  test("an error that isn't the planner's still surfaces", async () => {
+    await assert.rejects(run("create a task to call Ana", failing(new TypeError("bug"))), /bug/);
   });
 });
 

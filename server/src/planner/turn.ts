@@ -7,12 +7,15 @@ import type { Clock } from "../store/clock.js";
 import type { Store } from "../store/db.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
-import type { PlanResult, Planner, Tier } from "./types.js";
+import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
 //   retrieve a shortlist → prompt → plan, with at most one search_tools round (a second retrieval for what the
 //   planner says is missing) and at most one repair round (compile errors fed back), in either order
 //   → a compiled plan or a reply. At most three planner calls. The plan may only use actions the planner was shown.
+
+/** How long one planner call may take before the turn gives up on it. */
+export const PLANNER_TIMEOUT_MS = 120_000;
 
 export interface TurnDeps {
   registry: Registry;
@@ -21,6 +24,8 @@ export interface TurnDeps {
   clock: Clock;
   /** Records to link names in the message against (see mentions.ts). Without it, names aren't linked. */
   store?: Store;
+  /** Per planner call; defaults to PLANNER_TIMEOUT_MS. */
+  plannerTimeoutMs?: number;
 }
 
 export interface TurnInput {
@@ -64,6 +69,16 @@ export interface RetrievalTrace {
 }
 
 export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnEvent) => void = () => {}): Promise<TurnOutcome> {
+  try {
+    return await planTurnUnguarded(input, deps, emit);
+  } catch (err) {
+    // A provider failure or a call that never returned ends the turn with a reply; anything else is a bug and surfaces.
+    if (!(err instanceof PlannerError)) throw err;
+    return failed(err.kind === "timeout" ? `${err.message}. Nothing was changed; please try again.` : `The planner failed: ${err.message}`);
+  }
+}
+
+async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: TurnEvent) => void): Promise<TurnOutcome> {
   const { registry, retriever, planner, clock, store } = deps;
   const resolvable = registry.resolverEntities();
   const named: Mention[] = store ? mentions(input.answering ? `${input.answering}\n${input.message}` : input.message, registry, store) : [];
@@ -102,7 +117,7 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
   const prompt = () => userBlock({ clock, actions: offered, notAvailable, resolvable, mentions: named, message: input.message, context: input.context });
   const call = async (user: string, label: string) => {
     emit({ type: "planner.request", data: { label, tier: input.tier, system: SYSTEM, user, actions: offered.map((a) => a.id) } });
-    const r = await planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA });
+    const r = await withDeadline(deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }));
     emit({ type: "planner.reply", data: { label, model: r.model, latencyMs: Math.round(r.latencyMs), usage: r.usage, json: r.json } });
     return r;
   };
@@ -150,6 +165,23 @@ export function carryOf(plan: CompiledPlan, registry: Registry): Carry {
   ];
   const entities = [...new Set(prev.map((id) => registry.get(id)?.entities?.produces).filter((e): e is string => !!e))];
   return { prev, entities };
+}
+
+/** Runs `fn`, aborting its signal and rejecting if it hasn't settled after `ms`. */
+async function withDeadline<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const ctl = new AbortController();
+  let timer: NodeJS.Timeout | undefined;
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      ctl.abort();
+      reject(new PlannerError(`The planner didn't answer within ${Math.round(ms / 1000)} s`, "timeout"));
+    }, ms);
+  });
+  try {
+    return await Promise.race([fn(ctl.signal), expired]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 const failed = (text: string): TurnOutcome => ({ kind: "reply", status: "failed", text });

@@ -86,7 +86,8 @@ const stepLine = (s) =>
         <span class="tag">{{ p.request.label }}</span>
         <span v-if="p.reply" class="mono">{{ p.reply.model }}</span>
         <span v-if="p.reply" class="muted small">{{ (p.reply.latencyMs / 1000).toFixed(1) }} s · {{ tokens(p.reply.usage) }} · ${{ p.reply.usage.costUsd.toFixed(4) }}</span>
-        <span v-else class="live">waiting for model…</span>
+        <span v-else-if="turn.live" class="live">waiting for model…</span>
+        <span v-else class="muted small">no reply</span>
       </div>
       <details class="sub"><summary>Prompt sent ({{ p.request.user.length.toLocaleString() }} chars, {{ p.request.actions.length }} action cards)</summary><pre class="prompt">{{ p.request.user }}</pre></details>
       <details class="sub"><summary>System prompt</summary><pre class="prompt">{{ p.request.system }}</pre></details>

@@ -40,7 +40,7 @@ export class ClaudeCliPlanner implements Planner {
     const env = Object.fromEntries(KEEP_ENV.flatMap((k) => (process.env[k] ? [[k, process.env[k]]] : [])));
 
     const started = performance.now();
-    const stdout = await run(args, req.user, { cwd: this.cwd, env });
+    const stdout = await run(args, req.user, { cwd: this.cwd, env, signal: req.signal });
     const latencyMs = performance.now() - started;
 
     let out: CliResult;
@@ -74,7 +74,7 @@ export class ClaudeCliPlanner implements Planner {
   }
 }
 
-function run(args: string[], stdin: string, opts: { cwd: string; env: NodeJS.ProcessEnv }): Promise<string> {
+function run(args: string[], stdin: string, opts: { cwd: string; env: NodeJS.ProcessEnv; signal?: AbortSignal }): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn("claude", args, { ...opts, stdio: ["pipe", "pipe", "pipe"] });
     let out = "";

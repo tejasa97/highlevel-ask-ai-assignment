@@ -7,6 +7,7 @@ export interface PlanRequest {
   system: string; // static; keep byte-identical across requests so prefix caching can hit
   user: string; // rebuilt every turn: <now><context><recent_turns><actions><message>
   schema: object; // JSON Schema the reply must match (submit_plan)
+  signal?: AbortSignal; // aborted when the caller stops waiting; the provider should drop the call
 }
 
 export interface Usage {
@@ -34,7 +35,7 @@ export interface Planner {
 export class PlannerError extends Error {
   constructor(
     message: string,
-    readonly kind: "rate_limited" | "bad_json" | "provider",
+    readonly kind: "rate_limited" | "bad_json" | "provider" | "timeout",
     readonly text?: string,
   ) {
     super(message);
