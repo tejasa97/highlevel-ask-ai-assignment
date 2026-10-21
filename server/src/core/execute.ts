@@ -1,0 +1,381 @@
+import { createHash } from "node:crypto";
+import type { z } from "zod";
+import { ActionError, type ActionContext } from "../registry/define.js";
+import type { Candidate, Registry } from "../registry/registry.js";
+import type { Call, CompiledPlan, CStep } from "./compile.js";
+import { parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
+
+// Stage 2: run a compiled plan.
+// - Refs are substituted, then the concrete args are parsed with the action's Zod schema.
+// - Risk is decided here, never by the model: destructive/external actions, and writes repeated over
+//   BULK_MIN or more items, pause for confirmation. The approval is bound to the plan hash and to a hash of
+//   the exact targets, so if the data changed between preview and approval, the user is asked again.
+// - Resume = run the same executionId again with approvals. Reads re-run; writes are deduped through the
+//   `writes` ledger (key executionId:stepId:itemKey:callIndex), so nothing is done twice.
+// - Each forEach item runs in one transaction: its calls all land or none do. Items fail independently.
+
+export const BULK_MIN = 3;
+const PREVIEW_MAX = 10;
+
+export interface Approval {
+  stepId: string;
+  planHash: string;
+  targetsHash: string;
+}
+
+export interface Pending extends Approval {
+  reason: string;
+  /** What will happen: one entry per call, with concrete args. */
+  preview: { action: string; name: string; args: Record<string, unknown>; label?: string }[];
+  count: number;
+  /** Set when an earlier approval no longer matches the targets. */
+  changed?: boolean;
+}
+
+export interface Clarification {
+  stepId: string;
+  entity: string;
+  name: string;
+  candidates: Candidate[];
+}
+
+export interface StepError {
+  code: string;
+  message: string;
+}
+
+export type StepStatus = "done" | "partial" | "failed" | "skipped" | "awaiting_confirmation" | "needs_clarification";
+
+export interface ItemResult {
+  key: string;
+  label?: string;
+  status: "done" | "failed";
+  results?: unknown[];
+  error?: StepError;
+  /** Writes that came from the ledger instead of running again. */
+  replayed?: number;
+}
+
+export interface StepResult {
+  id: string;
+  kind: CStep["kind"];
+  status: StepStatus;
+  output?: unknown;
+  error?: StepError;
+  items?: ItemResult[];
+}
+
+export type RunStatus = "done" | "partial" | "failed" | "awaiting_confirmation" | "needs_clarification";
+
+export interface RunResult {
+  executionId: string;
+  planHash: string;
+  status: RunStatus;
+  steps: StepResult[];
+  pending?: Pending;
+  clarification?: Clarification;
+}
+
+export type ExecEvent =
+  | { type: "step.started"; stepId: string }
+  | { type: "step.done"; stepId: string; status: StepStatus }
+  | { type: "step.failed"; stepId: string; error: StepError }
+  | { type: "confirm.required"; pending: Pending }
+  | { type: "clarify.required"; clarification: Clarification };
+
+export interface ExecOptions {
+  executionId: string;
+  approvals?: Approval[];
+  onEvent?: (e: ExecEvent) => void;
+}
+
+export async function execute(plan: CompiledPlan, registry: Registry, ctx: ActionContext, opts: ExecOptions): Promise<RunResult> {
+  const outputs = new Map<string, unknown>();
+  const results: StepResult[] = [];
+  const bad = new Set<string>(); // failed or skipped: dependents are skipped
+  const emit = opts.onEvent ?? (() => {});
+  const finish = (status: RunStatus, extra: Partial<RunResult> = {}): RunResult => ({
+    executionId: opts.executionId,
+    planHash: plan.hash,
+    status,
+    steps: results,
+    ...extra,
+  });
+
+  const lookup =
+    (scope: { item?: unknown; rr?: unknown } = {}) =>
+    (ref: Ref): unknown => {
+      const label = `$${ref.root}`;
+      if (ref.root === "item") return valueAt(scope.item, ref.path, label);
+      if (ref.root === "rr") return valueAt(scope.rr, ref.path, label);
+      if (!outputs.has(ref.root)) throw new RefError(`${label} has no output`);
+      return valueAt(outputs.get(ref.root), ref.path, label);
+    };
+  const refValue = (raw: string, scope?: { item?: unknown; rr?: unknown }) => lookup(scope)(parseRef(raw)!);
+
+  for (const step of plan.steps) {
+    if (step.deps.some((d) => bad.has(d))) {
+      bad.add(step.id);
+      results.push({
+        id: step.id,
+        kind: step.kind,
+        status: "skipped",
+        error: { code: "SKIPPED", message: `depends on a step that did not complete (${step.deps.filter((d) => bad.has(d)).join(", ")})` },
+      });
+      continue;
+    }
+    emit({ type: "step.started", stepId: step.id });
+    const fail = (error: StepError, extra: Partial<StepResult> = {}) => {
+      bad.add(step.id);
+      results.push({ id: step.id, kind: step.kind, status: "failed", error, ...extra });
+      emit({ type: "step.failed", stepId: step.id, error });
+    };
+    const done = (output: unknown, extra: Partial<StepResult> = {}) => {
+      outputs.set(step.id, output);
+      const status = extra.status ?? "done";
+      results.push({ id: step.id, kind: step.kind, status, output, ...extra });
+      emit({ type: "step.done", stepId: step.id, status });
+    };
+
+    try {
+      switch (step.kind) {
+        case "resolve": {
+          const found = registry.resolver(step.entity)!(ctx.store, step.name);
+          if (found.length === 0) {
+            fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"` });
+          } else if (found.length > 1) {
+            const clarification = { stepId: step.id, entity: step.entity, name: step.name, candidates: found };
+            results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });
+            emit({ type: "clarify.required", clarification });
+            return finish("needs_clarification", { clarification });
+          } else {
+            done({ id: found[0]!.id, name: found[0]!.name });
+          }
+          break;
+        }
+
+        case "filter": {
+          const list = asList(refValue(step.in), step.in);
+          const where = substitute(step.where, lookup()) as Record<string, unknown>;
+          done(list.filter((x) => matches(x, where)));
+          break;
+        }
+
+        case "exclude": {
+          const list = asList(refValue(step.in), step.in);
+          const set = new Set(asList(refValue(step.set), step.set).map(String));
+          done(list.filter((x) => !set.has(String((x as Record<string, unknown>)?.[step.by]))));
+          break;
+        }
+
+        case "action": {
+          const args = concreteArgs(step.call, lookup());
+          if (!args.ok) {
+            fail(args.error);
+            break;
+          }
+          const gate = gateFor(step, [{ call: step.call, args: args.value }], plan.hash, opts.approvals);
+          if (gate) {
+            results.push({ id: step.id, kind: step.kind, status: "awaiting_confirmation" });
+            emit({ type: "confirm.required", pending: gate });
+            return finish("awaiting_confirmation", { pending: gate });
+          }
+          const r = runItem(ctx, opts.executionId, step.id, "-", [{ call: step.call, args: args.value }]);
+          if (r.status === "failed") fail(r.error!);
+          else done(r.results![0], r.replayed ? { items: [r] } : {});
+          break;
+        }
+
+        case "forEach": {
+          const list = asList(refValue(step.in), step.in);
+          const rr = step.roundRobin ? asList(refValue(step.roundRobin), step.roundRobin) : null;
+          if (rr && rr.length === 0 && list.length > 0) {
+            fail({ code: "INVALID", message: `round-robin list ${step.roundRobin} is empty, so there is no one to assign to` });
+            break;
+          }
+          // Resolve every item's args first: the preview shows exactly these, and the hash binds them.
+          const prepared: { key: string; label?: string; item: unknown; calls: { call: Call; args: Record<string, unknown> }[]; error?: StepError }[] = [];
+          list.forEach((item, i) => {
+            const scope = { item, rr: rr ? rr[i % rr.length] : undefined };
+            const key = itemKey(item, i);
+            const calls: { call: Call; args: Record<string, unknown> }[] = [];
+            for (const call of step.calls) {
+              const a = concreteArgs(call, lookup(scope));
+              if (!a.ok) return prepared.push({ key, label: labelOf(item), item, calls, error: a.error });
+              calls.push({ call, args: a.value });
+            }
+            prepared.push({ key, label: labelOf(item), item, calls });
+          });
+
+          const gate = gateFor(
+            step,
+            prepared.filter((p) => !p.error).flatMap((p) => p.calls.map((c) => ({ ...c, label: p.label }))),
+            plan.hash,
+            opts.approvals,
+            prepared.length,
+          );
+          if (gate) {
+            results.push({ id: step.id, kind: step.kind, status: "awaiting_confirmation" });
+            emit({ type: "confirm.required", pending: gate });
+            return finish("awaiting_confirmation", { pending: gate });
+          }
+
+          const items: ItemResult[] = prepared.map((p) =>
+            p.error
+              ? { key: p.key, label: p.label, status: "failed", error: p.error }
+              : { label: p.label, ...runItem(ctx, opts.executionId, step.id, p.key, p.calls) },
+          );
+          const output = prepared.map((p, i) => ({ item: p.item, results: items[i]!.results ?? [] }));
+          const failed = items.filter((x) => x.status === "failed").length;
+          if (failed > 0 && failed === items.length) fail({ code: "ALL_FAILED", message: `all ${failed} items failed` }, { items });
+          else done(output, { items, status: failed ? "partial" : "done" });
+          break;
+        }
+      }
+    } catch (e) {
+      fail(toError(e));
+    }
+  }
+
+  // Run status: done if every step is; failed if no final step got anything done; partial otherwise.
+  const used = new Set(plan.steps.flatMap((s) => s.deps));
+  const finals = results.filter((r) => !used.has(r.id));
+  if (results.every((r) => r.status === "done")) return finish("done");
+  if (finals.every((r) => r.status === "failed" || r.status === "skipped")) return finish("failed");
+  return finish("partial");
+}
+
+function concreteArgs(call: Call, lookup: (r: Ref) => unknown): { ok: true; value: Record<string, unknown> } | { ok: false; error: StepError } {
+  try {
+    const raw = substitute(call.args, lookup);
+    const parsed = (call.action.input as z.ZodType).safeParse(raw);
+    if (!parsed.success) {
+      const msg = parsed.error.issues.map((i) => `${i.path.join(".") || "(args)"}: ${i.message}`).join("; ");
+      return { ok: false, error: { code: "INVALID", message: `${call.action.id} args: ${msg}` } };
+    }
+    return { ok: true, value: parsed.data as Record<string, unknown> };
+  } catch (e) {
+    return { ok: false, error: toError(e) };
+  }
+}
+
+/** Runs one item's calls in one transaction, replaying any write the ledger already has. */
+function runItem(ctx: ActionContext, executionId: string, stepId: string, key: string, calls: { call: Call; args: Record<string, unknown> }[]): ItemResult {
+  let replayed = 0;
+  try {
+    const results = ctx.store.tx(() =>
+      calls.map(({ call, args }, i) => {
+        const writes = call.action.risk !== "read";
+        const ledgerKey = `${executionId}:${stepId}:${key}:${i}`;
+        if (writes) {
+          const prior = ctx.store.recordedWrite(ledgerKey);
+          if (prior !== undefined) {
+            replayed++;
+            return prior;
+          }
+        }
+        const out = call.action.handler(args, ctx);
+        if (out instanceof Promise) throw new Error(`${call.action.id}: async handlers are not supported inside a transaction`);
+        const value = (call.action.output as z.ZodType).parse(out);
+        if (writes) ctx.store.recordWrite(ledgerKey, call.action.id, value, ctx.clock.now());
+        return value;
+      }),
+    );
+    return { key, status: "done", results, ...(replayed ? { replayed } : {}) };
+  } catch (e) {
+    return { key, status: "failed", error: toError(e) };
+  }
+}
+
+function gateFor(
+  step: CStep,
+  calls: { call: Call; args: Record<string, unknown>; label?: string }[],
+  planHash: string,
+  approvals: Approval[] = [],
+  count = calls.length,
+): Pending | null {
+  const risks = new Set(calls.map((c) => c.call.action.risk));
+  const writes = calls.filter((c) => c.call.action.risk !== "read");
+  let reason: string | null = null;
+  if (risks.has("destructive")) reason = "deletes or cancels records";
+  else if (risks.has("external")) reason = "sends something outside the account";
+  else if (step.kind === "forEach" && writes.length > 0 && count >= BULK_MIN) reason = `changes ${count} records at once`;
+  if (!reason) return null;
+
+  const targets = writes.map((c) => ({ action: c.call.action.id, args: c.args }));
+  const targetsHash = createHash("sha256").update(JSON.stringify(targets)).digest("hex").slice(0, 16);
+  const prior = approvals.find((a) => a.stepId === step.id && a.planHash === planHash);
+  if (prior?.targetsHash === targetsHash) return null;
+  return {
+    stepId: step.id,
+    planHash,
+    targetsHash,
+    reason,
+    count,
+    preview: writes
+      .slice(0, PREVIEW_MAX)
+      .map((c) => ({ action: c.call.action.id, name: c.call.action.name, args: c.args, ...(c.label ? { label: c.label } : {}) })),
+    ...(prior ? { changed: true } : {}),
+  };
+}
+
+function matches(x: unknown, where: Record<string, unknown>): boolean {
+  const obj = (x ?? {}) as Record<string, unknown>;
+  return Object.entries(where).every(([field, cond]) => {
+    const v = obj[field];
+    const conds = cond && typeof cond === "object" && !Array.isArray(cond) ? Object.entries(cond) : [["eq", cond] as const];
+    return conds.every(([op, want]) => {
+      switch (op) {
+        case "eq":
+          return v === want;
+        case "ne":
+          return v !== want;
+        case "gt":
+          return cmp(v, want) > 0;
+        case "gte":
+          return cmp(v, want) >= 0;
+        case "lt":
+          return cmp(v, want) < 0;
+        case "lte":
+          return cmp(v, want) <= 0;
+        case "in":
+          return Array.isArray(want) && want.includes(v);
+        case "nin":
+          return Array.isArray(want) && !want.includes(v);
+        case "contains":
+          return Array.isArray(v) ? v.includes(want) : typeof v === "string" && typeof want === "string" && v.toLowerCase().includes(want.toLowerCase());
+        case "exists":
+          return (v !== null && v !== undefined) === Boolean(want);
+        default:
+          return false;
+      }
+    });
+  });
+}
+
+function cmp(a: unknown, b: unknown): number {
+  if (a === null || a === undefined || b === null || b === undefined) return NaN;
+  return typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b));
+}
+
+function asList(v: unknown, ref: string): unknown[] {
+  if (!Array.isArray(v)) throw new RefError(`${ref} is not a list at run time`);
+  return v;
+}
+
+function itemKey(item: unknown, i: number): string {
+  const id = (item as Record<string, unknown> | null)?.id;
+  return typeof id === "string" || typeof id === "number" ? String(id) : `#${i}`;
+}
+
+function labelOf(item: unknown): string | undefined {
+  const o = item as Record<string, unknown> | null;
+  const name = o?.name ?? o?.title;
+  return typeof name === "string" ? name : undefined;
+}
+
+function toError(e: unknown): StepError {
+  if (e instanceof ActionError) return { code: e.code, message: e.message };
+  if (e instanceof RefError) return { code: "INVALID", message: e.message };
+  return { code: "INTERNAL", message: e instanceof Error ? e.message : String(e) };
+}

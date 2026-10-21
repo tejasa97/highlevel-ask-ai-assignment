@@ -1,0 +1,21 @@
+{
+  "name": "ask-ai-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "probe:planner": "tsx --env-file-if-exists=../.env src/scripts/probe-planner.ts",
+    "ask": "tsx --env-file-if-exists=../.env src/scripts/ask.ts",
+    "test": "tsx --test \"src/**/*.test.ts\"",
+    "catalog": "tsx src/scripts/build-catalog.ts"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "unpdf": "^1.9.1"
+  }
+}

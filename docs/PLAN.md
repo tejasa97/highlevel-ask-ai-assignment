@@ -201,6 +201,12 @@ The expectation to verify: most scenarios finish in 1 iteration, and indirect or
 
 ### Model providers and routing
 
+> **Decision, 2026-10-21: development runs on `claude -p`.** `server/src/planner/claude-cli.ts` (`PLANNER=claude-cli`, the default) spawns `claude -p --json-schema` on the developer's Claude subscription. It uses `claude-sonnet-5-5` for both tiers (`CLAUDE_FAST_MODEL` overrides `fast`): through `claude -p`, Haiku 5.5 always thinks (~1.2k tokens; `MAX_THINKING_TOKENS=0` and `--effort low` only trim it to ~900), so it took 7–11 s against Sonnet's 4 s. It runs with no tools, no MCP, no settings or hooks, an empty cwd and our own system prompt. Both models passed the 4-message probe with correct workflow semantics, at 4–10 s per call (~1.5 s of that is process start).
+>
+> **This adapter is for development only and is never used for benchmark numbers.** It has no temperature control, Claude Code places its own cache breakpoints, its `total_cost_usd` is an estimate (it priced Haiku above Sonnet), and it shares the subscription's rate limits. The benchmark runs on a direct API key through the Anthropic adapter below, which still has to be built.
+>
+> - **Args travel as a JSON string (`argsJson`).** Strict modes require `additionalProperties: false` on every object, so a loose `args` object isn't allowed. Zod checks the parsed args against each action's schema.
+
 #### One planner interface, thin adapters
 Retrieval, `<context>` rebuilding, the plan grammar, validation, execution, the risk policy and the observe loop are all app code. The model has one job: return one valid `submit_plan` object. So the provider boundary is small:
 
@@ -276,7 +282,7 @@ type Usage = { input: number; cachedRead: number; cacheWrite: number; output: nu
 #### Routing by difficulty
 There's essentially one LLM call per turn, the planner. The summary is templated and retrieval uses no model. So the saving comes from choosing **which model plans each request**, not from moving "other work" to a cheaper model.
 
-**Two tiers:** `fast` and `strong`. To start, `fast` is Haiku 5.5 and `strong` is Sonnet 5.5: same provider, same tokenizer, one adapter, so the routing effect is measured on its own.
+**Two tiers:** `fast` and `strong`. To start, `fast` is Haiku 5.5 and `strong` is Sonnet 5.5: same provider, same tokenizer, one adapter, so the routing effect is measured on its own. On the API adapter, `fast` sets thinking explicitly (off or a small budget); the dev CLI path showed Haiku's default thinking makes it slower than Sonnet, so Haiku's latency must be measured with thinking pinned.
 
 | Model (per MTok, checked 2026-10-21) | Input | Cache read | Output |
 |---|---|---|---|
@@ -361,7 +367,7 @@ server/src/
     m01-contacts/   index.ts  (10 actions)  entity.ts  (schema + seed gen)
     ...
     m50-reports/
-  store/       db.ts (better-sqlite3), seed.ts, clock.ts, faults.ts
+  store/       db.ts (node:sqlite), seed.ts, clock.ts, faults.ts
 eval/
   scenarios/*.yaml   runner.ts   assertions.ts   report.ts   smoke.test.ts
 web/           Vue 3 + Vite
@@ -472,10 +478,10 @@ Commit to these after a small pilot run, **before** the full benchmark. The valu
 
 ## 6. Stack
 
-- **Backend:** Node 22 + TypeScript, Fastify (SSE), Zod + `zod-to-json-schema`, better-sqlite3, `@faker-js/faker` (fixed seed).
+- **Backend:** Node 26 + TypeScript, Fastify (SSE), Zod 4 (built-in `z.toJSONSchema`), the built-in `node:sqlite`, a small seeded generator instead of faker (fixed seed).
 - **Retrieval:** MiniSearch (BM25) plus local embeddings via transformers.js (free, deterministic, offline). A provider's embeddings can be swapped in later.
-- **LLM:** the provider SDKs directly (Anthropic, plus one OpenAI-compatible adapter), no LangChain. That gives exact token accounting, prompt-cache control and less overhead. A two-tier router (Haiku → Sonnet) with a validation cascade, as described in [Model providers and routing](#model-providers-and-routing).
-- **Testing and UI:** Vitest for the smoke tests. Vue 3 + Vite for the web app.
+- **LLM:** Anthropic (Haiku 5.5 / Sonnet 5.5), no LangChain. Development plans through `claude -p` on the subscription; the benchmark needs the direct-API Anthropic adapter, which is designed, not built (see [Model providers and routing](#model-providers-and-routing)). A direct adapter gives exact token accounting, prompt-cache control and less overhead. A two-tier router (Haiku → Sonnet) with a validation cascade, as described in [Model providers and routing](#model-providers-and-routing).
+- **Testing and UI:** `node:test` (run through tsx) for the smoke tests. Vue 3 + Vite for the web app.
 
 ---
 
