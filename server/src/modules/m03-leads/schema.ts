@@ -26,6 +26,8 @@ export const Lead = z.object({
   status: z.enum(LEAD_STATUSES),
   score: z.number().int().min(0).max(100),
   ownerId: z.string().nullable(),
+  /** Tag names (M08 Tags). */
+  tags: z.array(z.string()),
   qualification: Qualification,
   disqualifyReason: z.enum(DISQUALIFY_REASONS).nullable(),
   disqualifyNote: z.string().nullable(),

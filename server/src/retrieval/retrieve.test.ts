@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { CATALOG_ACTIONS } from "../registry/catalog.js";
@@ -7,7 +8,8 @@ import { world } from "../store/world.js";
 import { buildCards, ENTITY_TYPES, loadCardMeta, type SearchCard } from "./cards.js";
 import { loadQueries, score, summarize } from "./eval.js";
 import { mentions } from "./mentions.js";
-import { Retriever } from "./retrieve.js";
+import { Embedder, MODEL } from "./embed.js";
+import { type Dense, Retriever } from "./retrieve.js";
 import { terms } from "./text.js";
 
 let registry: Registry;
@@ -79,21 +81,26 @@ describe("retrieve", () => {
   });
 
   test("adds producers only for record types the planner can't resolve by name", () => {
-    const msg = "move the Acme deal to the negotiation stage";
+    const msg = "allocate the payment to the invoice";
     const prod = (resolvable: string[]) => r.retrieve({ message: msg, resolvable }, { siblings: 0 }).picks.filter((p) => p.why === "producer");
     // Nothing resolvable: a contact producer comes in alongside the others.
     const all = prod([]).map((p) => r.card(p.id)!.produces);
     assert.ok(all.includes("contact"), all.join());
-    // With the real resolvers, contacts and users are looked up by name, so their producers drop out.
+    // With the real resolvers, contacts are looked up by name, so their producers drop out.
     const resolvable = registry.resolverEntities();
-    const some = prod(resolvable);
-    assert.ok(some.length > 0);
-    for (const p of some) assert.ok(p.via && !resolvable.includes(r.card(p.id)!.produces!), p.id);
+    for (const p of prod(resolvable)) assert.ok(p.via && !resolvable.includes(r.card(p.id)!.produces!), p.id);
+    // Whatever else a pick needs is produced by some pick (ranked or added).
+    const picks = r.retrieve({ message: msg, resolvable }, { siblings: 0 }).picks.map((p) => r.card(p.id)!);
+    for (const need of new Set(picks.flatMap((c) => c.consumes))) {
+      assert.ok(resolvable.includes(need) || picks.some((c) => c.produces === need), need);
+    }
   });
 
   test("a follow-up keeps the previous turn's actions", () => {
-    const x = r.retrieve({ message: "make those high priority", context: { prev: ["M06.A01"], entities: ["task"] } });
-    assert.ok(x.picks.some((p) => p.id === "M06.A01" && p.why === "carried"));
+    // M06.A01 ranks on its own words; the campaign launch only comes in because the last turn used it.
+    const x = r.retrieve({ message: "make those high priority", context: { prev: ["M06.A01", "M15.A07"], entities: ["task"] } });
+    assert.ok(x.picks.some((p) => p.id === "M06.A01"));
+    assert.ok(x.picks.some((p) => p.id === "M15.A07" && p.why === "carried"));
   });
 
   test("exclude leaves out what was already offered", () => {
@@ -109,19 +116,116 @@ describe("retrieve", () => {
   });
 });
 
+describe("module cap", () => {
+  test("other modules go first, but slots nothing else fills go back to the capped cards", () => {
+    // Only 4 cards outside Reviews clear the score floor, so all 10 review actions still fit in k=15.
+    const ranked = r.retrieve({ message: "answer the 2-star review from yesterday" }, { moduleCap: 1 }).picks.filter((p) => p.why === "bm25");
+    const reviews = ranked.map((p) => p.id.startsWith("M45"));
+    assert.equal(reviews.filter(Boolean).length, 10);
+    assert.ok(ranked.map((p) => p.id).includes("M45.A08"), "Reply to review");
+    assert.ok(reviews.indexOf(false) < reviews.lastIndexOf(true) && reviews.slice(1, 5).every((x) => !x), "after the first review card, the other modules' cards come next");
+  });
+});
+
+// The embedding half, with a stand-in model: a fixed ranking for every text it is asked about.
+describe("hybrid fusion", () => {
+  const fake = (top: string[]) => {
+    const asked: string[][] = [];
+    const dense: Dense = {
+      rank: async (texts) => {
+        asked.push(texts);
+        return texts.map(() => top.map((id, i) => ({ id, score: 1 - i / 100 })));
+      },
+    };
+    return { dense, asked };
+  };
+
+  test("prepare asks about the whole message and each clause; without a model it changes nothing", async () => {
+    const { dense, asked } = fake(["M15.A08"]);
+    const message = "pause the webinar campaign and add a note to Sarah";
+    const input = await new Retriever(cards, {}, dense).prepare({ message, context: { entities: ["smart_list"] } });
+    assert.deepEqual(asked, [[`${message} smart list`, "pause the webinar campaign", "add a note to Sarah"]]);
+    assert.equal(input.dense!.length, 3);
+    assert.deepEqual(await r.prepare({ message }), { message });
+  });
+
+  test("a card the meaning ranking puts first is picked even when its words barely match", async () => {
+    // BM25 alone ranks Pause campaign 24th, under the score floor that "send email" sets.
+    const message = "hold off on the fall webinar emails for now";
+    assert.ok(!ids(r.retrieve({ message })).includes("M15.A08"));
+    const h = new Retriever(cards, {}, fake(["M15.A08", "M15.A09"]).dense);
+    const pick = h.retrieve(await h.prepare({ message })).picks.find((p) => p.id === "M15.A08");
+    assert.equal(pick?.why, "bm25", "it has a weak BM25 hit, so it keeps that label and score");
+  });
+
+  test("a card only the meaning ranking found is labelled dense, without a BM25 score", async () => {
+    const h = new Retriever(cards, {}, fake(["M46.A03"]).dense);
+    const pick = h.retrieve(await h.prepare({ message: "create a contact for Ana Ruiz" })).picks.find((p) => p.id === "M46.A03");
+    assert.deepEqual([pick?.why, pick?.score, pick?.matched], ["dense", undefined, undefined]);
+  });
+
+  test("past the floor exemption, a meaning-only card still needs a BM25 score over the floor", async () => {
+    const h = new Retriever(cards, {}, fake(["M46.A03"]).dense);
+    const input = await h.prepare({ message: "create a contact for Ana Ruiz" });
+    assert.ok(!ids(h.retrieve(input, { denseFloorExempt: 0 })).includes("M46.A03"));
+  });
+
+  test("noMatch still comes from BM25 alone: an embedding ranking always has a nearest card", async () => {
+    const h = new Retriever(cards, {}, fake(["M01.A01"]).dense);
+    const x = h.retrieve(await h.prepare({ message: "how do I cook risotto?" }));
+    assert.equal(x.noMatch, true);
+    assert.equal(x.picks.length, 0);
+  });
+
+  test("ids the catalog doesn't have are ignored (a stale vector cache, say)", async () => {
+    const h = new Retriever(cards, {}, fake(["M99.A99", "M46.A03"]).dense);
+    const x = h.retrieve(await h.prepare({ message: "create a contact for Ana Ruiz" }));
+    assert.ok(!ids(x).includes("M99.A99"));
+    assert.ok(ids(x).includes("M46.A03"));
+  });
+
+  test("a model that throws costs the turn its embedding half, not the turn", async (t) => {
+    const errors = t.mock.method(console, "error", () => {});
+    const h = new Retriever(cards, {}, { rank: async () => { throw new Error("session closed"); } });
+    const message = "find leads from facebook";
+    const input = await h.prepare({ message });
+    assert.deepEqual(input, { message });
+    assert.deepEqual(ids(h.retrieve(input)), ids(r.retrieve({ message })));
+    assert.equal(errors.mock.callCount(), 1);
+  });
+});
+
 // Regression gate on the whole question set. Floors sit a little under the measured numbers
 // (docs/PLAN.md), so tuning can move them but not quietly lose them.
 describe("retrieval eval", () => {
-  test("recall stays at its measured level", () => {
+  test("recall stays at its measured level", async () => {
     const qs = loadQueries(QUERIES);
     const { store } = world();
     const s = summarize(
-      qs.map((q) => score(q, r, [15], registry.resolverEntities(), (m) => mentions(m, registry, store))),
+      await Promise.all(qs.map((q) => score(q, r, [15], registry.resolverEntities(), (m) => mentions(m, registry, store)))),
       [15],
     );
     assert.ok(s.total.recall[15]! >= 0.9, `R@15 ${s.total.recall[15]}`);
     assert.equal(s.groups.direct!.recall[15], 1, "every direct question finds its action");
     assert.ok(s.groups.paraphrase!.recall[15]! >= 0.8, `paraphrase R@15 ${s.groups.paraphrase!.recall[15]}`);
+    assert.equal(s.falseRejects, 0, "no in-scope question is rejected as no match");
+    assert.ok(s.total.picks <= 22, `average shortlist ${s.total.picks}`);
+  });
+});
+
+// The same gate with the real embedding model, when it has been downloaded (npm run serve or eval:retrieval
+// fetch it once into server/data/models/). Measured: R@15 96.7%, paraphrase 93.6% (BM25 alone: 90.4%, 82.7%).
+const modelOnDisk = existsSync(fileURLToPath(new URL(`../../data/models/${MODEL}/`, import.meta.url)));
+describe("retrieval eval, hybrid", { skip: !modelOnDisk && "embedding model not downloaded" }, () => {
+  test("recall stays at its measured level", async () => {
+    const h = new Retriever(cards, {}, await Embedder.load(cards));
+    const { store } = world();
+    const scored = [];
+    for (const q of loadQueries(QUERIES)) scored.push(await score(q, h, [15], registry.resolverEntities(), (m) => mentions(m, registry, store)));
+    const s = summarize(scored, [15]);
+    assert.ok(s.total.recall[15]! >= 0.95, `R@15 ${s.total.recall[15]}`);
+    assert.equal(s.groups.direct!.recall[15], 1, "every direct question finds its action");
+    assert.ok(s.groups.paraphrase!.recall[15]! >= 0.9, `paraphrase R@15 ${s.groups.paraphrase!.recall[15]}`);
     assert.equal(s.falseRejects, 0, "no in-scope question is rejected as no match");
     assert.ok(s.total.picks <= 22, `average shortlist ${s.total.picks}`);
   });

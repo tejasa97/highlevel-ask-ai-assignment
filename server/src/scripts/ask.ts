@@ -10,6 +10,7 @@ import { makePlanner } from "../planner/index.js";
 import { planTurn } from "../planner/turn.js";
 import { loadRegistry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
+import { loadDense } from "../retrieval/embed.js";
 import { Retriever } from "../retrieval/retrieve.js";
 import { devStore } from "../store/dev.js";
 import { world } from "../store/world.js";
@@ -28,7 +29,9 @@ const planner = makePlanner();
 const tier = flags.has("--fast") ? "fast" : "strong";
 const timings: string[] = [];
 
-const outcome = await planTurn({ message, tier }, { registry, retriever: new Retriever(buildCards(registry)), planner, clock, store }, (e) => {
+const cards = buildCards(registry);
+const retriever = new Retriever(cards, {}, await loadDense(cards, debug ? console.log : () => {}));
+const outcome = await planTurn({ message, tier }, { registry, retriever, planner, clock, store }, (e) => {
   if (e.type === "planner.reply") timings.push(`${e.data.label} ${e.data.latencyMs} ms (${e.data.model}, in ${e.data.usage.input}, out ${e.data.usage.output})`);
   if (e.type === "compile.errors") console.log(`\nplan rejected:\n  ${e.data.errors.join("\n  ")}`);
   if (!debug) return;

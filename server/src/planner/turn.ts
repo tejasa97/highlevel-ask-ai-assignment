@@ -63,6 +63,8 @@ export interface RetrievalTrace {
   mentions: Mention[];
   topScore: number;
   ms: number;
+  /** Time spent embedding the question, with the embedding model loaded. */
+  embedMs?: number;
   picks: (Retrieval["picks"][number] & { name: string; module: string; available: boolean })[];
   /** Characters of action cards in the prompt: what was sent vs. every implemented action. */
   promptChars: { sent: number; allImplemented: number };
@@ -87,13 +89,15 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   const offered: RegisteredAction[] = [];
   const notAvailable: string[] = [];
   const seen = new Set<string>();
-  const shortlist = (label: string, message: string, context?: Carry, linked: Mention[] = []) => {
-    const r = retriever.retrieve({ message, context, resolvable, mentions: linked, exclude: [...seen] });
+  const shortlist = async (label: string, message: string, context?: Carry, linked: Mention[] = []) => {
+    const started = performance.now();
+    const r = retriever.retrieve(await retriever.prepare({ message, context, resolvable, mentions: linked, exclude: [...seen] }));
+    const embedMs = retriever.hybrid ? Math.round(performance.now() - started - r.ms) : undefined;
     for (const p of r.picks) {
       seen.add(p.id);
       const impl = registry.get(p.id);
       if (impl) offered.push(impl);
-      else if (p.why === "bm25") notAvailable.push(`${p.id} ${retriever.card(p.id)!.name}`);
+      else if (p.why === "bm25" || p.why === "dense") notAvailable.push(`${p.id} ${retriever.card(p.id)!.name}`);
     }
     emit({
       type: "retrieval",
@@ -106,6 +110,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         mentions: linked,
         topScore: r.topScore,
         ms: r.ms,
+        embedMs,
         picks: r.picks.map((p) => {
           const c = retriever.card(p.id)!;
           return { ...p, name: c.name, module: c.module, available: c.available };
@@ -122,7 +127,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     return r;
   };
 
-  shortlist("retrieve", input.answering ? `${input.answering}\n${input.message}` : input.message, input.carry, named);
+  await shortlist("retrieve", input.answering ? `${input.answering}\n${input.message}` : input.message, input.carry, named);
   let user = prompt();
   let reply = await call(user, "plan");
   let searched = false;
@@ -138,7 +143,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       if (searched) return { kind: "reply", status: "unsupported", text: `I couldn't find an action for that${d.query ? ` (${d.query})` : ""}.` };
       searched = true;
       // Retrieve again on the planner's own description of what's missing; the new cards join the old ones.
-      shortlist("search_tools", d.query || input.message);
+      await shortlist("search_tools", d.query || input.message);
       user = prompt();
       reply = await call(user, "plan after search_tools");
       continue;

@@ -2,6 +2,15 @@ import { Contact } from "../modules/m01-contacts/schema.js";
 import { Lead } from "../modules/m03-leads/schema.js";
 import { Opportunity, Pipeline } from "../modules/m04-opportunities/schema.js";
 import { Task } from "../modules/m06-tasks/schema.js";
+import { Note } from "../modules/m07-notes/schema.js";
+import { Tag } from "../modules/m08-tags/schema.js";
+import { Conversation } from "../modules/m11-conversations/schema.js";
+import { Sms } from "../modules/m12-sms/schema.js";
+import { Email } from "../modules/m13-email/schema.js";
+import { Campaign } from "../modules/m15-campaigns/schema.js";
+import { Appointment } from "../modules/m21-appointments/schema.js";
+import { Invoice } from "../modules/m28-invoices/schema.js";
+import { Payment, PaymentRequest } from "../modules/m29-payments/schema.js";
 import { User } from "../modules/m48-users/schema.js";
 import { Team } from "../modules/m49-teams/schema.js";
 import { addDays, type Clock, localDate } from "./clock.js";
@@ -114,6 +123,7 @@ export class Fixtures {
       status: "new",
       score: 50,
       ownerId: null,
+      tags: [],
       qualification: { budget: null, authority: null, need: null, timeline: null },
       disqualifyReason: null,
       disqualifyNote: null,
@@ -167,6 +177,201 @@ export class Fixtures {
       createdAt: this.now(),
       completedAt: null,
       cancelReason: null,
+      ...o,
+    });
+  }
+
+  /** A note on a new contact unless attachedTo is given. */
+  note(o: Input<Note> = {}): Note {
+    return this.make("notes", "nt", Note, {
+      body: `Note ${this.seq()}`,
+      attachedTo: o.attachedTo ?? [{ type: "contact", id: this.contact().id }],
+      pinned: false,
+      authorId: "us_1",
+      revisions: [],
+      createdAt: this.now(),
+      updatedAt: this.now(),
+      ...o,
+    });
+  }
+
+  tag(o: Input<Tag> = {}): Tag {
+    return this.make("tags", "tg", Tag, { name: `tag-${this.seq()}`, color: "gray", description: null, createdAt: this.now(), ...o });
+  }
+
+  /** An open conversation with a new contact where we wrote last. */
+  conversation(o: Input<Conversation> = {}): Conversation {
+    const contactId = o.contactId !== undefined ? o.contactId : o.leadId ? null : this.contact().id;
+    return this.make("conversations", "cv", Conversation, {
+      contactId,
+      leadId: null,
+      channels: ["email"],
+      status: "open",
+      ownerId: null,
+      unread: false,
+      lastMessageAt: this.at(-1),
+      lastDirection: "outbound",
+      lastMessagePreview: "Hi there",
+      lastInboundAt: null,
+      lastOutboundAt: this.at(-1),
+      comments: [],
+      createdAt: this.at(-1),
+      closedAt: null,
+      ...o,
+    });
+  }
+
+  /** A delivered outbound text to a new contact. */
+  sms(o: Input<Sms> = {}): Sms {
+    const to = o.to ?? `+1555${String(1000000 + this.seq()).slice(-7)}`;
+    const contactId = o.contactId !== undefined ? o.contactId : o.leadId ? null : this.contact({ phone: to }).id;
+    return this.make("sms", "sm", Sms, {
+      conversationId: null,
+      contactId,
+      leadId: null,
+      to,
+      from: "+15550009999",
+      body: "Hi! Just checking in.",
+      campaignId: null,
+      direction: "outbound",
+      status: "delivered",
+      segments: 1,
+      encoding: "GSM-7",
+      scheduledAt: null,
+      sentAt: this.at(-1),
+      deliveredAt: this.at(-1),
+      failureReason: null,
+      createdBy: "us_1",
+      createdAt: this.at(-1),
+      ...o,
+    });
+  }
+
+  /** A delivered outbound email to a new contact. */
+  email(o: Input<Email> = {}): Email {
+    const c = o.contactId || o.leadId ? undefined : this.contact();
+    return this.make("emails", "em", Email, {
+      conversationId: null,
+      contactId: c?.id ?? null,
+      leadId: null,
+      to: c?.email ?? "someone@example.com",
+      from: "hello@ourco.example",
+      subject: "Hello",
+      body: "Just checking in.",
+      kind: "general",
+      invoiceId: null,
+      campaignId: null,
+      direction: "outbound",
+      status: "delivered",
+      scheduledAt: null,
+      sentAt: this.at(-1),
+      deliveredAt: this.at(-1),
+      failureReason: null,
+      createdBy: "us_1",
+      createdAt: this.at(-1),
+      ...o,
+    });
+  }
+
+  campaign(o: Input<Campaign> = {}): Campaign {
+    return this.make("campaigns", "cp", Campaign, {
+      name: `Campaign ${this.seq()}`,
+      channel: "email",
+      status: "draft",
+      audience: { tag: null, contactIds: [] },
+      steps: [],
+      startAt: null,
+      launchedAt: null,
+      pausedAt: null,
+      ownerId: null,
+      createdAt: this.now(),
+      ...o,
+    });
+  }
+
+  /** A booked 30-minute meeting in three days with a new contact, hosted by a new user. */
+  appointment(o: Input<Appointment> = {}): Appointment {
+    const contact = o.contactId || o.leadId ? undefined : this.contact();
+    const startAt = o.startAt ?? this.at(3);
+    return this.make("appointments", "ap", Appointment, {
+      title: `Meeting ${this.seq()}`,
+      contactId: contact?.id ?? null,
+      leadId: null,
+      hostId: o.hostId ?? this.user().id,
+      attendees: contact ? [{ kind: "contact", id: contact.id, name: contact.name, noShow: false }] : [],
+      startAt,
+      endAt: new Date(Date.parse(startAt) + 30 * 60_000).toISOString(),
+      location: null,
+      status: "booked",
+      cancelReason: null,
+      outcome: null,
+      createdAt: this.now(),
+      ...o,
+    });
+  }
+
+  /** A $500 draft invoice for a new contact. */
+  invoice(o: Input<Invoice> = {}): Invoice {
+    const n = this.store.all("invoices").length;
+    const lineItems = o.lineItems ?? [{ description: "Services", quantity: 1, unitPrice: 500, amount: 500 }];
+    const total = lineItems.reduce((t, i) => t + i.amount, 0);
+    return this.make("invoices", "inv", Invoice, {
+      number: `INV-${1001 + n}`,
+      contactId: o.contactId ?? this.contact().id,
+      status: "draft",
+      lineItems,
+      total,
+      amountPaid: 0,
+      amountDue: total,
+      currency: "USD",
+      issueDate: null,
+      dueDate: null,
+      paidAt: null,
+      voidedAt: null,
+      voidReason: null,
+      reminders: [],
+      lastReminderAt: null,
+      memo: null,
+      createdAt: this.now(),
+      ...o,
+    });
+  }
+
+  paymentRequest(o: Input<PaymentRequest> = {}): PaymentRequest {
+    const id = this.store.nextId("payment_requests", "prq");
+    const full = PaymentRequest.parse({
+      id,
+      contactId: o.contactId ?? this.contact().id,
+      invoiceId: null,
+      amount: 250,
+      description: "Payment",
+      status: "pending",
+      link: `https://pay.ourco.example/r/${id}`,
+      paymentId: null,
+      createdBy: "us_1",
+      createdAt: this.now(),
+      paidAt: null,
+      cancelledAt: null,
+      ...o,
+    });
+    return this.store.put("payment_requests", full);
+  }
+
+  /** A succeeded $250 card payment from a new contact, not yet applied to an invoice. */
+  payment(o: Input<Payment> = {}): Payment {
+    const amount = o.amount ?? 250;
+    return this.make("payments", "pay", Payment, {
+      contactId: o.contactId ?? this.contact().id,
+      amount,
+      currency: "USD",
+      method: "card",
+      status: "succeeded",
+      failure: null,
+      paymentRequestId: null,
+      allocations: [],
+      unallocated: amount,
+      recordedBy: "us_1",
+      createdAt: this.at(-1),
       ...o,
     });
   }

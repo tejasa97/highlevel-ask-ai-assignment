@@ -2,10 +2,11 @@ import MiniSearch, { type SearchResult } from "minisearch";
 import { clauses, terms } from "./text.js";
 import type { SearchCard } from "./cards.js";
 
-// Tool retrieval: narrows the 500 catalog actions to a short list for the planner. No model involved.
+// Tool retrieval: narrows the 500 catalog actions to a short list for the planner. No LLM involved.
 //   1. BM25 (MiniSearch) over each card's name, synonyms, module and description, on the whole message
-//      and on each clause of a multi-part message. Each clause's top few go first, taking turns; the rest
-//      follow in reciprocal-rank-fusion order.
+//      and on each clause of a multi-part message; with an embedding model loaded (embed.ts), its
+//      meaning-based ranking of the same texts too. Each clause's top few BM25 hits go first, taking turns;
+//      the rest follow in reciprocal-rank-fusion order.
 //   2. Walk the merged ranking with a per-module cap until k cards are picked.
 //   3. Add what the planner will need next to them: look-alike siblings, a producer for any record type
 //      a picked card needs but nothing picked returns, and the previous turn's actions.
@@ -31,6 +32,12 @@ export interface RetrieveOptions {
   /** A top BM25 score under this means nothing in the catalog matched. Deliberately low: words like "book" or
    *  "order" match real actions, so telling off-topic requests apart is the planner's job, not retrieval's. */
   noMatchScore: number;
+  /** How much of each meaning-based ranking joins the fusion, and its weight against one BM25 list. */
+  denseTop: number;
+  denseWeight: number;
+  /** Cards in the top this-many of a meaning ranking skip the score floor: they share no words with the
+   *  question, so their BM25 score says nothing about them. */
+  denseFloorExempt: number;
 }
 
 export type Field = "name" | "synonyms" | "module" | "description";
@@ -46,6 +53,9 @@ export const DEFAULTS: RetrieveOptions = {
   producers: true,
   floor: 0.1,
   noMatchScore: 2,
+  denseTop: 20,
+  denseWeight: 1,
+  denseFloorExempt: 10,
 };
 
 export interface RetrieveInput {
@@ -58,9 +68,17 @@ export interface RetrieveInput {
   resolvable?: string[];
   /** Names in the message that matched records (see mentions.ts): their record type's get and search join. */
   mentions?: { entity: string }[];
+  /** Meaning-based rankings of the cards for the query and then each clause, in that order (see prepare). */
+  dense?: { id: string }[][];
 }
 
-export type Why = "bm25" | "sibling" | "producer" | "carried" | "mention";
+/** Ranks every card by meaning for each text (embed.ts). */
+export interface Dense {
+  rank(texts: string[]): Promise<{ id: string; score: number }[][]>;
+}
+
+/** "bm25" and "dense" are the ranked slots: "dense" when only the embedding ranking found the card. */
+export type Why = "bm25" | "dense" | "sibling" | "producer" | "carried" | "mention";
 
 export interface Pick {
   id: string;
@@ -94,6 +112,7 @@ export class Retriever {
   constructor(
     readonly cards: SearchCard[],
     opts: Partial<RetrieveOptions> = {},
+    private readonly dense?: Dense,
   ) {
     this.opts = { ...DEFAULTS, ...opts, boost: { ...DEFAULTS.boost, ...opts.boost } };
     this.byId = new Map(cards.map((c) => [c.id, c]));
@@ -115,28 +134,45 @@ export class Retriever {
     return this.byId.get(id);
   }
 
+  /** Whether an embedding model is loaded. */
+  get hybrid(): boolean {
+    return !!this.dense;
+  }
+
+  /** Adds the meaning-based rankings to an input; unchanged without a model. Separate from retrieve because
+   *  the model is async and retrieve is not. */
+  async prepare(input: RetrieveInput): Promise<RetrieveInput> {
+    if (!this.dense || input.dense) return input;
+    const { query, parts } = this.texts(input, this.opts);
+    try {
+      return { ...input, dense: await this.dense.rank(parts.length > 1 ? [query, ...parts] : [query]) };
+    } catch (e) {
+      // A failed inference costs this turn its embedding half, not the turn itself.
+      console.error(`embedding failed, this turn uses BM25 only: ${(e as Error).message}`);
+      return input;
+    }
+  }
+
   retrieve(input: RetrieveInput, override: Partial<RetrieveOptions> = {}): Retrieval {
     const started = performance.now();
     const o = { ...this.opts, ...override, boost: { ...this.opts.boost, ...override.boost } };
     const exclude = new Set(input.exclude ?? []);
-
-    // Record types from the previous turn join the query, so "make those high priority" knows it means tasks.
-    const query = [input.message, ...(input.context?.entities ?? []).map((e) => e.replace(/_/g, " "))].join(" ");
-    const parts = o.splitClauses ? clauses(input.message) : [];
+    const { query, parts } = this.texts(input, o);
     const lists = [this.run(query, o), ...(parts.length > 1 ? parts.map((p) => this.run(p, o)) : [])];
+    const dense = (input.dense ?? []).map((d) => d.filter((x) => this.byId.has(x.id)).slice(0, o.denseTop));
+    const floorExempt = new Set(dense.flatMap((d) => d.slice(0, o.denseFloorExempt).map((x) => x.id)));
 
-    // Reciprocal rank fusion: ranks only, so the whole message and short clauses weigh in equally.
-    const fused = new Map<string, { score: number; best: SearchResult }>();
-    for (const list of lists) {
-      list.forEach((r, i) => {
-        const f = fused.get(r.id as string);
-        const add = 1 / (60 + i + 1);
-        if (f) {
-          f.score += add;
-          if (r.score > f.best.score) f.best = r;
-        } else fused.set(r.id as string, { score: add, best: r });
+    // Reciprocal rank fusion: ranks only, so the whole message, short clauses and the two kinds of ranking
+    // weigh in alike. `best` is the card's best BM25 hit; cards only the embedding ranking found have none.
+    const fused = new Map<string, { score: number; best?: SearchResult }>();
+    const fuse = (ids: { id: string; hit?: SearchResult }[], weight: number) =>
+      ids.forEach(({ id, hit }, i) => {
+        const f = fused.get(id) ?? fused.set(id, { score: 0 }).get(id)!;
+        f.score += weight / (60 + i + 1);
+        if (hit && hit.score > (f.best?.score ?? -1)) f.best = hit;
       });
-    }
+    for (const list of lists) fuse(list.map((hit) => ({ id: hit.id as string, hit })), 1);
+    for (const list of dense) fuse(list, o.denseWeight);
     // RRF alone lets a card that is middling in several lists beat the clear winner of one clause
     // ("find leads from facebook" → Search leads ranked 20th behind team and task actions).
     const first: string[] = [];
@@ -149,8 +185,8 @@ export class Retriever {
     const order = (id: string) => (first.includes(id) ? first.indexOf(id) : Infinity);
     const merged = [...fused.entries()]
       .filter(([id]) => !exclude.has(id))
-      .sort((a, b) => order(a[0]) - order(b[0]) || b[1].score - a[1].score || b[1].best.score - a[1].best.score);
-    const ranking = merged.map(([id, f], i) => ({ id, score: round(f.best.score), rank: i + 1 }));
+      .sort((a, b) => order(a[0]) - order(b[0]) || b[1].score - a[1].score || bm25(b[1]) - bm25(a[1]));
+    const ranking = merged.map(([id, f], i) => ({ id, score: round(bm25(f)), rank: i + 1 }));
     const topScore = lists[0]![0]?.score ?? 0;
     // A message that names a known record is about the CRM even with no catalog words ("tell me about Victor Larsen").
     const noMatch = topScore < o.noMatchScore && !input.mentions?.length;
@@ -159,16 +195,28 @@ export class Retriever {
     const picks: Pick[] = [];
     const taken = new Set<string>();
     const perModule = new Map<string, number>();
-    const floor = o.floor * Math.max(...merged.map(([, f]) => f.best.score), 0);
-    for (const [id, f] of merged) {
-      if (picks.length >= o.k) break;
-      if (f.best.score < floor) continue;
-      const mod = id.slice(0, 3);
-      if ((perModule.get(mod) ?? 0) >= o.moduleCap) continue;
-      perModule.set(mod, (perModule.get(mod) ?? 0) + 1);
-      picks.push({ id, why: "bm25", rank: ranking.find((r) => r.id === id)!.rank, score: round(f.best.score), matched: byField(f.best) });
+    const floor = o.floor * Math.max(...merged.map(([, f]) => bm25(f)), 0);
+    const capped: typeof merged = [];
+    const take = ([id, f]: (typeof merged)[number]) => {
+      const rank = ranking.find((r) => r.id === id)!.rank;
+      picks.push(f.best ? { id, why: "bm25", rank, score: round(f.best.score), matched: byField(f.best) } : { id, why: "dense", rank });
       taken.add(id);
+    };
+    for (const entry of merged) {
+      if (picks.length >= o.k) break;
+      const [id, f] = entry;
+      if (bm25(f) < floor && !floorExempt.has(id)) continue;
+      const mod = id.slice(0, 3);
+      if ((perModule.get(mod) ?? 0) >= o.moduleCap) {
+        capped.push(entry);
+        continue;
+      }
+      perModule.set(mod, (perModule.get(mod) ?? 0) + 1);
+      take(entry);
     }
+    // The cap makes room for other modules. When nothing else clears the floor, that room would sit empty:
+    // give it back to the capped cards ("answer the 2-star review" is all about reviews).
+    for (const entry of capped) if (picks.length < o.k) take(entry);
     if (noMatch) picks.length = 0;
 
     const add = (id: string, why: Why, via?: string) => {
@@ -186,7 +234,7 @@ export class Retriever {
     }
 
     // Siblings only for the strongest picks: for weak ones they mostly add noise to the prompt.
-    for (const p of picks.filter((x) => x.why === "bm25").slice(0, o.siblings)) {
+    for (const p of picks.filter((x) => x.why === "bm25" || x.why === "dense").slice(0, o.siblings)) {
       for (const s of this.byId.get(p.id)!.siblings) add(s, "sibling", p.id);
     }
 
@@ -204,6 +252,13 @@ export class Retriever {
     }
 
     return { query, clauses: parts, terms: terms(query), picks, ranking: ranking.slice(0, 50), topScore: round(topScore), noMatch, ms: round(performance.now() - started) };
+  }
+
+  /** The whole-message query and the clauses, shared by BM25 and the embedding model. */
+  private texts(input: RetrieveInput, o: RetrieveOptions): { query: string; parts: string[] } {
+    // Record types from the previous turn join the query, so "make those high priority" knows it means tasks.
+    const query = [input.message, ...(input.context?.entities ?? []).map((e) => e.replace(/_/g, " "))].join(" ");
+    return { query, parts: o.splitClauses ? clauses(input.message) : [] };
   }
 
   private run(text: string, o: RetrieveOptions): SearchResult[] {
@@ -238,4 +293,5 @@ function byField(r: SearchResult): Record<string, string[]> {
   return out;
 }
 
+const bm25 = (f: { best?: SearchResult }) => f.best?.score ?? 0;
 const round = (n: number) => Math.round(n * 100) / 100;

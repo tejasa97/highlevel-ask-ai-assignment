@@ -1,5 +1,5 @@
 {
- "generatedBy": "npm run cards (claude-sonnet-5-5), checked by tests (counts, entity types, siblings, eval overlap); M01 M03 M06 M48 M49 read by hand against their handlers, with the optional-filter consumes of M01.A03, M06.A03 and M48.A03 cleared",
+ "generatedBy": "npm run cards (claude-sonnet-5-5)",
  "cards": {
   "M01.A01": {
    "description": "Add a new person to contacts, such as an existing customer or someone you already deal with. For a new prospect, use Create lead instead.",
@@ -604,21 +604,21 @@
    ]
   },
   "M04.A01": {
-   "description": "Creates a new opportunity (deal) in a pipeline for a contact or company, with a name, value and starting stage.",
+   "description": "Open a new deal for a contact in a pipeline, with its value in USD. It starts at the first stage unless you pick one. To turn a qualified lead into a deal, use Convert lead instead.",
    "synonyms": [
     "new deal",
     "add opportunity",
     "open deal",
     "start deal",
-    "create deal",
-    "new sales opportunity",
+    "create sale",
+    "new opportunity",
     "add deal to pipeline",
-    "log opportunity"
+    "log deal",
+    "new sales opportunity"
    ],
    "produces": "opportunity",
    "consumes": [
     "contact",
-    "company",
     "pipeline",
     "stage"
    ],
@@ -627,81 +627,79 @@
    ]
   },
   "M04.A02": {
-   "description": "Shows the full details of one opportunity, including its value, stage, owner, expected close date and status.",
+   "description": "Show everything about one deal: contact, owner, value, current stage and win probability, expected close date and status.",
    "synonyms": [
     "view deal",
-    "open deal",
     "deal info",
     "opportunity details",
     "show deal",
-    "deal record",
+    "open deal record",
+    "deal overview",
     "look up deal",
-    "fetch opportunity"
+    "fetch opportunity",
+    "deal status"
    ],
    "produces": "opportunity",
    "consumes": [
     "opportunity"
    ],
    "siblings": [
-    "M03.A02",
-    "M01.A02"
+    "M03.A02"
    ]
   },
   "M04.A03": {
-   "description": "Finds opportunities by filters such as name, stage, owner, status or value range. Use it to list several deals, not to open one.",
+   "description": "Find deals by contact, owner, stage, value range, expected close date range or name. Returns open deals unless a status is given.",
    "synonyms": [
     "find deals",
+    "list deals",
     "search deals",
-    "list opportunities",
-    "filter deals",
-    "deal lookup",
-    "open deals list",
-    "browse deals",
-    "query opportunities"
+    "filter opportunities",
+    "deals by owner",
+    "deals by stage",
+    "open deals",
+    "deals closing soon",
+    "lookup opportunity"
    ],
    "produces": "opportunity",
    "consumes": [
-    "pipeline",
+    "contact",
     "stage",
     "user"
    ],
    "siblings": [
-    "M03.A03",
-    "M01.A03"
+    "M03.A03"
    ]
   },
   "M04.A04": {
-   "description": "Changes the monetary value or amount of an existing opportunity. Does not change its stage or close date.",
+   "description": "Change the dollar value of an open deal, for example after a revised quote or scope change.",
    "synonyms": [
     "change deal value",
     "edit deal amount",
     "update deal size",
-    "revise amount",
-    "adjust deal price",
-    "opportunity amount",
-    "change revenue",
-    "deal worth"
+    "revise opportunity amount",
+    "deal worth",
+    "set deal price",
+    "adjust deal value",
+    "change amount"
    ],
    "produces": "opportunity",
    "consumes": [
     "opportunity"
    ],
-   "siblings": [
-    "M03.A04",
-    "M05.A10"
-   ]
+   "siblings": []
   },
   "M04.A05": {
-   "description": "Moves an opportunity to a different stage in its pipeline, for example from Proposal to Negotiation. Does not close the deal.",
+   "description": "Move an open deal to another stage of its pipeline, such as Qualified, Proposal or Negotiation. To close it, use Mark won or Mark lost instead.",
    "synonyms": [
-    "change deal stage",
+    "change stage",
     "advance deal",
     "move deal",
     "progress opportunity",
     "next stage",
-    "shift stage",
-    "push forward deal",
-    "update deal stage"
+    "shift deal stage",
+    "drag deal",
+    "promote deal",
+    "update stage"
    ],
    "produces": "opportunity",
    "consumes": [
@@ -709,20 +707,20 @@
     "stage"
    ],
    "siblings": [
-    "M05.A06"
+    "M05.A07"
    ]
   },
   "M04.A06": {
-   "description": "Assigns or changes the sales user who owns an opportunity.",
+   "description": "Make a staff user the owner of an open deal. Reassigns responsibility for the deal only, not for contacts or leads.",
    "synonyms": [
     "deal owner",
     "reassign deal",
     "change deal owner",
-    "set rep for deal",
-    "give deal to",
-    "transfer opportunity",
+    "give deal to rep",
+    "set opportunity owner",
+    "transfer deal",
     "assign salesperson",
-    "opportunity owner"
+    "deal rep"
    ],
    "produces": "opportunity",
    "consumes": [
@@ -730,21 +728,21 @@
     "user"
    ],
    "siblings": [
-    "M03.A05",
-    "M01.A07"
+    "M01.A07",
+    "M03.A05"
    ]
   },
   "M04.A07": {
-   "description": "Sets or changes the date by which an opportunity is expected to close. Does not close the deal.",
+   "description": "Set the date an open deal is expected to close. The date can't be in the past.",
    "synonyms": [
     "close date",
     "expected close",
     "deal deadline",
     "target close date",
     "forecast date",
+    "set closing date",
     "change close date",
-    "set deal due date",
-    "projected close"
+    "deal due date"
    ],
    "produces": "opportunity",
    "consumes": [
@@ -755,16 +753,16 @@
    ]
   },
   "M04.A08": {
-   "description": "Closes an opportunity as won because the deal was successful. Differs from Mark opportunity lost, which closes it unsuccessfully.",
+   "description": "Close an open deal as won, meaning the sale was made.",
    "synonyms": [
-    "close won",
     "deal won",
+    "close won",
     "win deal",
     "closed won",
-    "won the deal",
-    "successful deal",
-    "close as won",
-    "deal closed"
+    "sale made",
+    "won opportunity",
+    "mark as won",
+    "deal signed"
    ],
    "produces": "opportunity",
    "consumes": [
@@ -773,16 +771,17 @@
    "siblings": []
   },
   "M04.A09": {
-   "description": "Closes an opportunity as lost, usually with a loss reason. Differs from Mark opportunity won, which closes it successfully.",
+   "description": "Close an open deal as lost and record why, such as a competitor win or no budget. It can be reopened later.",
    "synonyms": [
-    "close lost",
     "deal lost",
+    "close lost",
     "lose deal",
     "closed lost",
-    "lost the deal",
-    "abandon deal",
-    "close as lost",
-    "dead deal"
+    "mark as lost",
+    "lost reason",
+    "deal fell through",
+    "drop deal",
+    "no sale"
    ],
    "produces": "opportunity",
    "consumes": [
@@ -793,13 +792,13 @@
    ]
   },
   "M04.A10": {
-   "description": "Reopens an opportunity that was closed as won or lost so it becomes active again in the pipeline.",
+   "description": "Reopen a won or lost deal so it returns to the pipeline at the stage where it closed.",
    "synonyms": [
-    "reactivate deal",
     "undo close",
+    "reactivate deal",
+    "restore deal",
+    "revive opportunity",
     "reopen deal",
-    "revive deal",
-    "restore opportunity",
     "bring back deal",
     "unclose deal",
     "reopen lost deal"
@@ -809,8 +808,7 @@
     "opportunity"
    ],
    "siblings": [
-    "M06.A09",
-    "M11.A07"
+    "M06.A09"
    ]
   },
   "M05.A01": {
@@ -1222,74 +1220,88 @@
    ]
   },
   "M07.A01": {
-   "description": "Creates a new note with free text, optionally linked to a contact, company or deal. Use to jot down call details or meeting remarks.",
+   "description": "Write a new note on a contact, lead, deal, appointment or invoice, such as what was said on a call. For a to-do with a due date, create a task instead.",
    "synonyms": [
     "add note",
     "write note",
-    "new note",
-    "jot down",
     "log call notes",
+    "jot down",
+    "new note",
+    "comment on record",
     "meeting notes",
-    "save comment",
-    "take note"
+    "call summary",
+    "record remark"
    ],
    "produces": "note",
    "consumes": [
     "contact",
-    "company",
-    "opportunity"
+    "lead",
+    "opportunity",
+    "appointment",
+    "invoice"
    ],
    "siblings": [
-    "M11.A08",
-    "M47.A07"
+    "M06.A01",
+    "M11.A08"
    ]
   },
   "M07.A02": {
-   "description": "Opens a single note by its id and shows its full text, author and the records it is linked to.",
+   "description": "Open a single note to read its text, author, the records it's attached to and whether it is pinned.",
    "synonyms": [
-    "open note",
     "view note",
-    "show note",
+    "open note",
     "read note",
+    "show note",
     "note details",
+    "see note",
     "fetch note",
-    "look up note"
+    "note author"
    ],
    "produces": "note",
    "consumes": [
     "note"
    ],
-   "siblings": []
+   "siblings": [
+    "M06.A02"
+   ]
   },
   "M07.A03": {
-   "description": "Finds notes by keyword, author, date or linked record. Use when you don't know which note you need, unlike Get note which needs the id.",
+   "description": "Find notes on a record, or by author, pinned status, date written or text. Pinned notes appear first, then newest. Differs from Get note, which opens one known note.",
    "synonyms": [
     "find notes",
-    "search note text",
-    "look for notes",
+    "look up notes",
     "filter notes",
     "notes by author",
-    "notes list",
-    "query notes",
-    "notes on contact"
+    "notes on contact",
+    "pinned notes",
+    "notes containing text",
+    "notes by date",
+    "list notes"
    ],
    "produces": "note",
-   "consumes": [],
+   "consumes": [
+    "contact",
+    "lead",
+    "opportunity",
+    "appointment",
+    "invoice"
+   ],
    "siblings": [
-    "M01.A03",
-    "M06.A03"
+    "M06.A03",
+    "M11.A02"
    ]
   },
   "M07.A04": {
-   "description": "Edits the text or title of an existing note. The earlier version is kept in the note's revision history.",
+   "description": "Rewrite the text of an existing note. The earlier wording is saved in the note's revision history.",
    "synonyms": [
     "edit note",
     "change note",
     "modify note",
-    "rewrite note",
     "correct note",
+    "revise note",
     "amend note",
-    "revise note text"
+    "rewrite note",
+    "update note text"
    ],
    "produces": "note",
    "consumes": [
@@ -1300,14 +1312,15 @@
    ]
   },
   "M07.A05": {
-   "description": "Permanently removes a note so it no longer appears anywhere. Use Detach instead to only unlink it from one record.",
+   "description": "Permanently delete a note along with its history. To only remove it from one record while keeping it, detach it instead.",
    "synonyms": [
     "remove note",
     "erase note",
     "trash note",
-    "discard note",
     "destroy note",
-    "get rid of note"
+    "get rid of note",
+    "discard note",
+    "delete note forever"
    ],
    "produces": null,
    "consumes": [
@@ -1316,52 +1329,56 @@
    "siblings": []
   },
   "M07.A06": {
-   "description": "Links an existing note to another contact, company, deal or other record so it shows there too. It does not create a new note.",
+   "description": "Put an existing note on one more record (contact, lead, deal, appointment or invoice) so it shows in several places. Does not create a new note.",
    "synonyms": [
     "link note",
     "add note to record",
+    "share note",
+    "also show note on",
     "connect note",
-    "associate note",
-    "tie note to contact",
-    "share note on record",
-    "assign note to deal"
+    "attach note to deal",
+    "copy note to contact",
+    "associate note"
    ],
    "produces": "note",
    "consumes": [
     "note",
     "contact",
-    "company",
-    "opportunity"
+    "lead",
+    "opportunity",
+    "appointment",
+    "invoice"
    ],
-   "siblings": [
-    "M08.A06"
-   ]
+   "siblings": []
   },
   "M07.A07": {
-   "description": "Unlinks a note from a record while keeping the note itself and its other links. Different from Delete note, which removes it entirely.",
+   "description": "Take a note off one record while the note itself is kept. To remove the note entirely, use delete instead.",
    "synonyms": [
     "unlink note",
     "remove note from record",
     "disconnect note",
-    "detach from contact",
-    "untie note",
-    "take note off record"
+    "detach note",
+    "take off record",
+    "unattach note",
+    "dissociate note"
    ],
-   "produces": "note",
+   "produces": null,
    "consumes": [
-    "note"
+    "note",
+    "contact",
+    "lead",
+    "opportunity",
+    "appointment",
+    "invoice"
    ],
-   "siblings": [
-    "M08.A07",
-    "M02.A07"
-   ]
+   "siblings": []
   },
   "M07.A08": {
-   "description": "Pins a note to the top of a record's notes so it stays visible. Reverse of Unpin note.",
+   "description": "Pin a note so it appears at the top of the notes on its records.",
    "synonyms": [
     "pin to top",
-    "stick note",
     "highlight note",
+    "stick note",
     "keep note on top",
     "favorite note",
     "star note",
@@ -1376,14 +1393,15 @@
    ]
   },
   "M07.A09": {
-   "description": "Removes the pin from a note so it returns to its normal chronological place. Reverse of Pin note.",
+   "description": "Unpin a note that was pinned, so it goes back to normal date order among the notes.",
    "synonyms": [
-    "unpin from top",
     "unstick note",
+    "remove pin",
     "unhighlight note",
     "unstar note",
-    "remove pin",
-    "stop pinning note"
+    "stop pinning",
+    "drop pin from note",
+    "unpin from top"
    ],
    "produces": "note",
    "consumes": [
@@ -1392,88 +1410,85 @@
    "siblings": []
   },
   "M07.A10": {
-   "description": "Shows the past versions of a note with who changed it and when. Useful to see earlier wording or undo confusion.",
+   "description": "Show every earlier version of a note's text, oldest first, ending with the current version. Useful to see who changed what.",
    "synonyms": [
     "note history",
-    "note versions",
+    "previous versions",
     "edit history",
-    "who edited note",
-    "previous note versions",
     "note changes",
-    "note audit",
-    "revision log"
+    "revision log",
+    "old versions of note",
+    "note versions",
+    "see past edits"
    ],
    "produces": null,
    "consumes": [
     "note"
    ],
    "siblings": [
-    "M14.A10",
-    "M01.A10"
+    "M14.A10"
    ]
   },
   "M08.A01": {
-   "description": "Creates a new tag (label) with a name so it can later be applied to contacts, deals or other records. Does not attach it to anything yet.",
+   "description": "Add a brand new tag to the account's tag list, optionally with a color and description. It doesn't put the tag on anyone; use Apply tag to record for that.",
    "synonyms": [
     "new tag",
     "add label",
     "make tag",
     "create label",
-    "new label",
     "define tag",
-    "add new tag",
-    "tag setup"
+    "new label",
+    "set up tag",
+    "add tag to list"
    ],
    "produces": "tag",
    "consumes": [],
    "siblings": []
   },
   "M08.A02": {
-   "description": "Shows all existing tags available in the account, so you can browse or find a tag name. For how often each is used, see usage counts instead.",
+   "description": "Show the account's tags in alphabetical order, optionally narrowed by part of the name or by color. Use it to see which tags exist.",
    "synonyms": [
     "show tags",
     "all tags",
     "tag list",
     "browse labels",
+    "find tag",
     "list labels",
-    "view tags",
     "available tags",
-    "what tags exist"
+    "search tags"
    ],
    "produces": "tag",
    "consumes": [],
    "siblings": []
   },
   "M08.A03": {
-   "description": "Changes the name of an existing tag; records already carrying it keep the tag under the new name. Differs from merge, which combines two tags.",
+   "description": "Change the name of an existing tag. Every contact and lead that already has it shows the new name automatically.",
    "synonyms": [
     "change tag name",
+    "rename label",
     "edit tag name",
     "relabel tag",
-    "rename label",
     "retitle tag",
     "update tag name",
-    "correct tag name"
+    "give tag new name"
    ],
    "produces": "tag",
    "consumes": [
     "tag"
    ],
-   "siblings": [
-    "M09.A04"
-   ]
+   "siblings": []
   },
   "M08.A04": {
-   "description": "Sets or changes the display color of a tag so it is easier to spot visually. Does not change its name or records.",
+   "description": "Change the color of a tag. Only the look changes, not the name or the records using it.",
    "synonyms": [
     "tag colour",
     "change tag color",
-    "label color",
     "recolor tag",
-    "pick color",
+    "label color",
     "tag shade",
-    "color label",
-    "update tag color"
+    "pick tag color",
+    "edit tag color",
+    "update tag colour"
    ],
    "produces": "tag",
    "consumes": [
@@ -1482,133 +1497,116 @@
    "siblings": []
   },
   "M08.A05": {
-   "description": "Deletes a tag only if no records use it. Use this for cleaning up unused labels; tags still in use are not removed.",
+   "description": "Delete a tag nobody uses anymore. A tag still on records must first be removed from them or merged into another tag.",
    "synonyms": [
     "remove tag",
     "delete label",
     "clean up tags",
     "drop unused tag",
     "erase tag",
+    "get rid of tag",
     "delete empty tag",
-    "remove unused label",
-    "tag cleanup"
+    "remove unused label"
    ],
    "produces": null,
    "consumes": [
     "tag"
    ],
-   "siblings": [
-    "M09.A10"
-   ]
+   "siblings": []
   },
   "M08.A06": {
-   "description": "Puts an existing tag onto a record such as a contact, company or opportunity. Opposite of removing a tag from a record.",
+   "description": "Put an existing tag on a contact or lead. The tag must already exist; this doesn't create new tags.",
    "synonyms": [
-    "tag a record",
+    "tag a contact",
     "add tag to contact",
     "label record",
+    "tag lead",
     "attach tag",
     "assign tag",
-    "tag contact",
     "mark with tag",
-    "apply label"
+    "put label on"
    ],
    "produces": null,
    "consumes": [
     "tag",
     "contact",
-    "company",
-    "lead",
-    "opportunity"
+    "lead"
    ],
-   "siblings": [
-    "M07.A06"
-   ]
+   "siblings": []
   },
   "M08.A07": {
-   "description": "Takes a tag off a record such as a contact or opportunity, while the tag itself stays available. Differs from deleting the tag.",
+   "description": "Take a tag off a contact or lead. The tag itself stays in the tag list and on other records.",
    "synonyms": [
     "untag",
-    "remove label from record",
-    "detach tag",
-    "take off tag",
+    "remove tag from contact",
+    "take off label",
+    "strip tag",
     "clear tag",
-    "untag contact",
-    "unassign tag",
-    "strip tag"
+    "detach tag",
+    "unlabel record",
+    "untag lead"
    ],
    "produces": null,
    "consumes": [
     "tag",
     "contact",
-    "company",
-    "lead",
-    "opportunity"
+    "lead"
    ],
-   "siblings": [
-    "M07.A07"
-   ]
+   "siblings": []
   },
   "M08.A08": {
-   "description": "Lists every record that currently carries a given tag, such as all contacts labeled with it.",
+   "description": "List the contacts and leads that carry a given tag. For contacts with extra filters as well, use Search contacts with tag instead.",
    "synonyms": [
-    "records with tag",
     "who has tag",
     "tagged contacts",
-    "find by tag",
+    "records by tag",
+    "tagged leads",
+    "find tagged records",
     "filter by tag",
-    "show tagged records",
-    "search by label",
-    "tagged items"
+    "show tagged people",
+    "members of tag"
    ],
-   "produces": null,
+   "produces": "contact",
    "consumes": [
     "tag"
    ],
    "siblings": [
-    "M09.A06"
+    "M01.A03"
    ]
   },
   "M08.A09": {
-   "description": "Combines two or more tags into one, moving all tagged records to the surviving tag and removing duplicates. Differs from rename, which keeps a single tag.",
+   "description": "Combine two tags: everything with the source tag gets the target tag, then the source tag is deleted. Handy for duplicates.",
    "synonyms": [
     "combine tags",
     "merge labels",
-    "join tags",
     "consolidate tags",
-    "dedupe tags",
+    "join tags",
     "fold tag into another",
-    "unify tags",
-    "duplicate tags"
+    "dedupe tags",
+    "replace tag with another",
+    "tag merge"
    ],
    "produces": "tag",
    "consumes": [
     "tag"
    ],
-   "siblings": [
-    "M01.A06",
-    "M02.A09"
-   ]
+   "siblings": []
   },
   "M08.A10": {
-   "description": "Shows how many records use each tag, helping spot popular or unused tags. Gives counts, not the records themselves.",
+   "description": "Show how many contacts and leads use each tag, most used first, including tags with zero use. Good for spotting tags to clean up.",
    "synonyms": [
     "tag counts",
     "tag statistics",
+    "tag popularity",
+    "most used tags",
     "how many tagged",
-    "tag usage",
-    "label counts",
-    "popular tags",
+    "tag usage report",
     "unused tags",
-    "tag totals"
+    "label counts"
    ],
    "produces": "report",
-   "consumes": [
-    "tag"
-   ],
-   "siblings": [
-    "M09.A07"
-   ]
+   "consumes": [],
+   "siblings": []
   },
   "M09.A01": {
    "description": "Creates a new smart list, a saved dynamic audience that automatically collects records matching a set of filter rules. Use it to start a new segment from scratch.",
@@ -1990,40 +1988,44 @@
    "siblings": []
   },
   "M11.A01": {
-   "description": "Opens a single conversation thread and shows its messages, participants, status and owner. Use it when you already know which conversation you want to read.",
+   "description": "Open a single conversation to see who it is with, its status and owner, and every SMS and email exchanged, oldest first. For counts and a recap, use Summarize conversation history instead.",
    "synonyms": [
     "open conversation",
     "view thread",
-    "show chat",
-    "conversation details",
-    "read thread",
-    "fetch conversation",
+    "show conversation",
     "message thread",
-    "see chat history"
+    "read conversation",
+    "full chat history",
+    "conversation details",
+    "see messages",
+    "open chat"
    ],
    "produces": "conversation",
    "consumes": [
     "conversation"
    ],
    "siblings": [
-    "M47.A02"
+    "M12.A06",
+    "M13.A06"
    ]
   },
   "M11.A02": {
-   "description": "Finds conversations by keyword, contact, channel, status or owner. Use it to look up threads when you don't have the exact conversation.",
+   "description": "Find conversations by contact or lead, owner, open or closed, unread, channel, or last message date, newest activity first. To find who is waiting for a reply, use List unanswered conversations.",
    "synonyms": [
     "find conversations",
     "search threads",
     "look up chats",
-    "filter conversations",
-    "find inbox messages",
+    "filter inbox",
+    "unread conversations",
     "search inbox",
-    "conversation lookup",
-    "find chat by contact"
+    "find messages thread",
+    "conversations by owner",
+    "conversations by channel"
    ],
    "produces": "conversation",
    "consumes": [
     "contact",
+    "lead",
     "user"
    ],
    "siblings": [
@@ -2032,16 +2034,16 @@
    ]
   },
   "M11.A03": {
-   "description": "Assigns a conversation to a team member so they are responsible for replying. Changes the owner of the thread, not the contact's owner.",
+   "description": "Make a user responsible for answering a conversation. This does not change who owns the contact or lead record itself.",
    "synonyms": [
-    "assign chat",
-    "give conversation to",
-    "route conversation",
-    "hand over thread",
+    "assign conversation",
+    "give chat to",
     "set conversation owner",
-    "reassign inbox thread",
-    "transfer conversation",
-    "delegate chat"
+    "hand over thread",
+    "route conversation",
+    "reassign conversation",
+    "conversation responsible",
+    "delegate inbox thread"
    ],
    "produces": "conversation",
    "consumes": [
@@ -2050,20 +2052,20 @@
    ],
    "siblings": [
     "M01.A07",
-    "M47.A04"
+    "M03.A05"
    ]
   },
   "M11.A04": {
-   "description": "Marks a conversation as read so it no longer shows as having new messages. Opposite of marking it unread.",
+   "description": "Mark a conversation as read so it no longer shows as having new messages. The opposite of Mark conversation unread.",
    "synonyms": [
     "mark as read",
+    "set read",
     "clear unread",
-    "seen",
+    "seen conversation",
     "dismiss unread badge",
     "read thread",
-    "mark chat read",
-    "remove unread flag",
-    "acknowledge messages"
+    "mark seen",
+    "remove unread flag"
    ],
    "produces": "conversation",
    "consumes": [
@@ -2072,16 +2074,16 @@
    "siblings": []
   },
   "M11.A05": {
-   "description": "Flags a conversation as unread so it stands out in the inbox for follow-up later. Opposite of marking it read.",
+   "description": "Mark a conversation as unread so it shows up again as needing attention. The opposite of Mark conversation read.",
    "synonyms": [
     "mark as unread",
-    "flag unread",
-    "keep unread",
-    "revisit later",
-    "mark new",
-    "unread flag",
     "set unread",
-    "highlight chat"
+    "flag for follow-up",
+    "keep as new",
+    "unread thread",
+    "come back later",
+    "mark new",
+    "highlight conversation"
    ],
    "produces": "conversation",
    "consumes": [
@@ -2090,78 +2092,75 @@
    "siblings": []
   },
   "M11.A06": {
-   "description": "Closes a conversation once it is resolved, removing it from open threads. Different from reopening, which brings a closed thread back.",
+   "description": "Close a conversation that needs nothing more. A new message from the person reopens it automatically.",
    "synonyms": [
+    "close thread",
     "resolve conversation",
     "end chat",
-    "archive thread",
-    "mark resolved",
+    "archive conversation",
+    "done with conversation",
     "finish conversation",
-    "close chat",
-    "done with thread",
-    "shut thread"
+    "mark resolved",
+    "close chat"
    ],
    "produces": "conversation",
    "consumes": [
     "conversation"
    ],
-   "siblings": [
-    "M47.A06"
-   ]
+   "siblings": []
   },
   "M11.A07": {
-   "description": "Reopens a previously closed conversation so it becomes active again, for example when the customer writes back or more follow-up is needed.",
+   "description": "Reopen a conversation that was closed so it is active again, without waiting for a new message from the person.",
    "synonyms": [
+    "reopen thread",
     "reactivate conversation",
-    "unresolve",
-    "bring back thread",
-    "open chat again",
+    "unclose chat",
+    "open again",
     "restore conversation",
+    "bring back thread",
     "undo close",
-    "resume chat",
-    "reopen thread"
+    "resume conversation"
    ],
    "produces": "conversation",
    "consumes": [
     "conversation"
    ],
-   "siblings": [
-    "M06.A09",
-    "M04.A10"
-   ]
+   "siblings": []
   },
   "M11.A08": {
-   "description": "Adds a private comment to a conversation visible only to your team, not sent to the customer. Differs from sending a message or a record note.",
+   "description": "Leave an internal comment on a conversation for teammates; the customer never sees it. To message the customer, send an SMS or email instead.",
    "synonyms": [
     "internal note",
     "private comment",
     "team comment",
-    "staff note on chat",
-    "whisper",
+    "note on conversation",
     "comment on thread",
-    "hidden note",
-    "mention teammate"
+    "teammate note",
+    "staff-only note",
+    "whisper note",
+    "leave comment"
    ],
    "produces": "conversation",
    "consumes": [
     "conversation"
    ],
    "siblings": [
-    "M47.A07",
-    "M07.A01"
+    "M07.A01",
+    "M47.A07"
    ]
   },
   "M11.A09": {
-   "description": "Creates a short summary of a conversation's message history so you can catch up quickly without reading the whole thread.",
+   "description": "Sum up a conversation: message counts each way and by channel, start date, last message each way, and who is waiting on whom.",
    "synonyms": [
-    "summarize chat",
-    "thread recap",
     "conversation summary",
-    "tl;dr",
-    "catch up on thread",
-    "brief overview",
-    "digest conversation",
-    "summarise messages"
+    "recap thread",
+    "chat overview",
+    "thread stats",
+    "message counts",
+    "who is waiting",
+    "conversation digest",
+    "summarize chat",
+    "history summary"
    ],
    "produces": null,
    "consumes": [
@@ -2170,53 +2169,56 @@
    "siblings": []
   },
   "M11.A10": {
-   "description": "Lists conversations where the customer's last message has not yet been answered, to help find threads needing a reply.",
+   "description": "List open conversations waiting for a reply, longest wait first, either where the customer wrote last or where we did. People never messaged do not appear.",
    "synonyms": [
-    "awaiting reply",
-    "unreplied chats",
-    "pending responses",
-    "needs response",
     "unanswered messages",
-    "waiting on us",
-    "inbox backlog",
-    "no reply yet"
+    "awaiting reply",
+    "pending replies",
+    "needs response",
+    "no reply yet",
+    "overdue replies",
+    "waiting on customer",
+    "unreplied chats",
+    "follow-up needed",
+    "inbox backlog"
    ],
    "produces": "conversation",
    "consumes": [],
    "siblings": []
   },
   "M12.A01": {
-   "description": "Write and save a text message as a draft without sending it. Use it to prepare the wording for a contact; unlike Send SMS, nothing goes out yet.",
+   "description": "Write a text message to a contact or lead and save it as a draft without sending it. Use Send SMS later to deliver it.",
    "synonyms": [
     "write text",
     "compose SMS",
     "save text draft",
     "prepare text message",
-    "new text message",
-    "draft text",
-    "start SMS",
-    "unsent text"
+    "new text",
+    "draft message",
+    "text for later",
+    "start SMS"
    ],
    "produces": "sms",
    "consumes": [
     "contact",
-    "template"
+    "lead"
    ],
    "siblings": [
     "M13.A01"
    ]
   },
   "M12.A02": {
-   "description": "Check how a text message will be split into segments and how many characters it uses, so you can estimate cost and length before sending.",
+   "description": "Check how a text would be split and billed: character count, encoding (GSM-7 or UCS-2 for emoji) and number of segments. Nothing is sent.",
    "synonyms": [
-    "SMS length check",
-    "segment count",
+    "SMS length",
     "character count",
-    "text message cost",
-    "count segments",
-    "message length",
-    "SMS parts",
-    "encoding check"
+    "segment count",
+    "text cost",
+    "check encoding",
+    "emoji text",
+    "how many segments",
+    "SMS billing",
+    "message size"
    ],
    "produces": null,
    "consumes": [
@@ -2227,58 +2229,60 @@
    ]
   },
   "M12.A03": {
-   "description": "Send a text message to a contact right now. Unlike Schedule SMS, it goes out immediately rather than at a later time.",
+   "description": "Send a text message right now, either a saved draft or a new message to a contact or lead. Refused if they opted out or have no valid mobile.",
    "synonyms": [
-    "send text",
     "text now",
+    "send text",
     "fire off SMS",
-    "deliver text message",
-    "message contact by text",
-    "send text message",
-    "text a customer",
-    "dispatch SMS"
+    "message by text",
+    "deliver SMS",
+    "send draft text",
+    "text contact",
+    "SMS blast one",
+    "send text message"
    ],
    "produces": "sms",
    "consumes": [
+    "sms",
     "contact",
-    "sms"
+    "lead"
    ],
    "siblings": [
     "M13.A03"
    ]
   },
   "M12.A04": {
-   "description": "Set a text message to be sent automatically at a future date and time. Unlike Send SMS, it is delayed; unlike Draft SMS, it is queued for delivery.",
+   "description": "Schedule a text message to go out at a later time, from a saved draft or a new message. Same consent rules as sending now.",
    "synonyms": [
-    "delay text",
     "send text later",
-    "queue SMS",
-    "timed text message",
-    "schedule text",
+    "delay SMS",
+    "timed text",
+    "queue text",
+    "text at a set time",
     "plan SMS",
     "future text",
-    "text at specific time"
+    "schedule text message"
    ],
    "produces": "sms",
    "consumes": [
     "sms",
-    "contact"
+    "contact",
+    "lead"
    ],
    "siblings": [
     "M13.A04"
    ]
   },
   "M12.A05": {
-   "description": "Stop a queued text message from going out at its scheduled time. Only works for messages not yet sent.",
+   "description": "Cancel a scheduled text message before it goes out, so it is not delivered.",
    "synonyms": [
-    "unschedule text",
-    "stop scheduled SMS",
-    "cancel queued text",
-    "abort text",
+    "stop scheduled text",
+    "unschedule SMS",
     "delete scheduled text",
-    "revoke pending SMS",
-    "undo scheduled message",
-    "call off text"
+    "abort text",
+    "call off SMS",
+    "revoke queued text",
+    "cancel pending text"
    ],
    "produces": "sms",
    "consumes": [
@@ -2289,16 +2293,16 @@
    ]
   },
   "M12.A06": {
-   "description": "Open a single text message to see its content, recipient, status and timestamps.",
+   "description": "Open one text message to see who it is to or from, the text, its status and timestamps.",
    "synonyms": [
-    "view text message",
-    "SMS info",
-    "open SMS",
-    "show text",
-    "read text message",
-    "SMS record",
+    "view text",
+    "show SMS",
+    "open text message",
+    "read SMS",
+    "text info",
     "message details",
-    "look up text"
+    "look up text",
+    "SMS record"
    ],
    "produces": "sms",
    "consumes": [
@@ -2309,36 +2313,38 @@
    ]
   },
   "M12.A07": {
-   "description": "Find text messages by keyword, contact, date or status. Use it to look through past sent and received SMS.",
+   "description": "Find text messages by contact or lead, direction, status, date or text content. Results are newest first.",
    "synonyms": [
     "find texts",
-    "look up SMS",
-    "search text messages",
+    "search SMS",
+    "look for text messages",
     "text history",
+    "inbound texts",
+    "outbound texts",
     "filter SMS",
     "SMS log",
-    "list texts",
-    "find sent texts"
+    "list texts"
    ],
    "produces": "sms",
    "consumes": [
-    "contact"
+    "contact",
+    "lead"
    ],
    "siblings": [
     "M13.A07"
    ]
   },
   "M12.A08": {
-   "description": "Check whether a sent text was delivered, failed or is still pending. Use it to track outcome, not to read the message content.",
+   "description": "Check whether a text message was delivered and, if it failed, the reason why.",
    "synonyms": [
-    "did text arrive",
-    "SMS delivered",
-    "text delivery report",
+    "was text delivered",
     "SMS failed",
-    "delivery receipt",
-    "text sent status",
+    "delivery report",
+    "text status",
+    "undelivered SMS",
+    "why text failed",
     "delivery check",
-    "undelivered text"
+    "SMS bounce"
    ],
    "produces": null,
    "consumes": [
@@ -2349,16 +2355,16 @@
    ]
   },
   "M12.A09": {
-   "description": "Simulate an incoming text reply from a contact for testing, so it appears as a received message in the system.",
+   "description": "Simulate a text arriving from a phone number, as if the person replied. It lands in their conversation as unread; STOP-type replies also opt them out.",
    "synonyms": [
-    "fake inbound text",
+    "fake incoming text",
     "simulate reply",
-    "test incoming SMS",
-    "mock text reply",
-    "simulate received text",
-    "incoming text test",
-    "pretend customer text",
-    "inbound SMS test"
+    "mock inbound SMS",
+    "test text reply",
+    "pretend customer texted",
+    "incoming SMS test",
+    "simulate STOP",
+    "inbound text"
    ],
    "produces": "sms",
    "consumes": [
@@ -2369,141 +2375,148 @@
    ]
   },
   "M12.A10": {
-   "description": "Record that a contact has opted out of text messages, such as by replying STOP, so no further SMS are sent to them.",
+   "description": "Record that a contact or lead no longer wants text messages, so future sends to their number are refused. For email use Record email unsubscribe.",
    "synonyms": [
-    "STOP reply",
-    "unsubscribe from texts",
-    "opt out SMS",
+    "opt out of texts",
+    "stop texting",
+    "SMS unsubscribe",
     "do not text",
-    "block texts",
+    "block SMS",
     "text opt-out",
-    "stop texting contact",
-    "SMS consent withdrawn"
+    "STOP request",
+    "no more texts"
    ],
    "produces": null,
    "consumes": [
-    "contact"
+    "contact",
+    "lead"
    ],
    "siblings": [
-    "M13.A10",
-    "M01.A08"
+    "M13.A10"
    ]
   },
   "M13.A01": {
-   "description": "Write and save an email as a draft to a contact without sending it. Use Preview to check how it looks, or Send email to deliver it.",
+   "description": "Write an email to a contact or lead and save it as a draft without sending. Can also draft a payment reminder for an open invoice. Send it later with Send email.",
    "synonyms": [
     "write email",
     "compose email",
-    "new email draft",
     "save email draft",
-    "start email",
+    "new email draft",
     "prepare email",
-    "email message draft",
-    "create email"
+    "draft invoice reminder",
+    "email draft",
+    "start an email",
+    "payment reminder draft"
    ],
    "produces": "email",
    "consumes": [
     "contact",
-    "template"
+    "lead",
+    "invoice"
    ],
    "siblings": [
     "M12.A01"
    ]
   },
   "M13.A02": {
-   "description": "Show how a drafted email will look with its subject, body and merged contact details, before anything goes out. It does not send or change the email.",
+   "description": "Show a draft email as it would go out and list anything that would block it, such as unsubscribed, do-not-disturb, missing address or a recent reminder. Does not send.",
    "synonyms": [
-    "view email draft",
-    "email preview",
-    "check email",
-    "see rendered email",
-    "proof email",
-    "test view email",
-    "review email before sending",
-    "email mockup"
+    "preview email",
+    "check email before sending",
+    "email dry run",
+    "review draft",
+    "what will email look like",
+    "email blockers",
+    "pre-send check",
+    "test email view",
+    "see email first"
    ],
-   "produces": null,
+   "produces": "email",
    "consumes": [
     "email"
    ],
    "siblings": [
-    "M12.A02",
-    "M14.A09"
+    "M12.A02"
    ]
   },
   "M13.A03": {
-   "description": "Deliver an email to the recipient right now. Differs from Schedule email, which sends at a later time, and from Draft email, which only saves it.",
+   "description": "Send an email right now, either a saved draft or a new message to a contact or lead. Refused if they unsubscribed or opted out. Use Schedule email for later.",
    "synonyms": [
-    "send mail now",
+    "send mail",
+    "email now",
     "deliver email",
-    "email contact",
     "fire off email",
-    "dispatch email",
+    "send draft",
     "send message by email",
-    "mail out",
-    "send draft"
+    "mail contact",
+    "email a lead",
+    "send immediately"
    ],
    "produces": "email",
    "consumes": [
     "email",
-    "contact"
+    "contact",
+    "lead"
    ],
    "siblings": [
     "M12.A03"
    ]
   },
   "M13.A04": {
-   "description": "Set an email to be sent automatically at a future date and time. Differs from Send email, which goes out immediately.",
+   "description": "Schedule an email to go out at a later date and time, from a saved draft or a new message. Same consent rules as sending. Use Send email for immediate delivery.",
    "synonyms": [
     "send email later",
     "delay email",
     "queue email",
     "timed email",
-    "email at specific time",
-    "plan email send",
+    "email at a set time",
     "schedule mail",
-    "future email"
+    "future email",
+    "set email send time",
+    "send on date"
    ],
    "produces": "email",
    "consumes": [
-    "email"
+    "email",
+    "contact",
+    "lead"
    ],
    "siblings": [
     "M12.A04"
    ]
   },
   "M13.A05": {
-   "description": "Stop a scheduled email from going out so it is not delivered at its planned time. Only works for emails not yet sent.",
+   "description": "Cancel an email that is scheduled but not yet sent, so it will not go out. Does not unsend emails already delivered.",
    "synonyms": [
-    "unschedule email",
     "stop scheduled email",
-    "abort email send",
-    "cancel queued email",
-    "revoke scheduled mail",
+    "unschedule email",
     "delete scheduled email",
+    "abort email",
+    "cancel queued email",
     "call off email",
-    "halt email"
+    "revoke scheduled mail",
+    "don't send email"
    ],
    "produces": "email",
    "consumes": [
     "email"
    ],
    "siblings": [
-    "M12.A05",
-    "M45.A03"
+    "M12.A05"
    ]
   },
   "M13.A06": {
-   "description": "Open one email message to see its sender, recipient, subject, body and current state. Use Search email messages to find emails instead.",
+   "description": "Open one email to see who it's to or from, subject, body, kind, status and timestamps. Use Search email messages to find emails first.",
    "synonyms": [
     "view email",
     "open email",
-    "email info",
+    "email details",
     "read email",
     "show email",
-    "email record",
-    "message details",
-    "look up email"
+    "email info",
+    "look up email",
+    "email content",
+    "see message"
    ],
    "produces": "email",
    "consumes": [
@@ -2514,38 +2527,44 @@
    ]
   },
   "M13.A07": {
-   "description": "Find email messages by keyword, recipient, subject, date or status. Returns a list of matches rather than the details of one email.",
+   "description": "Find emails by contact or lead, invoice, campaign, kind, direction, status, date or text, newest first. Use Get email details for a single known email.",
    "synonyms": [
     "find emails",
-    "search mail",
-    "look for emails",
-    "email lookup",
-    "filter emails",
+    "email search",
+    "look up emails",
     "list emails",
-    "emails by recipient",
-    "email inbox search"
+    "email history",
+    "emails sent to contact",
+    "filter emails",
+    "inbox search",
+    "sent emails",
+    "search mail"
    ],
    "produces": "email",
    "consumes": [
-    "contact"
+    "contact",
+    "lead",
+    "invoice",
+    "campaign"
    ],
    "siblings": [
     "M12.A07"
    ]
   },
   "M13.A08": {
-   "description": "Check whether a sent email was delivered, opened, clicked, bounced or failed. Differs from Get email details, which shows the content.",
+   "description": "Check whether an email was delivered or bounced, and the reason why. Use it to troubleshoot messages that did not arrive.",
    "synonyms": [
     "email delivered",
-    "email bounce",
-    "email opened",
+    "bounce check",
     "did email arrive",
-    "email tracking",
-    "email status",
-    "open and click status",
-    "delivery report"
+    "email bounced",
+    "delivery report",
+    "email failed",
+    "delivery result",
+    "email deliverability",
+    "bounce reason"
    ],
-   "produces": null,
+   "produces": "email",
    "consumes": [
     "email"
    ],
@@ -2554,16 +2573,16 @@
    ]
   },
   "M13.A09": {
-   "description": "Simulate an incoming email from a contact to test how replies and inbound messages appear in the system. No real email is received.",
+   "description": "Simulate an email arriving from an address, as if the person replied. It appears in their conversation as unread. For testing, not for sending.",
    "synonyms": [
     "fake inbound email",
-    "test incoming email",
     "simulate reply",
-    "mock received email",
-    "incoming mail test",
-    "simulate email reply",
-    "inbound email test",
-    "pretend email received"
+    "test incoming email",
+    "mock email reply",
+    "pretend customer replied",
+    "incoming email test",
+    "simulate received email",
+    "inbound mail"
    ],
    "produces": "email",
    "consumes": [
@@ -2574,7 +2593,7 @@
    ]
   },
   "M13.A10": {
-   "description": "Log that a contact unsubscribed from email so they get no more marketing emails. Differs from Set communication preferences, which edits preferences more broadly.",
+   "description": "Record that a contact or lead unsubscribed from email, so marketing and follow-up emails are refused while invoices still go out. For texts, use the SMS opt-out.",
    "synonyms": [
     "unsubscribe contact",
     "email opt out",
@@ -2582,16 +2601,17 @@
     "opt out of email",
     "remove from email list",
     "do not email",
-    "email unsubscribe request",
-    "suppress email"
+    "email unsubscribe",
+    "mark unsubscribed",
+    "block marketing email"
    ],
-   "produces": "contact",
+   "produces": null,
    "consumes": [
-    "contact"
+    "contact",
+    "lead"
    ],
    "siblings": [
-    "M12.A10",
-    "M01.A08"
+    "M12.A10"
    ]
   },
   "M14.A01": {
@@ -2783,119 +2803,112 @@
    ]
   },
   "M15.A01": {
-   "description": "Creates a new outreach campaign with a name and goal, ready for audience, messages and schedule to be added. Does not start sending; use Launch campaign for that.",
+   "description": "Creates a new draft marketing campaign with a name and main channel (email or SMS). Audience and message steps are added afterwards, before launching.",
    "synonyms": [
     "new campaign",
-    "start campaign setup",
-    "build campaign",
-    "add campaign",
-    "set up outreach",
-    "new marketing campaign",
-    "create blast",
-    "draft campaign"
+    "start campaign",
+    "set up campaign",
+    "draft campaign",
+    "add outreach campaign",
+    "email blast",
+    "SMS campaign",
+    "marketing campaign",
+    "build campaign"
    ],
    "produces": "campaign",
    "consumes": [],
-   "siblings": [
-    "M16.A01",
-    "M09.A01"
-   ]
+   "siblings": []
   },
   "M15.A02": {
-   "description": "Shows the full setup of one campaign: its status, audience, message steps and schedule. For results and numbers use Get campaign performance instead.",
+   "description": "Shows everything about one campaign: status, audience and size, steps, schedule and leads generated. For sending results use campaign performance instead.",
    "synonyms": [
-    "view campaign",
     "campaign info",
+    "view campaign",
     "open campaign",
     "campaign overview",
-    "show campaign",
-    "campaign settings",
     "campaign status",
-    "campaign setup"
+    "campaign summary",
+    "show campaign",
+    "campaign steps",
+    "campaign audience size"
+   ],
+   "produces": "campaign",
+   "consumes": [
+    "campaign"
+   ],
+   "siblings": []
+  },
+  "M15.A03": {
+   "description": "Lists campaigns, optionally filtered by status, channel or name, to find or browse existing outreach.",
+   "synonyms": [
+    "all campaigns",
+    "browse campaigns",
+    "find campaign",
+    "campaign list",
+    "show campaigns",
+    "active campaigns",
+    "draft campaigns",
+    "search campaigns",
+    "campaigns by channel"
+   ],
+   "produces": "campaign",
+   "consumes": [],
+   "siblings": []
+  },
+  "M15.A04": {
+   "description": "Chooses who a draft or scheduled campaign is sent to: everyone with a tag, specific contacts, or both. Does not change message content or timing.",
+   "synonyms": [
+    "campaign recipients",
+    "choose audience",
+    "target contacts",
+    "select recipients",
+    "campaign target list",
+    "who gets campaign",
+    "audience by tag",
+    "add contacts to campaign",
+    "campaign segment"
+   ],
+   "produces": "campaign",
+   "consumes": [
+    "campaign",
+    "tag",
+    "contact"
+   ],
+   "siblings": []
+  },
+  "M15.A05": {
+   "description": "Adds a message to a draft or scheduled campaign with channel, subject (email), body and the number of days after launch it goes out.",
+   "synonyms": [
+    "add campaign email",
+    "add campaign text",
+    "campaign message",
+    "drip step",
+    "follow-up message",
+    "new sequence step",
+    "add step to campaign",
+    "campaign sequence",
+    "message delay days"
    ],
    "produces": "campaign",
    "consumes": [
     "campaign"
    ],
    "siblings": [
-    "M16.A02",
-    "M05.A02"
-   ]
-  },
-  "M15.A03": {
-   "description": "Lists all campaigns, optionally narrowed by status, so you can browse what exists, is running or is paused.",
-   "synonyms": [
-    "all campaigns",
-    "browse campaigns",
-    "show campaigns",
-    "campaign list",
-    "running campaigns",
-    "active campaigns",
-    "find campaigns",
-    "my campaigns"
-   ],
-   "produces": "campaign",
-   "consumes": [],
-   "siblings": [
-    "M16.A03",
-    "M05.A03"
-   ]
-  },
-  "M15.A04": {
-   "description": "Chooses who receives the campaign, such as a smart list, tag or group of contacts. Replaces the audience previously set on the campaign.",
-   "synonyms": [
-    "campaign recipients",
-    "choose recipients",
-    "target audience",
-    "select contacts",
-    "campaign target list",
-    "who receives campaign",
-    "define audience",
-    "campaign segment"
-   ],
-   "produces": "campaign",
-   "consumes": [
-    "campaign",
-    "smart_list",
-    "tag"
-   ],
-   "siblings": [
-    "M09.A05"
-   ]
-  },
-  "M15.A05": {
-   "description": "Adds a message step (an SMS or email, often with a delay) to a campaign's sequence, using a message template or custom content.",
-   "synonyms": [
-    "add campaign email",
-    "add campaign message",
-    "new sequence step",
-    "add drip step",
-    "append message",
-    "campaign sequence step",
-    "add follow-up message",
-    "add campaign sms"
-   ],
-   "produces": "campaign",
-   "consumes": [
-    "campaign",
-    "template"
-   ],
-   "siblings": [
-    "M16.A04",
-    "M36.A04"
+    "M16.A04"
    ]
   },
   "M15.A06": {
-   "description": "Sets when a campaign starts sending and its sending window or timing. Only configures the timing; Launch campaign actually starts it.",
+   "description": "Sets the start date and time of a draft campaign, making it scheduled, or clears it to return to draft. Different from launching now.",
    "synonyms": [
-    "campaign start time",
     "schedule campaign",
-    "campaign send date",
-    "set send window",
-    "campaign timing",
-    "plan campaign date",
-    "campaign calendar",
-    "when to send"
+    "campaign start date",
+    "plan campaign",
+    "set send time",
+    "start later",
+    "clear campaign schedule",
+    "unschedule campaign",
+    "campaign date",
+    "delay start"
    ],
    "produces": "campaign",
    "consumes": [
@@ -2907,37 +2920,34 @@
    ]
   },
   "M15.A07": {
-   "description": "Starts a configured campaign so its messages go out to the audience. Use Resume campaign instead for one that was paused.",
+   "description": "Launches a draft or scheduled campaign immediately, sending day-0 steps to reachable contacts. Opted-out and do-not-disturb people are skipped and counted.",
    "synonyms": [
-    "start campaign",
-    "go live campaign",
-    "activate campaign",
-    "run campaign",
-    "begin sending",
-    "kick off campaign",
+    "start campaign now",
     "send campaign",
-    "start outreach"
+    "go live",
+    "run campaign",
+    "activate campaign",
+    "kick off campaign",
+    "begin campaign",
+    "send blast now"
    ],
    "produces": "campaign",
    "consumes": [
     "campaign"
    ],
-   "siblings": [
-    "M16.A08",
-    "M35.A09"
-   ]
+   "siblings": []
   },
   "M15.A08": {
-   "description": "Temporarily stops a running campaign from sending further messages while keeping its setup and progress. Can be continued later with Resume campaign.",
+   "description": "Pauses an active campaign so no further steps are sent. Use resume to continue it later.",
    "synonyms": [
     "stop campaign",
     "hold campaign",
+    "freeze campaign",
     "suspend campaign",
     "halt sending",
-    "freeze campaign",
     "pause outreach",
-    "stop sending temporarily",
-    "campaign on hold"
+    "stop sending messages",
+    "put campaign on hold"
    ],
    "produces": "campaign",
    "consumes": [
@@ -2949,16 +2959,16 @@
    ]
   },
   "M15.A09": {
-   "description": "Restarts a paused campaign so it continues sending from where it stopped. Differs from Launch campaign, which starts one for the first time.",
+   "description": "Resumes a paused campaign so its remaining steps continue to go out.",
    "synonyms": [
+    "restart campaign",
     "continue campaign",
     "unpause campaign",
-    "restart campaign",
-    "resume sending",
+    "turn campaign back on",
     "reactivate campaign",
-    "carry on campaign",
-    "take off hold",
-    "start again"
+    "carry on sending",
+    "resume outreach",
+    "un-hold campaign"
    ],
    "produces": "campaign",
    "consumes": [
@@ -2969,24 +2979,25 @@
    ]
   },
   "M15.A10": {
-   "description": "Shows results for a campaign, such as sent, delivered, opened, clicked, replied and unsubscribed counts. For its configuration use Get campaign details.",
+   "description": "Shows how a campaign is doing: messages sent, delivered, bounced or failed, replies and leads generated. For setup details use get campaign details.",
    "synonyms": [
-    "campaign stats",
     "campaign results",
+    "campaign stats",
     "campaign metrics",
-    "open rate",
-    "click rate",
     "campaign analytics",
+    "delivery rate",
+    "bounce count",
+    "reply count",
     "campaign report",
-    "how did campaign do"
+    "how is campaign doing",
+    "campaign ROI"
    ],
    "produces": "report",
    "consumes": [
     "campaign"
    ],
    "siblings": [
-    "M36.A10",
-    "M50.A07"
+    "M36.A10"
    ]
   },
   "M16.A01": {
@@ -3979,121 +3990,125 @@
    ]
   },
   "M21.A01": {
-   "description": "Books a new appointment on a calendar for a contact at a chosen date and time, with a host. Use to schedule a meeting, not to change an existing one.",
+   "description": "Book a new appointment with a contact or lead, hosted by a user, at a future time. Defaults to 30 minutes; refused if the host is busy or unavailable.",
    "synonyms": [
     "book appointment",
     "schedule meeting",
-    "new appointment",
     "set up meeting",
+    "new appointment",
     "book a call",
-    "add appointment",
-    "make booking",
-    "schedule visit"
+    "make a booking",
+    "add meeting",
+    "schedule a visit",
+    "book consultation"
    ],
    "produces": "appointment",
    "consumes": [
-    "calendar",
     "contact",
-    "user",
-    "slot"
+    "lead",
+    "user"
    ],
    "siblings": [
-    "M24.A01"
+    "M24.A01",
+    "M06.A01"
    ]
   },
   "M21.A02": {
-   "description": "Shows the full details of one appointment: time, host, attendees, status and notes. Use when you already know which appointment you want.",
+   "description": "Open one appointment to see who it's with, host, attendees, time, location, status and outcome.",
    "synonyms": [
-    "view appointment",
     "appointment info",
-    "open appointment",
+    "view appointment",
     "show meeting",
     "meeting details",
     "appointment status",
-    "see booking",
-    "look up appointment"
+    "look up appointment",
+    "open booking",
+    "see meeting"
    ],
    "produces": "appointment",
    "consumes": [
     "appointment"
    ],
    "siblings": [
-    "M24.A02"
+    "M24.A02",
+    "M06.A02"
    ]
   },
   "M21.A03": {
-   "description": "Finds appointments by filters such as date range, host, contact, calendar or status. Use to browse or look up several meetings at once.",
+   "description": "Find appointments by contact or lead, host, status or date range, soonest first. Use it to check whether someone has a meeting booked.",
    "synonyms": [
     "find appointments",
-    "list appointments",
-    "search meetings",
+    "list meetings",
     "upcoming appointments",
-    "appointments by date",
-    "look for bookings",
-    "filter meetings",
-    "my appointments"
+    "search bookings",
+    "meetings this week",
+    "do they have a meeting",
+    "host's schedule",
+    "look for meetings",
+    "appointments by date"
    ],
    "produces": "appointment",
    "consumes": [
-    "calendar",
     "contact",
+    "lead",
     "user"
    ],
    "siblings": [
-    "M24.A03"
+    "M24.A03",
+    "M06.A03"
    ]
   },
   "M21.A04": {
-   "description": "Moves an existing appointment to a new date or time while keeping the same attendees. Different from cancelling, which removes it entirely.",
+   "description": "Move a booked appointment to a new future time, keeping its length unless a new duration or end time is given. Not the same as cancelling.",
    "synonyms": [
-    "change appointment time",
     "move appointment",
+    "change meeting time",
     "reschedule meeting",
-    "change date",
-    "postpone",
+    "postpone appointment",
     "push back meeting",
-    "new time slot",
-    "rebook"
+    "change appointment date",
+    "shift booking",
+    "new time slot"
    ],
    "produces": "appointment",
    "consumes": [
-    "appointment",
-    "slot"
+    "appointment"
    ],
    "siblings": []
   },
   "M21.A05": {
-   "description": "Cancels a booked appointment so it no longer takes place and frees the time slot. Different from marking it completed or a no-show.",
+   "description": "Cancel a booked appointment, with an optional reason. Use it when the meeting won't happen at all, rather than moving it or marking it done.",
    "synonyms": [
     "cancel meeting",
     "call off appointment",
-    "delete booking",
-    "cancel booking",
-    "drop appointment",
+    "drop booking",
+    "delete appointment",
     "scrap meeting",
-    "void appointment",
-    "cancel visit"
+    "cancel booking",
+    "appointment cancelled",
+    "called off"
    ],
    "produces": "appointment",
    "consumes": [
     "appointment"
    ],
    "siblings": [
+    "M06.A10",
     "M30.A09",
     "M32.A09"
    ]
   },
   "M21.A06": {
-   "description": "Changes which team member hosts an appointment. Use to hand a meeting to someone else without changing its time or attendees.",
+   "description": "Hand a booked appointment over to a different host. Refused if the new host is unavailable or busy at that time.",
    "synonyms": [
     "change host",
     "reassign appointment",
-    "new meeting host",
-    "switch host",
-    "hand over meeting",
+    "switch meeting host",
+    "new host",
+    "transfer appointment",
+    "hand off meeting",
     "appointment owner",
-    "assign staff",
-    "set host"
+    "assign host"
    ],
    "produces": "appointment",
    "consumes": [
@@ -4101,82 +4116,84 @@
     "user"
    ],
    "siblings": [
-    "M20.A06",
+    "M01.A07",
+    "M06.A05",
     "M47.A04"
    ]
   },
   "M21.A07": {
-   "description": "Adds another person to an existing appointment as a guest or participant, so they are included in the meeting.",
+   "description": "Invite another contact, lead or teammate to a booked appointment as an additional attendee.",
    "synonyms": [
-    "add guest",
     "invite to meeting",
+    "add guest",
     "add participant",
     "include attendee",
+    "bring someone to meeting",
     "add person to appointment",
     "extra attendee",
-    "invite guest",
-    "add invitee"
+    "invite guest"
    ],
    "produces": "appointment",
    "consumes": [
     "appointment",
-    "contact"
+    "contact",
+    "lead",
+    "user"
    ],
    "siblings": [
     "M24.A06"
    ]
   },
   "M21.A08": {
-   "description": "Takes a person off an appointment's attendee list while the appointment itself stays booked. Different from cancelling the whole meeting.",
+   "description": "Remove an invited attendee, other than the main contact or lead, from a booked appointment.",
    "synonyms": [
     "remove guest",
     "uninvite",
     "drop participant",
+    "take off attendee",
+    "remove person from meeting",
     "delete attendee",
-    "take off meeting",
-    "remove invitee",
-    "remove person from appointment",
-    "kick attendee"
+    "kick from meeting",
+    "remove invitee"
    ],
    "produces": "appointment",
    "consumes": [
-    "appointment",
-    "contact"
+    "appointment"
    ],
    "siblings": [
     "M24.A07"
    ]
   },
   "M21.A09": {
-   "description": "Records that an attendee did not show up to the appointment. Use for missed meetings, not for cancellations made in advance.",
+   "description": "Record that the contact or lead didn't show up to an appointment that has already started. Differs from completed, where the meeting happened.",
    "synonyms": [
     "no show",
-    "did not attend",
+    "didn't show",
     "missed appointment",
-    "absent",
-    "failed to show",
-    "flag no-show",
-    "didn't turn up",
-    "mark absent"
+    "client absent",
+    "failed to attend",
+    "did not turn up",
+    "absent from meeting",
+    "flag no-show"
    ],
    "produces": "appointment",
    "consumes": [
-    "appointment",
-    "contact"
+    "appointment"
    ],
    "siblings": []
   },
   "M21.A10": {
-   "description": "Marks an appointment as finished after it took place. Different from cancelling or no-show, which mean the meeting did not happen.",
+   "description": "Mark an appointment that has started as completed, with an optional outcome note. Differs from no-show or cancel.",
    "synonyms": [
-    "complete meeting",
-    "appointment done",
+    "meeting done",
     "finish appointment",
-    "mark as held",
-    "meeting completed",
-    "close appointment",
-    "mark attended",
-    "set as done"
+    "complete meeting",
+    "appointment held",
+    "mark as attended",
+    "close out appointment",
+    "meeting happened",
+    "log outcome",
+    "set done"
    ],
    "produces": "appointment",
    "consumes": [
@@ -5381,21 +5398,20 @@
    ]
   },
   "M28.A01": {
-   "description": "Creates a new draft invoice for a contact or company. Use it to start billing; line items can be added afterwards and it is not sent until issued.",
+   "description": "Start a new draft invoice for a contact, optionally with line items, a due date and a memo. Nothing is sent to the customer until it is issued.",
    "synonyms": [
     "new invoice",
-    "bill customer",
     "make invoice",
-    "start invoice",
     "draft invoice",
-    "raise invoice",
-    "generate bill",
-    "invoice a client"
+    "bill customer",
+    "create bill",
+    "start invoice",
+    "write invoice",
+    "invoice a contact"
    ],
    "produces": "invoice",
    "consumes": [
-    "contact",
-    "company"
+    "contact"
    ],
    "siblings": [
     "M27.A01",
@@ -5403,16 +5419,16 @@
    ]
   },
   "M28.A02": {
-   "description": "Opens one invoice and shows its lines, totals, status, due date and amount paid. Use it to look up a specific invoice by id.",
+   "description": "Open one invoice to see its contact, line items, total, amount paid and due, due date, days overdue, reminders sent and payments applied.",
    "synonyms": [
-    "view invoice",
     "invoice details",
+    "view invoice",
     "show invoice",
-    "open invoice",
-    "invoice status",
-    "check invoice",
     "invoice info",
-    "look up invoice"
+    "open invoice record",
+    "invoice balance",
+    "check invoice",
+    "invoice payments applied"
    ],
    "produces": "invoice",
    "consumes": [
@@ -5424,21 +5440,20 @@
    ]
   },
   "M28.A03": {
-   "description": "Finds invoices by customer, status, date, number or amount. Use it for filtered lookups; for only late unpaid ones use the overdue list.",
+   "description": "Find invoices by contact, status (draft, open, paid, void), date range, minimum amount due or invoice number. For just overdue ones ranked, use the overdue list instead.",
    "synonyms": [
     "find invoices",
-    "invoice lookup",
-    "filter invoices",
+    "look up invoice",
     "invoice search",
-    "browse invoices",
-    "invoices by customer",
-    "paid invoices",
-    "unpaid invoices"
+    "filter invoices",
+    "invoices by status",
+    "invoice number lookup",
+    "unpaid invoices",
+    "bills for customer"
    ],
    "produces": "invoice",
    "consumes": [
-    "contact",
-    "company"
+    "contact"
    ],
    "siblings": [
     "M27.A03",
@@ -5446,21 +5461,20 @@
    ]
   },
   "M28.A04": {
-   "description": "Adds a product or service line with quantity and price to an invoice that is still a draft, changing its total.",
+   "description": "Add a line item with description, quantity and unit price to a draft invoice; the total is recalculated automatically.",
    "synonyms": [
     "add invoice item",
     "add charge",
-    "invoice line",
+    "new invoice line",
     "add product to invoice",
-    "new line item",
-    "bill extra item",
-    "append item",
-    "add service line"
+    "append line item",
+    "add service to bill",
+    "invoice row",
+    "extra charge"
    ],
    "produces": "invoice",
    "consumes": [
-    "invoice",
-    "product"
+    "invoice"
    ],
    "siblings": [
     "M27.A04",
@@ -5468,55 +5482,55 @@
    ]
   },
   "M28.A05": {
-   "description": "Edits a draft invoice's details such as customer, notes or terms before it is issued. Does not work on issued invoices; for only the due date use Set invoice due date.",
+   "description": "Edit a draft invoice: change its memo, switch which contact it is for, or replace all of its line items at once.",
    "synonyms": [
     "edit invoice",
     "change draft invoice",
     "modify invoice",
-    "update invoice notes",
-    "amend draft",
-    "edit draft",
-    "correct invoice",
-    "revise invoice"
+    "edit invoice memo",
+    "change invoice customer",
+    "replace line items",
+    "revise draft",
+    "update invoice note"
    ],
    "produces": "invoice",
    "consumes": [
-    "invoice"
+    "invoice",
+    "contact"
    ],
    "siblings": []
   },
   "M28.A06": {
-   "description": "Sets or changes the payment due date of an invoice. Use it to extend or shorten payment terms without editing other invoice details.",
+   "description": "Set or move the due date of a draft or open invoice, for example to give a customer more time to pay.",
    "synonyms": [
-    "invoice due date",
-    "payment deadline",
-    "extend due date",
     "change due date",
-    "payment terms date",
-    "pay by date",
+    "extend due date",
     "invoice deadline",
-    "postpone invoice due"
+    "payment due date",
+    "push back due date",
+    "more time to pay",
+    "move due date",
+    "reschedule payment date"
    ],
    "produces": "invoice",
    "consumes": [
     "invoice"
    ],
    "siblings": [
-    "M06.A06",
-    "M27.A06"
+    "M06.A06"
    ]
   },
   "M28.A07": {
-   "description": "Finalizes a draft invoice and makes it official and sendable to the customer. After issuing, it becomes payable and can no longer be freely edited.",
+   "description": "Issue a draft invoice so it becomes open and is emailed to the contact; due date defaults to 30 days out. Different from just creating the draft.",
    "synonyms": [
-    "finalize invoice",
     "send invoice",
-    "publish invoice",
+    "finalize invoice",
     "approve invoice",
-    "post invoice",
-    "release invoice",
-    "open invoice for payment",
-    "finish draft"
+    "publish invoice",
+    "bill customer now",
+    "open invoice",
+    "email invoice",
+    "release invoice"
    ],
    "produces": "invoice",
    "consumes": [
@@ -5527,35 +5541,36 @@
    ]
   },
   "M28.A08": {
-   "description": "Sends a payment reminder to the customer about an issued invoice that is unpaid or overdue. Does not create or issue the invoice.",
+   "description": "Email the contact a payment reminder for an open invoice right away, at most once per 24 hours. To review the wording first, draft an email instead.",
    "synonyms": [
     "payment reminder",
-    "dunning",
+    "dun customer",
     "chase payment",
-    "nudge customer",
+    "nudge unpaid invoice",
     "remind to pay",
     "overdue notice",
-    "invoice follow-up",
-    "collect payment reminder"
+    "follow up on invoice",
+    "collections email"
    ],
    "produces": null,
    "consumes": [
-    "invoice"
+    "invoice",
+    "contact"
    ],
    "siblings": [
-    "M29.A01"
+    "M13.A03"
    ]
   },
   "M28.A09": {
-   "description": "Voids an invoice that has not been paid so it is cancelled and no longer owed. Cannot be used on paid invoices; use refunds for those.",
+   "description": "Void a draft or open invoice that has no payments, recording a reason. This cannot be undone; it differs from cancelling a payment request.",
    "synonyms": [
     "cancel invoice",
-    "void invoice",
-    "annul invoice",
-    "write off invoice",
+    "void bill",
     "invalidate invoice",
+    "write off invoice",
+    "annul invoice",
     "kill invoice",
-    "nullify invoice",
+    "invoice made in error",
     "delete unpaid invoice"
    ],
    "produces": "invoice",
@@ -5568,152 +5583,149 @@
    ]
   },
   "M28.A10": {
-   "description": "Lists issued invoices that are past their due date and still unpaid, to review late payers and outstanding balances.",
+   "description": "List open invoices past their due date, most overdue first, with days overdue, amount due and last reminder date. Simpler than a general invoice search.",
    "synonyms": [
-    "late invoices",
-    "past due invoices",
+    "overdue invoices",
+    "late payments",
+    "past due bills",
     "unpaid overdue",
-    "outstanding invoices",
-    "overdue bills",
     "delinquent invoices",
-    "who owes money",
-    "overdue balances"
+    "aging report",
+    "who owes us",
+    "outstanding balances"
    ],
    "produces": "invoice",
    "consumes": [],
    "siblings": []
   },
   "M29.A01": {
-   "description": "Creates a request asking a customer to pay a set amount, optionally tied to an invoice. Use it to ask for money; it doesn't record money already received.",
+   "description": "Creates a payment link asking a contact to pay an amount, optionally tied to an open invoice, defaulting to the balance still due. It only makes the link; nothing is sent.",
    "synonyms": [
+    "payment link",
     "request payment",
     "ask for payment",
-    "payment link",
-    "collect payment",
-    "bill customer",
-    "new payment request",
-    "charge request",
-    "payment ask"
+    "pay link",
+    "collect money",
+    "billing link",
+    "checkout link",
+    "create pay request",
+    "charge customer link"
    ],
    "produces": "payment_request",
    "consumes": [
     "contact",
     "invoice"
    ],
-   "siblings": [
-    "M33.A01"
-   ]
+   "siblings": []
   },
   "M29.A02": {
-   "description": "Shows the details and current status of a payment request, such as amount, customer and whether it is still unpaid.",
+   "description": "Looks up one payment request (link) to see who it's for, the amount, the invoice, and whether it's still pending, paid or cancelled.",
    "synonyms": [
-    "view payment request",
+    "view payment link",
     "payment request status",
-    "open payment request",
-    "check payment request",
-    "payment request info",
-    "show payment ask",
-    "request details",
-    "is request paid"
+    "check pay link",
+    "payment request details",
+    "is link paid",
+    "show payment request",
+    "open payment link",
+    "pay link info"
    ],
    "produces": "payment_request",
    "consumes": [
     "payment_request"
    ],
-   "siblings": [
-    "M33.A02"
-   ]
+   "siblings": []
   },
   "M29.A03": {
-   "description": "Cancels a payment request that hasn't been paid yet so it can no longer be paid. Paid requests are not affected; for invoices use void.",
+   "description": "Cancels a payment request that hasn't been paid so its link stops working. Use this for unpaid links, not for undoing payments already received.",
    "synonyms": [
-    "cancel payment request",
+    "cancel payment link",
+    "kill pay link",
+    "void payment request",
+    "disable link",
     "withdraw payment request",
-    "revoke payment link",
-    "drop payment request",
-    "kill payment link",
-    "stop unpaid request",
-    "delete payment request",
-    "void request"
+    "stop payment link",
+    "revoke pay link",
+    "delete payment request"
    ],
    "produces": "payment_request",
    "consumes": [
     "payment_request"
    ],
-   "siblings": [
-    "M28.A09"
-   ]
+   "siblings": []
   },
   "M29.A04": {
-   "description": "Records a simulated payment as received, for testing or manual entry. It logs the payment itself, separate from applying it to an invoice.",
+   "description": "Logs a payment from a contact as a simulated entry by card, bank transfer, cash or check, either succeeded or failed. Successful ones are applied to the related invoice, otherwise left unallocated.",
    "synonyms": [
     "record payment",
     "log payment",
-    "mark as paid",
-    "simulate payment",
+    "add payment",
+    "mark invoice paid",
+    "received cash",
+    "enter check",
     "manual payment",
-    "payment received",
+    "fake payment",
     "test payment",
-    "enter payment",
-    "add payment"
+    "payment received"
    ],
    "produces": "payment",
    "consumes": [
-    "payment_request",
-    "contact"
+    "contact",
+    "invoice",
+    "payment_request"
    ],
    "siblings": []
   },
   "M29.A05": {
-   "description": "Shows the details of a single payment, including amount, method, status and what it has been applied to.",
+   "description": "Shows a single payment with its amount, method, whether it succeeded, and which invoices it was applied to.",
    "synonyms": [
     "view payment",
     "payment info",
-    "payment status",
-    "open payment",
     "show payment",
+    "payment lookup",
     "payment record",
-    "look up payment",
-    "payment detail"
+    "transaction details",
+    "check payment",
+    "payment applied to"
    ],
    "produces": "payment",
    "consumes": [
     "payment"
    ],
-   "siblings": [
-    "M33.A02"
-   ]
+   "siblings": []
   },
   "M29.A06": {
-   "description": "Searches payments by filters such as customer, status, date or amount to find a list of matching payments.",
+   "description": "Finds payments by contact, invoice, status, method or date range, or only those with money not yet applied to an invoice. Newest first; use to browse many payments.",
    "synonyms": [
     "find payments",
-    "search payments",
-    "payment list",
-    "look up payments",
-    "filter payments",
-    "payment history",
     "list payments",
-    "payments by customer"
+    "payment history",
+    "transactions",
+    "unallocated payments",
+    "failed payments",
+    "search transactions",
+    "payments by contact",
+    "payments this month"
    ],
    "produces": "payment",
-   "consumes": [],
-   "siblings": [
-    "M28.A03",
-    "M33.A03"
-   ]
+   "consumes": [
+    "contact",
+    "invoice"
+   ],
+   "siblings": []
   },
   "M29.A07": {
-   "description": "Applies a recorded payment, fully or partly, to an invoice to settle it. Use Remove payment allocation to undo.",
+   "description": "Applies money from a succeeded payment to one of the same contact's open invoices, by default as much as fits. Use to settle an invoice with an unallocated payment.",
    "synonyms": [
     "apply payment",
     "allocate payment",
     "match payment",
-    "settle invoice",
-    "pay invoice",
     "assign payment to invoice",
-    "link payment invoice",
-    "reconcile payment"
+    "settle invoice",
+    "pay off invoice",
+    "use credit on invoice",
+    "reconcile payment",
+    "link payment to invoice"
    ],
    "produces": "payment",
    "consumes": [
@@ -5723,16 +5735,17 @@
    "siblings": []
   },
   "M29.A08": {
-   "description": "Removes the link between a payment and an invoice, so the invoice becomes unpaid again and the payment is free to reallocate.",
+   "description": "Takes a payment back off an invoice, such as when it was applied to the wrong one. The invoice reopens and the money returns to unallocated.",
    "synonyms": [
-    "unallocate payment",
     "unapply payment",
-    "unlink payment",
     "undo allocation",
-    "detach payment invoice",
+    "remove payment from invoice",
     "reverse allocation",
-    "unmatch payment",
-    "remove payment match"
+    "detach payment",
+    "unallocate payment",
+    "wrong invoice fix",
+    "reopen invoice",
+    "unmatch payment"
    ],
    "produces": "payment",
    "consumes": [
@@ -5742,16 +5755,16 @@
    "siblings": []
   },
   "M29.A09": {
-   "description": "Generates a receipt document for a completed payment that can be given to the customer as proof of payment.",
+   "description": "Produces a receipt for a succeeded payment with receipt number, payer, amount, method, date and the invoices it paid.",
    "synonyms": [
     "payment receipt",
-    "make receipt",
-    "create receipt",
+    "get receipt",
     "print receipt",
     "receipt for payment",
     "proof of payment",
     "download receipt",
-    "issue receipt"
+    "payment confirmation",
+    "make receipt"
    ],
    "produces": "payment",
    "consumes": [
@@ -5760,18 +5773,19 @@
    "siblings": []
   },
   "M29.A10": {
-   "description": "Shows why a payment attempt failed, including the failure reason and code, to help diagnose declined or errored payments.",
+   "description": "Explains why a payment failed, such as declined card, insufficient funds, expired card or bank rejection, and suggests what to do next.",
    "synonyms": [
     "why payment failed",
+    "failure reason",
+    "declined card",
     "payment error",
-    "failed payment",
-    "declined payment",
-    "payment failure reason",
-    "payment decline",
-    "failure details",
-    "payment problem"
+    "insufficient funds",
+    "card declined",
+    "failed transaction",
+    "payment problem",
+    "payment failure"
    ],
-   "produces": "payment",
+   "produces": null,
    "consumes": [
     "payment"
    ],
@@ -8912,17 +8926,16 @@
    "siblings": []
   },
   "M46.A01": {
-   "description": "Crea una nueva ficha de negocio con nombre, dirección y teléfono para publicarla en directorios. Úsalo para dar de alta un perfil nuevo, no para editar uno existente.",
+   "description": "Creates a new business listing profile with the company's name, address, phone and other basics so it can later be published to directories.",
    "synonyms": [
-    "nueva ficha de negocio",
-    "alta de ficha",
-    "crear perfil de negocio",
-    "agregar listing",
-    "registrar negocio",
-    "nuevo perfil de empresa",
-    "dar de alta negocio",
-    "ficha de directorio",
-    "add business profile"
+    "new listing",
+    "add business profile",
+    "create business listing",
+    "set up listing",
+    "add location",
+    "new directory profile",
+    "register business",
+    "add business listing"
    ],
    "produces": "listing",
    "consumes": [],
@@ -8931,75 +8944,75 @@
    ]
   },
   "M46.A02": {
-   "description": "Muestra los datos completos de una ficha de negocio: nombre, dirección, teléfono, horarios y categorías. Sirve para consultar una ficha concreta, a diferencia de buscar varias.",
+   "description": "Opens one business listing and shows its saved name, address, phone, hours and categories. Use to look at a single listing, not to find one.",
    "synonyms": [
-    "ver ficha de negocio",
-    "abrir listing",
-    "detalle de ficha",
-    "consultar perfil de negocio",
-    "datos de la ficha",
-    "mostrar listing",
-    "ver perfil del negocio",
-    "información de ficha"
+    "view listing",
+    "show listing",
+    "listing info",
+    "listing profile",
+    "open business listing",
+    "fetch listing",
+    "business profile details",
+    "read listing"
    ],
    "produces": "listing",
    "consumes": [
     "listing"
    ],
    "siblings": [
-    "M02.A02"
+    "M02.A02",
+    "M47.A02"
    ]
   },
   "M46.A03": {
-   "description": "Busca fichas de negocio por nombre, ciudad, categoría u otros criterios y devuelve una lista de coincidencias. Para ver una sola ficha usa obtener detalles.",
+   "description": "Finds business listings by name, address, city or category. Use when you don't know which listing you need; returns a list of matches.",
    "synonyms": [
-    "buscar fichas",
-    "encontrar listing",
-    "filtrar fichas de negocio",
-    "buscar perfiles de negocio",
-    "localizar ficha",
-    "consultar listados",
-    "search listings",
-    "buscar negocio en directorio"
+    "find listing",
+    "look up listing",
+    "search business profiles",
+    "find location",
+    "listing search",
+    "filter listings",
+    "browse listings",
+    "locate business listing"
    ],
    "produces": "listing",
    "consumes": [],
    "siblings": [
-    "M02.A03"
+    "M02.A03",
+    "M47.A03"
    ]
   },
   "M46.A04": {
-   "description": "Cambia el nombre comercial que aparece en una ficha de negocio existente. No modifica dirección ni teléfono.",
+   "description": "Changes the business name shown on an existing listing. Only the name changes, not the address or phone.",
    "synonyms": [
-    "cambiar nombre del negocio",
-    "renombrar ficha",
-    "editar nombre comercial",
-    "modificar nombre de listing",
-    "corregir nombre de la empresa",
-    "nuevo nombre de ficha",
     "rename listing",
-    "actualizar razón comercial"
+    "change business name",
+    "edit listing name",
+    "new business name",
+    "update company name on listing",
+    "fix listing title",
+    "listing title change"
    ],
    "produces": "listing",
    "consumes": [
     "listing"
    ],
    "siblings": [
-    "M35.A04",
-    "M49.A04"
+    "M35.A04"
    ]
   },
   "M46.A05": {
-   "description": "Actualiza la dirección física de una ficha de negocio: calle, ciudad, código postal y país. No cambia teléfono ni horarios.",
+   "description": "Changes the street address, city, state or postal code on a business listing, for example after a move or to fix a mistake.",
    "synonyms": [
-    "cambiar dirección del negocio",
-    "editar domicilio",
-    "mover ubicación",
-    "nueva dirección de ficha",
-    "corregir calle",
-    "actualizar ubicación",
-    "modificar código postal",
-    "business address change"
+    "change address",
+    "edit listing address",
+    "new location address",
+    "moved office",
+    "update street address",
+    "fix address",
+    "listing zip code",
+    "relocate business"
    ],
    "produces": "listing",
    "consumes": [
@@ -9010,16 +9023,15 @@
    ]
   },
   "M46.A06": {
-   "description": "Actualiza el número de teléfono de contacto que muestra una ficha de negocio. No cambia nombre ni dirección.",
+   "description": "Changes the phone number shown on a business listing. Does not touch the name or address.",
    "synonyms": [
-    "cambiar teléfono del negocio",
-    "editar número de ficha",
-    "nuevo teléfono",
-    "modificar celular del listing",
-    "corregir número de contacto",
-    "actualizar tel",
-    "phone number change",
-    "cambiar línea del negocio"
+    "change phone number",
+    "edit listing phone",
+    "update telephone",
+    "new business number",
+    "fix phone",
+    "listing contact number",
+    "change business phone"
    ],
    "produces": "listing",
    "consumes": [
@@ -9028,17 +9040,16 @@
    "siblings": []
   },
   "M46.A07": {
-   "description": "Define los horarios de atención de la ficha de negocio por día, incluidos cierres y descansos. No afecta la disponibilidad de calendarios de citas.",
+   "description": "Sets the days and opening and closing times shown on a listing, including holiday or special hours.",
    "synonyms": [
-    "horario de atención",
-    "horas de apertura",
-    "configurar horarios del negocio",
-    "días y horas abiertos",
     "opening hours",
-    "horario comercial",
-    "editar horario de ficha",
-    "hora de cierre",
-    "días festivos del negocio"
+    "business hours",
+    "set hours of operation",
+    "store hours",
+    "change open times",
+    "holiday hours",
+    "listing schedule",
+    "open and close times"
    ],
    "produces": "listing",
    "consumes": [
@@ -9049,16 +9060,16 @@
    ]
   },
   "M46.A08": {
-   "description": "Asigna o cambia las categorías de la ficha de negocio, como rubro o tipo de actividad, para que aparezca en las búsquedas correctas del directorio.",
+   "description": "Chooses the business categories or industry types a listing appears under in directories, such as restaurant or dentist.",
    "synonyms": [
-    "categorías del negocio",
-    "rubro de ficha",
-    "tipo de negocio",
-    "asignar categoría",
-    "clasificar listing",
-    "industria del negocio",
-    "editar categorías",
-    "giro comercial"
+    "listing categories",
+    "business category",
+    "industry type",
+    "set category",
+    "change business type",
+    "directory category",
+    "classify listing",
+    "listing niche"
    ],
    "produces": "listing",
    "consumes": [
@@ -9069,16 +9080,16 @@
    ]
   },
   "M46.A09": {
-   "description": "Publica la ficha de negocio en el directorio simulado para que sea visible. Es distinto de consultar su estado de sincronización después.",
+   "description": "Pushes a listing's details out to the simulated directory so it goes live there. Different from checking sync status, which only reports on it.",
    "synonyms": [
-    "publicar ficha",
-    "enviar a directorio",
-    "subir listing",
-    "poner en línea el negocio",
-    "sincronizar con directorio",
-    "lanzar ficha",
     "publish listing",
-    "difundir perfil de negocio"
+    "push to directory",
+    "go live listing",
+    "submit to directory",
+    "sync listing out",
+    "distribute listing",
+    "list business online",
+    "send listing live"
    ],
    "produces": "listing",
    "consumes": [
@@ -9090,18 +9101,18 @@
    ]
   },
   "M46.A10": {
-   "description": "Consulta el estado de sincronización de una ficha con el directorio simulado: si está publicada, pendiente o con errores. No publica ni modifica datos.",
+   "description": "Shows whether a listing's details have reached the simulated directory and match, or if updates are pending or failed.",
    "synonyms": [
-    "estado de sincronización",
     "sync status",
-    "ver si se publicó",
-    "estado de publicación de ficha",
-    "errores de sincronización",
-    "revisar directorio",
-    "listing sincronizado",
-    "estado del listing"
+    "directory sync",
+    "is listing live",
+    "listing publish status",
+    "check sync",
+    "pending updates",
+    "listing sync errors",
+    "directory status"
    ],
-   "produces": "listing",
+   "produces": null,
    "consumes": [
     "listing"
    ],

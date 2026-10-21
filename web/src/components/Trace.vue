@@ -53,7 +53,7 @@ const stepLine = (s) =>
         <div class="card-head">
           <span class="tag">{{ r.label }}</span>
           <span class="small"><b>{{ r.picks.filter((p) => p.available).length }}</b> cards sent · {{ r.picks.filter((p) => !p.available).length }} not in v1</span>
-          <span class="muted small">cards {{ r.promptChars.sent.toLocaleString() }} of {{ r.promptChars.allImplemented.toLocaleString() }} chars ({{ share(r.promptChars) }}) · top score {{ r.topScore }} · {{ r.ms }} ms</span>
+          <span class="muted small">cards {{ r.promptChars.sent.toLocaleString() }} of {{ r.promptChars.allImplemented.toLocaleString() }} chars ({{ share(r.promptChars) }}) · top score {{ r.topScore }} · {{ r.ms }} ms<template v-if="r.embedMs !== undefined"> + embedding {{ r.embedMs }} ms</template></span>
           <span v-if="r.noMatch" class="tag bad">no match</span>
         </div>
         <div class="small terms">
@@ -73,7 +73,7 @@ const stepLine = (s) =>
               <td><span class="mono">{{ p.id }}</span> {{ p.name }} <span class="muted">· {{ p.module }}</span> <span v-if="!p.available" class="tag">not in v1</span></td>
               <td>{{ p.why }}<span v-if="p.via" class="muted"> ← {{ p.via }}</span></td>
               <td class="mono">{{ p.score ?? "" }}</td>
-              <td class="muted">{{ matched(p.matched) }}</td>
+              <td class="muted">{{ p.why === "dense" ? "similar meaning (embeddings)" : matched(p.matched) }}</td>
             </tr>
           </tbody>
         </table>

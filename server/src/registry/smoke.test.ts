@@ -7,7 +7,7 @@ import { world } from "../store/world.js";
 // Every registered action, twice: its example must succeed, and two broken versions of it must fail
 // with the right code (a made-up param → INVALID; an unknown id in a required id field → NOT_FOUND).
 
-const V1_MODULES = ["M01", "M03", "M06", "M48", "M49"];
+const V1_MODULES = ["M01", "M03", "M04", "M06", "M07", "M08", "M11", "M12", "M13", "M15", "M21", "M28", "M29", "M48", "M49"];
 const reg = await registry();
 
 test("v1 modules have all 10 actions", () => {

@@ -3,6 +3,7 @@
 //   npm run eval:retrieval                       held-out split, default settings
 //   npm run eval:retrieval -- --split dev        tuning split (or "all")
 //   npm run eval:retrieval -- --misses           list every miss with where the action ranked
+//   npm run eval:retrieval -- --bm25             BM25 alone, without the embedding model (RETRIEVAL=bm25 does the same)
 //   npm run eval:retrieval -- --set k=20 moduleCap=3 boost.synonyms=3 fuzzy=off splitClauses=false
 //   npm run eval:retrieval -- --no-mentions      ablation: names in questions aren't linked to records
 //   npm run eval:retrieval -- --names-only       ablation: cards without synonyms or descriptions
@@ -11,6 +12,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { loadRegistry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
+import { loadDense } from "../retrieval/embed.js";
 import { loadQueries, score, summarize, type Scored } from "../retrieval/eval.js";
 import { mentions } from "../retrieval/mentions.js";
 import { DEFAULTS, type RetrieveOptions, Retriever } from "../retrieval/retrieve.js";
@@ -42,7 +44,9 @@ if (flag("names-only")) cards = cards.map((c) => ({ ...c, synonyms: [], descript
 const missingMeta = cards.filter((c) => !c.synonyms.length).length;
 if (missingMeta && !flag("names-only")) console.log(`note: ${missingMeta} cards have no synonyms yet (npm run cards)\n`);
 
-const retriever = new Retriever(cards, opts);
+if (flag("bm25")) process.env.RETRIEVAL = "bm25";
+const dense = await loadDense(cards, () => {});
+const retriever = new Retriever(cards, opts, dense);
 const split = value("split") ?? "test";
 const queries = loadQueries(`${ROOT}eval/retrieval/queries.jsonl`).filter((q) => split === "all" || q.split === split);
 const resolvable = registry.resolverEntities();
@@ -51,11 +55,14 @@ const KS = [5, 10, 15, 20, 25];
 // Names are linked against the seed data, as the dev server links them against its database.
 const { store } = world();
 const linked = flag("no-mentions") ? undefined : (m: string) => mentions(m, registry, store);
-const scored: Scored[] = queries.map((q) => score(q, retriever, KS, resolvable, linked));
+const started = performance.now();
+const scored: Scored[] = [];
+for (const q of queries) scored.push(await score(q, retriever, KS, resolvable, linked));
+const msTotal = (performance.now() - started) / Math.max(queries.length, 1);
 const report = summarize(scored, KS);
 
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`.padStart(6);
-console.log(`retrieval eval · split=${split} · ${queries.length} questions · ${cards.length} cards · settings ${JSON.stringify({ ...opts })}`);
+console.log(`retrieval eval · ${dense ? "hybrid (BM25 + embeddings)" : "BM25 only"} · split=${split} · ${queries.length} questions · ${cards.length} cards · settings ${JSON.stringify({ ...opts })}`);
 console.log(`\n${"group".padEnd(11)} ${"n".padStart(3)}  ${KS.map((k) => `R@${k}`.padStart(6)).join(" ")}  ${"all@15".padStart(6)}  ${"MRR".padStart(5)}  ${"picks".padStart(5)}`);
 for (const [group, g] of Object.entries(report.groups)) {
   if (group === "outside") continue;
@@ -63,7 +70,7 @@ for (const [group, g] of Object.entries(report.groups)) {
 }
 const t = report.total;
 console.log(`${"ALL".padEnd(11)} ${String(t.n).padStart(3)}  ${KS.map((k) => pct(t.recall[k]!)).join(" ")}  ${pct(t.all[15]!)}  ${t.mrr.toFixed(2).padStart(5)}  ${t.picks.toFixed(1).padStart(5)}`);
-console.log(`\nout of scope: ${report.outside.rejected}/${report.outside.n} rejected · in scope wrongly rejected: ${report.falseRejects}/${t.n} · ${report.msPerQuery.toFixed(2)} ms/question`);
+console.log(`\nout of scope: ${report.outside.rejected}/${report.outside.n} rejected · in scope wrongly rejected: ${report.falseRejects}/${t.n} · ${report.msPerQuery.toFixed(2)} ms/question ranking, ${msTotal.toFixed(1)} ms with embedding and every k`);
 
 if (flag("misses")) {
   console.log("\nmisses at k=15:");
@@ -77,6 +84,6 @@ const label = value("label");
 if (label) {
   mkdirSync(`${ROOT}eval/results`, { recursive: true });
   const file = `${ROOT}eval/results/retrieval-${label}.json`;
-  writeFileSync(file, JSON.stringify({ label, split, opts, at: new Date().toISOString(), report, questions: scored.map((s) => ({ id: s.q.id, misses: s.misses, rejected: s.rejected })) }, null, 1));
+  writeFileSync(file, JSON.stringify({ label, retrieval: dense ? "hybrid" : "bm25", split, opts, at: new Date().toISOString(), report, questions: scored.map((s) => ({ id: s.q.id, misses: s.misses, rejected: s.rejected })) }, null, 1));
   console.log(`\nsaved ${file}`);
 }

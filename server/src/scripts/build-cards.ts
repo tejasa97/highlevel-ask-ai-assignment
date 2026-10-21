@@ -17,7 +17,7 @@ const CONCURRENCY = 5;
 const SYSTEM = `You write search metadata for the actions of a CRM, so that a keyword search (BM25) can find the right
 action from what a user types. You get one module and its 10 actions, plus the whole catalog for context.
 For each action return:
-- description: one or two plain sentences in the user's language, 15-35 words. Say what it does and, where a
+- description: one or two plain English sentences in everyday words, 15-35 words. Say what it does and, where a
   look-alike exists, how it differs (e.g. "Cancel" vs "Mark complete"). No API words (endpoint, payload, CRUD).
 - synonyms: 8-12 short words or phrases (1-4 words) a user might type for this action: informal verbs,
   everyday nouns, abbreviations and alternative phrasings. Spell them correctly; typos are handled by fuzzy matching. Include the record noun in some of them.

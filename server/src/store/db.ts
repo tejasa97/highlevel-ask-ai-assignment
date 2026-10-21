@@ -114,6 +114,8 @@ export class Store {
       return out;
     } catch (err) {
       this.db.exec("ROLLBACK");
+      // A table first touched in this transaction was rolled back with it; let table() create it again.
+      this.known.clear();
       throw err;
     }
   }

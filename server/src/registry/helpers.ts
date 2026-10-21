@@ -1,4 +1,6 @@
 import { z } from "zod";
+import type { Contact } from "../modules/m01-contacts/schema.js";
+import type { Lead } from "../modules/m03-leads/schema.js";
 import { ROLE_PERMISSIONS, type User } from "../modules/m48-users/schema.js";
 import type { Store } from "../store/db.js";
 import { ActionError, mustGet } from "./define.js";
@@ -93,3 +95,46 @@ export function permissionsOf(u: Pick<User, "roles">): string[] {
 export function atLeastOne<T extends Record<string, unknown>>(args: T, keys: (keyof T)[]): void {
   if (!keys.some((k) => args[k] !== undefined)) throw new ActionError("INVALID", `Nothing to change: give at least one of ${keys.join(", ")}`);
 }
+
+/** A contact or a lead: messages, conversations and appointments can be with either. */
+export interface Person {
+  type: "contact" | "lead";
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+}
+
+/** Input fields for "a contact or a lead": exactly one must be given. */
+export const PersonArgs = {
+  contactId: z.string().optional().describe("contact id (ct_…); give this or leadId"),
+  leadId: z.string().optional().describe("lead id (ld_…); give this or contactId"),
+};
+
+/** The contact or lead named by exactly one of contactId / leadId. Archived and merged contacts and converted leads are refused. */
+export function person(store: Store, a: { contactId?: string; leadId?: string }, doing: string): Person {
+  if (!!a.contactId === !!a.leadId) throw new ActionError("INVALID", "Give exactly one of contactId or leadId");
+  if (a.contactId) {
+    const c = mustGet<Contact>(store, "contacts", a.contactId, "contact");
+    if (c.status === "merged") throw new ActionError("CONFLICT", `${c.name} was merged into ${c.mergedInto}; use that contact instead`, { mergedInto: c.mergedInto });
+    requireState(c.name, c.status, ["active"], doing);
+    return { type: "contact", id: c.id, name: c.name, email: c.email, phone: c.phone };
+  }
+  const l = mustGet<Lead>(store, "leads", a.leadId!, "lead");
+  if (l.status === "converted") throw new ActionError("CONFLICT", `Lead ${l.name} was converted; use contact ${l.convertedTo?.contactId} instead`, { convertedTo: l.convertedTo });
+  return { type: "lead", id: l.id, name: l.name, email: l.email, phone: l.phone };
+}
+
+/** The contactId / leadId pair stored on records that belong to a person. */
+export function personRef(p: Person): { contactId: string | null; leadId: string | null } {
+  return { contactId: p.type === "contact" ? p.id : null, leadId: p.type === "lead" ? p.id : null };
+}
+
+/** Display name of whoever a contactId / leadId pair points at. */
+export function personName(store: Store, ref: { contactId: string | null; leadId: string | null }): string | null {
+  const doc = ref.contactId ? store.get<Contact>("contacts", ref.contactId) : ref.leadId ? store.get<Lead>("leads", ref.leadId) : undefined;
+  return doc?.name ?? null;
+}
+
+/** Money rounded to cents, so sums of line items don't drift. */
+export const cents = (n: number): number => Math.round(n * 100) / 100;

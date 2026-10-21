@@ -167,9 +167,10 @@ describe("planTurn", () => {
 
   test("the prompt names built and unbuilt matches separately", async () => {
     const planner = scripted(reply({ type: "unsupported", reason: "x" }));
-    await run("send an invoice reminder to Priya", planner);
+    await run("add a product called Gold Plan to Priya's invoice", planner);
     const user = planner.requests[0]!.user;
-    assert.match(user, /<not_available>[\s\S]*invoice[\s\S]*<\/not_available>/i);
+    assert.match(user, /<actions>[\s\S]*M28\.A04[\s\S]*<\/actions>/);
+    assert.match(user, /<not_available>[\s\S]*product[\s\S]*<\/not_available>/i);
   });
 });
 

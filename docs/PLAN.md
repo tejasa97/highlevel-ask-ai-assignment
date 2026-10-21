@@ -47,8 +47,8 @@ This one decision carries most of the latency, cost and quality story.
 │      ├─ Context store   (session: working set, last     │
 │      │                   plan, created ids, pending     │
 │      │                   confirmations)                 │
-│      ├─ Tool retriever  (BM25 over the 500 action       │
-│      │                   cards, no LLM)                 │
+│      ├─ Tool retriever  (BM25 + local embeddings over   │
+│      │                   the 500 action cards, no LLM)  │
 │      ├─ Planner         (1 LLM call → typed JSON plan)  │
 │      ├─ Executor        (deterministic DAG runner,      │
 │      │                   built-in filter/exclude/forEach│
@@ -68,18 +68,21 @@ This one decision carries most of the latency, cost and quality story.
 
 Example: *"Find leads created last week who haven't replied, exclude anyone with a booked appointment, assign to available reps, create follow-up tasks."*
 
-### ① Retrieve (<1 ms, no LLM)
+### ① Retrieve (~10 ms, no LLM)
 - BM25 (MiniSearch) over **action cards**, one per catalog action (500). Each card holds the id, module, name, a one-line description, 6–10 synonyms, siblings and entity types.
-- Returns about 15 BM25 picks spread across modules. Siblings, producers and carried actions are added on top, ~18 cards in total on average.
+- A small local embedding model (bge-base) ranks the same cards by meaning; the two rankings are fused (see [Retrieval](#retrieval)).
+- Returns 15 ranked picks spread across modules. Siblings, producers and carried actions are added on top, ~19 cards in total on average.
 - Result here: M03.A03 Search leads, M49.A09 Get team workload and M06.A01 Create task rank in the top 6, with M03.A05 Assign lead owner and its sibling M01.A07 Assign contact owner alongside.
 - For how the shortlist is built and measured, see [Retrieval](#retrieval) below.
 
 #### Retrieval
 
-**Why BM25 and not embeddings (yet)**
-- The card synonyms carry most of what embeddings would add. With names alone, held-out recall@15 is 71.7% (paraphrases 22.2%). With generated cards it's 93.1% (paraphrases 88.9%).
-- BM25 is deterministic, explainable (the trace shows which words matched which field) and needs no model or cache at boot.
-- The misses that remain are mostly vague asks ("who hasn't gotten back to us?", "how much is on Lucia's plate?") where the planner's `search_tools` round recovers better than a second index would. Embeddings stay a benchmark variant behind the same `Retriever` interface. They go in only if they beat this on the held-out split.
+**BM25 first, then embeddings once they beat it**
+- BM25 went first: the card synonyms carry much of what embeddings add. With names alone, held-out recall@15 is 71.7% (paraphrases 22.2%). With generated cards it's 93.1% (paraphrases 88.9%). It is deterministic and explainable (the trace shows which words matched which field).
+- The bar for embeddings was beating that on the held-out split. 80 more paraphrase-heavy questions (h01–h80, across the 10 newer modules) showed where BM25 falls short: wordings that share no words with the card ("hold off on the fall webinar emails" → Pause campaign). Test split, recall@15: BM25 86.8% → hybrid 94.9%; paraphrases 76.6% → 89.4%. On all 239 questions: 90.0% → 97.1% (97.6% with the module-cap backfill below). Direct questions stay at 100%, out-of-scope rejection is unchanged.
+- **How they're combined** (`retrieve.ts`, `embed.ts`): the embedding model ranks all cards for the whole message and for each clause. The top 20 of each ranking joins reciprocal-rank fusion with the BM25 lists at equal weight. Cards in the top 10 of a meaning ranking skip the BM25 score floor, since they may share no words with the question. "No match" is still decided by BM25 alone, because an embedding ranking always has a nearest card. Picks only the embedding found are labelled `dense` in the trace.
+- Settings were chosen on the dev split (floor exemption 0/5/10/20, top 10/20/30, weight 0.5/1/2), then the test split was run once. A sweep across models (MiniLM, bge-small, bge-base) was done earlier with all splits visible; bge-base won on every split.
+- **Cost:** `Xenova/bge-base-en-v1.5`, quantized, runs locally through transformers.js (no API call). 113 MB on disk, downloaded once into `server/data/models/`. Card vectors take ~30 s on first start and are cached in `server/data/`, keyed by the card text and model. Measured on an M1 Pro: ~300 ms to load, ~10 ms per question, ~250–310 MB more memory. `RETRIEVAL=bm25` turns it off. If the model can't load, retrieval falls back to BM25 and logs one line.
 
 **Cards** (`server/src/retrieval/cards.json`)
 - Name and module come from the catalog. Description, synonyms, siblings and entity types were generated once by an LLM per action (~$2 for all 500) and are committed.
@@ -95,7 +98,7 @@ Example: *"Find leads created last week who haven't replied, exclude anyone with
 1. **Field boosts:** name 3, synonyms 2, module 1.5, description 1.
 2. **Clause splitting:** "…, give them to …, and make …" becomes one search per clause. The lists are merged with Reciprocal Rank Fusion, `Σ 1/(60 + rank)`, over the clause lists and the whole message.
 3. **Per-clause guarantee:** the top 2 of each clause go first. RRF on its own favoured cards that were middling in every list, and ranked Search leads 20th for the Facebook request.
-4. **Module cap** 6, **score floor** 10% of the top score, then cut to **k = 15** (where the dev recall@k curve levels off).
+4. **Module cap** 6, **score floor** 10% of the top score, then cut to **k = 15** (where the dev recall@k curve levels off). The cap makes room for other modules; when nothing else clears the floor, the capped cards get the empty slots back ("answer the 2-star review" is all about reviews). All questions 97.1% → 97.6%, test split unchanged; it only adds picks, so no question can lose one.
 5. **Siblings** of the top 3 picks only. Adding them for every pick cost ~12 cards a question for under a point of recall.
 6. **Producers:** if a pick consumes a record type no pick produces, add the best producer. Contact, lead, user and team are skipped, because the planner resolves those by name.
 7. **Carried actions:** the previous plan's actions, so "make those high priority" keeps its tools.
@@ -309,7 +312,7 @@ type Usage = { input: number; cachedRead: number; cacheWrite: number; output: nu
 - Compare models on **cost per successful task**, not raw token counts, because tokenizers differ.
 
 #### Routing by difficulty
-There's essentially one LLM call per turn, the planner. The summary is templated and retrieval uses no model. So the saving comes from choosing **which model plans each request**, not from moving "other work" to a cheaper model.
+There's essentially one LLM call per turn, the planner. The summary is templated and retrieval uses no LLM (only a small local embedding model). So the saving comes from choosing **which model plans each request**, not from moving "other work" to a cheaper model.
 
 **Two tiers:** `fast` and `strong`. To start, `fast` is Haiku 5.5 and `strong` is Sonnet 5.5: same provider, same tokenizer, one adapter, so the routing effect is measured on its own. On the API adapter, `fast` sets thinking explicitly (off or a small budget); the dev CLI path showed Haiku's default thinking makes it slower than Sonnet, so Haiku's latency must be measured with thinking pinned.
 
@@ -509,7 +512,7 @@ Commit to these after a small pilot run, **before** the full benchmark. The valu
 ## 6. Stack
 
 - **Backend:** Node 26 + TypeScript, Fastify (SSE), Zod 4 (built-in `z.toJSONSchema`), the built-in `node:sqlite`, a small seeded generator instead of faker (fixed seed).
-- **Retrieval:** MiniSearch (BM25) over LLM-generated action cards. Deterministic, offline, under 1 ms a question. Embeddings can be added behind the same interface if they beat it on the held-out split.
+- **Retrieval:** MiniSearch (BM25) over LLM-generated action cards, fused with a local embedding model (bge-base via transformers.js). Offline, ~10 ms a question. Added after it beat BM25 alone on the held-out split (see [Retrieval](#retrieval)).
 - **LLM:** Anthropic (Haiku 5.5 / Sonnet 5.5), no LangChain. Development plans through `claude -p` on the subscription; the benchmark needs the direct-API Anthropic adapter, which is designed, not built (see [Model providers and routing](#model-providers-and-routing)). A direct adapter gives exact token accounting, prompt-cache control and less overhead. A two-tier router (Haiku → Sonnet) with a validation cascade, as described in [Model providers and routing](#model-providers-and-routing).
 - **Testing and UI:** `node:test` (run through tsx) for the smoke tests. Vue 3 + Vite for the web app.
 
