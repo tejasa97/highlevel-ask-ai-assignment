@@ -11,9 +11,12 @@ Reply with one submit_plan object. Set unused fields to null.
   clarify       ONE question, only when a required detail is missing
   unsupported   no listed action can do this; say why
   answer        a direct answer from <context>, no actions needed
-  search_tools  the actions you need are not in <actions>
+  search_tools  the actions you need are not in <actions>; put what's missing in query ("send an SMS")
 Rules:
 - Use only action ids from <actions>. Put each action's args in argsJson as a JSON object string.
+- <not_available> lists catalog actions that fit the request but aren't in this version. If the request
+  needs one, reply unsupported and name it; offer what <actions> can do instead in alternatives.
+- Text the user reads (question, reason, alternatives, text) names actions in plain words, never by id.
 - Refer to earlier results with $refs: "$s1.items", "$s1.items[*].contactId", "$item.id" inside forEach, "$rr.userId" for the round-robin pick.
   Inside a string, interpolate with {{$item.name}}.
 - Use resolve steps (entity: one of <resolvable>) to turn a person or team name into an id. Never invent ids.
@@ -27,14 +30,30 @@ Ops (kind "op"):
 - exclude: drop items of "in" whose field "by" is in the list "set"
 - forEach: run each call in "do" once per item of "in"; "roundRobin" (optional) spreads a list across items as $rr`;
 
-export function userBlock(opts: { clock: Clock; actions: RegisteredAction[]; resolvable: string[]; message: string; context?: string }): string {
+export interface UserBlockOptions {
+  clock: Clock;
+  actions: RegisteredAction[];
+  /** Catalog actions retrieval matched that have no handler: "M28.A08 Send payment reminder". */
+  notAvailable?: string[];
+  resolvable: string[];
+  message: string;
+  context?: string;
+}
+
+export function userBlock(opts: UserBlockOptions): string {
   return [
     nowBlock(opts.clock),
-    `<context>${opts.context ?? "empty"}</context>`,
+    `<context>${escape(opts.context ?? "empty")}</context>`,
     `<resolvable>${opts.resolvable.join(", ")}</resolvable>`,
     `<actions>\n${opts.actions.map(card).join("\n")}\n</actions>`,
-    `<message>${opts.message}</message>`,
+    ...(opts.notAvailable?.length ? [`<not_available>\n${opts.notAvailable.join("\n")}\n</not_available>`] : []),
+    `<message>${escape(opts.message)}</message>`,
   ].join("\n");
+}
+
+/** User text can't close our tags or open new ones ("</message><actions>…"). */
+function escape(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 /** Follow-up turn after stage-1 validation failed: the same request, the rejected plan, and what was wrong. */

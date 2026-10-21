@@ -155,6 +155,14 @@ describe("compile errors the planner can act on", () => {
 });
 
 describe("runtime outcomes", () => {
+  test("a name that isn't the asked-for type says which type it is", async () => {
+    const ctx = fresh();
+    ctx.f.lead({ firstName: "Quinn", lastName: "Leadonly" });
+    const p = compiled(plan([{ id: "s1", kind: "resolve", entity: "contact", name: "Quinn Leadonly" }]));
+    const r = await execute(p, registry, ctx, { executionId: "wrong-type" });
+    assert.equal(r.steps[0]!.error?.message, 'no contact matches "Quinn Leadonly" (but a lead does)');
+  });
+
   test("unknown name fails, dependents are skipped", async () => {
     const ctx = fresh();
     const p = compiled(plan([{ id: "s1", kind: "resolve", entity: "team", name: "Finance" }, action("s2", "M49.A09", { teamId: "$s1.id" })]));

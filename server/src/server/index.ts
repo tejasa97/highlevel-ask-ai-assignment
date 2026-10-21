@@ -3,16 +3,17 @@
 // Run: npm run serve (port 8787; the Vite dev server in web/ proxies /api here).
 import { existsSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { compile, type CompiledPlan, type CStep } from "../core/compile.js";
+import type { CompiledPlan, CStep } from "../core/compile.js";
 import { execute, type Pending, type RunResult } from "../core/execute.js";
 import { summarize } from "../core/summarize.js";
 import { makePlanner } from "../planner/index.js";
-import { repairBlock, SYSTEM, userBlock } from "../planner/prompt.js";
-import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "../planner/submit-plan.js";
+import { type Carry, planTurn } from "../planner/turn.js";
 import type { Tier } from "../planner/types.js";
 import type { CallTrace } from "../registry/define.js";
 import { DEFAULT_ACTOR } from "../registry/invoke.js";
 import { loadRegistry } from "../registry/registry.js";
+import { buildCards } from "../retrieval/cards.js";
+import { Retriever } from "../retrieval/retrieve.js";
 import { DEV_DB, devStore, resetDevStore } from "../store/dev.js";
 import { diff, snapshot } from "./diff.js";
 
@@ -21,6 +22,7 @@ const HISTORY_TURNS = 4;
 
 const registry = await loadRegistry();
 const planner = makePlanner();
+const retriever = new Retriever(buildCards(registry));
 if (!existsSync(DEV_DB)) resetDevStore();
 let world = devStore();
 
@@ -33,6 +35,10 @@ interface Turn {
 }
 const turns = new Map<string, Turn>();
 const history: { user: string; assistant: string }[] = [];
+/** The last planned turn's actions, carried into the next retrieval so follow-ups keep their tools. */
+let carry: Carry | undefined;
+/** The messages the last reply asked a question about, if it did (kept across a chain of questions). */
+let answering: string | undefined;
 let busy = false;
 
 type Emit = (event: string, data: unknown) => void;
@@ -41,38 +47,10 @@ async function ask(message: string, tier: Tier, actorId: string, emit: Emit): Pr
   const turnId = `t${turns.size + 1}_${Date.now().toString(36)}`;
   emit("turn", { turnId, message });
   const context = history.length ? history.slice(-HISTORY_TURNS).map((h) => `user: ${h.user}\nassistant: ${h.assistant}`).join("\n") : undefined;
-  const user = userBlock({ clock: world.clock, actions: registry.list(), resolvable: registry.resolverEntities(), message, context });
-
-  const callPlanner = async (text: string, label: string) => {
-    emit("planner.request", { label, tier, system: SYSTEM, user: text, actions: registry.list().map((a) => a.id) });
-    const r = await planner.plan({ tier, system: SYSTEM, user: text, schema: SUBMIT_PLAN_SCHEMA });
-    emit("planner.reply", { label, model: r.model, latencyMs: Math.round(r.latencyMs), usage: r.usage, json: r.json });
-    return r;
-  };
-
-  let reply = await callPlanner(user, "plan");
-  let parsed = SubmitPlan.safeParse(reply.json);
-  if (!parsed.success) return finish(message, "failed", `The planner's reply didn't match submit_plan: ${parsed.error.message}`, emit);
-
-  if (parsed.data.type !== "plan") {
-    const d = parsed.data;
-    const text = [d.question ?? d.reason ?? d.text ?? d.query ?? "", d.alternatives?.length ? `Alternatives: ${d.alternatives.join("; ")}` : ""].filter(Boolean).join("\n");
-    return finish(message, d.type, text, emit, d.options ?? undefined);
-  }
-
-  let compiled = compile(parsed.data, registry);
-  if (!compiled.ok) {
-    emit("compile.errors", { errors: compiled.errors });
-    reply = await callPlanner(repairBlock(user, reply.json, compiled.errors), "repair");
-    parsed = SubmitPlan.safeParse(reply.json);
-    if (!parsed.success || parsed.data.type !== "plan") return finish(message, "failed", "The repaired reply wasn't a plan.", emit);
-    compiled = compile(parsed.data, registry);
-    if (!compiled.ok) {
-      emit("compile.errors", { errors: compiled.errors });
-      return finish(message, "failed", `The plan was still invalid after one repair:\n${compiled.errors.join("\n")}`, emit);
-    }
-  }
-  const turn: Turn = { id: turnId, message, plan: compiled.plan, executionId: `ex_${turnId}` };
+  const outcome = await planTurn({ message, tier, context, carry, answering }, { registry, retriever, planner, clock: world.clock }, (e) => emit(e.type, e.data));
+  if (outcome.kind === "reply") return finish(message, outcome.status, outcome.text, emit, outcome.options);
+  carry = outcome.carry;
+  const turn: Turn = { id: turnId, message, plan: outcome.plan, executionId: `ex_${turnId}` };
   turns.set(turnId, turn);
   emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
   await run(turn, actorId, emit);
@@ -115,6 +93,8 @@ async function run(turn: Turn, actorId: string, emit: Emit, approvals?: Pending[
 
 function finish(message: string, status: string, text: string, emit: Emit, options?: string[]): void {
   history.push({ user: message, assistant: text });
+  const asked = status === "clarify" || status === "needs_clarification";
+  answering = asked ? (answering ? `${answering}\n${message}` : message) : undefined;
   emit("reply", { status, text, options });
 }
 
@@ -196,6 +176,7 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" && path === "/api/audit") return json(res, 200, world.store.audit().slice(0, Number(url.searchParams.get("limit") ?? 200)));
     if (req.method === "POST" && path === "/api/reset") {
       if (busy) return json(res, 409, { error: "A request is still running" });
+      carry = answering = undefined;
       world.store.close();
       resetDevStore();
       world = devStore();

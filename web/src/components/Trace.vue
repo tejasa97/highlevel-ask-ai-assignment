@@ -17,6 +17,19 @@ const totals = computed(() => {
     execMs: props.turn.runs.reduce((a, x) => a + x.ms, 0),
   };
 });
+// Section numbers follow what this turn actually has.
+const sections = computed(() =>
+  [
+    props.turn.retrieval.length && "retrieval",
+    "planner",
+    props.turn.compileErrors.length && "validation",
+    props.turn.plan && "plan",
+    props.turn.calls.length && "calls",
+  ].filter(Boolean),
+);
+const num = (name) => sections.value.indexOf(name) + 1;
+const matched = (m) => Object.entries(m ?? {}).map(([field, terms]) => `${field}: ${terms.join(" ")}`).join(" · ");
+const share = (c) => `${Math.round((100 * c.sent) / c.allImplemented)}%`;
 const stepLine = (s) =>
   s.kind === "resolve" ? `${s.entity} "${s.name}"`
   : s.kind === "filter" ? `${s.in} where ${JSON.stringify(s.where)}`
@@ -34,7 +47,37 @@ const stepLine = (s) =>
       <span v-if="turn.live" class="live">live</span>
     </div>
 
-    <h3>1 · Planner</h3>
+    <template v-if="turn.retrieval.length">
+      <h3>{{ num("retrieval") }} · Retrieval <span class="muted small">(BM25 over all 500 catalog actions, no model)</span></h3>
+      <div v-for="(r, i) in turn.retrieval" :key="i" class="card">
+        <div class="card-head">
+          <span class="tag">{{ r.label }}</span>
+          <span class="small"><b>{{ r.picks.filter((p) => p.available).length }}</b> cards sent · {{ r.picks.filter((p) => !p.available).length }} not in v1</span>
+          <span class="muted small">cards {{ r.promptChars.sent.toLocaleString() }} of {{ r.promptChars.allImplemented.toLocaleString() }} chars ({{ share(r.promptChars) }}) · top score {{ r.topScore }} · {{ r.ms }} ms</span>
+          <span v-if="r.noMatch" class="tag bad">no match</span>
+        </div>
+        <div class="small terms">
+          <span class="muted">terms</span> <span v-for="t in r.terms" :key="t" class="chip mono">{{ t }}</span>
+        </div>
+        <div v-if="r.clauses.length > 1" class="small terms">
+          <span class="muted">clauses</span> <span v-for="c in r.clauses" :key="c" class="chip">{{ c }}</span>
+        </div>
+        <table class="picks small">
+          <thead><tr><th>#</th><th>action</th><th>why</th><th>score</th><th>matched</th></tr></thead>
+          <tbody>
+            <tr v-for="p in r.picks" :key="p.id" :class="{ unavailable: !p.available }">
+              <td class="muted">{{ p.rank ?? "" }}</td>
+              <td><span class="mono">{{ p.id }}</span> {{ p.name }} <span class="muted">· {{ p.module }}</span> <span v-if="!p.available" class="tag">not in v1</span></td>
+              <td>{{ p.why }}<span v-if="p.via" class="muted"> ← {{ p.via }}</span></td>
+              <td class="mono">{{ p.score ?? "" }}</td>
+              <td class="muted">{{ matched(p.matched) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
+
+    <h3>{{ num("planner") }} · Planner</h3>
     <div v-for="(p, i) in turn.planner" :key="i" class="card">
       <div class="card-head">
         <span class="tag">{{ p.request.label }}</span>
@@ -48,7 +91,7 @@ const stepLine = (s) =>
     </div>
 
     <template v-if="turn.compileErrors.length">
-      <h3>2 · Validation</h3>
+      <h3>{{ num("validation") }} · Validation</h3>
       <div v-for="(errs, i) in turn.compileErrors" :key="i" class="card bad">
         <div class="card-head"><span class="tag bad">rejected</span><span class="small">{{ i === 0 ? "sent back to the planner for one repair" : "still invalid" }}</span></div>
         <ul><li v-for="e in errs" :key="e" class="mono small">{{ e }}</li></ul>
@@ -56,7 +99,7 @@ const stepLine = (s) =>
     </template>
 
     <template v-if="turn.plan">
-      <h3>{{ turn.compileErrors.length ? 3 : 2 }} · Plan <span class="muted small mono">#{{ turn.plan.hash }}</span></h3>
+      <h3>{{ num("plan") }} · Plan <span class="muted small mono">#{{ turn.plan.hash }}</span></h3>
       <div v-for="s in turn.plan.steps" :key="s.id" class="card step" :class="turn.steps[s.id]?.status">
         <div class="card-head">
           <span class="mono step-id">{{ s.id }}</span>
@@ -83,7 +126,7 @@ const stepLine = (s) =>
     </template>
 
     <template v-if="turn.calls.length">
-      <h3>{{ turn.compileErrors.length ? 4 : 3 }} · Tool calls <span class="muted small">(every handler run, in order)</span></h3>
+      <h3>{{ num("calls") }} · Tool calls <span class="muted small">(every handler run, in order)</span></h3>
       <div v-for="(c, i) in turn.calls" :key="i" class="card call" :class="{ bad: c.error }">
         <div class="card-head">
           <span class="muted small">#{{ i + 1 }}<template v-if="c.phase"> · after approval</template></span>
@@ -101,3 +144,12 @@ const stepLine = (s) =>
     <p v-if="turn.error" class="card bad err">{{ turn.error }}</p>
   </div>
 </template>
+
+<style scoped>
+.terms { margin: 4px 0; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.chip { padding: 1px 6px; border-radius: 4px; background: var(--chip, rgba(127, 127, 127, 0.14)); }
+.picks { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.picks th { text-align: left; font-weight: 500; opacity: 0.6; padding: 3px 6px; }
+.picks td { padding: 3px 6px; border-top: 1px solid rgba(127, 127, 127, 0.15); vertical-align: top; }
+.picks tr.unavailable td { opacity: 0.55; }
+</style>

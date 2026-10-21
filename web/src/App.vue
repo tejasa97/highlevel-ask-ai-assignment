@@ -41,7 +41,7 @@ function scrollChat() {
 
 function newTurn(message) {
   const t = reactive({
-    id: null, message, planner: [], compileErrors: [], plan: null, steps: {}, calls: [], runs: [], changes: [], audit: [],
+    id: null, message, retrieval: [], planner: [], compileErrors: [], plan: null, steps: {}, calls: [], runs: [], changes: [], audit: [],
     pending: null, error: null, ms: 0, live: true,
   });
   turns.push(t);
@@ -53,6 +53,7 @@ function onEvent(t, name, d) {
   const phase = t.runs.length;
   switch (name) {
     case "turn": t.id = d.turnId; break;
+    case "retrieval": t.retrieval.push(d); break;
     case "planner.request": t.planner.push({ request: d, reply: null }); break;
     case "planner.reply": t.planner.at(-1).reply = d; break;
     case "compile.errors": t.compileErrors.push(d.errors); break;

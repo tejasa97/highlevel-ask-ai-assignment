@@ -143,7 +143,10 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         case "resolve": {
           const found = registry.resolver(step.entity)!(ctx.store, step.name);
           if (found.length === 0) {
-            fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"` });
+            // The planner sometimes guesses the wrong record type for a name; say where the name does exist.
+            const elsewhere = registry.resolverEntities().filter((e) => e !== step.entity && registry.resolver(e)!(ctx.store, step.name).length > 0);
+            const hint = elsewhere.length ? ` (but a ${elsewhere.join(" and a ")} does)` : "";
+            fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"${hint}` });
           } else if (found.length > 1) {
             const clarification = { stepId: step.id, entity: step.entity, name: step.name, candidates: found };
             results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });

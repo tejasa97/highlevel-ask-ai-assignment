@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 import type { z } from "zod";
 import type { SubmitPlan } from "../planner/submit-plan.js";
+import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import type { JsonSchema, RegisteredAction, Registry } from "../registry/registry.js";
 import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, parseRef, RESERVED_ROOTS, type Ref, typeAt, unwrap } from "./refs.js";
 
 // Stage 1 of validation: everything that can be checked before anything runs.
-// - structure: unique step ids, known actions, JSON in argsJson/whereJson
+// - structure: unique step ids, known actions that were offered to the planner this turn, JSON in argsJson/whereJson
 // - references: backward-only (so the graph is acyclic), every path exists in the producer's output schema,
 //   $item/$rr only inside forEach, and the referenced value's shape fits where it is used
 // - literal args: checked against the action's input schema (ref-valued args wait for stage 2)
@@ -39,7 +40,11 @@ const RESOLVED: JsonSchema = {
   required: ["id", "name"],
 };
 
-export function compile(plan: SubmitPlan, registry: Registry): CompileResult {
+/**
+ * `offered`: the action ids the planner was shown this turn. A plan may only use those, so a model that
+ * remembers an id from an earlier turn (or makes one up) can't reach an action retrieval didn't pick.
+ */
+export function compile(plan: SubmitPlan, registry: Registry, offered?: ReadonlySet<string>): CompileResult {
   const errors: string[] = [];
   if (plan.type !== "plan") return { ok: false, errors: [`expected type "plan", got "${plan.type}"`] };
   const raw = plan.steps ?? [];
@@ -59,7 +64,7 @@ export function compile(plan: SubmitPlan, registry: Registry): CompileResult {
       continue;
     }
     const deps = new Set<string>();
-    const scope: Scope = { types, deps, at, item: null, rr: null };
+    const scope: Scope = { types, deps, at, item: null, rr: null, offered };
     const err = (m: string) => errors.push(`${at}: ${m}`);
 
     // A step with errors still gets its output type, so later steps are checked against it
@@ -137,6 +142,7 @@ interface Scope {
   at: string;
   item: JsonSchema | null;
   rr: JsonSchema | null;
+  offered?: ReadonlySet<string>;
 }
 
 /** Static type of a ref, or null after reporting why it's wrong. */
@@ -230,8 +236,13 @@ function parseObject(s: string | null, what: string, err: (m: string) => void): 
 
 function compileCall(id: string, argsJson: string, registry: Registry, scope: Scope, err: (m: string) => void): Call | null {
   const action = registry.get(id);
+  const known = CATALOG_ACTIONS.get(id);
   if (!action) {
-    err(`unknown action ${id}`);
+    err(known ? `${id} (${known.name}) is not available in this version; reply unsupported if the request needs it` : `unknown action ${id}`);
+    return null;
+  }
+  if (scope.offered && !scope.offered.has(id)) {
+    err(`${id} was not in <actions>; use a listed action, or reply search_tools with a query for what's missing`);
     return null;
   }
   const args = parseObject(argsJson, "argsJson", err);

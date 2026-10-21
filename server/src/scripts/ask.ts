@@ -1,16 +1,16 @@
 // End-to-end, one message: seed a fresh store, plan, validate (one repair round), execute, confirm, summarize.
 // Run: npm run ask -- "assign last week's facebook leads to the free sales reps" [--yes] [--fast] [--debug] [--dev]
 // --dev uses the dev database (data/dev.sqlite, made by `npm run db:reset`), so changes persist between runs.
-// Every action in the registry is sent as a card for now; retrieval comes later.
+// --debug also prints the retrieval shortlist and the raw planner replies.
 import { createInterface } from "node:readline/promises";
-import { compile, type CompiledPlan } from "../core/compile.js";
+import type { CompiledPlan } from "../core/compile.js";
 import { execute, type RunResult } from "../core/execute.js";
 import { summarize } from "../core/summarize.js";
 import { makePlanner } from "../planner/index.js";
-import { repairBlock, SYSTEM, userBlock } from "../planner/prompt.js";
-import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "../planner/submit-plan.js";
-import type { PlanResult } from "../planner/types.js";
+import { planTurn } from "../planner/turn.js";
 import { loadRegistry } from "../registry/registry.js";
+import { buildCards } from "../retrieval/cards.js";
+import { Retriever } from "../retrieval/retrieve.js";
 import { devStore } from "../store/dev.js";
 import { world } from "../store/world.js";
 
@@ -28,32 +28,26 @@ const planner = makePlanner();
 const tier = flags.has("--fast") ? "fast" : "strong";
 const timings: string[] = [];
 
-const user = userBlock({ clock, actions: registry.list(), resolvable: registry.resolverEntities(), message });
-let reply = await ask(user, "plan");
-let parsed = SubmitPlan.safeParse(reply.json);
-if (!parsed.success) fail(`reply doesn't match submit_plan: ${parsed.error.message}`);
-
-if (parsed.data.type !== "plan") {
-  const d = parsed.data;
-  console.log(`\n[${d.type}] ${d.question ?? d.reason ?? d.text ?? d.query ?? ""}`);
-  if (d.options?.length) console.log(`options: ${d.options.join(" | ")}`);
-  if (d.alternatives?.length) console.log(`alternatives: ${d.alternatives.join(" | ")}`);
-  done();
+const outcome = await planTurn({ message, tier }, { registry, retriever: new Retriever(buildCards(registry)), planner, clock }, (e) => {
+  if (e.type === "planner.reply") timings.push(`${e.data.label} ${e.data.latencyMs} ms (${e.data.model}, in ${e.data.usage.input}, out ${e.data.usage.output})`);
+  if (e.type === "compile.errors") console.log(`\nplan rejected:\n  ${e.data.errors.join("\n  ")}`);
+  if (!debug) return;
+  if (e.type === "planner.reply") console.log(`\n${e.data.label} reply:`, JSON.stringify(e.data.json));
+  if (e.type === "retrieval") {
+    const r = e.data;
+    console.log(`\n${r.label}: ${r.picks.length} cards (${r.promptChars.sent} of ${r.promptChars.allImplemented} chars)${r.noMatch ? " · no match" : ""}`);
+    for (const p of r.picks) console.log(`  ${p.available ? " " : "×"} ${p.id} ${p.name.padEnd(34)} ${p.why}${p.via ? ` ← ${p.via}` : ""}${p.score ? ` ${p.score}` : ""}`);
+  }
+});
+if (outcome.kind === "reply") {
+  console.log(`\n[${outcome.status}] ${outcome.text}`);
+  if (outcome.options?.length) console.log(`options: ${outcome.options.join(" | ")}`);
+  done(outcome.status === "failed" ? 1 : 0);
 }
-
-let compiled = compile(parsed.data, registry);
-if (!compiled.ok) {
-  console.log(`\nplan rejected, repairing:\n  ${compiled.errors.join("\n  ")}`);
-  reply = await ask(repairBlock(user, reply.json, compiled.errors), "repair");
-  parsed = SubmitPlan.safeParse(reply.json);
-  if (!parsed.success || parsed.data.type !== "plan") fail("repair didn't return a plan");
-  compiled = compile(parsed.data, registry);
-  if (!compiled.ok) fail(`still invalid after repair:\n  ${compiled.errors.join("\n  ")}`);
-}
-const plan: CompiledPlan = compiled.plan;
+const plan: CompiledPlan = outcome.plan;
 printPlan(plan);
 
-const executionId = `ex_${plan.hash}`;
+const executionId = `ex_${plan.hash}_${Date.now().toString(36)}`;
 let t = performance.now();
 let run: RunResult = await execute(plan, registry, { store, clock }, { executionId, onEvent: debug ? (e) => console.log("  ·", JSON.stringify(e)) : undefined });
 timings.push(`execute ${Math.round(performance.now() - t)} ms`);
@@ -74,13 +68,6 @@ while (run.status === "awaiting_confirmation") {
 console.log(`\n[${run.status}]\n${summarize(plan, run, registry)}`);
 if (debug) console.log(JSON.stringify(run.steps, null, 1));
 done();
-
-async function ask(text: string, label: string): Promise<PlanResult> {
-  const r = await planner.plan({ tier, system: SYSTEM, user: text, schema: SUBMIT_PLAN_SCHEMA });
-  timings.push(`${label} ${Math.round(r.latencyMs)} ms (${r.model}, in ${r.usage.input}, out ${r.usage.output})`);
-  if (debug) console.log(`\n${label} reply:`, JSON.stringify(r.json));
-  return r;
-}
 
 async function confirm(): Promise<boolean> {
   if (flags.has("--yes")) {
@@ -105,11 +92,6 @@ function printPlan(p: CompiledPlan): void {
       : `forEach ${s.in}${s.roundRobin ? ` roundRobin ${s.roundRobin}` : ""}: ${s.calls.map((c) => `${c.action.id} ${JSON.stringify(c.args)}`).join(" ; ")}`;
     console.log(`  ${s.id}  ${body}`);
   }
-}
-
-function fail(msg: string): never {
-  console.error(`\n${msg}`);
-  done(1);
 }
 
 function done(code = 0): never {
