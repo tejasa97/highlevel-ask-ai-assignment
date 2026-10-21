@@ -2,9 +2,7 @@ import assert from "node:assert/strict";
 import { before, describe, test } from "node:test";
 import type { SubmitPlan } from "../planner/submit-plan.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
-import { frozenClock } from "../store/clock.js";
-import { Store } from "../store/db.js";
-import { seed } from "../store/seed.js";
+import { world } from "../store/world.js";
 import { compile, type CompiledPlan } from "./compile.js";
 import { execute } from "./execute.js";
 
@@ -13,12 +11,7 @@ before(async () => {
   registry = await loadRegistry();
 });
 
-function fresh() {
-  const clock = frozenClock();
-  const store = new Store();
-  seed(store, clock);
-  return { store, clock };
-}
+const fresh = () => world();
 
 const action = (id: string, act: string, args: unknown) => ({ id, kind: "action" as const, action: act, argsJson: JSON.stringify(args) });
 const op = (
@@ -82,22 +75,23 @@ describe("facebook leads workflow", () => {
     );
     assert.ok(targets.length >= 4, `seed should have ≥4 targets, has ${targets.length}`);
 
+    const baseTasks = ctx.store.all("tasks").length;
     const first = await execute(p, registry, ctx, { executionId: "ex1" });
     assert.equal(first.status, "awaiting_confirmation");
     assert.equal(first.pending?.stepId, "s5");
     assert.equal(first.pending?.count, targets.length);
-    assert.equal(ctx.store.all("tasks").length, 12, "nothing written before approval");
+    assert.equal(ctx.store.all("tasks").length, baseTasks, "nothing written before approval");
 
     const second = await execute(p, registry, ctx, { executionId: "ex1", approvals: [first.pending!] });
     assert.equal(second.status, "done", JSON.stringify(second.steps.at(-1)));
     const owners = targets.map((t) => ctx.store.get<{ ownerId: string }>("leads", (t as unknown as { id: string }).id)!.ownerId);
     assert.ok(!owners.includes("us_3"), "Lucia is unavailable and gets nothing");
     assert.deepEqual([...new Set(owners)].sort(), ["us_2", "us_4", "us_5"].slice(0, Math.min(3, targets.length)).sort());
-    assert.equal(ctx.store.all("tasks").length, 12 + targets.length);
+    assert.equal(ctx.store.all("tasks").length, baseTasks + targets.length);
 
     // Running it again with the same id replays from the ledger.
     const third = await execute(p, registry, ctx, { executionId: "ex1", approvals: [first.pending!] });
-    assert.equal(ctx.store.all("tasks").length, 12 + targets.length, "no duplicate tasks");
+    assert.equal(ctx.store.all("tasks").length, baseTasks + targets.length, "no duplicate tasks");
     assert.ok(third.steps.at(-1)!.items!.every((i) => i.replayed === 2));
   });
 
@@ -105,17 +99,7 @@ describe("facebook leads workflow", () => {
     const ctx = fresh();
     const p = compiled(facebookWorkflow);
     const first = await execute(p, registry, ctx, { executionId: "ex2" });
-    ctx.store.insert("leads", "ld", {
-      firstName: "New",
-      lastName: "Lead",
-      name: "New Lead",
-      email: null,
-      source: "facebook_ads",
-      status: "new",
-      score: 10,
-      ownerId: null,
-      createdAt: "2026-10-14T10:00:00.000Z",
-    });
+    ctx.f.lead({ source: "facebook_ads", createdAt: "2026-10-14T10:00:00.000Z" });
     const second = await execute(p, registry, ctx, { executionId: "ex2", approvals: [first.pending!] });
     assert.equal(second.status, "awaiting_confirmation");
     assert.equal(second.pending?.changed, true);

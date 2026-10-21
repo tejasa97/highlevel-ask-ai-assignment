@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { z } from "zod";
 import { ActionError, type ActionContext } from "../registry/define.js";
+import { invoke } from "../registry/invoke.js";
 import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
 import { parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
@@ -274,9 +275,7 @@ function runItem(ctx: ActionContext, executionId: string, stepId: string, key: s
             return prior;
           }
         }
-        const out = call.action.handler(args, ctx);
-        if (out instanceof Promise) throw new Error(`${call.action.id}: async handlers are not supported inside a transaction`);
-        const value = (call.action.output as z.ZodType).parse(out);
+        const value = invoke(call.action, args, ctx);
         if (writes) ctx.store.recordWrite(ledgerKey, call.action.id, value, ctx.clock.now());
         return value;
       }),

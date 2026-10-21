@@ -5,6 +5,17 @@ Working plan for the HighLevel "Ask AI framework" assignment. The requirements a
 **Deadline:** 5 days from 2026-10-19, so submit by **Sat 2026-10-24**.
 **Questions:** reply on the email thread; Nikhil (panel) is cc'd.
 
+**Scope (decided 2026-10-21): v1 = 15 modules in depth.** All 500 actions stay in the catalog and in retrieval, but only these 15 modules have handlers; a request that lands on one of the other 35 gets an honest "not available in v1" answer, never a fake success. The other 35 come after v1 works end to end and covers its edge cases.
+
+| Group | Modules |
+|---|---|
+| CRM core | M01 Contacts, M03 Leads, M04 Opportunities, M06 Tasks, M07 Notes, M08 Tags |
+| People | M48 Users, M49 Teams |
+| Messaging | M11 Conversations, M12 SMS, M13 Email, M15 Campaigns |
+| Scheduling and money | M21 Appointments, M28 Invoices, M29 Payments |
+
+Depth means: all 10 actions per module, real validation and state changes, permissions, and a test file per module for its edge cases (duplicates, closed or archived records, inactive users, last-admin guards, merges, conversions) on top of the per-action smoke test.
+
 ---
 
 ## 0. Core idea
@@ -364,10 +375,10 @@ server/src/
   core/        orchestrator, planner, executor, retriever, context, tracer
   registry/    defineAction.ts, registry.ts, crudFactory.ts, riskPolicy.ts
   modules/
-    m01-contacts/   index.ts  (10 actions)  entity.ts  (schema + seed gen)
+    m01-contacts/   index.ts  (10 actions)  schema.ts  contacts.test.ts
     ...
     m50-reports/
-  store/       db.ts (node:sqlite), seed.ts, clock.ts, faults.ts
+  store/       db.ts (node:sqlite, faults), seed.ts, fixtures.ts, dev.ts (file DB), clock.ts
 eval/
   scenarios/*.yaml   runner.ts   assertions.ts   report.ts   smoke.test.ts
 web/           Vue 3 + Vite
@@ -395,7 +406,10 @@ export const createContact = defineAction({
 ```
 
 ### Rules
-- **`crudFactory(entity)`** generates create, get, search, update and archive from each module's entity schema, about 250 actions in total. Hand-write the domain actions: merge, convert quote to invoice, find slots, refundable balance, workload, and so on.
+- **Hand-written handlers for the v1 modules.** A CRUD factory was the plan for 500 actions; at 15 modules in depth, each handler is written by hand so its guards are specific (e.g. a merged contact names the contact it went into). Shared pieces live in `registry/helpers.ts`: `mustGet`, `activeUser`, `requireState`, `requirePermission`, `atLeastOne`, `notPast`, `page`.
+- **Every action has an `example(f)`** built from the seed or from fixtures, so the smoke test can run it.
+- **One path to run a handler:** `registry/invoke.ts` checks injected faults, runs the handler, parses the output schema and writes the audit entry. The executor and tests both go through it.
+- **Data:** `node:sqlite`. Tests get a fresh in-memory seeded store each (`testWorld()`), and add what a case needs through fixtures (`f.lead({...})`, `f.task({...})`). The CLI and UI use a file DB, `server/data/dev.sqlite` (gitignored), rebuilt with `npm run db:reset`.
 - **Auto-registration:** modules are discovered by directory scan. A new module is one folder with no core change (the extensibility requirement).
 - **Descriptions in user language**, not REST language. They're the retrieval surface and the main quality lever.
   - Spell out direction and meaning wherever everyday words are ambiguous. For example, M11.A10 takes `waitingOn: "contact" | "team"`, and its description says which side wrote last in each case.
@@ -485,19 +499,19 @@ Commit to these after a small pilot run, **before** the full benchmark. The valu
 
 ---
 
-## 7. Five-day schedule
+## 7. Schedule
 
 | Day | Build | Done when |
 |---|---|---|
-| **1 · Tue 20** | Repo, registry, `defineAction`, CRUD factory, SQLite store, seed, clock, faults. Draft all 500 action definitions from the catalog (LLM-assisted, reviewed) | ~250 CRUD actions pass the smoke test |
-| **2 · Wed 21** | Remaining domain handlers. Retriever, `Planner` interface + Anthropic adapter, executor for direct requests. CLI `ask "..."` | 500/500 smoke green; direct requests work end to end |
-| **3 · Thu 22** | References + built-in ops, entity resolution, clarification, confirmations, follow-up context, replan. SSE + Vue UI. Start drafting scenarios | The brief's 5 example prompts work in the UI |
-| **4 · Fri 23** | Finish 100+ scenarios, eval runner, baseline agent, router + OpenAI-compatible adapter. Pilot → write targets → full benchmark → fix top failure classes | Benchmark JSON + first report |
-| **5 · Sat 24** | Final benchmark, README, demo video (2–5 min), buffer | Submitted |
+| **1 · Tue 20** | Repo, registry, `defineAction`, SQLite store, seed, clock, faults, compile + execute with gates, approvals and the writes ledger. Catalog of all 500 actions | The Facebook-leads workflow runs end to end in tests |
+| **2 · Wed 21** | v1 scope. Fixtures, `invoke`, dev DB. M01, M03, M06, M48, M49 at 10 actions each with edge-case tests | 196 tests green ✅ |
+| **3 · Thu 22** | The other 10 v1 modules (M04, M07, M08, M11, M12, M13, M15, M21, M28, M29). BM25 retrieval over all 500 with "not in v1" answers. Anthropic adapter, follow-ups, observe loop | 15 modules smoke green; the brief's example prompts work from the CLI |
+| **4 · Fri 23** | Fastify SSE + Vue UI. 100+ scenarios over the v1 modules, eval runner, baseline, benchmark → fix top failure classes | UI demo works; benchmark JSON + first report |
+| **5 · Sat 24** | Final benchmark, README (scope and what's next), demo video (2–5 min), buffer | Submitted |
 
 ### Risks
 1. **Writing and reviewing scenarios takes long.** Start drafting on day 3.
-2. **500 handlers eat days 1–2.** Keep domain logic simple but real; the CRUD factory does the bulk.
+2. **Ten more modules on day 3.** The pattern, helpers and test style are set by the first five; if day 3 slips, retrieval and the adapter come first and the last modules move to the post-v1 batch.
 3. **Retrieval misses on look-alike actions** (contacts vs leads, email vs conversations). Track recall@k as its own metric and tune descriptions and synonyms against it.
 4. **Non-determinism.** Temperature 0, repeated runs, and report variance instead of hiding it.
 5. **Semantic traps that retrieval can't catch.** The action is right but its meaning is inverted, e.g. "haven't replied" vs "unanswered", or "Facebook campaign" as a lead source vs a Campaign record. Keep a named eval category for these and fix them in card descriptions and params, not in the prompt.

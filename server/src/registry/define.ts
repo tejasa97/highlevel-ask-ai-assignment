@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import type { Clock } from "../store/clock.js";
 import type { Store } from "../store/db.js";
+import type { Fixtures } from "../store/fixtures.js";
 
 // One action = one catalog entry (M01.A01 …) with typed input/output and a real handler.
 // The display name comes from catalog.json, so ids and names can't drift from HighLevel's catalog.
@@ -10,6 +11,8 @@ export type Risk = "read" | "write" | "destructive" | "external";
 export interface ActionContext {
   store: Store;
   clock: Clock;
+  /** User id of the person asking. Defaults to the account admin (see store/seed.ts). */
+  actorId?: string;
 }
 
 export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType = z.ZodType> {
@@ -24,14 +27,28 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   entities?: { produces?: string; consumes?: string[] };
   /** Look-alike actions in other modules, always retrieved together. */
   siblings?: string[];
-  handler: (args: z.output<I>, ctx: ActionContext) => z.input<O> | Promise<z.input<O>>;
+  /** Synchronous: every call runs inside a transaction. Throw ActionError for expected failures. */
+  handler: (args: z.output<I>, ctx: ActionContext) => z.input<O>;
+  /**
+   * A valid call for the smoke test: create whatever records it needs with `f`, return the args.
+   * The smoke test also derives the invalid call from it (an unknown id, or a made-up param).
+   */
+  example: (f: Fixtures) => z.input<I>;
 }
 
-export function defineAction<I extends z.ZodType, O extends z.ZodType>(def: ActionDef<I, O>): ActionDef<I, O> {
-  return def;
+type DeepReadonly<T> = T extends (infer U)[] ? readonly DeepReadonly<U>[] : T extends object ? { readonly [K in keyof T]: DeepReadonly<T[K]> } : T;
+
+/**
+ * `X` exists only so examples type-check with their literals intact. Typed directly against z.input<I>,
+ * an example's enum strings widen to `string` (the return is checked before I is known) and fail.
+ */
+export function defineAction<I extends z.ZodType, O extends z.ZodType, const X extends DeepReadonly<z.input<I>>>(
+  def: Omit<ActionDef<I, O>, "example"> & { example: (f: Fixtures) => X },
+): ActionDef<I, O> {
+  return def as ActionDef<I, O>;
 }
 
-export type ErrorCode = "NOT_FOUND" | "DUPLICATE" | "INVALID" | "CONFLICT" | "PERMISSION" | "TIMEOUT";
+export type ErrorCode = "NOT_FOUND" | "DUPLICATE" | "INVALID" | "CONFLICT" | "PERMISSION" | "TIMEOUT" | "UNAVAILABLE";
 
 /** A typed, expected failure. The executor reports it; it never crashes the run. */
 export class ActionError extends Error {

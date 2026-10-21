@@ -1,5 +1,6 @@
 // End-to-end, one message: seed a fresh store, plan, validate (one repair round), execute, confirm, summarize.
-// Run: npm run ask -- "assign last week's facebook leads to the free sales reps" [--yes] [--fast] [--debug]
+// Run: npm run ask -- "assign last week's facebook leads to the free sales reps" [--yes] [--fast] [--debug] [--dev]
+// --dev uses the dev database (data/dev.sqlite, made by `npm run db:reset`), so changes persist between runs.
 // Every action in the registry is sent as a card for now; retrieval comes later.
 import { createInterface } from "node:readline/promises";
 import { compile, type CompiledPlan } from "../core/compile.js";
@@ -10,22 +11,19 @@ import { repairBlock, SYSTEM, userBlock } from "../planner/prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "../planner/submit-plan.js";
 import type { PlanResult } from "../planner/types.js";
 import { loadRegistry } from "../registry/registry.js";
-import { frozenClock } from "../store/clock.js";
-import { Store } from "../store/db.js";
-import { seed } from "../store/seed.js";
+import { devStore } from "../store/dev.js";
+import { world } from "../store/world.js";
 
 const flags = new Set(process.argv.slice(2).filter((a) => a.startsWith("--")));
 const message = process.argv.slice(2).filter((a) => !a.startsWith("--")).join(" ");
 if (!message) {
-  console.error('usage: npm run ask -- "<message>" [--yes] [--fast] [--debug]');
+  console.error('usage: npm run ask -- "<message>" [--yes] [--fast] [--debug] [--dev]');
   process.exit(2);
 }
 const debug = flags.has("--debug");
 
 const registry = await loadRegistry();
-const clock = frozenClock();
-const store = new Store();
-seed(store, clock);
+const { store, clock } = flags.has("--dev") ? devStore() : world();
 const planner = makePlanner();
 const tier = flags.has("--fast") ? "fast" : "strong";
 const timings: string[] = [];
