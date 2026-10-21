@@ -28,7 +28,7 @@ const planner = makePlanner();
 const tier = flags.has("--fast") ? "fast" : "strong";
 const timings: string[] = [];
 
-const outcome = await planTurn({ message, tier }, { registry, retriever: new Retriever(buildCards(registry)), planner, clock }, (e) => {
+const outcome = await planTurn({ message, tier }, { registry, retriever: new Retriever(buildCards(registry)), planner, clock, store }, (e) => {
   if (e.type === "planner.reply") timings.push(`${e.data.label} ${e.data.latencyMs} ms (${e.data.model}, in ${e.data.usage.input}, out ${e.data.usage.output})`);
   if (e.type === "compile.errors") console.log(`\nplan rejected:\n  ${e.data.errors.join("\n  ")}`);
   if (!debug) return;

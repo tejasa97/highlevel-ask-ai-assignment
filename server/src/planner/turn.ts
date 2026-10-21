@@ -1,8 +1,10 @@
 import { compile, type CompiledPlan } from "../core/compile.js";
 import { card } from "../registry/card.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
+import { type Mention, mentions } from "../retrieval/mentions.js";
 import type { Retrieval, Retriever } from "../retrieval/retrieve.js";
 import type { Clock } from "../store/clock.js";
+import type { Store } from "../store/db.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import type { PlanResult, Planner, Tier } from "./types.js";
@@ -17,6 +19,8 @@ export interface TurnDeps {
   retriever: Retriever;
   planner: Planner;
   clock: Clock;
+  /** Records to link names in the message against (see mentions.ts). Without it, names aren't linked. */
+  store?: Store;
 }
 
 export interface TurnInput {
@@ -51,6 +55,7 @@ export interface RetrievalTrace {
   clauses: string[];
   terms: string[];
   noMatch: boolean;
+  mentions: Mention[];
   topScore: number;
   ms: number;
   picks: (Retrieval["picks"][number] & { name: string; module: string; available: boolean })[];
@@ -59,15 +64,16 @@ export interface RetrievalTrace {
 }
 
 export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnEvent) => void = () => {}): Promise<TurnOutcome> {
-  const { registry, retriever, planner, clock } = deps;
+  const { registry, retriever, planner, clock, store } = deps;
   const resolvable = registry.resolverEntities();
+  const named: Mention[] = store ? mentions(input.answering ? `${input.answering}\n${input.message}` : input.message, registry, store) : [];
   const allChars = registry.list().map(card).join("\n").length;
 
   const offered: RegisteredAction[] = [];
   const notAvailable: string[] = [];
   const seen = new Set<string>();
-  const shortlist = (label: string, message: string, context?: Carry) => {
-    const r = retriever.retrieve({ message, context, resolvable, exclude: [...seen] });
+  const shortlist = (label: string, message: string, context?: Carry, linked: Mention[] = []) => {
+    const r = retriever.retrieve({ message, context, resolvable, mentions: linked, exclude: [...seen] });
     for (const p of r.picks) {
       seen.add(p.id);
       const impl = registry.get(p.id);
@@ -82,6 +88,7 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
         clauses: r.clauses,
         terms: r.terms,
         noMatch: r.noMatch,
+        mentions: linked,
         topScore: r.topScore,
         ms: r.ms,
         picks: r.picks.map((p) => {
@@ -92,7 +99,7 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
       },
     });
   };
-  const prompt = () => userBlock({ clock, actions: offered, notAvailable, resolvable, message: input.message, context: input.context });
+  const prompt = () => userBlock({ clock, actions: offered, notAvailable, resolvable, mentions: named, message: input.message, context: input.context });
   const call = async (user: string, label: string) => {
     emit({ type: "planner.request", data: { label, tier: input.tier, system: SYSTEM, user, actions: offered.map((a) => a.id) } });
     const r = await planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA });
@@ -100,7 +107,7 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
     return r;
   };
 
-  shortlist("retrieve", input.answering ? `${input.answering}\n${input.message}` : input.message, input.carry);
+  shortlist("retrieve", input.answering ? `${input.answering}\n${input.message}` : input.message, input.carry, named);
   let user = prompt();
   let reply = await call(user, "plan");
   let searched = false;

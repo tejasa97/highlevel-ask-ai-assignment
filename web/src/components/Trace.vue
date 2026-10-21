@@ -59,6 +59,9 @@ const stepLine = (s) =>
         <div class="small terms">
           <span class="muted">terms</span> <span v-for="t in r.terms" :key="t" class="chip mono">{{ t }}</span>
         </div>
+        <div v-if="r.mentions?.length" class="small terms">
+          <span class="muted">names</span> <span v-for="m in r.mentions" :key="m.name + m.entity" class="chip">{{ m.name }} → {{ m.entity }}<template v-if="m.count > 1"> ×{{ m.count }}</template></span>
+        </div>
         <div v-if="r.clauses.length > 1" class="small terms">
           <span class="muted">clauses</span> <span v-for="c in r.clauses" :key="c" class="chip">{{ c }}</span>
         </div>

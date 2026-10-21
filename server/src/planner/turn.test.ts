@@ -5,6 +5,7 @@ import { loadRegistry, type Registry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
 import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
+import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
 import { planTurn, type TurnEvent } from "./turn.js";
 import type { PlanRequest, Planner } from "./types.js";
@@ -169,5 +170,23 @@ describe("planTurn", () => {
     await run("send an invoice reminder to Priya", planner);
     const user = planner.requests[0]!.user;
     assert.match(user, /<not_available>[\s\S]*invoice[\s\S]*<\/not_available>/i);
+  });
+});
+
+describe("names in the message", () => {
+  test("are linked to their record type in the prompt, and their lookups are offered", async () => {
+    const ctx = world();
+    ctx.f.lead({ firstName: "Quinn", lastName: "Leadonly" });
+    const planner = scripted(reply({ type: "clarify", question: "?" }));
+    await planTurn({ message: "Create a task to call Quinn Leadonly tomorrow", tier: "fast" }, { registry, retriever, planner, clock: frozenClock(), store: ctx.store });
+    const user = planner.requests[0]!.user;
+    assert.match(user, /<mentions>Quinn Leadonly: lead<\/mentions>/);
+    assert.ok(offeredIn(planner.requests[0]!).includes("M03.A02"));
+  });
+
+  test("without a store nothing is linked", async () => {
+    const planner = scripted(reply({ type: "clarify", question: "?" }));
+    await run("What is Sarah Johnson's status?", planner);
+    assert.doesNotMatch(planner.requests[0]!.user, /<mentions>/);
   });
 });

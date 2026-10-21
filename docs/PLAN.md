@@ -99,6 +99,7 @@ Example: *"Find leads created last week who haven't replied, exclude anyone with
 5. **Siblings** of the top 3 picks only. Adding them for every pick cost ~12 cards a question for under a point of recall.
 6. **Producers:** if a pick consumes a record type no pick produces, add the best producer. Contact, lead, user and team are skipped, because the planner resolves those by name.
 7. **Carried actions:** the previous plan's actions, so "make those high priority" keeps its tools.
+8. **Names** (`retrieval/mentions.ts`): capitalized runs in the message are looked up with the resolvers (contact, lead, user, team; not tasks, whose titles are too noisy). A name links only if all its words are whole words of a record's name, so "Tom" doesn't link to "Tomas". A run that opens a sentence is retried without its first word ("Call Ana Ruiz"); mid-sentence it isn't, so an unknown "Jo Park" doesn't link to a user named Park. Each linked type adds its get and search actions. Before this, "What is Sarah Johnson's status?" never says "contact", and the shortlist had no contact actions at all. A linked name also overrides no-match ("tell me about Victor Larsen").
 - Every added card records `via` (which pick brought it in). The trace shows it.
 
 **Query construction**
@@ -109,18 +110,21 @@ Example: *"Find leads created last week who haven't replied, exclude anyone with
 **What the planner sees**
 - `<actions>` holds only the shortlisted *implemented* actions. The cost is ~6 k characters instead of ~35 k for every implemented action, and it falls further as modules are added.
 - `<not_available>` lists unbuilt actions that matched, so the reply can name them.
+- `<mentions>` names the record type each linked name belongs to ("Hiro Reyes: lead", "Sarah Johnson: 2 contacts"). The planner had resolved Hiro Reyes as a contact, and the step failed.
 - Compile rejects any action the planner wasn't offered, and any unbuilt one, with an error the repair round can act on.
 
 **Measured** (`npm run eval:retrieval`; no LLM, ~0.3 ms a question)
-- 40% of the 157 questions (`eval/retrieval/queries.jsonl`) are held out by id hash: 63 in scope plus 2 out of scope. All tuning used the dev split only. At this size one question moves recall by about 1.5 points, and a paraphrase by about 5.
+- 40% of the 167 questions (`eval/retrieval/queries.jsonl`) are held out by id hash: 67 in scope plus 2 out of scope. All tuning used the dev split only. At this size one question moves recall by about 1.5 points, and a paraphrase by about 5.
 
 | held-out test split | R@5 | R@15 | all needed @15 | MRR | cards |
 |---|---|---|---|---|---|
 | names only | 62.4% | 71.7% | 69.8% | 0.56 | ~14 |
-| final | 84.9% | 93.1% | 92.1% | 0.69 | ~18 |
+| final, before names | 84.9% | 93.1% | 92.1% | 0.69 | ~18 |
+| with names linked | 85.8% | 93.5% | 92.5% | 0.65 | ~19 |
 
-- By group at R@15: direct 100%, paraphrase 88.9%, multi-intent 97.0%, typo 83.3% (n=6), follow-up 66.7% (n=3). No in-scope question was rejected as no match.
+- By group at R@15: direct 100%, paraphrase 88.9%, multi-intent 97.0%, typo 83.3% (n=6), follow-up 66.7% (n=3), lookup 100% (n=4). No in-scope question was rejected as no match.
 - The remaining misses are vague questions, a typo too short for fuzzy matching ("tagg"), and context-free follow-ups ("did it go through?"), the territory `search_tools` covers.
+- The lookup group (10 questions that ask about a named person: "is Hiro Reyes qualified yet?") was added for the names step. On the full set it went from 40% to 100% at R@15, with no other group moving. Its MRR stays near 0 because those actions come from the link, not from BM25. `--no-mentions` turns linking off for comparison.
 - `retrieve.test.ts` gates regressions on the full set: R@15 ≥ 90%, direct 100%, paraphrase ≥ 80%, zero false rejects.
 
 **What retrieval can't do**

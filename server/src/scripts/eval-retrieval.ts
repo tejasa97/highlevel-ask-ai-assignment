@@ -4,6 +4,7 @@
 //   npm run eval:retrieval -- --split dev        tuning split (or "all")
 //   npm run eval:retrieval -- --misses           list every miss with where the action ranked
 //   npm run eval:retrieval -- --set k=20 moduleCap=3 boost.synonyms=3 fuzzy=off splitClauses=false
+//   npm run eval:retrieval -- --no-mentions      ablation: names in questions aren't linked to records
 //   npm run eval:retrieval -- --names-only       ablation: cards without synonyms or descriptions
 //   npm run eval:retrieval -- --label baseline   also saves eval/results/retrieval-<label>.json
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -11,7 +12,9 @@ import { fileURLToPath } from "node:url";
 import { loadRegistry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
 import { loadQueries, score, summarize, type Scored } from "../retrieval/eval.js";
+import { mentions } from "../retrieval/mentions.js";
 import { DEFAULTS, type RetrieveOptions, Retriever } from "../retrieval/retrieve.js";
+import { world } from "../store/world.js";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const argv = process.argv.slice(2);
@@ -45,7 +48,10 @@ const queries = loadQueries(`${ROOT}eval/retrieval/queries.jsonl`).filter((q) =>
 const resolvable = registry.resolverEntities();
 const KS = [5, 10, 15, 20, 25];
 
-const scored: Scored[] = queries.map((q) => score(q, retriever, KS, resolvable));
+// Names are linked against the seed data, as the dev server links them against its database.
+const { store } = world();
+const linked = flag("no-mentions") ? undefined : (m: string) => mentions(m, registry, store);
+const scored: Scored[] = queries.map((q) => score(q, retriever, KS, resolvable, linked));
 const report = summarize(scored, KS);
 
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`.padStart(6);

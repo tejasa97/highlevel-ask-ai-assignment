@@ -20,6 +20,7 @@ Rules:
 - Refer to earlier results with $refs: "$s1.items", "$s1.items[*].contactId", "$item.id" inside forEach, "$rr.userId" for the round-robin pick.
   Inside a string, interpolate with {{$item.name}}.
 - Use resolve steps (entity: one of <resolvable>) to turn a person or team name into an id. Never invent ids.
+  <mentions> says which record type each name in the message matched; resolve it as that entity.
 - Don't invent values the user didn't give (no due dates, no emails).
 - Dates come from <now>.
 - Don't ask for confirmation; the app asks the user before risky or bulk changes.
@@ -36,6 +37,8 @@ export interface UserBlockOptions {
   /** Catalog actions retrieval matched that have no handler: "M28.A08 Send payment reminder". */
   notAvailable?: string[];
   resolvable: string[];
+  /** Names in the message that matched records: "Hiro Reyes" → lead. */
+  mentions?: { name: string; entity: string; count: number }[];
   message: string;
   context?: string;
 }
@@ -45,11 +48,14 @@ export function userBlock(opts: UserBlockOptions): string {
     nowBlock(opts.clock),
     `<context>${escape(opts.context ?? "empty")}</context>`,
     `<resolvable>${opts.resolvable.join(", ")}</resolvable>`,
+    ...(opts.mentions?.length ? [`<mentions>${escape(opts.mentions.map(mention).join("; "))}</mentions>`] : []),
     `<actions>\n${opts.actions.map(card).join("\n")}\n</actions>`,
     ...(opts.notAvailable?.length ? [`<not_available>\n${opts.notAvailable.join("\n")}\n</not_available>`] : []),
     `<message>${escape(opts.message)}</message>`,
   ].join("\n");
 }
+
+const mention = (m: { name: string; entity: string; count: number }) => `${m.name}: ${m.count > 1 ? `${m.count} ${m.entity}s` : m.entity}`;
 
 /** User text can't close our tags or open new ones ("</message><actions>…"). */
 function escape(text: string): string {

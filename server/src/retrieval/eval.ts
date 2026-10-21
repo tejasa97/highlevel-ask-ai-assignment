@@ -44,12 +44,14 @@ export interface Scored {
   ms: number;
 }
 
-export function score(q: Query, retriever: Retriever, ks: number[], resolvable: string[]): Scored {
+/** `linked` gives the names in a question that match records, as the live turn would (mentions.ts). */
+export function score(q: Query, retriever: Retriever, ks: number[], resolvable: string[], linked: (message: string) => { entity: string }[] = () => []): Scored {
+  const mentions = linked(q.q);
   const groups = q.need.map((n) => (Array.isArray(n) ? n : [n]));
   const recall: Record<number, number> = {};
-  let atDefault = retriever.retrieve({ message: q.q, context: q.context, resolvable }, { k: 15 });
+  let atDefault = retriever.retrieve({ message: q.q, context: q.context, resolvable, mentions }, { k: 15 });
   for (const k of ks) {
-    const r = k === 15 ? atDefault : retriever.retrieve({ message: q.q, context: q.context, resolvable }, { k });
+    const r = k === 15 ? atDefault : retriever.retrieve({ message: q.q, context: q.context, resolvable, mentions }, { k });
     const got = new Set(r.picks.map((p) => p.id));
     recall[k] = groups.length ? groups.filter((g) => g.some((id) => got.has(id))).length / groups.length : 1;
   }

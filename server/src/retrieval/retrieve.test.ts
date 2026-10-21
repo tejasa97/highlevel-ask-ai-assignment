@@ -3,8 +3,10 @@ import { before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
+import { world } from "../store/world.js";
 import { buildCards, ENTITY_TYPES, loadCardMeta, type SearchCard } from "./cards.js";
 import { loadQueries, score, summarize } from "./eval.js";
+import { mentions } from "./mentions.js";
 import { Retriever } from "./retrieve.js";
 import { terms } from "./text.js";
 
@@ -112,8 +114,9 @@ describe("retrieve", () => {
 describe("retrieval eval", () => {
   test("recall stays at its measured level", () => {
     const qs = loadQueries(QUERIES);
+    const { store } = world();
     const s = summarize(
-      qs.map((q) => score(q, r, [15], registry.resolverEntities())),
+      qs.map((q) => score(q, r, [15], registry.resolverEntities(), (m) => mentions(m, registry, store))),
       [15],
     );
     assert.ok(s.total.recall[15]! >= 0.9, `R@15 ${s.total.recall[15]}`);

@@ -56,9 +56,11 @@ export interface RetrieveInput {
   exclude?: string[];
   /** Record types the planner can resolve by name, so they never need a producer card. */
   resolvable?: string[];
+  /** Names in the message that matched records (see mentions.ts): their record type's get and search join. */
+  mentions?: { entity: string }[];
 }
 
-export type Why = "bm25" | "sibling" | "producer" | "carried";
+export type Why = "bm25" | "sibling" | "producer" | "carried" | "mention";
 
 export interface Pick {
   id: string;
@@ -150,7 +152,8 @@ export class Retriever {
       .sort((a, b) => order(a[0]) - order(b[0]) || b[1].score - a[1].score || b[1].best.score - a[1].best.score);
     const ranking = merged.map(([id, f], i) => ({ id, score: round(f.best.score), rank: i + 1 }));
     const topScore = lists[0]![0]?.score ?? 0;
-    const noMatch = topScore < o.noMatchScore;
+    // A message that names a known record is about the CRM even with no catalog words ("tell me about Victor Larsen").
+    const noMatch = topScore < o.noMatchScore && !input.mentions?.length;
 
     // Ranked slots: module cap and score floor.
     const picks: Pick[] = [];
@@ -176,6 +179,11 @@ export class Retriever {
     };
 
     for (const id of input.context?.prev ?? []) add(id, "carried");
+
+    // "What is Sarah Johnson's status?" names a contact without saying so: offer the contact lookups.
+    for (const entity of new Set((input.mentions ?? []).map((m) => m.entity))) {
+      for (const id of this.lookupsFor(entity)) add(id, "mention", entity);
+    }
 
     // Siblings only for the strongest picks: for weak ones they mostly add noise to the prompt.
     for (const p of picks.filter((x) => x.why === "bm25").slice(0, o.siblings)) {
@@ -206,6 +214,12 @@ export class Retriever {
       fuzzy: (term) => (term.length >= two ? 2 : term.length >= one ? 1 : false) as number,
       weights: { fuzzy: 0.45, prefix: 0.375 },
     });
+  }
+
+  /** The get and search actions for a record type. */
+  private lookupsFor(type: string): string[] {
+    const producers = this.cards.filter((c) => c.produces === type && c.available);
+    return ["get", "search"].flatMap((verb) => producers.find((c) => new RegExp(`^${verb}\\b`, "i").test(c.name))?.id ?? []);
   }
 
   /** Prefer a producer the query already ranked; otherwise the module's search/list action for that type. */

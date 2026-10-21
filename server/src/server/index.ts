@@ -47,7 +47,7 @@ async function ask(message: string, tier: Tier, actorId: string, emit: Emit): Pr
   const turnId = `t${turns.size + 1}_${Date.now().toString(36)}`;
   emit("turn", { turnId, message });
   const context = history.length ? history.slice(-HISTORY_TURNS).map((h) => `user: ${h.user}\nassistant: ${h.assistant}`).join("\n") : undefined;
-  const outcome = await planTurn({ message, tier, context, carry, answering }, { registry, retriever, planner, clock: world.clock }, (e) => emit(e.type, e.data));
+  const outcome = await planTurn({ message, tier, context, carry, answering }, { registry, retriever, planner, clock: world.clock, store: world.store }, (e) => emit(e.type, e.data));
   if (outcome.kind === "reply") return finish(message, outcome.status, outcome.text, emit, outcome.options);
   carry = outcome.carry;
   const turn: Turn = { id: turnId, message, plan: outcome.plan, executionId: `ex_${turnId}` };
