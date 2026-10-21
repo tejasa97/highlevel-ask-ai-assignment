@@ -1,6 +1,6 @@
 # Ask AI — Build Plan
 
-Working plan for the HighLevel "Ask AI framework" assignment. The requirements and a checklist are in [ASSIGNMENT.md](ASSIGNMENT.md). The original PDFs are in [assignment/](assignment/).
+Working plan for the HighLevel "Ask AI framework" assignment. The requirements and a checklist are in `ASSIGNMENT.md`, and the original PDFs in `assignment/`; both are kept locally, not in the repo.
 
 **Deadline:** 5 days from 2026-10-19, so submit by **Sat 2026-10-24**.
 **Questions:** reply on the email thread; Nikhil (panel) is cc'd.
