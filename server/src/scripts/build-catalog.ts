@@ -1,5 +1,5 @@
-// Builds src/registry/catalog.json from HighLevel's catalog PDF. The JSON is gitignored, like the PDF's
-// content in general, so it's regenerated locally: npm run catalog [-- path/to/catalog.pdf]
+// Builds src/registry/catalog.json from HighLevel's catalog PDF. The JSON is committed; rerun this only
+// if the PDF changes: npm run catalog [-- path/to/catalog.pdf]
 // Layout per module: "M01 / 10 ACTIONS", the name, a description (may wrap), then "A01 Create contact" × 10.
 import { readFileSync, writeFileSync } from "node:fs";
 import { relative } from "node:path";
