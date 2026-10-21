@@ -13,6 +13,18 @@ export interface ActionContext {
   clock: Clock;
   /** User id of the person asking. Defaults to the account admin (see store/seed.ts). */
   actorId?: string;
+  /** Told about every handler run, for tracing (the debug view). */
+  onCall?: (c: CallTrace) => void;
+}
+
+export interface CallTrace {
+  action: string;
+  name: string;
+  risk: string;
+  args: Record<string, unknown>;
+  ms: number;
+  result?: unknown;
+  error?: { code: string; message: string };
 }
 
 export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType = z.ZodType> {

@@ -72,6 +72,12 @@ export class Store {
     return doc;
   }
 
+  /** Entity tables that have been created, in name order. */
+  tables(): string[] {
+    const rows = this.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE '\\_%' ESCAPE '\\' AND name NOT IN ('writes', 'audit', 'faults', 'sqlite_sequence') ORDER BY name").all() as { name: string }[];
+    return rows.map((r) => r.name);
+  }
+
   get<T = Doc>(entity: string, id: string): T | undefined {
     const row = this.db.prepare(`SELECT data FROM ${this.table(entity)} WHERE id = ?`).get(id) as { data: string } | undefined;
     return row ? (JSON.parse(row.data) as T) : undefined;

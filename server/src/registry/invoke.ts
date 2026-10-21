@@ -10,6 +10,21 @@ export const DEFAULT_ACTOR = "us_1";
 const ID = /^[a-z]{2,3}_\d+$/;
 
 export function invoke(action: RegisteredAction, args: Record<string, unknown>, ctx: ActionContext): unknown {
+  if (!ctx.onCall) return run(action, args, ctx);
+  const t = performance.now();
+  const trace = { action: action.id, name: action.name, risk: action.risk, args };
+  try {
+    const result = run(action, args, ctx);
+    ctx.onCall({ ...trace, ms: performance.now() - t, result });
+    return result;
+  } catch (err) {
+    const e = err instanceof ActionError ? { code: err.code, message: err.message } : { code: "INTERNAL", message: String(err) };
+    ctx.onCall({ ...trace, ms: performance.now() - t, error: e });
+    throw err;
+  }
+}
+
+function run(action: RegisteredAction, args: Record<string, unknown>, ctx: ActionContext): unknown {
   const actor = ctx.actorId ?? DEFAULT_ACTOR;
   for (const f of ctx.store.faults(action.id)) {
     if (Object.entries(f.match).every(([k, v]) => JSON.stringify(args[k]) === JSON.stringify(v))) {
