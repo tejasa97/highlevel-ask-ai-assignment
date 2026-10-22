@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
+import { contains, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Clock } from "../../store/clock.js";
@@ -267,7 +267,9 @@ const publishWorkflow = defineAction({
       steps: [{ id: "step_a", kind: "action", name: "Tag", actionId: "M01.A04", args: {}, waitMinutes: null, condition: null }],
     }).id,
   }),
-  handler: ({ workflowId }, { store, clock }) => {
+  handler: ({ workflowId }, { store, clock, actorId }) => {
+    // A live workflow messages contacts on its own, so publishing is held to the same bar as sending.
+    requirePermission(store, actorId, "messaging.send");
     const wf = mustGet<Workflow>(store, "workflows", workflowId, "workflow");
     requireState(`Workflow "${wf.name}"`, wf.status, ["draft", "paused"], "be published");
     const errors = workflowErrors(wf);

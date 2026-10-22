@@ -92,3 +92,16 @@ test("a no-op step edit conflicts, lists sort by name, and history is newest fir
   assert.equal(runs.total, 2);
   assert.equal((w.call("M16.A10", { workflowId: wf.id, status: "failed" }) as { total: number }).total, 1);
 });
+
+test("M16.A08 publishing starts messages going out, so it needs messaging.send", async () => {
+  const w = await testWorld();
+  const billing = w.f.user({ roles: ["billing"] });
+  const marketing = w.f.user({ roles: ["marketing"] });
+  const wf = w.f.workflow({ name: "Welcome", steps: [actionStep("step_a")] });
+
+  assert.equal(failure(() => w.call("M16.A08", { workflowId: wf.id }, billing.id)).code, "PERMISSION");
+  assert.equal(failure(() => w.call("M16.A08", { workflowId: wf.id }, "us_missing")).code, "PERMISSION");
+  assert.equal(w.store.get<Workflow>("workflows", wf.id)?.status, "draft");
+
+  assert.equal((w.call("M16.A08", { workflowId: wf.id }, marketing.id) as Workflow).status, "published");
+});

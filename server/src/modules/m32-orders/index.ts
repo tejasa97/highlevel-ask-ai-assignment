@@ -514,7 +514,7 @@ const submitOrder = defineAction({
 const cancelOrder = defineAction({
   id: "M32.A09",
   description:
-    "Cancel a draft order, or a submitted order whose invoice is still open and unpaid. The invoice is voided and tracked inventory is put back. A paid invoice is a CONFLICT (refund the payment first). Unlike M32.A08 Submit order, this undoes the sale. Unlike M28.A09 Void unpaid invoice, this also cancels the order and restores inventory. Requires billing.manage.",
+    "Cancel a draft order, or a submitted order whose invoice is still open and unpaid. The invoice is voided, tracked inventory is put back and the coupon's redemption is released. A paid invoice is a CONFLICT (refund the payment first). Unlike M32.A08 Submit order, this undoes the sale. Unlike M28.A09 Void unpaid invoice, this also cancels the order and restores inventory. Requires billing.manage.",
   risk: "destructive",
   input: z.strictObject({ orderId: OrderId, reason: z.string().min(1) }),
   output: Order,
@@ -535,6 +535,9 @@ const cancelOrder = defineAction({
       if (inv.status !== "open") throw new ActionError("CONFLICT", `Invoice ${inv.number} is ${inv.status}; only an open unpaid invoice can be voided`);
       store.update("invoices", inv.id, { status: "void", voidedAt: now, voidReason: reason, amountDue: 0 });
       writeStock(store, stockRows(store, order.lines), 1, now);
+      // The redemption this order used is free again, or a one-use coupon would be spent by a cancelled sale.
+      const coupon = order.couponId ? store.get<Coupon>("coupons", order.couponId) : undefined;
+      if (coupon) store.update<Coupon>("coupons", coupon.id, { redemptions: Math.max(0, coupon.redemptions - 1), updatedAt: now });
       return store.update<Order>("orders", order.id, { status: "cancelled", cancelledAt: now, cancelReason: reason, updatedAt: now });
     }
     requireState(`Order ${order.number}`, order.status, ["draft", "submitted"], "be cancelled");
