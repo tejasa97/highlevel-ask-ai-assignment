@@ -68,6 +68,9 @@ function describe(step: CStep, r: StepResult, registry: Registry, used: Set<stri
     const out: string[] = [];
     if (r.items.length === 0) return `${actions}: nothing matched, so nothing was changed.`;
     if (ok.length) out.push(`${actions} for ${ok.length} of ${r.items.length}: ${list(names(ok), ok.length)}.`);
+    // A write that recorded its outcome as a failure (a bounced email, a failed sync) is not a plain success.
+    const caveats = ok.flatMap((i) => step.calls.flatMap((c, n) => (c.action.risk !== "read" && c.action.caveat?.(i.results?.[n]) ? [`${i.label ?? i.key} (${c.action.caveat(i.results?.[n])})`] : [])));
+    if (caveats.length) out.push(`But ${caveats.length} of those did not go through: ${caveats.slice(0, NAMES_MAX).join("; ")}${caveats.length > NAMES_MAX ? "; …" : ""}.`);
     if (bad.length) out.push(`Failed for ${bad.length}: ${bad.slice(0, NAMES_MAX).map((i) => `${i.label ?? i.key} (${i.error!.message})`).join("; ")}${bad.length > NAMES_MAX ? "; …" : ""}.`);
     return out.join(" ");
   }

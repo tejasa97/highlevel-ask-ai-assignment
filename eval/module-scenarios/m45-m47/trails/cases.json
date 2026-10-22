@@ -1,0 +1,85 @@
+[
+  {
+    "id": "trail-review-request-bounce",
+    "category": "failure",
+    "modules": ["M45"],
+    "setup": [
+      { "fixture": "contact", "with": { "firstName": "Ilse", "lastName": "Brandvold", "email": "ilse@bounce.example" } }
+    ],
+    "turns": [
+      { "user": "Create a review request for Ilse Brandvold with subject 'Visit feedback' and body 'How was your visit?', and send it" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M45.A01", "M45.A02"] },
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.status')='failed' AND json_extract(data,'$.contactId')=(SELECT id FROM contacts WHERE json_extract(data,'$.email')='ilse@bounce.example')",
+          "equals": 1
+        },
+        {
+          "sql": "SELECT count(*) FROM emails WHERE json_extract(data,'$.to')='ilse@bounce.example' AND json_extract(data,'$.status')='bounced'",
+          "equals": 1
+        }
+      ],
+      "reply": { "includes": ["bounced"], "excludes": ["failed to"] }
+    }
+  },
+  {
+    "id": "trail-ticket-reply-bounce",
+    "category": "failure",
+    "modules": ["M47"],
+    "setup": [
+      { "fixture": "ticket", "with": { "title": "Invoice copy request", "contactId": null, "requesterEmail": "guest@bounce.example" } }
+    ],
+    "turns": [
+      { "user": "Reply to the support ticket 'Invoice copy request' saying we are sending the invoice copy today" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M47.A08"] },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM tickets WHERE json_extract(data,'$.title')='Invoice copy request'",
+          "equals": "open"
+        },
+        {
+          "sql": "SELECT json_extract(data,'$.firstResponseAt') FROM tickets WHERE json_extract(data,'$.title')='Invoice copy request'",
+          "equals": null
+        },
+        {
+          "sql": "SELECT json_array_length(json_extract(data,'$.replies')) FROM tickets WHERE json_extract(data,'$.title')='Invoice copy request'",
+          "equals": 1
+        }
+      ],
+      "reply": { "includes": ["bounced"] }
+    }
+  },
+  {
+    "id": "trail-listing-directory-down",
+    "category": "failure",
+    "modules": ["M46"],
+    "setup": [
+      { "fixture": "listing", "with": { "name": "Harbor Dental", "directory": "mapquest-down", "address": "9 Quay Road" } }
+    ],
+    "turns": [
+      { "user": "Publish the Harbor Dental listing on mapquest-down" },
+      { "user": "What is the sync status of the Harbor Dental listing on mapquest-down?" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M46.A09", "M46.A10"] },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.publishedVersion') FROM listings WHERE json_extract(data,'$.name')='Harbor Dental'",
+          "equals": null
+        },
+        {
+          "sql": "SELECT json_extract(data,'$.failureReason') IS NOT NULL FROM listings WHERE json_extract(data,'$.name')='Harbor Dental'",
+          "equals": 1
+        }
+      ],
+      "reply": { "includes": ["failed"] }
+    }
+  }
+]

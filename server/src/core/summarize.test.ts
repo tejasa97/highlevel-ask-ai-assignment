@@ -142,6 +142,28 @@ describe("summarize: a plan that only reads still answers", () => {
     ]);
     assert.equal(text.split("\n").length, 1, text);
   });
+
+  test("a loop of reads is the answer, so it shows what each item returned", async () => {
+    const ctx = world();
+    const listing = ctx.f.listing({ name: "Harbor Dental", directory: "yelp" });
+    const { text } = await reply([
+      action("s1", "M46.A03", { query: "Harbor Dental" }),
+      { id: "s2", kind: "op" as const, op: "forEach" as const, in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M46.A10", argsJson: JSON.stringify({ listingId: "$item.id" }) }] },
+    ], ctx);
+    assert.ok(text.length > 0 && text.includes(listing.name) && /never_published/.test(text), text);
+  });
+
+  test("a loop of writes names the ones whose outcome was recorded as a failure", async () => {
+    const ctx = world();
+    const good = ctx.f.reviewRequest({ contactId: ctx.f.contact({ email: "ok@example.com" }).id });
+    const bad = ctx.f.reviewRequest({ contactId: ctx.f.contact({ email: "gone@bounce.example" }).id });
+    const { text } = await reply([
+      action("s1", "M45.A04", {}),
+      { id: "s2", kind: "op" as const, op: "forEach" as const, in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M45.A02", argsJson: JSON.stringify({ requestId: "$item.id" }) }] },
+    ], ctx, true);
+    assert.match(text, /But 1 of those did not go through: .*email bounced/, text);
+    assert.ok(good.id && bad.id);
+  });
 });
 
 const NAMES_SHOWN = 5;
