@@ -514,10 +514,11 @@ const submitOrder = defineAction({
 const cancelOrder = defineAction({
   id: "M32.A09",
   description:
-    "Cancel a draft order, or a submitted order whose invoice is still open and unpaid. The invoice is voided and tracked inventory is put back. A paid invoice is a CONFLICT (refund the payment first). Unlike M32.A08 Submit order, this undoes the sale. Requires billing.manage.",
+    "Cancel a draft order, or a submitted order whose invoice is still open and unpaid. The invoice is voided and tracked inventory is put back. A paid invoice is a CONFLICT (refund the payment first). Unlike M32.A08 Submit order, this undoes the sale. Unlike M28.A09 Void unpaid invoice, this also cancels the order and restores inventory. Requires billing.manage.",
   risk: "destructive",
   input: z.strictObject({ orderId: OrderId, reason: z.string().min(1) }),
   output: Order,
+  siblings: ["M28.A09"],
   entities: { consumes: ["order", "invoice"] },
   example: (f) => ({ orderId: f.order().id, reason: "Customer changed their mind" }),
   handler: ({ orderId, reason }, { store, clock, actorId }) => {

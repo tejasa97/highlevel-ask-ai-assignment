@@ -289,10 +289,11 @@ const applyDiscount = defineAction({
 
 const sendQuote = defineAction({
   id: "M27.A08",
-  description: "Send a draft quote to the contact for acceptance and mark it sent. Requires billing.manage and messaging.send. No emails row is stored, because there is no quote email kind; the contact must have an email address.",
+  description: "Send a draft quote to the contact for acceptance and mark it sent. Requires billing.manage and messaging.send. No emails row is stored, because there is no quote email kind; the contact must have an email address. Unlike M28.A07 Issue invoice, this asks the contact to accept an offer and bills nothing.",
   risk: "external",
   input: z.strictObject({ quoteId: QuoteId }),
   output: Quote,
+  siblings: ["M28.A07"],
   entities: { consumes: ["quote"] },
   example: (f) => ({ quoteId: f.quote().id }),
   handler: ({ quoteId }, { store, clock, actorId }) => {

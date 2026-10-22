@@ -269,10 +269,11 @@ const setGrouping = defineAction({
 
 const runReport = defineAction({
   id: "M50.A07",
-  description: "Run a saved report and return live rows plus a total. With no grouping, rows is a single key all. This writes lastRunAt. pipeline_value ignores the date range and sums the value of every open opportunity. Unlike Compare report periods, this uses only the saved range. Requires reports.view.",
+  description: "Run a saved report and return live rows plus a total. With no grouping, rows is a single key all. This writes lastRunAt. pipeline_value ignores the date range and sums the value of every open opportunity. Unlike Compare report periods, this uses only the saved range. Unlike M09.A06 Preview matching records, this runs a saved report, not a smart list's filter. Requires reports.view.",
   risk: "write",
   input: z.strictObject({ reportId: ReportId }),
   output: Rows,
+  siblings: ["M09.A06"],
   entities: { consumes: ["report"] },
   example: (f) => ({ reportId: f.savedReport().id }),
   handler: ({ reportId }, { store, clock, actorId }) => {
@@ -302,10 +303,11 @@ const compare = defineAction({
 
 const exportReport = defineAction({
   id: "M50.A09",
-  description: "Export the same live rows as running the report, plus a csv string of key and value. Nothing is saved and lastRunAt is left unchanged. pipeline_value ignores the date range and sums every open opportunity. Unlike Run report, this does not record a run. Requires reports.view.",
+  description: "Export the same live rows as running the report, plus a csv string of key and value. Nothing is saved and lastRunAt is left unchanged. pipeline_value ignores the date range and sums every open opportunity. Unlike Run report, this does not record a run. Unlike M09.A08 Export matching records, this exports a saved report's rows, not a smart list's records. Requires reports.view.",
   risk: "read",
   input: z.strictObject({ reportId: ReportId }),
   output: Rows.extend({ csv: z.string() }),
+  siblings: ["M09.A08"],
   entities: { consumes: ["report"] },
   example: (f) => ({ reportId: f.savedReport().id }),
   handler: ({ reportId }, { store, actorId }) => {

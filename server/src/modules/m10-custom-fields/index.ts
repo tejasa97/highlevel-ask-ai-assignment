@@ -248,7 +248,7 @@ const retireOption = defineAction({
 
 const setValue = defineAction({
   id: "M10.A09",
-  description: "Set one custom field's value on one record. Checks the field's type, its validation, and refuses a retired dropdown option. To filter on the value later, use a smart list rule cf.<key> (M09.A05).",
+  description: "Set one custom field's value on one record. Checks the field's type, its validation, and refuses a retired dropdown option. To filter on the value later, use a smart list rule cf.<key> (M09.A05). Unlike M01.A04 Update contact details, this sets a custom field the account defined rather than a built-in contact property.",
   risk: "write",
   input: z.strictObject({
     fieldId: FieldId,
@@ -256,7 +256,7 @@ const setValue = defineAction({
     value: z.union([z.string(), z.number(), z.boolean(), z.null()]),
   }),
   output: CustomFieldValue,
-  siblings: ["M09.A05"],
+  siblings: ["M09.A05", "M01.A04"],
   entities: { consumes: ["custom_field"] },
   example: (f) => ({ fieldId: f.customField().id, recordId: f.contact().id, value: "hello" }),
   handler: (a, { store, clock }) => {

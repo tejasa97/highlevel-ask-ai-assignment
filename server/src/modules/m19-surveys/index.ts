@@ -88,10 +88,11 @@ function checkBranch(question: SurveyQuestion, branch: { ifAnswer: string | numb
 
 const createSurvey = defineAction({
   id: "M19.A01",
-  description: "Creates a new survey with a name and purpose so questions can be added afterwards. Starts as an unpublished draft, not yet visible to respondents.",
+  description: "Creates a new survey with a name and purpose so questions can be added afterwards. Starts as an unpublished draft, not yet visible to respondents. Unlike M18.A01 Create form, this is for asking questions (with branching) rather than capturing contact details.",
   risk: "write",
   input: z.strictObject({ name: z.string().min(1) }),
   output: Survey,
+  siblings: ["M18.A01"],
   entities: { produces: "survey" },
   example: () => ({ name: "Post-visit NPS" }),
   handler: (a, { store, clock }) => {
@@ -147,7 +148,7 @@ const listSurveys = defineAction({
 
 const addQuestion = defineAction({
   id: "M19.A04",
-  description: "Adds a new question to a survey, such as multiple choice, rating or free text. Use Update question to change an existing one.",
+  description: "Adds a new question to a survey, such as multiple choice, rating or free text. Use Update question to change an existing one. Unlike M18.A04 Add form field, this adds a question that can branch.",
   risk: "write",
   input: z.strictObject({
     surveyId: SurveyId,
@@ -157,6 +158,7 @@ const addQuestion = defineAction({
     required: z.boolean().optional(),
   }),
   output: Survey,
+  siblings: ["M18.A04"],
   entities: { consumes: ["survey"] },
   example: (f) => ({ surveyId: f.survey().id, text: "How did we do?", type: "text" }),
   handler: (a, { store, clock }) => {
@@ -265,10 +267,11 @@ const setBranching = defineAction({
 
 const publishSurvey = defineAction({
   id: "M19.A07",
-  description: "Makes a draft survey live so respondents can answer it. Opposite of Close survey, which stops collecting answers.",
+  description: "Makes a draft survey live so respondents can answer it. Opposite of Close survey, which stops collecting answers. Unlike M18.A08 Publish form, this opens a survey rather than a form.",
   risk: "external",
   input: z.strictObject({ surveyId: SurveyId }),
   output: Survey,
+  siblings: ["M18.A08"],
   entities: { consumes: ["survey"] },
   example: (f) => ({
     surveyId: f.survey({
@@ -309,7 +312,7 @@ const closeSurvey = defineAction({
 
 const submitResponse = defineAction({
   id: "M19.A09",
-  description: "Creates a test survey response with made-up answers to try out the flow and branching. Does not come from a real respondent.",
+  description: "Creates a test survey response with made-up answers to try out the flow and branching. Does not come from a real respondent. Unlike M18.A09 Submit simulated form response, this answers survey questions rather than filling form fields.",
   risk: "write",
   input: z.strictObject({
     surveyId: SurveyId,
@@ -317,6 +320,7 @@ const submitResponse = defineAction({
     answers: z.record(z.string(), Answer),
   }),
   output: SurveyResponse,
+  siblings: ["M18.A09"],
   entities: { consumes: ["survey", "contact"] },
   example: (f) => {
     const survey = f.survey({
@@ -421,10 +425,11 @@ const Summary = z.object({
 
 const summary = defineAction({
   id: "M19.A10",
-  description: "Shows aggregated results for a survey, like response counts and answer breakdowns per question. Gives totals rather than the survey setup.",
+  description: "Shows aggregated results for a survey, like response counts and answer breakdowns per question. Gives totals rather than the survey setup. Unlike M18.A10 List form submissions, this aggregates answers per question instead of listing each submission.",
   risk: "read",
   input: z.strictObject({ surveyId: SurveyId }),
   output: Summary,
+  siblings: ["M18.A10"],
   entities: { produces: "report", consumes: ["survey"] },
   example: (f) => ({
     surveyId: f.survey({

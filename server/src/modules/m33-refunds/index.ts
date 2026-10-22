@@ -49,7 +49,7 @@ function refundableOf(store: Store, payment: Payment, exceptId?: string): number
 const createRefund = defineAction({
   id: "M33.A01",
   description:
-    "Request a refund against a succeeded payment. The amount defaults to whatever is still refundable (payment amount minus requested, approved and executed refunds). Cash payments are refused with CONFLICT. Unlike M29.A01 Record payment, this does not move money until the request is approved and executed.",
+    "Request a refund against a succeeded payment. The amount defaults to whatever is still refundable (payment amount minus requested, approved and executed refunds). Cash payments are refused with CONFLICT. Unlike M29.A04 Record simulated payment, this does not move money until the request is approved and executed.",
   risk: "write",
   input: z.strictObject({
     paymentId: z.string().describe("payment id (pay_…)"),
@@ -57,7 +57,7 @@ const createRefund = defineAction({
     reason: z.string().min(1).optional(),
   }),
   output: Refund,
-  siblings: ["M29.A01"],
+  siblings: ["M29.A04"],
   entities: { produces: "refund" },
   example: (f) => ({ paymentId: f.payment({ amount: 25, unallocated: 25 }).id, reason: "Duplicate charge" }),
   handler: (a, { store, clock, actorId }) => {
@@ -231,7 +231,7 @@ const executeRefund = defineAction({
   risk: "destructive",
   input: z.strictObject({ refundId: RefundId }),
   output: Refund,
-  siblings: ["M29.A01"],
+  siblings: ["M29.A08"],
   entities: { consumes: ["refund", "payment", "invoice"] },
   example: (f) => {
     const payment = f.payment({ amount: 40, unallocated: 40 });

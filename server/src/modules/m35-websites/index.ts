@@ -215,10 +215,11 @@ const setSeo = defineAction({
 const publishWebsite = defineAction({
   id: "M35.A09",
   description:
-    "Publish a draft website so it is live. A home page must already be set (M35.A06); otherwise this is refused. Taking a live site offline is M35.A10 Unpublish website.",
+    "Publish a draft website so it is live. A home page must already be set (M35.A06); otherwise this is refused. Taking a live site offline is M35.A10 Unpublish website. Unlike M37.A09 Publish landing page, M36.A09 Publish funnel and M38.A09 Publish post, this puts the whole site live, not a single page, funnel or article.",
   risk: "external",
   input: z.strictObject({ websiteId: WebsiteId }),
   output: Website,
+  siblings: ["M36.A09", "M37.A09", "M38.A09"],
   entities: { consumes: ["website"] },
   example: (f) => {
     const pageId = `pg_${f.seq()}`;
@@ -242,10 +243,11 @@ const publishWebsite = defineAction({
 const unpublishWebsite = defineAction({
   id: "M35.A10",
   description:
-    "Take a published website offline and return it to draft. Pages, the home page and the menu are kept. To put it back online, use M35.A09 Publish website.",
+    "Take a published website offline and return it to draft. Pages, the home page and the menu are kept. To put it back online, use M35.A09 Publish website. Unlike M37.A10 Unpublish landing page and M38.A10 Unpublish post, this takes the whole site offline, not a single page or article.",
   risk: "destructive",
   input: z.strictObject({ websiteId: WebsiteId }),
   output: Website,
+  siblings: ["M37.A10", "M38.A10"],
   entities: { consumes: ["website"] },
   example: (f) => ({ websiteId: f.website({ status: "published", publishedAt: f.now() }).id }),
   handler: ({ websiteId }, { store, clock }) => {
