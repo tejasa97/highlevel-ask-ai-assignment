@@ -24,10 +24,13 @@ const plan = (steps: SubmitPlan["steps"]): SubmitPlan => ({
   text: null,
 });
 
-async function reply(steps: SubmitPlan["steps"], ctx = world()) {
+let runs = 0;
+async function reply(steps: SubmitPlan["steps"], ctx = world(), approve = false) {
   const r = compile(plan(steps), registry);
   if (!r.ok) assert.fail(r.errors.join("\n"));
-  const run = await execute(r.plan, registry, ctx, { executionId: "sum" });
+  runs++;
+  let run = await execute(r.plan, registry, ctx, { executionId: `sum${runs}` });
+  if (approve && run.pending) run = await execute(r.plan, registry, ctx, { executionId: `sum${runs}`, approvals: [run.pending] });
   return { text: summarize(r.plan, run, registry), ctx };
 }
 
@@ -35,6 +38,18 @@ describe("summarize: writes", () => {
   test("say which record they made", async () => {
     const { text } = await reply([action("s1", "M06.A01", { title: "Call Ana" })]);
     assert.equal(text, "Done: Create task (Call Ana).");
+  });
+
+  test("an outcome recorded as a failure is not reported as a plain success", async () => {
+    const ctx = world();
+    const request = ctx.f.reviewRequest({ contactId: ctx.f.contact({ email: "gone@bounce.example" }).id });
+    const bounced = await reply([action("s1", "M45.A02", { requestId: request.id })], ctx, true);
+    assert.match(bounced.text, /^Done: .*, but the email bounced \(Mailbox doesn't exist \(hard bounce\)\), so the request is marked failed and was not sent\.$/);
+    const listing = ctx.f.listing({ directory: "yelp-down" });
+    const down = await reply([action("s1", "M46.A09", { listingId: listing.id })], ctx, true);
+    assert.match(down.text, /but the sync to yelp-down failed \(yelp-down is not responding\), so the listing is still unpublished\.$/);
+    const ok = await reply([action("s1", "M46.A09", { listingId: ctx.f.listing().id })], ctx, true);
+    assert.doesNotMatch(ok.text, /but/);
   });
 });
 

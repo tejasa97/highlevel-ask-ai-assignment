@@ -55,7 +55,8 @@ function describe(step: CStep, r: StepResult, registry: Registry, used: Set<stri
     const a = step.call.action;
     if (a.risk === "read") return null; // reads only matter through what they feed
     const name = titleOf(r.output);
-    return `Done: ${a.name}${name ? ` (${name})` : ""}${r.items?.[0]?.replayed ? ", already done earlier" : ""}.`;
+    const caveat = r.output === undefined ? undefined : a.caveat?.(r.output);
+    return `Done: ${a.name}${name ? ` (${name})` : ""}${r.items?.[0]?.replayed ? ", already done earlier" : ""}${caveat ? `, but ${caveat}` : ""}.`;
   }
   if (step.kind === "forEach" && r.items) {
     const writes = step.calls.filter((c) => c.action.risk !== "read");

@@ -17,7 +17,10 @@ export function ownedEmailBlocker(kind: string): string | undefined {
       : undefined;
 }
 
-/** Called inside the owning action's transaction. A failed delivery rolls back its domain changes too. */
+/**
+ * Called inside the owning action's transaction. Unmet preconditions throw and roll everything back;
+ * a bounce does not: the email row stays as the trail, and the caller records what a bounce means for its own record.
+ */
 export function sendOwnedEmail(
   ctx: ActionContext,
   a: {

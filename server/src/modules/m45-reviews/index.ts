@@ -63,29 +63,44 @@ const create = defineAction({
 const send = defineAction({
   id: "M45.A02",
   description:
-    "Send an existing draft review request by email. Requires requestId from Create/list review requests. Marketing preferences and do-not-disturb apply. This is the only send path for review requests.",
+    "Send an existing draft (or failed) review request by email. Requires requestId from Create/list review requests. Marketing preferences and do-not-disturb apply. This is the only send path for review requests. If the email bounces the request is kept with status failed and the bounce reason, and can be sent again once the contact's address is fixed.",
   risk: "external",
   input: z.strictObject({ requestId: RequestId }),
   output: ReviewRequest,
   entities: { produces: "review_request", consumes: ["review_request"] },
   example: (f) => ({ requestId: f.reviewRequest().id }),
+  caveat: (r) =>
+    r.status === "failed"
+      ? `the email bounced (${r.failureReason}), so the request is marked failed and was not sent`
+      : undefined,
   handler: ({ requestId }, ctx) => {
     requirePermission(ctx.store, ctx.actorId, "reputation.manage");
     requirePermission(ctx.store, ctx.actorId, "messaging.send");
     const r = request(ctx.store, requestId);
-    requireState("Review request", r.status, ["draft"], "be sent");
+    requireState("Review request", r.status, ["draft", "failed"], "be sent");
     const e = sendOwnedEmail(ctx, { ...r, kind: "review_request" });
-    return ctx.store.update<ReviewRequest>("review_requests", r.id, {
-      status: "sent",
-      emailId: e.id,
-      sentAt: ctx.clock.now().toISOString(),
-    });
+    return ctx.store.update<ReviewRequest>(
+      "review_requests",
+      r.id,
+      e.status === "delivered"
+        ? {
+            status: "sent",
+            emailId: e.id,
+            sentAt: ctx.clock.now().toISOString(),
+            failureReason: null,
+          }
+        : {
+            status: "failed",
+            emailId: e.id,
+            failureReason: e.failureReason ?? "The email was not delivered",
+          },
+    );
   },
 });
 const cancel = defineAction({
   id: "M45.A03",
   description:
-    "Cancel an unsent draft review request. A sent or fulfilled request cannot be cancelled.",
+    "Cancel an unsent draft or failed review request. A sent or fulfilled request cannot be cancelled.",
   risk: "destructive",
   input: z.strictObject({ requestId: RequestId }),
   output: ReviewRequest,
@@ -94,7 +109,12 @@ const cancel = defineAction({
   handler: ({ requestId }, { store, clock, actorId }) => {
     requirePermission(store, actorId, "reputation.manage");
     const r = request(store, requestId);
-    requireState("Review request", r.status, ["draft"], "be cancelled");
+    requireState(
+      "Review request",
+      r.status,
+      ["draft", "failed"],
+      "be cancelled",
+    );
     return store.update<ReviewRequest>("review_requests", r.id, {
       status: "cancelled",
       cancelledAt: clock.now().toISOString(),
@@ -104,7 +124,7 @@ const cancel = defineAction({
 const list = defineAction({
   id: "M45.A04",
   description:
-    "List customer review requests by contact or draft/sent/cancelled/fulfilled status, newest first. Includes request ids needed to send or cancel.",
+    "List customer review requests by contact or draft/sent/failed/cancelled/fulfilled status, newest first. Includes request ids needed to send or cancel.",
   risk: "read",
   input: z.strictObject({
     contactId: ContactId.optional(),

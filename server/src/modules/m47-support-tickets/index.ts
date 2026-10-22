@@ -273,7 +273,7 @@ function replyTarget(ticketId: string, ctx: ActionContext) {
 const reply = defineAction({
   id: "M47.A08",
   description:
-    "Reply by email to a support ticket's requester with body. Only this action updates ticket replies and first-response SLA; do not use generic email/SMS/conversation send. Resolved/closed tickets must be reopened; success moves open to in_progress. Transactional: marketing opt-outs do not block, but an email address is required.",
+    "Reply by email to a support ticket's requester with body. Only this action updates ticket replies and first-response SLA; do not use generic email/SMS/conversation send. Resolved/closed tickets must be reopened; success moves open to in_progress. If the email bounces, the reply is kept on the ticket with its failure reason, but it does not count as a first response and the status does not change. Transactional: marketing opt-outs do not block, but an email address is required.",
   risk: "external",
   input: z.strictObject({ ticketId: TicketId, body: Text }),
   output: Ticket,
@@ -282,6 +282,12 @@ const reply = defineAction({
   preflight: ({ ticketId }, ctx) => {
     const { ticket, to } = replyTarget(ticketId, ctx);
     return { ticketId, contactId: ticket.contactId, to };
+  },
+  caveat: (t) => {
+    const why = t.replies.at(-1)?.failureReason;
+    return why
+      ? `the email bounced (${why}); the reply is saved on the ticket but is not a first response and the status is unchanged`
+      : undefined;
   },
   handler: ({ ticketId, body }, ctx) => {
     const { ticket: t } = replyTarget(ticketId, ctx);
@@ -293,6 +299,21 @@ const reply = defineAction({
         body,
       }),
       at = ctx.clock.now().toISOString();
+    // A bounced reply stays on the ticket as a trail, but the requester has not been answered:
+    // no first-response credit, no status change.
+    if (e.status !== "delivered")
+      return ctx.store.update<Ticket>("tickets", t.id, {
+        updatedAt: at,
+        replies: [
+          ...t.replies,
+          {
+            body,
+            emailId: e.id,
+            at,
+            failureReason: e.failureReason ?? "The email was not delivered",
+          },
+        ],
+      });
     return ctx.store.update<Ticket>("tickets", t.id, {
       status: "in_progress",
       updatedAt: at,
