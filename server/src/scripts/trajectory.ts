@@ -217,6 +217,7 @@ const first = retrLine[0], firstS = scen3[0], lastS = scen3.at(-1);
 $("lede").textContent = "Each change below went after one failure class we could measure. The numbers come from the eval history, and every run is recorded with the commit it measured.";
 const tile = (k, from, to, d) => '<div class="tile"><div class="k">' + k + '</div><div class="v">' + (from != null ? '<span class="from">' + from + ' → </span>' : "") + to + '</div><div class="d">' + d + "</div></div>";
 const pct = (x) => (Math.round(x * 10) / 10).toFixed(1) + "%";
+const usd = (v, digits = 3) => Number.isFinite(v) ? "$" + v.toFixed(digits) : "USD unavailable";
 $("tiles").innerHTML = [
   first && retrNow ? tile("Retrieval R@15", pct(first.metrics.r15), pct(retrNow.metrics.r15), retrNow.metrics.questions + " held-out questions") : "",
   first && retrNow ? tile("Retrieval R@5", pct(first.metrics.r5), pct(retrNow.metrics.r5), "right action in the top 5") : "",
@@ -351,8 +352,11 @@ for (const group of scenarioGroups) {
   if (infra.length) notes.push(group.folder + ": " + infra.map(h=>h.label + " (" + h.metrics.infraRuns + " infrastructure failures excluded)").join("; "));
   lineChart(slot("latency"), scen.map(h=>[h.label,""]), [{name:group.folder,color:"var(--s1)",values:scen.map(h=>h.metrics.e2eP50Ms/1000)}],
     {lo:0,hi:Math.max(1,Math.ceil(Math.max(...scen.map(h=>h.metrics.e2eP50Ms/1000))+2)),fmt:v=>v.toFixed(1)+" s",height:220,breaks,tipOf:i=>runTip(scen[i],[esc(group.folder),"p50 "+(scen[i].metrics.e2eP50Ms/1000).toFixed(1)+" s","p95 "+(scen[i].metrics.e2eP95Ms/1000).toFixed(1)+" s"])});
-  lineChart(slot("cost"), scen.map(h=>[h.label,""]), [{name:group.folder,color:"var(--s1)",values:scen.map(h=>h.metrics.costPerRunUsd)}],
-    {lo:0,hi:Math.max(0.001,Math.max(...scen.map(h=>h.metrics.costPerRunUsd))*1.3),fmt:v=>"$"+v.toFixed(3),height:220,breaks,tipOf:i=>runTip(scen[i],[esc(group.folder),"$"+scen[i].metrics.costPerRunUsd.toFixed(4)+" per run"])});
+  const costs = scen.map(h => Number.isFinite(h.metrics.costPerRunUsd) ? h.metrics.costPerRunUsd : null);
+  const knownCosts = costs.filter(v => v !== null);
+  if (knownCosts.length) lineChart(slot("cost"), scen.map(h=>[h.label,""]), [{name:group.folder,color:"var(--s1)",values:costs}],
+    {lo:0,hi:Math.max(0.001,Math.max(...knownCosts)*1.3),fmt:usd,height:220,breaks,tipOf:i=>runTip(scen[i],[esc(group.folder),usd(costs[i],4)+" per run"])});
+  else slot("cost").textContent = "USD unavailable for these runs.";
 }
 $("scenario-notes").innerHTML = notes.map(n=>'<div class="note">'+esc(n)+"</div>").join("");
 }
@@ -363,7 +367,7 @@ addEventListener("resize", () => { if (innerWidth === lastW) return; lastW = inn
 
 // ---- timeline ----
 const KEYS = { retrieval: [["r15", "R@15", "%"], ["r5", "R@5", "%"], ["mrr", "MRR", ""]], scenarios: [["passRate", "pass", "%"], ["allPass", "all-pass scenarios", ""], ["e2eP50Ms", "p50", "ms"], ["costPerRunUsd", "$/run", "$"]] };
-const fmtV = (v, u) => (u === "%" ? pct(v) : u === "ms" ? (v / 1000).toFixed(1) + " s" : u === "$" ? "$" + v.toFixed(3) : String(v));
+const fmtV = (v, u) => (u === "%" ? pct(v) : u === "ms" ? (v / 1000).toFixed(1) + " s" : u === "$" ? usd(v) : String(v));
 const lowerIsBetter = new Set(["e2eP50Ms", "costPerRunUsd"]);
 function deltas(e) {
   const hs = e.runs.map((l) => byLabel[l]).filter(Boolean);
@@ -390,7 +394,7 @@ $("timeline").innerHTML = journey.map((e) => {
 
 // ---- table view ----
 const cols = [["at", (h) => day(h.at) + " " + new Date(h.at).toTimeString().slice(0, 5)], ["suite", (h) => h.suite], ["scenario folder", (h) => h.suite === "scenarios" ? (h.config.scenarioDir || "eval/scenarios") : ""], ["label", (h) => h.label], ["commit", commitOf], ["set", (h) => h.set],
-  ["headline", (h) => h.suite === "retrieval" ? "R@15 " + pct(h.metrics.r15) + " · R@5 " + pct(h.metrics.r5) + (h.config.ablation ? " · ablation" : "") : pct(h.metrics.passRate) + " · " + h.metrics.allPass + "/" + h.metrics.measured + " · " + (h.metrics.e2eP50Ms / 1000).toFixed(1) + " s · $" + h.metrics.costPerRunUsd + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "") + (h.reverted ? " · reverted" : "")],
+  ["headline", (h) => h.suite === "retrieval" ? "R@15 " + pct(h.metrics.r15) + " · R@5 " + pct(h.metrics.r5) + (h.config.ablation ? " · ablation" : "") : pct(h.metrics.passRate) + " · " + h.metrics.allPass + "/" + h.metrics.measured + " · " + (h.metrics.e2eP50Ms / 1000).toFixed(1) + " s · " + usd(h.metrics.costPerRunUsd,4) + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "") + (h.reverted ? " · reverted" : "")],
   ["source", (h) => h.backfilled || "recorded by the run"]];
 $("table").innerHTML = "<table><thead><tr>" + cols.map(([c]) => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>" + history.map((h) => "<tr>" + cols.map(([, f]) => "<td>" + esc(f(h)) + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
 </script>
