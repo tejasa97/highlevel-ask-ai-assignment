@@ -98,6 +98,11 @@ export function typeAt(schema: JsonSchema, path: Seg[], label: string): { type: 
     if (kind === "any") return { type: ANY };
     if ("field" in seg) {
       if (kind === "array") {
+        // A filter or exclude step's result is the list itself; ".items" belongs to a search action's {items, total}.
+        const itemFields = fieldsOf((s.items ?? ANY) as JsonSchema);
+        if (itemFields.length && !itemFields.includes(seg.field)) {
+          return { error: `${here} is already the list of records, with no ".${seg.field}"; use ${here}[*].<field> for a field of every item (fields: ${itemFields.join(", ")})` };
+        }
         return { error: `${here} is a list; use ${here}[*].${seg.field} for that field of every item` };
       }
       if (kind !== "object") return { error: `${here} is a ${String(s.type)}, it has no field "${seg.field}"` };

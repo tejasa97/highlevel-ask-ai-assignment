@@ -119,6 +119,12 @@ describe("compile errors the planner can act on", () => {
     assert.match(e, /\$s1\.items is a list; use \$s1\.items\[\*\]\.id/);
   });
 
+  test("a filter's result is the list itself, so .items is steered away from, not toward", () => {
+    const e = errs(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.items[*].id", ownerId: "us_2" })]));
+    assert.match(e, /already the list of records/);
+    assert.doesNotMatch(e, /use \$f\[\*\]\.items/);
+  });
+
   test("forward ref", () => {
     assert.match(errs(plan([action("s1", "M03.A05", { leadId: "$s2.id", ownerId: "us_2" }), action("s2", "M03.A03", {})])), /not an earlier step/);
   });

@@ -43,6 +43,17 @@ test("create and search preserve requester identity, defaults, totals and filter
   assert.equal(r.items.length, 1);
   assert.equal(w.call("M47.A02", { ticketId: t.id }).personName, c.name);
 });
+test("search words may span title, body and who asked, in any order", async () => {
+  const w = await testWorld(),
+    c = w.f.contact({ name: "Marcus Quillfeather" }),
+    t = w.f.ticket({ contactId: c.id, title: "Receipt download fails", body: "The link is broken" });
+  w.f.ticket({ title: "Receipt download fails" });
+  const ids = (query: string) => w.call("M47.A03", { query }).items.map((x: { id: string }) => x.id);
+  assert.deepEqual(ids("Marcus Quillfeather Receipt"), [t.id]);
+  assert.deepEqual(ids("receipt marcus"), [t.id]);
+  assert.deepEqual(ids("Marcus broken link"), [t.id]);
+  assert.deepEqual(ids("Marcus invoice"), []);
+});
 test("owner must be active, available and eligible; unrelated ownership is untouched", async () => {
   const w = await testWorld(),
     t = w.f.ticket();
