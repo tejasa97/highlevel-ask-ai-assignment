@@ -27,8 +27,19 @@ export function matchByName<T>(docs: T[], name: string, label: (d: T) => string)
   return tiers.find((t) => t.length > 0) ?? [];
 }
 
-export function candidates<T extends { id: string }>(docs: T[], name: string, label: (d: T) => string, detail?: (d: T) => string): Candidate[] {
-  return matchByName(docs, name, label).map((d) => ({ id: d.id, name: label(d), ...(detail ? { detail: detail(d) } : {}) }));
+/** Records matching `name`. With `inactive` (a record's status when it can't be used, else undefined), usable
+ *  records are matched first; only when none match are the unusable ones returned, marked with their status. */
+export function candidates<T extends { id: string }>(
+  docs: T[],
+  name: string,
+  label: (d: T) => string,
+  detail?: (d: T) => string,
+  inactive?: (d: T) => string | undefined,
+): Candidate[] {
+  const out = (ds: T[]) => ds.map((d) => ({ id: d.id, name: label(d), ...(detail ? { detail: detail(d) } : {}), ...(inactive?.(d) ? { inactive: inactive(d) } : {}) }));
+  if (!inactive) return out(matchByName(docs, name, label));
+  const usable = matchByName(docs.filter((d) => !inactive(d)), name, label);
+  return out(usable.length ? usable : matchByName(docs.filter((d) => inactive(d)), name, label));
 }
 
 /** Inclusive YYYY-MM-DD range check on an ISO timestamp. */

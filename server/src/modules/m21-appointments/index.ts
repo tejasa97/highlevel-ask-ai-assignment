@@ -255,6 +255,13 @@ export default {
   actions: [createAppointment, getAppointment, searchAppointments, reschedule, cancel, assignHost, addAttendee, removeAttendee, markNoShow, markCompleted],
   resolvers: {
     appointment: (store, name) =>
-      candidates(store.find<Appointment>("appointments", (a) => a.status === "booked"), name, (a) => a.title, (a) => `${a.startAt}, ${personName(store, a) ?? ""}`),
+      // People name a meeting by who it's with ("Sarah Johnson's walkthrough"), so the person is part of its name.
+      candidates(
+        store.all<Appointment>("appointments"),
+        name,
+        (a) => [a.title, personName(store, a)].filter(Boolean).join(" with "),
+        (a) => a.startAt,
+        (a) => (a.status === "booked" ? undefined : a.status),
+      ),
   },
 } satisfies ModuleExports;

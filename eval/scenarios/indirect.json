@@ -1,0 +1,60 @@
+[
+  {
+    "id": "indirect-cover-for-lucia",
+    "category": "indirect",
+    "modules": ["M06", "M48"],
+    "turns": [{ "user": "Lucia is out this week, have Raj cover her open tasks" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M06.A05"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.assigneeId') FROM tasks WHERE id='tk_19'", "equals": "us_2" },
+        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_3' AND json_extract(data,'$.status')='open'", "equals": 0 }
+      ]
+    }
+  },
+  {
+    "id": "indirect-chase-late-payers",
+    "category": "indirect",
+    "modules": ["M28"],
+    "note": "More than two weeks overdue: inv_4, inv_5, inv_6, inv_9. inv_4 was reminded on Monday (this week), so it is skipped.",
+    "turns": [{ "user": "Chase everyone who's more than two weeks late paying, but skip anyone we already reminded this week" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M28.A08"] },
+      "state": [
+        { "sql": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_4'", "equals": 1 },
+        { "sql": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_5'", "equals": 2 },
+        { "sql": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_6'", "equals": 2 },
+        { "sql": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_9'", "equals": 1 },
+        { "sql": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_3'", "equals": 0 }
+      ]
+    }
+  },
+  {
+    "id": "indirect-who-is-waiting",
+    "category": "indirect",
+    "modules": ["M11"],
+    "turns": [{ "user": "Who's still waiting on a reply from us?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M11.A10"] },
+      "reply": { "includes": ["11 conversations", "Tara Silva"], "excludes": ["\\?", ", ,"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "indirect-noah-helps-sales",
+    "category": "indirect",
+    "modules": ["M49"],
+    "turns": [{ "user": "Noah is going to help out on the sales team for a while" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M49.A05"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM teams, json_each(json_extract(teams.data,'$.memberIds')) m WHERE teams.id='tm_1' AND m.value='us_6'", "equals": 1 },
+        { "sql": "SELECT count(*) FROM teams, json_each(json_extract(teams.data,'$.memberIds')) m WHERE teams.id='tm_2' AND m.value='us_6'", "equals": 1 }
+      ]
+    }
+  }
+]

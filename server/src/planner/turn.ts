@@ -11,8 +11,10 @@ import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.
 
 // The planning half of a turn, shared by the dev server and the CLI:
 //   retrieve a shortlist → prompt → plan, with at most one search_tools round (a second retrieval for what the
-//   planner says is missing) and at most one repair round (compile errors fed back), in either order
-//   → a compiled plan or a reply. At most three planner calls. The plan may only use actions the planner was shown.
+//   planner says is missing), at most one look round (read-only steps run now, their results fed back, so a
+//   value can be worked out from a record: "same time, on Monday") and at most one repair round (compile errors
+//   fed back), in any order → a compiled plan or a reply. At most four planner calls. The plan may only use
+//   actions the planner was shown.
 
 /** How long one planner call may take before the turn gives up on it. */
 export const PLANNER_TIMEOUT_MS = 120_000;
@@ -26,6 +28,8 @@ export interface TurnDeps {
   store?: Store;
   /** Per planner call; defaults to PLANNER_TIMEOUT_MS. */
   plannerTimeoutMs?: number;
+  /** Runs a read-only plan and gives back each step's output, for a look round. Without it, look isn't offered. */
+  look?: (plan: CompiledPlan) => Promise<{ id: string; output?: unknown; error?: string }[]>;
 }
 
 export interface TurnInput {
@@ -52,7 +56,16 @@ export type TurnEvent =
 
 export type TurnOutcome =
   | { kind: "plan"; plan: CompiledPlan; carry: Carry }
-  | { kind: "reply"; status: "clarify" | "unsupported" | "answer" | "failed"; text: string; options?: string[] };
+  | {
+      kind: "reply";
+      status: "clarify" | "unsupported" | "answer" | "failed";
+      text: string;
+      options?: string[];
+      /** Set when the planner couldn't be reached or didn't answer: the turn failed for a reason outside the app. */
+      infra?: InfraKind;
+    };
+
+export type InfraKind = Exclude<PlannerError["kind"], "bad_json">;
 
 export interface RetrievalTrace {
   label: string;
@@ -76,7 +89,8 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
   } catch (err) {
     // A provider failure or a call that never returned ends the turn with a reply; anything else is a bug and surfaces.
     if (!(err instanceof PlannerError)) throw err;
-    return failed(err.kind === "timeout" ? `${err.message}. Nothing was changed; please try again.` : `The planner failed: ${err.message}`);
+    const text = err.kind === "timeout" ? `${err.message}. Nothing was changed; please try again.` : `The planner failed: ${err.message}`;
+    return failed(text, err.kind === "bad_json" ? undefined : err.kind);
   }
 }
 
@@ -119,7 +133,9 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       },
     });
   };
-  const prompt = () => userBlock({ clock, actions: offered, notAvailable, resolvable, mentions: named, message: input.message, context: input.context });
+  let looked: string | undefined;
+  const prompt = () =>
+    userBlock({ clock, actions: offered, notAvailable, resolvable, mentions: named, message: input.message, context: input.context, looked });
   const call = async (user: string, label: string) => {
     emit({ type: "planner.request", data: { label, tier: input.tier, system: SYSTEM, user, actions: offered.map((a) => a.id) } });
     const r = await withDeadline(deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }));
@@ -132,6 +148,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let reply = await call(user, "plan");
   let searched = false;
   let repaired = false;
+  let lookPlan: CompiledPlan | undefined;
   // Each reply is one of: search_tools (retrieve once more, re-plan), a plan (compile; repair once if invalid),
   // or a reply for the user. The repair prompt may itself say "reply search_tools" or "reply unsupported".
   for (;;) {
@@ -149,6 +166,35 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       continue;
     }
 
+    if (d.type === "look") {
+      // Reads only, run now; a write waits for the real plan (and its approval). A bad look is repaired like a plan.
+      const compiled = compile({ ...d, type: "plan" }, registry, new Set(offered.map((a) => a.id)));
+      const errors = !deps.look
+        ? ["look isn't available here; reply with a plan or a question"]
+        : looked !== undefined
+          ? ["you already looked; plan with the results in <looked>"]
+          : !compiled.ok
+            ? compiled.errors
+            : compiled.plan.steps.flatMap((s) => callsOf(s).filter((a) => a.risk !== "read").map((a) => `${s.id}: ${a.id} is a ${a.risk} action; a look may only read`));
+      if (errors.length || !compiled.ok) {
+        emit({ type: "compile.errors", data: { errors } });
+        if (repaired) return failed(`The plan was still invalid after one repair:\n${errors.join("\n")}`);
+        repaired = true;
+        reply = await call(repairBlock(user, reply.json, errors), "repair");
+        continue;
+      }
+      lookPlan = compiled.plan;
+      looked = JSON.stringify(await deps.look!(compiled.plan));
+      if (looked.length > LOOKED_MAX) looked = `${looked.slice(0, LOOKED_MAX)}…(cut)`;
+      user = prompt();
+      reply = await call(user, "plan after look");
+      continue;
+    }
+
+    // Answering from <looked> would put the planner's prose (and raw ids) where the summary of the reads belongs:
+    // the reads were the plan.
+    if (d.type === "answer" && lookPlan) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
+
     if (d.type !== "plan") {
       const text = [d.question ?? d.reason ?? d.text ?? "", d.alternatives?.length ? `Alternatives: ${d.alternatives.join("; ")}` : ""].filter(Boolean).join("\n");
       return { kind: "reply", status: d.type, text, options: d.options ?? undefined };
@@ -163,11 +209,14 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   }
 }
 
+/** Characters of look results shown to the planner. */
+const LOOKED_MAX = 6000;
+
+const callsOf = (s: CompiledPlan["steps"][number]) => (s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []);
+
 /** What a follow-up turn inherits: the actions this plan used and the record types they return. */
 export function carryOf(plan: CompiledPlan, registry: Registry): Carry {
-  const prev = [
-    ...new Set(plan.steps.flatMap((s) => (s.kind === "action" ? [s.call.action.id] : s.kind === "forEach" ? s.calls.map((c) => c.action.id) : []))),
-  ];
+  const prev = [...new Set(plan.steps.flatMap((s) => callsOf(s).map((a) => a.id)))];
   const entities = [...new Set(prev.map((id) => registry.get(id)?.entities?.produces).filter((e): e is string => !!e))];
   return { prev, entities };
 }
@@ -189,4 +238,4 @@ async function withDeadline<T>(ms: number, fn: (signal: AbortSignal) => Promise<
   }
 }
 
-const failed = (text: string): TurnOutcome => ({ kind: "reply", status: "failed", text });
+const failed = (text: string, infra?: InfraKind): TurnOutcome => ({ kind: "reply", status: "failed", text, ...(infra ? { infra } : {}) });

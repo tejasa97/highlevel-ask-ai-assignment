@@ -249,6 +249,6 @@ export default {
   resolvers: {
     // "the Sales team" → "Sales"
     team: (store, name) =>
-      candidates(store.find<Team>("teams", (t) => t.status === "active"), name.replace(/\b(the|team)\b/gi, ""), (t) => t.name),
+      candidates(store.all<Team>("teams"), name.replace(/\b(the|team)\b/gi, ""), (t) => t.name, undefined, (t) => (t.status === "active" ? undefined : t.status)),
   },
 } satisfies ModuleExports;

@@ -141,10 +141,16 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     try {
       switch (step.kind) {
         case "resolve": {
-          const found = registry.resolver(step.entity)!(ctx.store, step.name);
-          if (found.length === 0) {
+          const all = registry.resolver(step.entity)!(ctx.store, step.name);
+          const found = all.filter((c) => !c.inactive);
+          if (found.length === 0 && all.length > 0) {
+            // Only unusable records match (a deactivated user, a closed deal): say so, rather than "no match".
+            fail({ code: "CONFLICT", message: all.map((c) => `${c.name} is ${c.inactive}`).join("; ") });
+          } else if (found.length === 0) {
             // The planner sometimes guesses the wrong record type for a name; say where the name does exist.
-            const elsewhere = registry.resolverEntities().filter((e) => e !== step.entity && registry.resolver(e)!(ctx.store, step.name).length > 0);
+            const elsewhere = registry
+              .resolverEntities()
+              .filter((e) => e !== step.entity && registry.resolver(e)!(ctx.store, step.name).some((c) => !c.inactive));
             const hint = elsewhere.length ? ` (but a ${elsewhere.join(" and a ")} does)` : "";
             fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"${hint}` });
           } else if (found.length > 1) {

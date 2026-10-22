@@ -217,6 +217,6 @@ const cancelTask = defineAction({
 export default {
   actions: [createTask, getTask, searchTasks, updateDescription, assignTask, setDueDate, setPriority, completeTask, reopenTask, cancelTask],
   resolvers: {
-    task: (store, name) => candidates(store.find<Task>("tasks", (t) => t.status === "open"), name, (t) => t.title, (t) => t.dueDate ?? "no due date"),
+    task: (store, name) => candidates(store.all<Task>("tasks"), name, (t) => t.title, (t) => t.dueDate ?? "no due date", (t) => (t.status === "open" ? undefined : t.status)),
   },
 } satisfies ModuleExports;

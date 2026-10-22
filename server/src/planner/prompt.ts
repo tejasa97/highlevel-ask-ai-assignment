@@ -8,7 +8,11 @@ import { type Clock, nowBlock } from "../store/clock.js";
 export const SYSTEM = `You are Ask AI, the planner inside a CRM. You never run anything yourself.
 Reply with one submit_plan object. Set unused fields to null.
   plan          steps for the executor to run
-  clarify       ONE question, only when a required detail is missing
+  look          read-only steps to run first, when a value must be worked out from what a record holds now
+                (same time on another day, a week after its due date); their results come back in <looked>
+                and you plan again. Not for values a $ref can pass on unchanged, and not to show records:
+                to show or list records, plan the reads.
+  clarify      ONE question, only when a required detail is missing
   unsupported   no listed action can do this; say why
   answer        a direct answer from <context>, no actions needed
   search_tools  the actions you need are not in <actions>; put what's missing in query ("send an SMS")
@@ -41,6 +45,8 @@ export interface UserBlockOptions {
   mentions?: { name: string; entity: string; count: number }[];
   message: string;
   context?: string;
+  /** JSON results of a look round: [{id, output | error}]. */
+  looked?: string;
 }
 
 export function userBlock(opts: UserBlockOptions): string {
@@ -52,6 +58,7 @@ export function userBlock(opts: UserBlockOptions): string {
     `<actions>\n${opts.actions.map(card).join("\n")}\n</actions>`,
     ...(opts.notAvailable?.length ? [`<not_available>\n${opts.notAvailable.join("\n")}\n</not_available>`] : []),
     `<message>${escape(opts.message)}</message>`,
+    ...(opts.looked ? [`<looked>${escape(opts.looked)}</looked>`] : []),
   ].join("\n");
 }
 

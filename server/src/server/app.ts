@@ -2,20 +2,13 @@
 // POST /api/ask and /api/confirm stream the turn as server-sent events; the rest is plain JSON.
 // index.ts wires it to the dev database and a real planner; the tests wire it to a scripted one.
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import type { CompiledPlan, CStep } from "../core/compile.js";
-import { execute, type Pending, type RunResult } from "../core/execute.js";
-import { summarize } from "../core/summarize.js";
-import { type Carry, planTurn } from "../planner/turn.js";
 import type { Planner, Tier } from "../planner/types.js";
-import type { CallTrace } from "../registry/define.js";
 import { DEFAULT_ACTOR } from "../registry/invoke.js";
 import type { Registry } from "../registry/registry.js";
 import type { Retriever } from "../retrieval/retrieve.js";
 import type { Clock } from "../store/clock.js";
 import type { Store } from "../store/db.js";
-import { diff, snapshot } from "./diff.js";
-
-const HISTORY_TURNS = 4;
+import { Conversation, type Emit } from "./conversation.js";
 
 export interface AppDeps {
   registry: Registry;
@@ -29,94 +22,8 @@ export interface AppDeps {
 export function createApp({ registry, planner, retriever, openWorld }: AppDeps): Server {
   let world = openWorld({ reset: false });
 
-  interface Turn {
-    id: string;
-    message: string;
-    plan: CompiledPlan;
-    executionId: string;
-    pending?: Pending;
-  }
-  const turns = new Map<string, Turn>();
-  const history: { user: string; assistant: string }[] = [];
-  /** The last planned turn's actions, carried into the next retrieval so follow-ups keep their tools. */
-  let carry: Carry | undefined;
-  /** The messages the last reply asked a question about, if it did (kept across a chain of questions). */
-  let answering: string | undefined;
+  const chat = new Conversation({ registry, planner, retriever }, world);
   let busy = false;
-
-  type Emit = (event: string, data: unknown) => void;
-
-  async function ask(message: string, tier: Tier, actorId: string, emit: Emit): Promise<void> {
-    const turnId = `t${turns.size + 1}_${Date.now().toString(36)}`;
-    emit("turn", { turnId, message });
-    const context = history.length ? history.slice(-HISTORY_TURNS).map((h) => `user: ${h.user}\nassistant: ${h.assistant}`).join("\n") : undefined;
-    const outcome = await planTurn({ message, tier, context, carry, answering }, { registry, retriever, planner, clock: world.clock, store: world.store }, (e) => emit(e.type, e.data));
-    if (outcome.kind === "reply") return finish(message, outcome.status, outcome.text, emit, outcome.options);
-    carry = outcome.carry;
-    const turn: Turn = { id: turnId, message, plan: outcome.plan, executionId: `ex_${turnId}` };
-    turns.set(turnId, turn);
-    emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
-    await run(turn, actorId, emit);
-  }
-
-  async function confirm(turnId: string, approve: boolean, actorId: string, emit: Emit): Promise<void> {
-    const turn = turns.get(turnId);
-    if (!turn?.pending) throw new Error(`Nothing is waiting for approval in turn ${turnId}`);
-    emit("turn", { turnId, message: turn.message, resumed: true });
-    if (!approve) {
-      turn.pending = undefined;
-      return finish(turn.message, "cancelled", "Cancelled. Nothing was changed by that step.", emit);
-    }
-    await run(turn, actorId, emit, [turn.pending]);
-  }
-
-  async function run(turn: Turn, actorId: string, emit: Emit, approvals?: Pending[]): Promise<void> {
-    const before = snapshot(world.store);
-    const auditBefore = world.store.audit().length;
-    const t = performance.now();
-    const onCall = (c: CallTrace) => emit("call", { ...c, ms: Math.round(c.ms * 10) / 10 });
-    const result: RunResult = await execute(
-      turn.plan,
-      registry,
-      { ...world, actorId, onCall },
-      { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e) },
-    );
-    emit("run", { status: result.status, ms: Math.round(performance.now() - t), steps: result.steps });
-    emit("diff", { changes: diff(before, world.store), audit: world.store.audit().slice(0, world.store.audit().length - auditBefore) });
-
-    turn.pending = result.pending;
-    const text = summarize(turn.plan, result, registry);
-    if (result.status === "awaiting_confirmation") {
-      emit("confirm", { turnId: turn.id, pending: result.pending });
-      emit("reply", { status: result.status, text });
-      return;
-    }
-    finish(turn.message, result.status, text, emit, result.clarification?.candidates.map((c) => (c.detail ? `${c.name} (${c.detail})` : c.name)));
-  }
-
-  function finish(message: string, status: string, text: string, emit: Emit, options?: string[]): void {
-    history.push({ user: message, assistant: text });
-    const asked = status === "clarify" || status === "needs_clarification";
-    answering = asked ? (answering ? `${answering}\n${message}` : message) : undefined;
-    emit("reply", { status, text, options });
-  }
-
-  function describeStep(s: CStep) {
-    const call = (c: { action: { id: string; name: string; risk: string }; args: unknown }) => ({ action: c.action.id, name: c.action.name, risk: c.action.risk, args: c.args });
-    const base = { id: s.id, kind: s.kind, deps: s.deps };
-    switch (s.kind) {
-      case "action":
-        return { ...base, calls: [call(s.call)] };
-      case "resolve":
-        return { ...base, entity: s.entity, name: s.name };
-      case "filter":
-        return { ...base, in: s.in, where: s.where };
-      case "exclude":
-        return { ...base, in: s.in, by: s.by, set: s.set };
-      case "forEach":
-        return { ...base, in: s.in, roundRobin: s.roundRobin, calls: s.calls.map(call) };
-    }
-  }
 
   // --- HTTP ---------------------------------------------------------------------------------
 
@@ -157,11 +64,11 @@ export function createApp({ registry, planner, retriever, openWorld }: AppDeps):
         const message = String(b.message ?? "").trim();
         if (!message) return json(res, 400, { error: "message is required" });
         const tier: Tier = b.tier === "fast" ? "fast" : "strong";
-        return stream(res, (emit) => ask(message, tier, String(b.actorId ?? DEFAULT_ACTOR), emit));
+        return stream(res, (emit) => chat.ask(message, tier, String(b.actorId ?? DEFAULT_ACTOR), emit));
       }
       if (req.method === "POST" && path === "/api/confirm") {
         const b = await body(req);
-        return stream(res, (emit) => confirm(String(b.turnId), b.approve === true, String(b.actorId ?? DEFAULT_ACTOR), emit));
+        return stream(res, (emit) => chat.confirm(String(b.turnId), b.approve === true, String(b.actorId ?? DEFAULT_ACTOR), emit));
       }
       if (req.method === "GET" && path === "/api/meta") {
         return json(res, 200, {
@@ -179,11 +86,9 @@ export function createApp({ registry, planner, retriever, openWorld }: AppDeps):
       if (req.method === "GET" && path === "/api/audit") return json(res, 200, world.store.audit().slice(0, Number(url.searchParams.get("limit") ?? 200)));
       if (req.method === "POST" && path === "/api/reset") {
         if (busy) return json(res, 409, { error: "A request is still running" });
-        carry = answering = undefined;
         world.store.close();
         world = openWorld({ reset: true });
-        turns.clear();
-        history.length = 0;
+        chat.reset(world);
         return json(res, 200, { ok: true });
       }
       json(res, 404, { error: "not found" });

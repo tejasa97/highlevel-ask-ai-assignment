@@ -91,6 +91,12 @@ describe("summarize: a plan that only reads still answers", () => {
     assert.match(text, /Zed Twin, zed1@example\.com \(active\), Zed Twin, zed2@example\.com \(active\)/);
   });
 
+  test("rows named by a …Name field (conversations' personName) are listed by it", async () => {
+    const { text } = await reply([action("s1", "M11.A10", { waitingOn: "team" })]);
+    assert.match(text, /^Found \d+ conversations matching waiting on team: [A-Z][a-z]+ [A-Z]/, text);
+    assert.doesNotMatch(text, /\?|, ,/, text);
+  });
+
   test("a read that feeds a later step stays quiet; the last one answers", async () => {
     const { text } = await reply([
       { id: "s1", kind: "resolve", entity: "team", name: "Sales" },

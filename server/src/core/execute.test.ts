@@ -163,6 +163,22 @@ describe("runtime outcomes", () => {
     assert.equal(r.steps[0]!.error?.message, 'no contact matches "Quinn Leadonly" (but a lead does)');
   });
 
+  test("a name that only matches an unusable record says why, and nothing runs on it", async () => {
+    const ctx = fresh();
+    const p = compiled(plan([{ id: "s1", kind: "resolve", entity: "user", name: "Dan Ortiz" }, action("s2", "M06.A01", { title: "Forecast", assigneeId: "$s1.id" })]));
+    const r = await execute(p, registry, ctx, { executionId: "inactive" });
+    assert.deepEqual(r.steps[0]!.error, { code: "CONFLICT", message: "Dan Ortiz is deactivated" });
+    assert.equal(r.steps[1]!.status, "skipped");
+  });
+
+  test("an active record wins over an inactive one that matches as well", async () => {
+    const ctx = fresh();
+    ctx.f.user({ name: "Jo", status: "deactivated" });
+    ctx.f.user({ name: "Jo Quarry" });
+    const found = registry.resolver("user")!(ctx.store, "Jo");
+    assert.deepEqual(found.map((c) => [c.name, c.inactive]), [["Jo Quarry", undefined]]);
+  });
+
   test("unknown name fails, dependents are skipped", async () => {
     const ctx = fresh();
     const p = compiled(plan([{ id: "s1", kind: "resolve", entity: "team", name: "Finance" }, action("s2", "M49.A09", { teamId: "$s1.id" })]));

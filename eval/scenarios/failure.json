@@ -1,0 +1,99 @@
+[
+  {
+    "id": "failure-dnd-contact",
+    "category": "failure",
+    "modules": [
+      "M13",
+      "M01"
+    ],
+    "note": "Marcus Lee is on do-not-disturb (and has no phone), so the email must not go out, and the reply should say why.",
+    "turns": [
+      {
+        "user": "Email Marcus Lee that his onboarding call is confirmed for Monday"
+      }
+    ],
+    "expect": {
+      "status": [
+        "failed",
+        "partial",
+        "unsupported",
+        "answer",
+        "done"
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM emails WHERE json_extract(data,'$.contactId')='ct_33' AND json_extract(data,'$.status')<>'draft'",
+          "equals": 0
+        }
+      ],
+      "reply": {
+        "includes": [
+          "do.not.disturb|\\bdnd\\b"
+        ]
+      }
+    }
+  },
+  {
+    "id": "failure-email-provider-down",
+    "category": "failure",
+    "modules": [
+      "M13"
+    ],
+    "setup": [
+      {
+        "fault": "M13.A03",
+        "code": "UNAVAILABLE",
+        "message": "The email provider is not responding"
+      }
+    ],
+    "turns": [
+      {
+        "user": "Email Rosa Ito to thank her for renewing"
+      }
+    ],
+    "expect": {
+      "status": [
+        "failed",
+        "partial"
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM emails WHERE json_extract(data,'$.contactId')='ct_1' AND json_extract(data,'$.createdAt')>='2026-10-21' AND json_extract(data,'$.status')<>'draft'",
+          "equals": 0
+        }
+      ],
+      "reply": {
+        "includes": [
+          "fail|couldn.t|could not|unable|not sent|didn.t|unavailable|not responding"
+        ]
+      }
+    }
+  },
+  {
+    "id": "failure-deactivated-assignee",
+    "category": "failure",
+    "modules": [
+      "M06",
+      "M48"
+    ],
+    "note": "Dan Ortiz is deactivated; nothing should be assigned to him.",
+    "turns": [
+      {
+        "user": "Create a task for Dan Ortiz to prepare the Q4 forecast"
+      }
+    ],
+    "expect": {
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_9' AND json_extract(data,'$.title') LIKE '%forecast%'",
+          "equals": 0
+        }
+      ],
+      "reply": {
+        "includes": [
+          "deactivat|inactive|no longer|not active"
+        ]
+      }
+    }
+  }
+]

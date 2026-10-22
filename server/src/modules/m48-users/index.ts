@@ -292,6 +292,6 @@ const auditActivity = defineAction({
 export default {
   actions: [inviteUser, getUser, listUsers, updateUser, assignRole, revokeRole, deactivateUser, reactivateUser, listPermissions, auditActivity],
   resolvers: {
-    user: (store, name) => candidates(store.find<User>("users", (u) => u.status !== "deactivated"), name, (u) => u.name, (u) => u.roles.join(", ")),
+    user: (store, name) => candidates(store.all<User>("users"), name, (u) => u.name, (u) => u.roles.join(", "), (u) => (u.status === "deactivated" ? u.status : undefined)),
   },
 } satisfies ModuleExports;

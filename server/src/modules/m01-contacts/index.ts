@@ -324,6 +324,6 @@ export default {
   actions: [createContact, getContact, searchContacts, updateContact, archiveContact, mergeContacts, assignContactOwner, setPreferences, addRelationship, timeline],
   resolvers: {
     contact: (store, name) =>
-      candidates(store.find<Contact>("contacts", (c) => c.status === "active"), name, (c) => c.name, (c) => [c.email, c.phone, c.company].filter(Boolean).join(", ")),
+      candidates(store.all<Contact>("contacts"), name, (c) => c.name, (c) => [c.email, c.phone, c.company].filter(Boolean).join(", "), (c) => (c.status === "active" ? undefined : c.status)),
   },
 } satisfies ModuleExports;

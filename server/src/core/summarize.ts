@@ -81,7 +81,8 @@ function found(step: CStep, output: unknown, noun: string): string | null {
     // Two records with the same name read as one; tell them apart by their first plain detail.
     const twice = new Set(names.filter((n, i) => names.indexOf(n) !== i));
     names.forEach((n, i) => {
-      if (twice.has(n)) names[i] = n.replace(/( \(|$)/, (m) => `, ${detail(items[i])}${m}`);
+      const d = detail(items[i]);
+      if (twice.has(n) && d) names[i] = n.replace(/( \(|$)/, (m) => `, ${d}${m}`);
     });
     return `Found ${total} ${plural(noun, total)}${criteria(step)}: ${list(names, total)}.`;
   }
@@ -94,7 +95,7 @@ function record(x: unknown, noun?: string): string {
   if (!x || typeof x !== "object") return String(x);
   const o = x as Record<string, unknown>;
   const fields = Object.entries(o)
-    .filter(([k, v]) => k !== "name" && k !== "title" && k !== "id" && !k.endsWith("Id") && !QUIET.has(k) && shown(v) && !(typeof v === "string" && ID.test(v)))
+    .filter(([k, v]) => k !== titleKey(o) && k !== "id" && !k.endsWith("Id") && !QUIET.has(k) && shown(v) && !(typeof v === "string" && ID.test(v)))
     .slice(0, FIELDS_MAX)
     .map(([k, v]) => `${words(k)} ${Array.isArray(v) ? v.join(", ") : String(v)}`);
   const title = titleOf(o);
@@ -134,9 +135,17 @@ function nounOf(step: CStep, byId: Map<string, CStep>, registry: Registry): stri
   return "result";
 }
 
-const titleOf = (x: unknown): string | undefined => {
+/** The field a record is called by: `name`, `title`, else a `…Name` field such as a conversation's `personName`. */
+const titleKey = (x: unknown): string | undefined => {
   const o = x && typeof x === "object" ? (x as Record<string, unknown>) : {};
-  return typeof o.name === "string" ? o.name : typeof o.title === "string" ? o.title : undefined;
+  const named = (k: string) => typeof o[k] === "string" && o[k] !== "";
+  if (named("name")) return "name";
+  if (named("title")) return "title";
+  return Object.keys(o).find((k) => k.endsWith("Name") && !QUIET.has(k) && named(k));
+};
+const titleOf = (x: unknown): string | undefined => {
+  const k = titleKey(x);
+  return k ? ((x as Record<string, string>)[k]) : undefined;
 };
 const detail = (x: unknown): string => {
   const o = x && typeof x === "object" ? (x as Record<string, unknown>) : {};

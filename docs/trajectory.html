@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask AI Trajectory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F4F6F5; --surface:#FFFFFF; --ink:#17201D; --muted:#56635E; --line:#D7DFDB; --pre:#EEF2F0; --grid:#E4EAE7;
+  --accent:#0E6B60; --accent-soft:#DDEFEA; --warn:#9A5B06; --warn-soft:#FAEAD2;
+  --s1:#2a78d6; --s2:#eb6834;
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0F1513; --surface:#17201C; --ink:#E5ECE8; --muted:#9BAAA3; --line:#2A3531; --pre:#121A17; --grid:#222C28;
+  --accent:#4FC2B0; --accent-soft:#123A33; --warn:#F0AA45; --warn-soft:#3A2A0F;
+  --s1:#3987e5; --s2:#d95926; } }
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1513; --surface:#17201C; --ink:#E5ECE8; --muted:#9BAAA3; --line:#2A3531; --pre:#121A17; --grid:#222C28;
+  --accent:#4FC2B0; --accent-soft:#123A33; --warn:#F0AA45; --warn-soft:#3A2A0F;
+  --s1:#3987e5; --s2:#d95926; }
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:17px; line-height:1.6;
+  padding-inline:max(16px, env(safe-area-inset-left, 0px))}
+.wrap{max-width:900px; margin:0 auto; padding-block:48px 96px; display:flex; flex-direction:column; gap:64px}
+h1,h2,h3{font-family:var(--f-display); line-height:1.15; text-wrap:balance; margin:0}
+h1{font-size:clamp(2.1rem, 6vw, 3.3rem); letter-spacing:-0.02em}
+h2{font-size:1.7rem; letter-spacing:-0.01em}
+h3{font-size:1.12rem}
+p{margin:0; max-width:68ch}
+code{font-family:var(--f-mono); font-size:.84em; background:var(--pre); padding:1px 5px; border-radius:4px}
+section{display:flex; flex-direction:column; gap:18px}
+.eyebrow{font-family:var(--f-mono); font-size:.74rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+.lede{font-size:1.15rem; color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+
+.tiles{display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:12px}
+.tile{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:2px}
+.tile .k{font-size:.86rem; color:var(--muted)}
+.tile .v{font-family:var(--f-display); font-size:1.9rem; font-weight:700; letter-spacing:-0.01em; font-variant-numeric:tabular-nums}
+.tile .v .from{font-size:1.1rem; font-weight:500; color:var(--muted)}
+.tile .d{font-size:.84rem; color:var(--muted)}
+
+.card{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:12px}
+.chart{position:relative; width:100%}
+.chart svg{display:block; width:100%; height:auto; overflow:visible}
+.chart text{font-family:var(--f-body); font-size:12px; fill:var(--muted)}
+.chart .axis{stroke:var(--line)} .chart .gridl{stroke:var(--grid)}
+.legend{display:flex; flex-wrap:wrap; gap:14px; font-size:.88rem; color:var(--muted)}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.sw{width:14px; height:3px; border-radius:2px; display:inline-block}
+.tip{position:absolute; pointer-events:none; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px;
+  font-size:.84rem; line-height:1.4; box-shadow:0 4px 16px rgb(0 0 0 / .12); opacity:0; transition:opacity .1s; max-width:260px; z-index:2}
+.tip b{font-family:var(--f-display)}
+.duo{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px}
+.note{border-left:3px solid var(--warn); background:var(--warn-soft); padding:8px 12px; border-radius:0 8px 8px 0; font-size:.92rem}
+
+.timeline{display:flex; flex-direction:column; gap:14px; position:relative}
+.step{display:grid; grid-template-columns:44px 1fr; gap:14px}
+.num{width:44px; height:44px; border-radius:50%; border:2px solid var(--accent); color:var(--accent); background:var(--surface);
+  display:grid; place-items:center; font-family:var(--f-display); font-weight:700}
+.step .body{display:flex; flex-direction:column; gap:8px; min-width:0}
+.meta{font-family:var(--f-mono); font-size:.76rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:8px}
+.part{display:grid; grid-template-columns:112px 1fr; gap:10px; font-size:.95rem}
+.part .lbl{font-family:var(--f-mono); font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding-top:4px}
+.part.result .lbl{color:var(--accent)}
+.part.side .lbl{color:var(--warn)}
+.deltas{display:flex; flex-wrap:wrap; gap:8px}
+.delta{font-size:.84rem; border:1px solid var(--line); border-radius:999px; padding:2px 10px; background:var(--pre); font-variant-numeric:tabular-nums}
+.delta.up{border-color:var(--accent); background:var(--accent-soft)}
+.delta.down{border-color:var(--warn); background:var(--warn-soft)}
+details{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 14px}
+summary{cursor:pointer; font-weight:600}
+.tablewrap{overflow-x:auto; margin-top:10px}
+table{border-collapse:collapse; width:100%; font-size:.84rem; font-variant-numeric:tabular-nums}
+th,td{text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); white-space:nowrap}
+th{font-weight:600; color:var(--muted)}
+@media (max-width:560px){ .part{grid-template-columns:1fr; gap:0} .step{grid-template-columns:32px 1fr; gap:10px} .num{width:32px; height:32px; font-size:.9rem} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:14px">
+    <div class="eyebrow">HighLevel Ask AI · trajectory · built 2026-10-22</div>
+    <h1>How Ask AI got here</h1>
+    <p class="lede" id="lede"></p>
+    <div class="tiles" id="tiles"></div>
+  </header>
+
+  <section>
+    <div class="eyebrow">Retrieval</div>
+    <h2>Is the right action on the planner's shortlist?</h2>
+    <p class="muted">Each commit re-run on the same held-out questions, so the line is fair. No LLM involved.</p>
+    <div class="card">
+      <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>R@15: right action in the top 15</span><span><i class="sw" style="background:var(--s2)"></i>R@5: in the top 5</span></div>
+      <div class="chart" id="retrieval"></div>
+    </div>
+    <div class="card">
+      <h3>What each part adds today</h3>
+      <p class="muted small">R@15 on the same questions with one part turned off.</p>
+      <div class="chart" id="ablation"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">End to end</div>
+    <h2>Does the user get the right result?</h2>
+    <p class="muted">Scenario runs against the real planner, each from a fresh database. Runs that failed outside the app (quota, timeouts) are left out of the rate.</p>
+    <div class="card">
+      <h3>Share of clean runs that passed</h3>
+      <div class="chart" id="scenarios"></div>
+      <div id="scenario-notes" class="small muted"></div>
+    </div>
+    <div class="duo">
+      <div class="card"><h3>Median time per scenario</h3><div class="chart" id="latency"></div></div>
+      <div class="card"><h3>Cost per scenario run</h3><div class="chart" id="cost"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Changes</div>
+    <h2>What we changed, and why</h2>
+    <div class="timeline" id="timeline"></div>
+  </section>
+
+  <section>
+    <details>
+      <summary>Every recorded eval run</summary>
+      <div class="tablewrap" id="table"></div>
+    </details>
+    <p class="small muted">Generated by <code>npm run trajectory</code> from <code>docs/JOURNEY.md</code> and <code>eval/results/history.jsonl</code>. Re-measured and backfilled runs are marked; a run's question set (fingerprint) must match for two numbers to be compared.</p>
+  </section>
+</div>
+<div class="tip" id="tip"></div>
+<script>
+const { journey, history } = {"journey":[{"n":0,"title":"Design before code","commit":"a6710e8","date":"2026-10-20","runs":[],"parts":[{"label":"Problem","html":"HighLevel's catalog has about 500 actions across 50 modules. A model can't be shown all of them on every message, and a free-running tool loop is hard to make safe for bulk and destructive changes."},{"label":"Change","html":"Wrote the plan first: the planner returns a whole plan of steps as one structured reply; code checks it and runs it. Retrieval picks a shortlist of action cards for each message. Approval is decided by code from the risk of the exact records touched, never by the model."},{"label":"Why this way","html":"A plan can be validated before anything runs, shown to the user, and approved once. Forced tool calls return 400 on the current Claude models, so the reply is structured output instead."}]},{"n":1,"title":"Thin slice: registry, two-stage executor, planner","commit":"bed8db9","date":"2026-10-21","runs":[],"parts":[{"label":"Problem","html":"Nothing ran end to end yet."},{"label":"Change","html":"SQLite store with a deterministic seed and a frozen clock; a registry of actions checked against the catalog; an executor in two stages: compile (every \u003ccode>$ref\u003c/code> and argument checked against schemas, errors worded for a repair call) then run (destructive, external and bulk writes wait for approval, keyed on a hash of the exact targets). Replies are templated from what ran, not written by the model."},{"label":"Why this way","html":"Everything after the planner is deterministic, so it can be unit tested, and the model can't claim something happened that didn't."}]},{"n":2,"title":"Five modules in depth, and a debug UI","commit":"f1034d7","date":"2026-10-21","runs":[],"parts":[{"label":"Change","html":"Contacts, leads, tasks, users and teams: ten hand-written actions each with permissions, state guards, edge-case tests and injectable faults. A web UI streams every turn: planner request and reply, the compiled plan, each call, and the rows that changed."},{"label":"Why this way","html":"Depth before breadth: a few modules that behave like the real product give honest evals; the debug view made every later failure quick to diagnose."}]},{"n":3,"title":"BM25 retrieval over generated action cards","commit":"d3d9942","date":"2026-10-21","runs":["names-only-test","final-test"],"parts":[{"label":"Problem","html":"The planner needs the right handful of actions out of 500, quickly and without an LLM call."},{"label":"Change","html":"Each catalog action got a card (name, synonyms, description, LLM-written and checked by tests), ranked with BM25. Long messages are split into clauses so each one gets its own candidates. \u003ccode>planTurn\u003c/code> allows one \u003ccode>search_tools\u003c/code> round (the planner asks for what's missing) and one repair round (compile errors fed back)."},{"label":"Result","html":"On the 63-question split of the day, the cards took R@15 from 70.6% (names only) to 93.1%. Re-run later on today's harder 105 questions, this commit scores 82.1%: the first split flattered BM25, which is why the paraphrase questions were added."}]},{"n":4,"title":"Linking names in the message to records","commit":"557f570","date":"2026-10-21","runs":["rerun-d3d9942","rerun-557f570"],"parts":[{"label":"Problem","html":"&quot;Assign Hiro Reyes to Raj&quot; says nothing about which record types are involved, so the lookups the plan needs weren't shortlisted, and the planner guessed whether Hiro was a contact or a lead."},{"label":"Change","html":"Capitalized names are matched against contacts, leads, users and teams. A match adds that type's get and search actions to the shortlist, and a \u003ccode>&lt;mentions&gt;\u003c/code> line tells the planner &quot;Hiro Reyes: lead&quot;."},{"label":"Result","html":"Lookup questions: R@15 40% → 100%. All questions, re-measured: 82.1% → 85.9%. Turning it off today costs 3.8 points (94.9% → 91.1%)."}]},{"n":5,"title":"Planner deadline and server tests","commit":"905733e","date":"2026-10-21","runs":[],"parts":[{"label":"Problem","html":"A planner call that never returned left the turn hanging."},{"label":"Change","html":"Each planner call gets 120 s, then the child process is stopped and the turn ends with a plain failed reply. 14 HTTP tests over a scripted planner."}]},{"n":6,"title":"Hybrid retrieval: BM25 + local embeddings, ten more modules","commit":"911b204","date":"2026-10-22","runs":["rerun-557f570","rerun-911b204"],"parts":[{"label":"Problem","html":"BM25 misses paraphrases: &quot;who hasn't heard back from us&quot; shares no words with &quot;list conversations waiting on a reply&quot;."},{"label":"Change","html":"A small local embedding model (bge-base, quantized) ranks cards by meaning; its ranking joins BM25 by reciprocal-rank fusion. If the model can't load, retrieval falls back to BM25 and says so. 80 paraphrase questions added to the held-out set. Ten more modules built in depth (opportunities, notes, tags, conversations, SMS, email, campaigns, appointments, invoices, payments)."},{"label":"Why this way","html":"Local and free per query, so there's no extra API call or key. Out-of-scope rejection by retrieval is unchanged (2 of 8 in both modes); the planner turns down the rest, and both unsupported scenarios pass every run."},{"label":"Result","html":"R@15 85.9% → 94.9%, R@5 76.0% → 89.0%, MRR 0.58 → 0.66. Today's code with embeddings off: 87.1%, so most of the gain is the embeddings."},{"label":"Cost","html":"About 12 ms per question to embed it; ranking itself stays under 0.5 ms. Timed the same way, a retrieval eval question takes 13.3 ms hybrid against 1.5 ms BM25 alone."}]},{"n":7,"title":"End-to-end scenario eval","commit":"uncommitted","date":"2026-10-22","runs":["pilot-1","pilot-3x"],"parts":[{"label":"Problem","html":"Retrieval recall says the right tool was offered, not that the user got the right result."},{"label":"Change","html":"23 scenarios in 7 groups (direct, indirect, multi-step, ambiguous, follow-up, failure, unsupported), each from a fresh seeded database. Checks: final status, actions planned and not planned, their arguments, SQL on the database afterwards, words in the reply, and &quot;nothing changed&quot;. The chat logic moved into a \u003ccode>Conversation\u003c/code> class that the web app and the eval both drive, so the eval tests the real path."},{"label":"Result","html":"Pilot: 87% of 69 runs pass; 20/23 scenarios pass every run; median 5.7 s; $0.012 a run. Three scenarios failed every time, each a different failure class (below)."}]},{"n":8,"title":"Deactivated users are reported, not silently skipped","commit":"uncommitted","date":"2026-10-22","runs":["pilot-3x","fix-3x"],"parts":[{"label":"Problem","html":"&quot;Assign this to Dan Ortiz&quot; when Dan is deactivated: the resolver ignored him, so the plan failed with &quot;no user named Dan Ortiz&quot;, which is wrong and unhelpful."},{"label":"Change","html":"Resolvers return usable matches first; when there are none, they return the inactive ones with their status. The executor then fails the step with &quot;Dan Ortiz is deactivated&quot; and skips what depends on it. The same rule covers inactive contacts, closed opportunities and tasks, appointments no longer booked and inactive teams."},{"label":"Why this way","html":"One rule in the resolver helper fixes the whole class, not one prompt case."},{"label":"Result","html":"failure-deactivated-assignee 0/3 → 3/3."}]},{"n":9,"title":"Lists named by their person, and a wrong expectation fixed","commit":"uncommitted","date":"2026-10-22","runs":["fix-3x","fix2-3x"],"parts":[{"label":"Problem","html":"&quot;Who is waiting on a reply?&quot; listed conversations as &quot;?, ?, ?&quot;: the summary looked only for a \u003ccode>name\u003c/code> or \u003ccode>title\u003c/code> field, and conversations carry \u003ccode>personName\u003c/code>. The scenario also expected Sarah Johnson first; she is 11th of 11."},{"label":"Change","html":"The summary names a record by \u003ccode>name\u003c/code>, then \u003ccode>title\u003c/code>, then the first non-empty \u003ccode>…Name\u003c/code> field. The scenario now expects 11 conversations led by Tara Silva."},{"label":"Result","html":"who-is-waiting 0/3 → 2/3. The question set changed here (new fingerprint), so fix2-3x isn't directly comparable with the pilot."}]},{"n":10,"title":"A \"look\" before planning, for values worked out from a record","commit":"uncommitted","date":"2026-10-22","runs":["fix-3x","fix2-3x"],"parts":[{"label":"Problem","html":"&quot;Move Sarah's walkthrough to Monday, same time&quot;: the time comes from the appointment as it is now, which the planner can't see, and a \u003ccode>$ref\u003c/code> can't change a date. The planner asked a question instead. The appointment also wasn't found by &quot;Sarah Johnson Agency plan walkthrough&quot;."},{"label":"Change","html":"A new planner reply, \u003ccode>look\u003c/code>: read-only steps run at once, as the same user, and their results come back in \u003ccode>&lt;looked&gt;\u003c/code> for one more planning round. At most one look a turn; any write in it is rejected and repaired. Appointments are now named &quot;title with person&quot;."},{"label":"Why this way","html":"The planner computes the new time from real data, and code still checks and approves the plan. Reads only, so a look can never change anything without approval."},{"label":"Result","html":"direct-appointment-reschedule 0/3 → 3/3."},{"label":"Cost","html":"Turns that look make one more planner call (about 5 s and $0.01)."},{"label":"Side effects","html":"In 2 of 64 turns the planner looked and then answered in its own words (raw ids included) instead of planning. Fixed by a prompt rule (&quot;to show records, plan the reads&quot;) and a guard: an answer after a look runs the look as the plan, so the reply is the usual summary. Not yet measured end to end."}]},{"n":11,"title":"Infrastructure failures counted apart","commit":"uncommitted","date":"2026-10-22","runs":["fix2-3x"],"parts":[{"label":"Problem","html":"fix2-3x reported 73.9%, which looked like a regression. 14 of its 69 runs had hit the Claude CLI session limit and never reached the app."},{"label":"Change","html":"A planner failure from quota, timeout or the provider is marked infra on the turn and the run. Pass rates leave those runs out, the report says &quot;NOT A CLEAN RUN&quot;, and hitting the quota stops the eval. Every labelled run of either eval is appended to \u003ccode>eval/results/history.jsonl\u003c/code>; a run where nothing reached the app isn't."},{"label":"Result","html":"fix2-3x read correctly: 92.7% of 55 clean runs, 15/19 measured scenarios pass every run; 4 scenarios unmeasured."}]}],"history":[{"at":"2026-10-21T08:29:00.311Z","suite":"retrieval","label":"names-only-test","git":{"sha":"edfed0d","dirty":true},"set":"test-63q","config":{"retrieval":"bm25","split":"test","opts":{},"namesOnly":true,"ablation":true},"metrics":{"questions":63,"r5":61.9,"r10":68.3,"r15":70.6,"all15":66.7,"mrr":0.57,"picks":14,"outOfScopeRejected":50,"falseRejects":6},"file":"eval/results/retrieval-names-only-test.json","backfilled":"from the saved result file","note":"cards with names only (ablation)"},{"at":"2026-10-21T08:32:21.944Z","suite":"retrieval","label":"final-test","git":{"sha":"edfed0d","dirty":true},"set":"test-63q","config":{"retrieval":"bm25","split":"test","opts":{}},"metrics":{"questions":63,"r5":84.9,"r10":90.2,"r15":93.1,"all15":92.1,"mrr":0.69,"picks":18.3,"outOfScopeRejected":50,"falseRejects":0},"file":"eval/results/retrieval-final-test.json","backfilled":"from the saved result file","note":"cards with synonyms and descriptions"},{"at":"2026-10-21T08:55:57.000Z","suite":"retrieval","label":"rerun-d3d9942","git":{"sha":"d3d9942","dirty":false},"set":"ed35741ee209","config":{"retrieval":"bm25","split":"test","opts":{}},"metrics":{"questions":105,"r5":72.2,"r10":79,"r15":82.1,"all15":81,"mrr":0.58,"picks":18.5,"outOfScopeRejected":50,"falseRejects":1},"backfilled":"re-run of this commit on 2026-10-22 with today's questions"},{"at":"2026-10-21T11:08:39.000Z","suite":"retrieval","label":"rerun-557f570","git":{"sha":"557f570","dirty":false},"set":"ed35741ee209","config":{"retrieval":"bm25","split":"test","opts":{}},"metrics":{"questions":105,"r5":76,"r10":82.9,"r15":85.9,"all15":84.8,"mrr":0.58,"picks":19.8,"outOfScopeRejected":50,"falseRejects":0},"backfilled":"re-run of this commit on 2026-10-22 with today's questions"},{"at":"2026-10-21T17:35:48.633Z","suite":"retrieval","label":"test---bm25","git":{"sha":"905733e","dirty":true},"set":"test-105q","config":{"retrieval":"bm25","split":"test","opts":{},"ablation":true},"metrics":{"questions":105,"r5":82.5,"r10":85.9,"r15":86.8,"all15":85.7,"mrr":0.62,"picks":18.3,"outOfScopeRejected":0,"falseRejects":0},"file":"eval/results/retrieval-test---bm25.json","backfilled":"from the saved result file","note":"BM25 alone (ablation)"},{"at":"2026-10-21T17:35:50.888Z","suite":"retrieval","label":"test-hybrid","git":{"sha":"905733e","dirty":true},"set":"test-105q","config":{"retrieval":"hybrid","split":"test","opts":{}},"metrics":{"questions":105,"r5":89,"r10":94.4,"r15":94.9,"all15":94.3,"mrr":0.66,"picks":19.3,"outOfScopeRejected":0,"falseRejects":0},"file":"eval/results/retrieval-test-hybrid.json","backfilled":"from the saved result file","note":"BM25 + embeddings"},{"at":"2026-10-21T18:33:08.000Z","suite":"retrieval","label":"rerun-911b204","git":{"sha":"911b204","dirty":false},"set":"ed35741ee209","config":{"retrieval":"hybrid","split":"test","opts":{}},"metrics":{"questions":105,"r5":89,"r10":94.4,"r15":94.9,"all15":94.3,"mrr":0.66,"picks":19.5,"outOfScopeRejected":0,"falseRejects":0},"backfilled":"re-run of this commit on 2026-10-22 with today's questions"},{"at":"2026-10-21T18:45:02.861Z","suite":"scenarios","label":"pilot-1","git":{"sha":"911b204","dirty":true},"set":"pilot-23 (old who-is-waiting expectation)","config":{"planner":"claude-cli","tier":"strong","repeat":1},"metrics":{"scenarios":23,"runs":23,"infraRuns":0,"notRun":0,"passRate":78.3,"allPass":18,"measured":23,"flaky":0,"e2eP50Ms":5603,"e2eP95Ms":11259,"firstReplyP50Ms":5117,"plannerRoundsPerRun":1.3,"costPerRunUsd":0.0299},"file":"eval/results/scenarios-pilot-1.json","backfilled":"re-summarized from the saved result file"},{"at":"2026-10-21T18:47:55.204Z","suite":"scenarios","label":"pilot-3x","git":{"sha":"911b204","dirty":true},"set":"pilot-23 (old who-is-waiting expectation)","config":{"planner":"claude-cli","tier":"strong","repeat":3},"metrics":{"scenarios":23,"runs":69,"infraRuns":0,"notRun":0,"passRate":87,"allPass":20,"measured":23,"flaky":0,"e2eP50Ms":5707,"e2eP95Ms":14336,"firstReplyP50Ms":5192,"plannerRoundsPerRun":1.32,"costPerRunUsd":0.0119},"file":"eval/results/scenarios-pilot-3x.json","backfilled":"re-summarized from the saved result file"},{"at":"2026-10-21T19:07:15.725Z","suite":"scenarios","label":"fix-3x","git":{"sha":"911b204","dirty":true},"set":"pilot-23 (old who-is-waiting expectation)","config":{"planner":"claude-cli","tier":"strong","repeat":3},"metrics":{"scenarios":23,"runs":69,"infraRuns":0,"notRun":0,"passRate":88.4,"allPass":19,"measured":23,"flaky":2,"e2eP50Ms":4890,"e2eP95Ms":16832,"firstReplyP50Ms":4783,"plannerRoundsPerRun":1.38,"costPerRunUsd":0.0203},"file":"eval/results/scenarios-fix-3x.json","backfilled":"re-summarized from the saved result file"},{"at":"2026-10-21T19:10:34.588Z","suite":"scenarios","label":"fix2-3x","git":{"sha":"911b204","dirty":true},"set":"fcc7ddef4615","config":{"planner":"claude-cli","tier":"strong","repeat":3},"metrics":{"scenarios":23,"runs":69,"infraRuns":14,"notRun":0,"passRate":92.7,"allPass":15,"measured":19,"flaky":4,"e2eP50Ms":6214,"e2eP95Ms":14421,"firstReplyP50Ms":5404,"plannerRoundsPerRun":1.4,"costPerRunUsd":0.0147},"file":"eval/results/scenarios-fix2-3x.json","backfilled":"re-summarized from the saved result file"},{"at":"2026-10-22T04:54:55.008Z","suite":"retrieval","label":"now-test","git":{"sha":"911b204","dirty":true},"set":"ed35741ee209","config":{"retrieval":"hybrid","split":"test","opts":{}},"metrics":{"questions":105,"r5":89,"r10":94.4,"r15":94.9,"all15":94.3,"mrr":0.66,"picks":19.6,"outOfScopeRejected":0,"falseRejects":0},"file":"eval/results/retrieval-now-test.json"},{"at":"2026-10-22T04:55:03.734Z","suite":"retrieval","label":"now-test-bm25","git":{"sha":"911b204","dirty":true},"set":"ed35741ee209","config":{"retrieval":"bm25","split":"test","opts":{},"ablation":true},"metrics":{"questions":105,"r5":82.5,"r10":86.2,"r15":87.1,"all15":86.7,"mrr":0.62,"picks":18.9,"outOfScopeRejected":0,"falseRejects":0},"file":"eval/results/retrieval-now-test-bm25.json"},{"at":"2026-10-22T04:55:08.540Z","suite":"retrieval","label":"now-test-names-only","git":{"sha":"911b204","dirty":true},"set":"ed35741ee209","config":{"retrieval":"hybrid","split":"test","opts":{},"namesOnly":true,"ablation":true},"metrics":{"questions":105,"r5":76.2,"r10":83.7,"r15":86,"all15":84.8,"mrr":0.53,"picks":18.9,"outOfScopeRejected":50,"falseRejects":3},"file":"eval/results/retrieval-now-test-names-only.json"},{"at":"2026-10-22T04:55:10.869Z","suite":"retrieval","label":"now-test-no-mentions","git":{"sha":"911b204","dirty":true},"set":"ed35741ee209","config":{"retrieval":"hybrid","split":"test","opts":{},"noMentions":true,"ablation":true},"metrics":{"questions":105,"r5":85.2,"r10":90.6,"r15":91.1,"all15":90.5,"mrr":0.66,"picks":18,"outOfScopeRejected":0,"falseRejects":1},"file":"eval/results/retrieval-now-test-no-mentions.json"}]};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const byLabel = Object.fromEntries(history.map((h) => [h.label, h]));
+const day = (iso) => new Date(iso).toLocaleDateString("en-CA");
+const commitOf = (h) => (h.git ? h.git.sha + (h.git.dirty ? "+" : "") : "?");
+
+// Main lines: the newest question set for each suite, without ablations.
+const retr = history.filter((h) => h.suite === "retrieval" && h.config.split === "test" && !h.config.ablation);
+const retrSet = retr.at(-1)?.set;
+const retrLine = retr.filter((h) => h.set === retrSet);
+const retrNow = retrLine.at(-1);
+const ablations = history.filter((h) => h.suite === "retrieval" && h.set === retrSet && h.git?.sha === retrNow?.git?.sha && h.config.ablation);
+// Scenario runs are drawn for the latest planner and tier only; a run on another model is in the table.
+const lastScen = history.filter((h) => h.suite === "scenarios").at(-1);
+const scen = history.filter((h) => h.suite === "scenarios" && h.metrics.measured > 0 && h.config.planner === lastScen?.config.planner && h.config.tier === lastScen?.config.tier);
+const scen3 = scen.filter((h) => h.config.repeat >= 3);
+
+// ---- headline ----
+const first = retrLine[0], firstS = scen3[0], lastS = scen3.at(-1);
+$("lede").textContent = "Each change below went after one failure class we could measure. The numbers come from the eval history, and every run is recorded with the commit it measured.";
+const tile = (k, from, to, d) => '<div class="tile"><div class="k">' + k + '</div><div class="v">' + (from != null ? '<span class="from">' + from + ' → </span>' : "") + to + '</div><div class="d">' + d + "</div></div>";
+const pct = (x) => (Math.round(x * 10) / 10).toFixed(1) + "%";
+$("tiles").innerHTML = [
+  first && retrNow ? tile("Retrieval R@15", pct(first.metrics.r15), pct(retrNow.metrics.r15), retrNow.metrics.questions + " held-out questions") : "",
+  first && retrNow ? tile("Retrieval R@5", pct(first.metrics.r5), pct(retrNow.metrics.r5), "right action in the top 5") : "",
+  firstS && lastS ? tile("Scenario runs passed", pct(firstS.metrics.passRate), pct(lastS.metrics.passRate), lastS.metrics.allPass + "/" + lastS.metrics.measured + " scenarios pass every run" + (firstS.set !== lastS.set ? "; the set changed between" : "")) : "",
+  firstS && lastS ? tile("Median time per scenario", (firstS.metrics.e2eP50Ms / 1000).toFixed(1) + " s", (lastS.metrics.e2eP50Ms / 1000).toFixed(1) + " s", "end to end, real planner") : "",
+].join("");
+
+// ---- charts (hand-drawn SVG, one axis each) ----
+const tip = $("tip");
+function showTip(e, html) {
+  tip.innerHTML = html; tip.style.opacity = 1;
+  const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + pad + window.scrollX, y = e.clientY + pad + window.scrollY;
+  if (e.clientX + pad + w > window.innerWidth - 8) x = e.clientX - w - pad + window.scrollX;
+  if (e.clientY + pad + h > window.innerHeight - 8) y = e.clientY - h - pad + window.scrollY;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+const hideTip = () => (tip.style.opacity = 0);
+const NS = "http://www.w3.org/2000/svg";
+
+/** A line chart of points over categorical x; series: [{name, color, values[]}], domain [lo, hi], fmt. */
+function lineChart(el, xs, series, { lo, hi, fmt, tipOf, height = 260, breaks = [] }) {
+  const W = Math.max(el.clientWidth, 280), H = height, m = { l: 44, r: 16, t: 14, b: 54 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const x = (i) => m.l + (xs.length === 1 ? iw / 2 : (i * iw) / (xs.length - 1));
+  const y = (v) => m.t + ih - ((v - lo) / (hi - lo)) * ih;
+  const ticks = niceTicks(lo, hi, 4);
+  let s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img">';
+  for (const t of ticks) s += '<line class="gridl" x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + y(t) + '" y2="' + y(t) + '"/><text x="' + (m.l - 8) + '" y="' + (y(t) + 4) + '" text-anchor="end">' + fmt(t) + "</text>";
+  // End labels hug the edges and every label is cut to the room between points, so neighbours never overlap.
+  const room = xs.length > 1 ? iw / (xs.length - 1) : iw;
+  const anchor = (i) => (xs.length > 1 && i === 0 ? "start" : xs.length > 1 && i === xs.length - 1 ? "end" : "middle");
+  const budget = (i) => (anchor(i) === "middle" ? room - 10 : room / 2 - 6);
+  const ax = (i) => x(i) + (anchor(i) === "start" ? -4 : anchor(i) === "end" ? 4 : 0);
+  xs.forEach((lab, i) => (s += '<text x="' + ax(i) + '" y="' + (H - m.b + 18) + '" text-anchor="' + anchor(i) + '" data-max="' + budget(i) + '">' + esc(lab[0]) + '</text><text x="' + ax(i) + '" y="' + (H - m.b + 34) + '" text-anchor="' + anchor(i) + '" data-max="' + budget(i) + '" style="font-size:11px">' + esc(lab[1] || "") + "</text>"));
+  for (const b of breaks) { const bx = (x(b - 1) + x(b)) / 2; s += '<line x1="' + bx + '" x2="' + bx + '" y1="' + m.t + '" y2="' + (m.t + ih) + '" stroke="var(--warn)" stroke-dasharray="4 4"/><text x="' + (bx - 4) + '" y="' + (m.t + ih - 6) + '" text-anchor="end" style="fill:var(--warn);font-size:11px">set changed</text>'; }
+  for (const se of series) {
+    const pts = se.values.map((v, i) => (v == null ? null : [x(i), y(v)])).filter(Boolean);
+    s += '<polyline fill="none" stroke="' + se.color + '" stroke-width="2" stroke-linejoin="round" points="' + pts.map((p) => p.join(",")).join(" ") + '"/>';
+    se.values.forEach((v, i) => { if (v != null) s += '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="4.5" fill="' + se.color + '" stroke="var(--surface)" stroke-width="2"/>'; });
+    const lastI = se.values.length - 1;
+    if (se.values[lastI] != null) s += '<text x="' + (x(lastI) - 8) + '" y="' + (y(se.values[lastI]) - 10) + '" text-anchor="end" style="fill:var(--ink);font-weight:600">' + fmt(se.values[lastI]) + "</text>";
+  }
+  xs.forEach((_, i) => (s += '<rect data-i="' + i + '" x="' + (x(i) - iw / Math.max(xs.length - 1, 1) / 2) + '" y="' + m.t + '" width="' + iw / Math.max(xs.length - 1, 1) + '" height="' + ih + '" fill="transparent"/>'));
+  s += "</svg>";
+  el.innerHTML = s;
+  // Axis labels are cut to their measured room, so neighbours never overlap; the tooltip has the full name.
+  el.querySelectorAll("text[data-max]").forEach((t) => {
+    const max = +t.dataset.max, full = t.textContent;
+    for (let n = full.length; n > 3 && t.getComputedTextLength() > max; n--) t.textContent = full.slice(0, n - 1) + "…";
+  });
+  const svg = el.querySelector("svg");
+  const cross = document.createElementNS(NS, "line");
+  cross.setAttribute("class", "axis"); cross.setAttribute("y1", m.t); cross.setAttribute("y2", m.t + ih); cross.style.display = "none";
+  svg.insertBefore(cross, svg.firstChild);
+  svg.querySelectorAll("rect[data-i]").forEach((r) => {
+    const i = +r.dataset.i;
+    r.addEventListener("mousemove", (e) => { cross.style.display = ""; cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); showTip(e, tipOf(i)); });
+    r.addEventListener("mouseleave", () => { cross.style.display = "none"; hideTip(); });
+  });
+}
+
+/** Horizontal bars: rows [{label, value, sub}], domain [0, hi]. */
+function barChart(el, rows, { lo = 0, hi, fmt, color = "var(--s1)" }) {
+  const W = Math.max(el.clientWidth, 280), row = 34, m = { l: Math.min(210, W * 0.45), r: 64, t: 4, b: 4 }, H = m.t + m.b + rows.length * row;
+  const x = (v) => m.l + ((v - lo) / (hi - lo)) * (W - m.l - m.r);
+  let s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img">';
+  rows.forEach((r, i) => {
+    const y0 = m.t + i * row;
+    s += '<text x="' + (m.l - 10) + '" y="' + (y0 + row / 2 + 4) + '" text-anchor="end" style="fill:var(--ink)">' + esc(r.label) + "</text>";
+    const w = Math.max(x(r.value) - m.l, 2);
+    s += '<path data-i="' + i + '" d="M' + m.l + " " + (y0 + 7) + " h" + (w - 4) + " a4 4 0 0 1 4 4 v" + (row - 22) + " a4 4 0 0 1 -4 4 h-" + (w - 4) + ' z" fill="' + (r.color || color) + '"/>';
+    s += '<text x="' + (x(r.value) + 8) + '" y="' + (y0 + row / 2 + 4) + '" style="fill:var(--ink);font-weight:600">' + fmt(r.value) + "</text>";
+  });
+  s += "</svg>";
+  el.innerHTML = s;
+  el.querySelectorAll("path[data-i]").forEach((p) => {
+    const r = rows[+p.dataset.i];
+    p.addEventListener("mousemove", (e) => showTip(e, "<b>" + esc(r.label) + "</b><br>" + fmt(r.value) + (r.sub ? "<br>" + r.sub : "")));
+    p.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function niceTicks(lo, hi, n) {
+  const step = Math.pow(10, Math.floor(Math.log10((hi - lo) / n)));
+  const err = (hi - lo) / n / step;
+  const s = step * (err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1);
+  const out = [];
+  for (let v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) out.push(+v.toFixed(6));
+  return out;
+}
+
+// A point is named after the change that produced it: the journey entry for its commit, or whose runs end with it.
+const shortLabel = (h) => {
+  const j = journey.find((e) => h.git && !h.git.dirty && e.commit === h.git.sha) || journey.find((e) => e.runs.at(-1) === h.label);
+  return j ? j.title.split(/[:,(]/)[0].trim().slice(0, 22) : h.label;
+};
+const runTip = (h, rows) => "<b>" + esc(h.label) + "</b> · <span class='muted'>" + esc(commitOf(h)) + " · " + day(h.at) + "</span><br>" + rows.join("<br>") + (h.backfilled ? "<br><span class='muted'>" + esc(h.backfilled) + "</span>" : "");
+
+function drawCharts() {
+if (retrLine.length) {
+  const lo = Math.max(0, Math.floor(Math.min(...retrLine.map((h) => h.metrics.r5)) / 10) * 10 - 10);
+  lineChart($("retrieval"), retrLine.map((h) => [commitOf(h), shortLabel(h)]), [
+    { name: "R@15", color: "var(--s1)", values: retrLine.map((h) => h.metrics.r15) },
+    { name: "R@5", color: "var(--s2)", values: retrLine.map((h) => h.metrics.r5) },
+  ], { lo, hi: 100, fmt: (v) => Math.round(v) + "%", tipOf: (i) => { const h = retrLine[i]; return runTip(h, ["R@15 " + pct(h.metrics.r15), "R@5 " + pct(h.metrics.r5), "MRR " + h.metrics.mrr, h.config.retrieval]); } });
+}
+if (retrNow) {
+  const name = (h) => h.config.namesOnly ? "cards: names only" : h.config.noMentions ? "names not linked" : h.config.retrieval === "bm25" ? "no embeddings (BM25 only)" : h.label;
+  const rows = [{ label: "everything on", value: retrNow.metrics.r15, sub: "R@5 " + pct(retrNow.metrics.r5) }, ...[...ablations].sort((a, b) => b.metrics.r15 - a.metrics.r15).map((h) => ({ label: name(h), value: h.metrics.r15, color: "var(--s2)", sub: "R@5 " + pct(h.metrics.r5) + " · " + (h.metrics.r15 - retrNow.metrics.r15).toFixed(1) + " points" }))];
+  barChart($("ablation"), rows, { lo: 50, hi: 100, fmt: (v) => pct(v) });
+}
+if (scen.length) {
+  lineChart($("scenarios"), scen.map((h) => [h.label, "×" + h.config.repeat + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "")]), [
+    { name: "pass", color: "var(--s1)", values: scen.map((h) => h.metrics.passRate) },
+  ], { lo: 50, hi: 100, fmt: (v) => Math.round(v) + "%", breaks: scen.map((h, i) => (i && h.set !== scen[i - 1].set ? i : 0)).filter(Boolean), tipOf: (i) => { const h = scen[i]; return runTip(h, [pct(h.metrics.passRate) + " of " + (h.metrics.runs - h.metrics.infraRuns) + " clean runs", h.metrics.allPass + "/" + h.metrics.measured + " scenarios pass every run · " + h.metrics.flaky + " flaky", h.metrics.infraRuns ? h.metrics.infraRuns + " runs failed outside the app" : "no infra failures"]); } });
+  const sets = [...new Set(scen.map((h) => h.set))];
+  const notes = [];
+  if (sets.length > 1) notes.push("The scenario set changed " + (sets.length - 1) + "× (a corrected expectation); runs either side of a change aren't strictly comparable.");
+  const infra = scen.filter((h) => h.metrics.infraRuns);
+  if (infra.length) notes.push(infra.map((h) => h.label + ": " + h.metrics.infraRuns + " of " + h.metrics.runs + " runs failed outside the app (planner quota or timeout) and are left out").join("; ") + ".");
+  $("scenario-notes").innerHTML = notes.map((n) => '<div class="note">' + esc(n) + "</div>").join("");
+  lineChart($("latency"), scen.map((h) => [h.label, ""]), [{ name: "p50", color: "var(--s1)", values: scen.map((h) => h.metrics.e2eP50Ms / 1000) }],
+    { lo: 0, hi: Math.ceil(Math.max(...scen.map((h) => h.metrics.e2eP50Ms / 1000)) + 2), fmt: (v) => v.toFixed(1) + " s", height: 220, tipOf: (i) => runTip(scen[i], ["p50 " + (scen[i].metrics.e2eP50Ms / 1000).toFixed(1) + " s", "p95 " + (scen[i].metrics.e2eP95Ms / 1000).toFixed(1) + " s", scen[i].metrics.plannerRoundsPerRun + " planner calls per run"]) });
+  lineChart($("cost"), scen.map((h) => [h.label, ""]), [{ name: "cost", color: "var(--s1)", values: scen.map((h) => h.metrics.costPerRunUsd) }],
+    { lo: 0, hi: Math.max(...scen.map((h) => h.metrics.costPerRunUsd)) * 1.3, fmt: (v) => "$" + v.toFixed(3), height: 220, tipOf: (i) => runTip(scen[i], ["$" + scen[i].metrics.costPerRunUsd.toFixed(4) + " per run", scen[i].config.planner + " (" + scen[i].config.tier + ")"]) });
+}
+}
+// Charts are drawn at their box's real width, so text stays readable on a phone; redrawn when the width changes.
+drawCharts();
+let lastW = innerWidth, redraw;
+addEventListener("resize", () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(redraw); redraw = setTimeout(drawCharts, 120); });
+
+// ---- timeline ----
+const KEYS = { retrieval: [["r15", "R@15", "%"], ["r5", "R@5", "%"], ["mrr", "MRR", ""]], scenarios: [["passRate", "pass", "%"], ["allPass", "all-pass scenarios", ""], ["e2eP50Ms", "p50", "ms"], ["costPerRunUsd", "$/run", "$"]] };
+const fmtV = (v, u) => (u === "%" ? pct(v) : u === "ms" ? (v / 1000).toFixed(1) + " s" : u === "$" ? "$" + v.toFixed(3) : String(v));
+const lowerIsBetter = new Set(["e2eP50Ms", "costPerRunUsd"]);
+function deltas(e) {
+  const hs = e.runs.map((l) => byLabel[l]).filter(Boolean);
+  if (!hs.length) return "";
+  if (hs.length === 1) { const h = hs[0]; return '<div class="deltas">' + KEYS[h.suite].map(([k, n, u]) => '<span class="delta">' + n + " " + fmtV(h.metrics[k], u) + "</span>").join("") + "</div>"; }
+  const [a, b] = [hs[0], hs.at(-1)];
+  const chips = KEYS[b.suite].filter(([k]) => a.metrics[k] != null && b.metrics[k] != null).map(([k, n, u]) => {
+    const d = b.metrics[k] - a.metrics[k];
+    const good = lowerIsBetter.has(k) ? d < 0 : d > 0;
+    const cls = Math.abs(d) < 1e-9 ? "" : good ? "up" : "down";
+    return '<span class="delta ' + cls + '">' + n + " " + fmtV(a.metrics[k], u) + " → " + fmtV(b.metrics[k], u) + "</span>";
+  });
+  const caveat = a.set !== b.set ? '<span class="delta">question set changed</span>' : "";
+  return '<div class="deltas">' + chips.join("") + caveat + "</div>";
+}
+$("timeline").innerHTML = journey.map((e) => {
+  const parts = e.parts.map((p) => {
+    const cls = p.label === "Result" ? "result" : /side|lesson/i.test(p.label) ? "side" : "";
+    return p.label ? '<div class="part ' + cls + '"><div class="lbl">' + esc(p.label) + "</div><div>" + p.html + "</div></div>" : "<p>" + p.html + "</p>";
+  }).join("");
+  const meta = [e.commit ? "<span>" + esc(e.commit) + "</span>" : "", e.date ? "<span>" + e.date + "</span>" : "", e.runs.length ? "<span>runs: " + e.runs.map(esc).join(" → ") + "</span>" : ""].join("");
+  return '<div class="step"><div class="num">' + e.n + '</div><div class="body"><h3>' + esc(e.title) + '</h3><div class="meta">' + meta + "</div>" + deltas(e) + parts + "</div></div>";
+}).join("");
+
+// ---- table view ----
+const cols = [["at", (h) => day(h.at) + " " + new Date(h.at).toTimeString().slice(0, 5)], ["suite", (h) => h.suite], ["label", (h) => h.label], ["commit", commitOf], ["set", (h) => h.set],
+  ["headline", (h) => h.suite === "retrieval" ? "R@15 " + pct(h.metrics.r15) + " · R@5 " + pct(h.metrics.r5) + (h.config.ablation ? " · ablation" : "") : pct(h.metrics.passRate) + " · " + h.metrics.allPass + "/" + h.metrics.measured + " · " + (h.metrics.e2eP50Ms / 1000).toFixed(1) + " s · $" + h.metrics.costPerRunUsd + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "")],
+  ["source", (h) => h.backfilled || "recorded by the run"]];
+$("table").innerHTML = "<table><thead><tr>" + cols.map(([c]) => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>" + history.map((h) => "<tr>" + cols.map(([, f]) => "<td>" + esc(f(h)) + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
+</script>
+</body>
+</html>

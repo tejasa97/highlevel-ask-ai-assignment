@@ -13,6 +13,9 @@ export interface Candidate {
   id: string;
   name: string;
   detail?: string;
+  /** Set when the record can't be used (its status, e.g. "deactivated"): returned only when nothing usable
+   *  matches, so a step can say why rather than "no match". */
+  inactive?: string;
 }
 
 /** Turns a name ("Sales", "Jo Park") into matching records of one entity type. */

@@ -1,0 +1,71 @@
+[
+  {
+    "id": "direct-task-create",
+    "category": "direct",
+    "modules": ["M06"],
+    "turns": [{ "user": "Create a high priority task for Tom to call Rosa Ito tomorrow" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M06.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.title') LIKE '%Rosa%' AND json_extract(data,'$.assigneeId')='us_4' AND json_extract(data,'$.priority')='high' AND json_extract(data,'$.dueDate')='2026-10-22'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "direct-opportunity-stage",
+    "category": "direct",
+    "modules": ["M04"],
+    "turns": [{ "user": "Move the Hooli deal back to Proposal" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M04.A05"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.stageId') FROM opportunities WHERE id='op_7'", "equals": "st_14_3" }]
+    }
+  },
+  {
+    "id": "direct-campaign-pause",
+    "category": "direct",
+    "modules": ["M15"],
+    "turns": [{ "user": "Pause the fall webinar campaign" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M15.A08"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM campaigns WHERE id='cp_1'", "equals": "paused" }]
+    }
+  },
+  {
+    "id": "direct-tag-rename",
+    "category": "direct",
+    "modules": ["M08"],
+    "turns": [{ "user": "Rename the partner tag to referral-partner" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M08.A03"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.name') FROM tags WHERE id='tg_4'", "equals": "referral-partner" }]
+    }
+  },
+  {
+    "id": "direct-payment-request",
+    "category": "direct",
+    "modules": ["M29"],
+    "turns": [{ "user": "Create a payment request for Marcus Lee's overdue invoice" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M29.A01"] },
+      "state": [{ "sql": "SELECT count(*) FROM payment_requests WHERE json_extract(data,'$.invoiceId')='inv_9' AND json_extract(data,'$.amount')=650", "equals": 1 }]
+    }
+  },
+  {
+    "id": "direct-appointment-reschedule",
+    "category": "direct",
+    "modules": ["M21"],
+    "note": "ap_1 is Fri 23 Oct 11:00 New York (15:00Z); Monday the 26th is still daylight time.",
+    "turns": [{ "user": "Push Sarah Johnson's Agency plan walkthrough to Monday, same time" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M21.A04"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.startAt') FROM appointments WHERE id='ap_1'", "equals": "2026-10-26T15:00:00.000Z" }]
+    }
+  }
+]

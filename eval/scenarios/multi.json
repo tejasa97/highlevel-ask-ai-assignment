@@ -1,0 +1,61 @@
+[
+  {
+    "id": "multi-facebook-leads",
+    "category": "multi",
+    "modules": ["M03", "M48", "M49"],
+    "note": "Last week is Mon 12 - Sun 18 Oct: ld_41-ld_44. Available sales reps: Raj, Tom, Aisha (Lucia is away, Dan is deactivated).",
+    "turns": [{ "user": "Assign last week's Facebook leads to the available sales reps, round robin" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M03.A05"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM leads WHERE id IN ('ld_41','ld_42','ld_43','ld_44') AND json_extract(data,'$.ownerId') IN ('us_2','us_4','us_5')", "equals": 4 },
+        { "sql": "SELECT count(DISTINCT json_extract(data,'$.ownerId')) FROM leads WHERE id IN ('ld_41','ld_42','ld_43','ld_44')", "equals": 3 },
+        { "sql": "SELECT count(*) FROM leads WHERE json_extract(data,'$.source')='facebook_ads' AND json_extract(data,'$.ownerId') NOT IN ('us_2','us_4','us_5')", "equals": 0 }
+      ]
+    }
+  },
+  {
+    "id": "multi-email-and-task",
+    "category": "multi",
+    "modules": ["M13", "M06"],
+    "turns": [{ "user": "Email Sarah Johnson at Brightside that the Agency plan is $297 a month, and create a task for Raj to follow up with her on Friday" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M13.A03", "M06.A01"] },
+      "args": [{ "action": "M13.A03", "match": { "contactId": "ct_31" } }],
+      "state": [
+        { "sql": "SELECT count(*) FROM emails WHERE json_extract(data,'$.contactId')='ct_31' AND json_extract(data,'$.direction')='outbound' AND json_extract(data,'$.body') LIKE '%297%' AND json_extract(data,'$.status')<>'draft'", "equals": 1 },
+        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_2' AND json_extract(data,'$.dueDate')='2026-10-23' AND json_extract(data,'$.title') LIKE '%Sarah%'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "multi-lost-deal-with-note",
+    "category": "multi",
+    "modules": ["M04", "M07"],
+    "turns": [{ "user": "Mark the Soylent Pro plan deal as lost, they went with a competitor, and add a note on it that we should revisit in Q2" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M04.A09", "M07.A01"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM opportunities WHERE id='op_5'", "equals": "lost" },
+        { "sql": "SELECT json_extract(data,'$.lostReason') LIKE '%competitor%' FROM opportunities WHERE id='op_5'", "equals": 1 },
+        { "sql": "SELECT count(*) FROM notes, json_each(json_extract(notes.data,'$.attachedTo')) a WHERE json_extract(a.value,'$.id')='op_5' AND json_extract(notes.data,'$.body') LIKE '%Q2%'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "multi-bulk-archive-declined",
+    "category": "multi",
+    "modules": ["M01"],
+    "note": "Five contacts at Wayne; the user declines at the approval step.",
+    "turns": [{ "user": "Archive every contact at Wayne", "approve": false }],
+    "expect": {
+      "status": ["cancelled"],
+      "actions": { "includes": ["M01.A05"] },
+      "state": [{ "sql": "SELECT count(*) FROM contacts WHERE json_extract(data,'$.company')='Wayne' AND json_extract(data,'$.status')='archived'", "equals": 0 }],
+      "noChanges": true
+    }
+  }
+]

@@ -62,7 +62,7 @@ export const SUBMIT_PLAN_SCHEMA = {
   additionalProperties: false,
   required: ["type", "steps", "question", "options", "reason", "alternatives", "query", "text"],
   properties: {
-    type: { enum: ["plan", "clarify", "unsupported", "answer", "search_tools"] },
+    type: { enum: ["plan", "look", "clarify", "unsupported", "answer", "search_tools"] },
     steps: { type: ["array", "null"], items: step },
     question: nullable("string"),
     options: strings,
@@ -92,7 +92,7 @@ const Step = z.discriminatedUnion("kind", [
 ]);
 
 export const SubmitPlan = z.object({
-  type: z.enum(["plan", "clarify", "unsupported", "answer", "search_tools"]),
+  type: z.enum(["plan", "look", "clarify", "unsupported", "answer", "search_tools"]),
   steps: z.array(Step).nullable(),
   question: z.string().nullable(),
   options: z.array(z.string()).nullable(),

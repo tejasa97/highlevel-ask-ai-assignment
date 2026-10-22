@@ -269,6 +269,12 @@ export default {
   actions: [createOpportunity, getOpportunity, searchOpportunities, updateValue, moveStage, assignOwner, setCloseDate, markWon, markLost, reopen],
   resolvers: {
     opportunity: (store, name) =>
-      candidates(store.find<Opportunity>("opportunities", (o) => o.status === "open"), name, (o) => o.name, (o) => `$${o.value}, ${store.get<Contact>("contacts", o.contactId)?.name ?? o.contactId}`),
+      candidates(
+        store.all<Opportunity>("opportunities"),
+        name,
+        (o) => o.name,
+        (o) => `$${o.value}, ${store.get<Contact>("contacts", o.contactId)?.name ?? o.contactId}`,
+        (o) => (o.status === "open" ? undefined : o.status),
+      ),
   },
 } satisfies ModuleExports;

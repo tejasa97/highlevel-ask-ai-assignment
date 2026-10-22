@@ -1,0 +1,32 @@
+[
+  {
+    "id": "followup-task-amend",
+    "category": "followup",
+    "modules": ["M06"],
+    "turns": [
+      { "user": "Create a task to send the proposal to Marco Patel, due Friday", "status": ["done"] },
+      { "user": "Actually give it to Aisha and make it high priority" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "state": [
+        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.title') LIKE '%Marco Patel%'", "equals": 1 },
+        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.title') LIKE '%Marco Patel%' AND json_extract(data,'$.assigneeId')='us_5' AND json_extract(data,'$.priority')='high' AND json_extract(data,'$.dueDate')='2026-10-23'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "followup-void-draft-invoice",
+    "category": "followup",
+    "modules": ["M28"],
+    "turns": [
+      { "user": "What's the status of Omar Larsen's invoice?", "status": ["done"] },
+      { "user": "Void it, they cancelled the order" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M28.A09"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM invoices WHERE id='inv_7'", "equals": "void" }]
+    }
+  }
+]

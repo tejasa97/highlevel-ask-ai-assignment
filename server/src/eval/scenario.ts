@@ -1,0 +1,261 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { z } from "zod";
+import type { Planner, Tier, Usage } from "../planner/types.js";
+import type { Registry } from "../registry/registry.js";
+import type { Retriever } from "../retrieval/retrieve.js";
+import { Conversation } from "../server/conversation.js";
+import type { Fixtures } from "../store/fixtures.js";
+import { world } from "../store/world.js";
+
+// End-to-end scenarios (eval/scenarios/*.json): each one starts from a fresh seeded database, sends its
+// messages through the same Conversation the web app uses, approves what asks for approval, then checks
+// what was planned, the arguments of the calls that ran, the data afterwards (SQL) and the reply.
+
+const Match = z.record(z.string(), z.unknown());
+const Expect = z.strictObject({
+  /** Allowed statuses of the last reply. */
+  status: z.array(z.string()).optional(),
+  /** Planned action ids, over all turns. */
+  actions: z.strictObject({ includes: z.array(z.string()).default([]), excludes: z.array(z.string()).default([]) }).optional(),
+  /** For each entry, some call of that action ran with args containing `match` (see matches()). */
+  args: z.array(z.strictObject({ action: z.string(), match: Match })).default([]),
+  /** The first column of the first row must equal `equals`. */
+  state: z.array(z.strictObject({ sql: z.string(), equals: z.unknown() })).default([]),
+  /** Regexes (case-insensitive) on the last reply text. `excludes` is how to catch false claims. */
+  reply: z.strictObject({ includes: z.array(z.string()).default([]), excludes: z.array(z.string()).default([]) }).optional(),
+  /** Nothing in the data changed, over all turns. */
+  noChanges: z.boolean().optional(),
+});
+
+export const ScenarioSchema = z.strictObject({
+  id: z.string(),
+  category: z.enum(["direct", "indirect", "multi", "followup", "ambiguous", "unsupported", "failure"]),
+  modules: z.array(z.string()),
+  note: z.string().optional(),
+  setup: z
+    .array(
+      z.union([
+        z.strictObject({ fixture: z.string(), with: z.record(z.string(), z.unknown()).default({}) }),
+        z.strictObject({ fault: z.string(), code: z.string(), message: z.string().optional(), match: Match.optional(), times: z.number().int().optional() }),
+      ]),
+    )
+    .default([]),
+  turns: z
+    .array(
+      z.strictObject({
+        user: z.string(),
+        /** Approve what the turn asks approval for (the default), or decline it. */
+        approve: z.boolean().default(true),
+        /** Allowed statuses of this turn's last reply. */
+        status: z.array(z.string()).optional(),
+      }),
+    )
+    .min(1),
+  expect: Expect,
+});
+export type Scenario = z.infer<typeof ScenarioSchema>;
+
+export function loadScenarios(dir: string): Scenario[] {
+  const out: Scenario[] = [];
+  for (const file of readdirSync(dir).filter((f) => f.endsWith(".json")).sort()) {
+    const raw = JSON.parse(readFileSync(`${dir}/${file}`, "utf8")) as unknown[];
+    raw.forEach((s, i) => {
+      const parsed = ScenarioSchema.safeParse(s);
+      if (!parsed.success) throw new Error(`${file} #${i + 1}: ${parsed.error.issues.map((x) => `${x.path.join(".")}: ${x.message}`).join("; ")}`);
+      out.push(parsed.data);
+    });
+  }
+  const ids = out.map((s) => s.id);
+  const dup = ids.find((id, i) => ids.indexOf(id) !== i);
+  if (dup) throw new Error(`duplicate scenario id ${dup}`);
+  return out;
+}
+
+export interface Failure {
+  /** status | action-missing | action-unwanted | args | state | reply | changes | error */
+  kind: string;
+  detail: string;
+}
+
+export interface TurnTrace {
+  user: string;
+  status: string;
+  reply: string;
+  /** Actions the planner was shown, over its rounds: tells a retrieval miss from a planning one. */
+  offered: string[];
+  planned: string[];
+  calls: { action: string; args: Record<string, unknown>; error?: string }[];
+  plannerRounds: number;
+  compileErrors: string[];
+  errors: string[];
+  approvals: number;
+  /** Why the planner couldn't answer, when that was outside the app (quota, timeout, provider down). */
+  infra?: string;
+  /** From sending the message to the first reply (the approval prompt, when there is one). */
+  firstReplyMs: number;
+  ms: number;
+}
+
+export interface RunMetrics {
+  ms: number;
+  firstReplyMs: number;
+  plannerMs: number;
+  plannerRounds: number;
+  calls: number;
+  usage: Usage;
+}
+
+export interface ScenarioRun {
+  id: string;
+  category: Scenario["category"];
+  pass: boolean;
+  /** The run hit an infrastructure failure (see TurnTrace.infra): it measures nothing about the app. */
+  infra?: string;
+  failures: Failure[];
+  turns: TurnTrace[];
+  metrics: RunMetrics;
+}
+
+export interface RunDeps {
+  registry: Registry;
+  planner: Planner;
+  retriever: Retriever;
+  tier?: Tier;
+}
+
+const MAX_APPROVALS = 5;
+
+export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioRun> {
+  const w = world();
+  for (const step of s.setup) {
+    if ("fault" in step) w.f.fault(step.fault, { code: step.code, message: step.message, match: step.match, times: step.times });
+    else {
+      const make = (w.f as unknown as Record<string, (o: unknown) => unknown>)[step.fixture];
+      if (typeof make !== "function") throw new Error(`${s.id}: no fixture "${step.fixture}"`);
+      make.call(w.f as Fixtures, step.with);
+    }
+  }
+  const chat = new Conversation(deps, w);
+  const turns: TurnTrace[] = [];
+  const usage: Usage = { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0 };
+  let plannerMs = 0;
+  let changes = 0;
+
+  for (const t of s.turns) {
+    const trace: TurnTrace = { user: t.user, status: "", reply: "", offered: [], planned: [], calls: [], plannerRounds: 0, compileErrors: [], errors: [], approvals: 0, firstReplyMs: 0, ms: 0 };
+    const started = performance.now();
+    let pendingTurn: string | undefined;
+    const emit = (event: string, data: any) => {
+      if (event === "planner.request") trace.offered.push(...data.actions.filter((a: string) => !trace.offered.includes(a)));
+      else if (event === "planner.reply") {
+        trace.plannerRounds++;
+        plannerMs += data.latencyMs;
+        for (const k of Object.keys(usage) as (keyof Usage)[]) usage[k] += data.usage?.[k] ?? 0;
+      } else if (event === "compile.errors") trace.compileErrors.push(...data.errors);
+      else if (event === "plan") trace.planned.push(...data.steps.flatMap((st: { calls?: { action: string }[] }) => (st.calls ?? []).map((c) => c.action)));
+      else if (event === "call") trace.calls.push({ action: data.action, args: data.args, ...(data.error ? { error: `${data.error.code}: ${data.error.message}` } : {}) });
+      else if (event === "diff") changes += data.changes.length;
+      else if (event === "confirm") pendingTurn = data.turnId;
+      else if (event === "reply") {
+        if (!trace.firstReplyMs) trace.firstReplyMs = Math.round(performance.now() - started);
+        trace.status = data.status;
+        trace.reply = data.text;
+        if (data.infra) trace.infra = data.infra;
+      }
+    };
+    try {
+      await chat.ask(t.user, deps.tier ?? "strong", "us_1", emit);
+      while (pendingTurn && trace.approvals < MAX_APPROVALS) {
+        const id = pendingTurn;
+        pendingTurn = undefined;
+        trace.approvals++;
+        await chat.confirm(id, t.approve, "us_1", emit);
+      }
+    } catch (err) {
+      trace.errors.push(err instanceof Error ? err.message : String(err));
+    }
+    trace.ms = Math.round(performance.now() - started);
+    turns.push(trace);
+  }
+
+  const failures = check(s, turns, changes, (sql) => (Object.values((w.store.db.prepare(sql).get() as Record<string, unknown> | undefined) ?? {})[0]));
+  w.store.close();
+  return {
+    id: s.id,
+    category: s.category,
+    pass: failures.length === 0,
+    ...(turns.some((t) => t.infra) ? { infra: turns.find((t) => t.infra)!.infra } : {}),
+    failures,
+    turns,
+    metrics: {
+      ms: turns.reduce((a, t) => a + t.ms, 0),
+      firstReplyMs: turns[0]!.firstReplyMs,
+      plannerMs,
+      plannerRounds: turns.reduce((a, t) => a + t.plannerRounds, 0),
+      calls: turns.reduce((a, t) => a + t.calls.length, 0),
+      usage,
+    },
+  };
+}
+
+export function check(s: Scenario, turns: TurnTrace[], changes: number, query: (sql: string) => unknown): Failure[] {
+  const out: Failure[] = [];
+  const e = s.expect;
+  const last = turns.at(-1)!;
+  for (const t of turns) for (const msg of t.errors) out.push({ kind: "error", detail: msg });
+  s.turns.forEach((t, i) => {
+    if (t.status && !t.status.includes(turns[i]!.status)) out.push({ kind: "status", detail: `turn ${i + 1}: ${turns[i]!.status || "(no reply)"}, wanted ${t.status.join("|")}` });
+  });
+  if (e.status && !e.status.includes(last.status)) out.push({ kind: "status", detail: `${last.status || "(no reply)"}, wanted ${e.status.join("|")}` });
+
+  const planned = new Set(turns.flatMap((t) => t.planned));
+  const offered = new Set(turns.flatMap((t) => t.offered));
+  for (const id of e.actions?.includes ?? []) {
+    if (!planned.has(id)) out.push({ kind: "action-missing", detail: `${id} not planned (${offered.has(id) ? "was offered" : "not offered"}; planned: ${[...planned].join(", ") || "nothing"})` });
+  }
+  for (const id of e.actions?.excludes ?? []) if (planned.has(id)) out.push({ kind: "action-unwanted", detail: `${id} was planned` });
+
+  const calls = turns.flatMap((t) => t.calls);
+  for (const a of e.args) {
+    const ran = calls.filter((c) => c.action === a.action);
+    if (!ran.some((c) => matches(c.args, a.match))) {
+      out.push({ kind: "args", detail: `${a.action} ${JSON.stringify(a.match)}; ran with ${ran.length ? ran.map((c) => JSON.stringify(c.args)).slice(0, 3).join(" / ") : "no calls"}` });
+    }
+  }
+
+  for (const st of e.state) {
+    let got: unknown;
+    try {
+      got = query(st.sql);
+    } catch (err) {
+      got = `SQL error: ${(err as Error).message}`;
+    }
+    if (!same(got, st.equals)) out.push({ kind: "state", detail: `${st.sql} → ${JSON.stringify(got)}, wanted ${JSON.stringify(st.equals)}` });
+  }
+
+  for (const re of e.reply?.includes ?? []) if (!new RegExp(re, "i").test(last.reply)) out.push({ kind: "reply", detail: `missing /${re}/` });
+  for (const re of e.reply?.excludes ?? []) if (new RegExp(re, "i").test(last.reply)) out.push({ kind: "reply", detail: `says /${re}/` });
+  if (e.noChanges && changes > 0) out.push({ kind: "changes", detail: `${changes} records changed` });
+  return out;
+}
+
+/** Objects match by subset, arrays when every expected element matches some actual one, strings
+ *  case-insensitively; `{ "$contains": "x" }` matches a string containing x, `{ "$absent": true }` a missing value. */
+export function matches(actual: unknown, expected: unknown): boolean {
+  if (expected && typeof expected === "object" && !Array.isArray(expected)) {
+    const o = expected as Record<string, unknown>;
+    if ("$contains" in o) return typeof actual === "string" && actual.toLowerCase().includes(String(o.$contains).toLowerCase());
+    if ("$absent" in o) return actual === undefined || actual === null;
+    if (!actual || typeof actual !== "object" || Array.isArray(actual)) return false;
+    return Object.entries(o).every(([k, v]) => matches((actual as Record<string, unknown>)[k], v));
+  }
+  if (Array.isArray(expected)) return Array.isArray(actual) && expected.every((x) => actual.some((y) => matches(y, x)));
+  return same(actual, expected);
+}
+
+function same(a: unknown, b: unknown): boolean {
+  if (typeof a === "string" && typeof b === "string") return a.toLowerCase() === b.toLowerCase();
+  // SQLite gives back numbers for counts and 0/1 for booleans.
+  if (typeof b === "boolean") return a === b || a === (b ? 1 : 0);
+  return a === b || (a == null && b == null);
+}

@@ -1,0 +1,188 @@
+# Journey
+
+How Ask AI got where it is: each change, the problem it went after, why it was built that way, and what it did to
+the numbers. `docs/trajectory.html` is built from this file and `eval/results/history.jsonl`
+(`npm run trajectory`).
+
+## How to read the numbers
+
+- **Retrieval eval** (`npm run eval:retrieval`): no LLM. For each held-out question, is the action it needs in the
+  shortlist the planner sees? R@15 is "the right action is in the top 15". The trajectory uses one question set,
+  today's 105 held-out questions, and re-runs old commits on it, so the line is fair. Older saved results used a
+  smaller 63-question split and are shown apart.
+- **Scenario eval** (`npm run eval:scenarios -- --repeat 3`): real planner, fresh seeded database, end to end. A run
+  passes when the status, the planned actions, their arguments, the database afterwards and the reply all check out.
+  Runs the planner couldn't serve (quota, timeout, provider down) are **infra**: counted apart, never in the pass rate.
+- Every recorded run is one line in `eval/results/history.jsonl`, with the commit, whether there were uncommitted
+  edits, and a fingerprint of the question set. Runs are comparable only when the fingerprint matches.
+
+## How to add an entry
+
+1. Before the change, run the eval it should move, with a label (`--label before-x`).
+2. Make the change. Run the same eval again (`--label x`); scenarios 3x.
+3. Add an entry below in the same commit: a `## N. Title` heading, a meta line with the commit, the date and
+   `runs: before-label → after-label`, then Problem, Change, Why this way, Result, Cost, Side effects.
+4. `npm run trajectory`.
+
+## 0. Design before code
+`a6710e8` · 2026-10-20
+
+**Problem.** HighLevel's catalog has about 500 actions across 50 modules. A model can't be shown all of them on every
+message, and a free-running tool loop is hard to make safe for bulk and destructive changes.
+
+**Change.** Wrote the plan first: the planner returns a whole plan of steps as one structured reply; code
+checks it and runs it. Retrieval picks a shortlist of action cards for each message. Approval is decided by code from
+the risk of the exact records touched, never by the model.
+
+**Why this way.** A plan can be validated before anything runs, shown to the user, and approved once. Forced
+tool calls return 400 on the current Claude models, so the reply is structured output instead.
+
+## 1. Thin slice: registry, two-stage executor, planner
+`bed8db9` · 2026-10-21
+
+**Problem.** Nothing ran end to end yet.
+
+**Change.** SQLite store with a deterministic seed and a frozen clock; a registry of actions checked against the
+catalog; an executor in two stages: compile (every `$ref` and argument checked against schemas, errors worded for a
+repair call) then run (destructive, external and bulk writes wait for approval, keyed on a hash of the exact targets).
+Replies are templated from what ran, not written by the model.
+
+**Why this way.** Everything after the planner is deterministic, so it can be unit tested, and the model can't
+claim something happened that didn't.
+
+## 2. Five modules in depth, and a debug UI
+`f1034d7` · 2026-10-21
+
+**Change.** Contacts, leads, tasks, users and teams: ten hand-written actions each with permissions, state guards,
+edge-case tests and injectable faults. A web UI streams every turn: planner request and reply, the compiled plan,
+each call, and the rows that changed.
+
+**Why this way.** Depth before breadth: a few modules that behave like the real product give honest evals; the
+debug view made every later failure quick to diagnose.
+
+## 3. BM25 retrieval over generated action cards
+`d3d9942` · 2026-10-21 · runs: names-only-test → final-test
+
+**Problem.** The planner needs the right handful of actions out of 500, quickly and without an LLM call.
+
+**Change.** Each catalog action got a card (name, synonyms, description, LLM-written and checked by tests), ranked with
+BM25. Long messages are split into clauses so each one gets its own candidates. `planTurn` allows one
+`search_tools` round (the planner asks for what's missing) and one repair round (compile errors fed back).
+
+**Result.** On the 63-question split of the day, the cards took R@15 from 70.6% (names only) to 93.1%. Re-run later on
+today's harder 105 questions, this commit scores 82.1%: the first split flattered BM25, which is why the
+paraphrase questions were added.
+
+## 4. Linking names in the message to records
+`557f570` · 2026-10-21 · runs: rerun-d3d9942 → rerun-557f570
+
+**Problem.** "Assign Hiro Reyes to Raj" says nothing about which record types are involved, so the lookups the plan
+needs weren't shortlisted, and the planner guessed whether Hiro was a contact or a lead.
+
+**Change.** Capitalized names are matched against contacts, leads, users and teams. A match adds that type's
+get and search actions to the shortlist, and a `<mentions>` line tells the planner "Hiro Reyes: lead".
+
+**Result.** Lookup questions: R@15 40% → 100%. All questions, re-measured: 82.1% → 85.9%. Turning it off today costs
+3.8 points (94.9% → 91.1%).
+
+## 5. Planner deadline and server tests
+`905733e` · 2026-10-21
+
+**Problem.** A planner call that never returned left the turn hanging.
+
+**Change.** Each planner call gets 120 s, then the child process is stopped and the turn ends with a plain failed
+reply. 14 HTTP tests over a scripted planner.
+
+## 6. Hybrid retrieval: BM25 + local embeddings, ten more modules
+`911b204` · 2026-10-22 · runs: rerun-557f570 → rerun-911b204
+
+**Problem.** BM25 misses paraphrases: "who hasn't heard back from us" shares no words with "list conversations
+waiting on a reply".
+
+**Change.** A small local embedding model (bge-base, quantized) ranks cards by meaning; its ranking joins BM25 by
+reciprocal-rank fusion. If the model can't load, retrieval falls back to BM25 and says so. 80 paraphrase questions
+added to the held-out set. Ten more modules built in depth (opportunities, notes, tags, conversations, SMS, email,
+campaigns, appointments, invoices, payments).
+
+**Why this way.** Local and free per query, so there's no extra API call or key. Out-of-scope rejection by
+retrieval is unchanged (2 of 8 in both modes); the planner turns down the rest, and both unsupported scenarios pass
+every run.
+
+**Result.** R@15 85.9% → 94.9%, R@5 76.0% → 89.0%, MRR 0.58 → 0.66. Today's code with embeddings off: 87.1%, so most of the gain is the embeddings.
+
+**Cost.** About 12 ms per question to embed it; ranking itself stays under 0.5 ms. Timed the same way, a
+retrieval eval question takes 13.3 ms hybrid against 1.5 ms BM25 alone.
+
+## 7. End-to-end scenario eval
+`uncommitted` · 2026-10-22 · runs: pilot-1 → pilot-3x
+
+**Problem.** Retrieval recall says the right tool was offered, not that the user got the right result.
+
+**Change.** 23 scenarios in 7 groups (direct, indirect, multi-step, ambiguous, follow-up, failure, unsupported),
+each from a fresh seeded database. Checks: final status, actions planned and not planned, their arguments, SQL
+on the database afterwards, words in the reply, and "nothing changed". The chat logic moved into a `Conversation`
+class that the web app and the eval both drive, so the eval tests the real path.
+
+**Result.** Pilot: 87% of 69 runs pass; 20/23 scenarios pass every run; median 5.7 s; $0.012 a run. Three
+scenarios failed every time, each a different failure class (below).
+
+## 8. Deactivated users are reported, not silently skipped
+`uncommitted` · 2026-10-22 · runs: pilot-3x → fix-3x
+
+**Problem.** "Assign this to Dan Ortiz" when Dan is deactivated: the resolver ignored him, so the plan failed with
+"no user named Dan Ortiz", which is wrong and unhelpful.
+
+**Change.** Resolvers return usable matches first; when there are none, they return the inactive ones with their
+status. The executor then fails the step with "Dan Ortiz is deactivated" and skips what depends on it. The same rule
+covers inactive contacts, closed opportunities and tasks, appointments no longer booked and inactive teams.
+
+**Why this way.** One rule in the resolver helper fixes the whole class, not one prompt case.
+
+**Result.** failure-deactivated-assignee 0/3 → 3/3.
+
+## 9. Lists named by their person, and a wrong expectation fixed
+`uncommitted` · 2026-10-22 · runs: fix-3x → fix2-3x
+
+**Problem.** "Who is waiting on a reply?" listed conversations as "?, ?, ?": the summary looked only for a `name`
+or `title` field, and conversations carry `personName`. The scenario also expected Sarah Johnson first; she is 11th of 11.
+
+**Change.** The summary names a record by `name`, then `title`, then the first non-empty `…Name` field. The scenario
+now expects 11 conversations led by Tara Silva.
+
+**Result.** who-is-waiting 0/3 → 2/3. The question set changed here (new fingerprint), so fix2-3x isn't directly
+comparable with the pilot.
+
+## 10. A "look" before planning, for values worked out from a record
+`uncommitted` · 2026-10-22 · runs: fix-3x → fix2-3x
+
+**Problem.** "Move Sarah's walkthrough to Monday, same time": the time comes from the appointment as it is now,
+which the planner can't see, and a `$ref` can't change a date. The planner asked a question instead. The appointment
+also wasn't found by "Sarah Johnson Agency plan walkthrough".
+
+**Change.** A new planner reply, `look`: read-only steps run at once, as the same user, and their results come back in
+`<looked>` for one more planning round. At most one look a turn; any write in it is rejected and repaired.
+Appointments are now named "title with person".
+
+**Why this way.** The planner computes the new time from real data, and code still checks and approves the
+plan. Reads only, so a look can never change anything without approval.
+
+**Result.** direct-appointment-reschedule 0/3 → 3/3.
+
+**Cost.** Turns that look make one more planner call (about 5 s and $0.01).
+
+**Side effects.** In 2 of 64 turns the planner looked and then answered in its own words (raw ids included) instead
+of planning. Fixed by a prompt rule ("to show records, plan the reads") and a guard: an answer after a look runs
+the look as the plan, so the reply is the usual summary. Not yet measured end to end.
+
+## 11. Infrastructure failures counted apart
+`uncommitted` · 2026-10-22 · runs: fix2-3x
+
+**Problem.** fix2-3x reported 73.9%, which looked like a regression. 14 of its 69 runs had hit the Claude CLI session
+limit and never reached the app.
+
+**Change.** A planner failure from quota, timeout or the provider is marked infra on the turn and the run. Pass rates
+leave those runs out, the report says "NOT A CLEAN RUN", and hitting the quota stops the eval. Every labelled run of
+either eval is appended to `eval/results/history.jsonl`; a run where nothing reached the app isn't.
+
+**Result.** fix2-3x read correctly: 92.7% of 55 clean runs, 15/19 measured scenarios pass every run; 4 scenarios
+unmeasured.

@@ -1,0 +1,31 @@
+[
+  {
+    "id": "ambiguous-two-sarahs",
+    "category": "ambiguous",
+    "modules": ["M01", "M12"],
+    "note": "Two contacts are called Sarah Johnson; the assistant should ask which one before texting.",
+    "turns": [{ "user": "Text Sarah Johnson that we're running 10 minutes late" }],
+    "expect": {
+      "status": ["clarify", "needs_clarification"],
+      "state": [{ "sql": "SELECT count(*) FROM sms WHERE json_extract(data,'$.contactId') IN ('ct_31','ct_32')", "equals": 0 }],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "ambiguous-zoe-then-answer",
+    "category": "ambiguous",
+    "modules": ["M01"],
+    "note": "Two contacts are called Zoe Costa (Wayne ct_26, Umbrella ct_30).",
+    "turns": [
+      { "user": "Make Aisha the owner of Zoe Costa", "status": ["clarify", "needs_clarification"] },
+      { "user": "the one at Umbrella" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.ownerId') FROM contacts WHERE id='ct_30'", "equals": "us_5" },
+        { "sql": "SELECT json_extract(data,'$.ownerId') FROM contacts WHERE id='ct_26'", "equals": "us_4" }
+      ]
+    }
+  }
+]

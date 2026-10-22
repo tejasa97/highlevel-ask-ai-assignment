@@ -7,9 +7,11 @@
 //   npm run eval:retrieval -- --set k=20 moduleCap=3 boost.synonyms=3 fuzzy=off splitClauses=false
 //   npm run eval:retrieval -- --no-mentions      ablation: names in questions aren't linked to records
 //   npm run eval:retrieval -- --names-only       ablation: cards without synonyms or descriptions
-//   npm run eval:retrieval -- --label baseline   also saves eval/results/retrieval-<label>.json
+//   npm run eval:retrieval -- --label baseline   also saves eval/results/retrieval-<label>.json and records the run
+//                                                in eval/results/history.jsonl
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { appendHistory, fingerprint, gitState } from "../eval/history.js";
 import { loadRegistry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
 import { loadDense } from "../retrieval/embed.js";
@@ -86,4 +88,38 @@ if (label) {
   const file = `${ROOT}eval/results/retrieval-${label}.json`;
   writeFileSync(file, JSON.stringify({ label, retrieval: dense ? "hybrid" : "bm25", split, opts, at: new Date().toISOString(), report, questions: scored.map((s) => ({ id: s.q.id, misses: s.misses, rejected: s.rejected })) }, null, 1));
   console.log(`\nsaved ${file}`);
+  appendHistory(ROOT, {
+    at: new Date().toISOString(),
+    suite: "retrieval",
+    label,
+    git: gitState(ROOT),
+    set: fingerprint(JSON.stringify(queries)),
+    // An ablation turns a part off on purpose; the trajectory's main line leaves those runs out.
+    config: {
+      retrieval: dense ? "hybrid" : "bm25",
+      split,
+      opts,
+      ...(flag("names-only") ? { namesOnly: true } : {}),
+      ...(flag("no-mentions") ? { noMentions: true } : {}),
+      ...(flag("bm25") || process.env.RETRIEVAL === "bm25" || flag("names-only") || flag("no-mentions") || setAt >= 0 ? { ablation: true } : {}),
+    },
+    metrics: retrievalMetrics(report),
+    file: `eval/results/retrieval-${label}.json`,
+  });
+  console.log("recorded in eval/results/history.jsonl");
+}
+
+function retrievalMetrics(r: typeof report): Record<string, number> {
+  const pct = (n: number) => Math.round(n * 1000) / 10;
+  return {
+    questions: r.total.n,
+    r5: pct(r.total.recall[5]!),
+    r10: pct(r.total.recall[10]!),
+    r15: pct(r.total.recall[15]!),
+    all15: pct(r.total.all[15]!),
+    mrr: Math.round(r.total.mrr * 100) / 100,
+    picks: Math.round(r.total.picks * 10) / 10,
+    outOfScopeRejected: r.outside.n ? pct(r.outside.rejected / r.outside.n) : 0,
+    falseRejects: r.falseRejects,
+  };
 }
