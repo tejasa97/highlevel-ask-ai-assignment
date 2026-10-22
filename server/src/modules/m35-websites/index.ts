@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, contains, Limit, listOf, noChange, page, requireState } from "../../registry/helpers.js";
+import { atLeastOne, contains, Limit, listOf, noChange, page, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { Website, type SitePage } from "./schema.js";
@@ -229,7 +229,9 @@ const publishWebsite = defineAction({
     });
     return { websiteId: website.id };
   },
-  handler: ({ websiteId }, { store, clock }) => {
+  handler: ({ websiteId }, { store, clock, actorId }) => {
+    // Going live puts content in front of the public, so it is held to the same bar as sending (see WAVE1-ASSUMPTIONS.md).
+    requirePermission(store, actorId, "messaging.send");
     const w = load(store, websiteId);
     requireState(`Website "${w.name}"`, w.status, ["draft"], "be published");
     if (!w.homePageId || !w.pages.some((p) => p.id === w.homePageId)) {
@@ -250,7 +252,8 @@ const unpublishWebsite = defineAction({
   siblings: ["M37.A10", "M38.A10"],
   entities: { consumes: ["website"] },
   example: (f) => ({ websiteId: f.website({ status: "published", publishedAt: f.now() }).id }),
-  handler: ({ websiteId }, { store, clock }) => {
+  handler: ({ websiteId }, { store, clock, actorId }) => {
+    requirePermission(store, actorId, "messaging.send");
     const w = load(store, websiteId);
     requireState(`Website "${w.name}"`, w.status, ["published"], "be unpublished");
     return store.update<Website>("websites", w.id, { status: "draft", publishedAt: null, updatedAt: clock.now().toISOString() });

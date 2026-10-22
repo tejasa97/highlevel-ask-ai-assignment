@@ -7,14 +7,14 @@ Wave 2 and Wave 3 are not started. No LLM calls, no `eval:*`, no `cards`, no `se
 
 ```
 npm run typecheck   -> tsc --noEmit, no errors
-npm test            -> tests 2207, suites 531, pass 2207, fail 0, cancelled 0, skipped 0
+npm test            -> tests 2208, suites 531, pass 2208, fail 0, cancelled 0, skipped 0
 npx tsx .wave1/verify.ts M02 M05 M09 M10 M14 M16 M17 M18 M19 M20 M22 M23 M24 M25 M26 M27 M30 M31 M32 M33 M34 M35 M36 M37 M38 M39 M40 M41 M42 M43 M44 M50
                     -> ... verify: OK
 grep -rn "TODO\|not implemented\|@ts-ignore\|Date.now(\|new Date()" src/modules/m*/index.ts | grep -v clock-local
                     -> no output
 ```
 
-The test count was 1941 at the start of the hardening and is 2207 now. Module test files went from 343 tests / 1467 `assert.` calls to 598 tests / 1528 calls. No assertion was deleted or weakened. Two splits added a few calls where a loop became separate asserts.
+The test count was 1941 at the start of the hardening and is 2208 now. Module test files went from 343 tests / 1467 `assert.` calls to 599 tests / 1535 calls. No assertion was deleted or weakened. Two splits added a few calls where a loop became separate asserts.
 
 ## 3.1 M33 cash refund (`51951eb`)
 
@@ -58,13 +58,13 @@ Wall-clock to instant conversion could land on the wrong side of a DST change, a
 - `M16.A08` publishing a workflow starts messages going out, so it now needs `messaging.send` (unknown actors are refused too).
 - `M32.A09` cancel now releases the coupon redemption the order held.
 
-### Ungated, needs a permission decision
+### Five actions that had no permission check
 
-These write actions have no permission check. Gating the M02 ones on `contacts.manage` would protect nothing, since every role holds it, so they need a decision on which permission should apply rather than a guess:
+Decided on stated assumptions, written down in `WAVE1-ASSUMPTIONS.md` (A1). The rule: a check is added only where it excludes someone, using the existing permissions, since `m48-users` is off limits.
 
-- M02.A05, M02.A09
-- M20.A10
-- M35.A09, M35.A10
+- `M35.A09` publish website and `M35.A10` unpublish website now need `messaging.send`. This excludes the `billing` role. A test covers `billing`, an unknown actor, a refusal leaving the status unchanged, and `marketing` succeeding.
+- `M02.A05` archive company, `M02.A09` merge companies: left ungated. The only fitting permission is `contacts.manage`, which all six roles hold, so a check would protect nothing.
+- `M20.A10` archive calendar: left ungated. No calendar permission exists, and no other M20 or M21 action is gated.
 
 ## 3.6 Chains and persistence (`3371395`)
 
@@ -108,6 +108,8 @@ Eleven mutations in ten modules. Two survived at first; both were real gaps and 
 - `CommunityMember` has no `membershipId`.
 - The retrieval cards (`cards.json`) were not regenerated after the sibling changes. They are built from the registry at run time, but the checked-in file is stale.
 - `registry/helpers.ts` (`noChange`) and `retrieval/cards.ts` (mutual siblings) were edited here as structural fixes, although the brief lists those folders as off limits. Revert-or-keep is the integrator's call.
+
+- M36.A09, M37.A09 and M38.A09 (publish a funnel, a landing page, a blog post) are public-facing and have no permission check. If the M35 rule (`messaging.send`) is right, they should get it too. A real permission for site and calendar management would be better than reusing `messaging.send`; that needs a change to `m48-users`.
 
 ## Not committed
 

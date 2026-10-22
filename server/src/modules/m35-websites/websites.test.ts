@@ -90,3 +90,22 @@ test("unknown field is INVALID", async () => {
   const site = w.f.website();
   assert.equal(failure(() => w.call("M35.A02", { websiteId: site.id, madeUp: 1 })).code, "INVALID");
 });
+
+test("M35.A09 publish and M35.A10 unpublish need messaging.send", async () => {
+  const w = await testWorld();
+  const billing = w.f.user({ roles: ["billing"] });
+  const marketing = w.f.user({ roles: ["marketing"] });
+  const site = w.f.website();
+  const home = w.call("M35.A05", { websiteId: site.id, title: "Home", slug: "home" }).pages[0];
+  w.call("M35.A06", { websiteId: site.id, pageId: home.id });
+
+  assert.equal(failure(() => w.call("M35.A09", { websiteId: site.id }, billing.id)).code, "PERMISSION");
+  assert.equal(failure(() => w.call("M35.A09", { websiteId: site.id }, "us_missing")).code, "PERMISSION");
+  assert.equal(w.call("M35.A02", { websiteId: site.id }).status, "draft");
+
+  assert.equal(w.call("M35.A09", { websiteId: site.id }, marketing.id).status, "published");
+
+  assert.equal(failure(() => w.call("M35.A10", { websiteId: site.id }, billing.id)).code, "PERMISSION");
+  assert.equal(w.call("M35.A02", { websiteId: site.id }).status, "published");
+  assert.equal(w.call("M35.A10", { websiteId: site.id }, marketing.id).status, "draft");
+});
