@@ -137,28 +137,23 @@ describe("planTurn", () => {
       assert.doesNotMatch(planner.requests[0]!.user, /<looked>/);
     });
 
-    test("a ref to a look step is refused with what to do instead, not 'not an earlier step'", async () => {
-      const refsLook = reply({ steps: [{ id: "s2", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$s1.items" }) }] });
-      const planner = scripted(listTasks, refsLook, createTask());
-      const { out, events } = await run("create a task like the Ana one", planner, {}, async () => [{ id: "s1", output: { items: [], total: 0 } }]);
-      assert.equal(out.kind, "plan");
-      const errors = events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : [])).join("\n");
-      assert.match(errors, /\$s1 was a look step: its result is the text in <looked>/);
-      assert.doesNotMatch(errors, /not an earlier step/);
+    test("a ref to a look step re-runs that read as part of the plan, with no repair round", async () => {
+      const refsLook = reply({ steps: [{ id: "s2", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$s1.items[0].title" }) }] });
+      const planner = scripted(listTasks, refsLook);
+      const { out } = await run("create a task like the Ana one", planner, {}, async () => [{ id: "s1", output: { items: [{ title: "Call Ana" }], total: 1 } }]);
+      assert.equal(planner.requests.length, 2);
+      assert.ok(out.kind === "plan");
+      assert.deepEqual(out.plan.steps.map((s) => s.id), ["s1", "s2"]);
     });
 
-    test("a ref to a step that never existed still says refs only point back", async () => {
-      const refsGhost = reply({ steps: [{ id: "s2", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$s9.items" }) }] });
-      const planner = scripted(listTasks, refsGhost, createTask());
-      const { events } = await run("create a task like the Ana one", planner, {}, async () => [{ id: "s1", output: { items: [], total: 0 } }]);
-      assert.match(events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : [])).join("\n"), /\$s9 is not an earlier step/);
-    });
-
-    test("a $look.<id> ref after a look gets the same look-step message", async () => {
-      const refsLook = reply({ steps: [{ id: "s2", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$look.s1.items" }) }] });
-      const planner = scripted(listTasks, refsLook, createTask());
-      const { events } = await run("create a task like the Ana one", planner, {}, async () => [{ id: "s1", output: { items: [], total: 0 } }]);
-      assert.match(events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : [])).join("\n"), /\$look was a look step: its result is the text in <looked>/);
+    test("a plan that defines its own step with a look step's id keeps its own", async () => {
+      const ownS1 = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "Call Ana" }) }, { id: "s2", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$s1.title" }) }] });
+      const planner = scripted(listTasks, ownS1);
+      const { out } = await run("create two tasks", planner, {}, async () => []);
+      assert.ok(out.kind === "plan");
+      assert.deepEqual(out.plan.steps.map((s) => s.id), ["s1", "s2"]);
+      const first = out.plan.steps[0]!;
+      assert.ok(first.kind === "action" && first.call.action.id === "M06.A01");
     });
 
     test("a write in a look is never run; it goes to repair", async () => {

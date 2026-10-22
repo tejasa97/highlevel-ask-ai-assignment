@@ -5,6 +5,7 @@ import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile, type CompiledPlan } from "./compile.js";
 import { execute } from "./execute.js";
+import { valueAt } from "./refs.js";
 
 let registry: Registry;
 before(async () => {
@@ -185,10 +186,17 @@ describe("compile errors the planner can act on", () => {
     assert.match(e, /\$s1\.items is a list; use \$s1\.items\[\*\]\.id/);
   });
 
-  test("a filter's result is the list itself, so .items is steered away from, not toward", () => {
-    const e = errs(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.items[*].id", ownerId: "us_2" })]));
+  test("a filter's result is the list itself: .items on it is read as the list, any other field is refused", () => {
+    const withRef = (leadId: string) => plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), op("e", "forEach", { in: "$f.items", do: [{ action: "M03.A05", args: { leadId, ownerId: "us_2" } }] })]);
+    assert.equal(compile(withRef("$item.id"), registry).ok, true);
+    const e = errs(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.leads[*].id", ownerId: "us_2" })]));
     assert.match(e, /already the list of records/);
-    assert.doesNotMatch(e, /use \$f\[\*\]\.items/);
+  });
+
+  test("at run time too, .items on a list is the list unless its records have an items field", () => {
+    assert.deepEqual(valueAt([{ id: 1 }, { id: 2 }], [{ field: "items" }, { all: true }, { field: "id" }], "$f"), [1, 2]);
+    assert.throws(() => valueAt([{ id: 1 }], [{ field: "id" }], "$f"), /has no field "id"/);
+    assert.deepEqual(valueAt([{ items: [1] }], [{ index: 0 }, { field: "items" }], "$f"), [1]);
   });
 
   test("forward ref", () => {

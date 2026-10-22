@@ -99,7 +99,10 @@ export function typeAt(schema: JsonSchema, path: Seg[], label: string): { type: 
     if ("field" in seg) {
       if (kind === "array") {
         // A filter or exclude step's result is the list itself; ".items" belongs to a search action's {items, total}.
+        // Writing ".items" on a list anyway can only mean the list, so it is read as that: a refused plan costs a
+        // repair round, and a repair rewrites more than the one slip.
         const itemFields = fieldsOf((s.items ?? ANY) as JsonSchema);
+        if (seg.field === "items" && !itemFields.includes("items")) continue;
         if (itemFields.length && !itemFields.includes(seg.field)) {
           return { error: `${here} is already the list of records, with no ".${seg.field}"; use ${here}[*].<field> for a field of every item (fields: ${itemFields.join(", ")})` };
         }
@@ -140,6 +143,7 @@ export function valueAt(value: unknown, path: Seg[], label: string): unknown {
     const here = label + fmt(path.slice(0, i));
     if ("field" in seg) {
       if (cur === null || cur === undefined) throw new RefError(`${here} is empty, so .${seg.field} has no value`);
+      if (Array.isArray(cur) && seg.field === "items" && !cur.some((x) => x && typeof x === "object" && "items" in x)) continue;
       if (typeof cur !== "object" || Array.isArray(cur)) throw new RefError(`${here} has no field "${seg.field}"`);
       cur = (cur as Record<string, unknown>)[seg.field];
     } else {

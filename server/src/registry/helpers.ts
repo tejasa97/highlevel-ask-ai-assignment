@@ -13,17 +13,22 @@ export const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/['
 
 /**
  * Name matching for resolvers: exact (case-insensitive) beats a whole-word match, which beats a prefix.
+ * Last, a name of two or more words that the request contains whole, with words of its own around it:
+ * "Zoe Costa at Umbrella" names the contact "Zoe Costa"; "Mailbox delivery support" names "Mailbox delivery".
  * Returns only the best tier, so "Jo" doesn't match "Jo Park" and "Joan Silva" equally when "Jo Park" is exact.
  */
 export function matchByName<T>(docs: T[], name: string, label: (d: T) => string): T[] {
   const q = norm(name);
   if (!q) return [];
-  const tiers: T[][] = [[], [], []];
+  const qWords = new Set(q.split(" "));
+  const tiers: T[][] = [[], [], [], []];
   for (const d of docs) {
     const n = norm(label(d));
+    const words = n.split(" ");
     if (n === q) tiers[0]!.push(d);
-    else if (n.split(" ").includes(q) || q.split(" ").every((w) => n.split(" ").includes(w))) tiers[1]!.push(d);
-    else if (n.split(" ").some((w) => w.startsWith(q))) tiers[2]!.push(d);
+    else if (words.includes(q) || q.split(" ").every((w) => words.includes(w))) tiers[1]!.push(d);
+    else if (words.some((w) => w.startsWith(q))) tiers[2]!.push(d);
+    else if (words.length >= 2 && words.every((w) => qWords.has(w))) tiers[3]!.push(d);
   }
   return tiers.find((t) => t.length > 0) ?? [];
 }

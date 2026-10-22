@@ -1,0 +1,2016 @@
+{
+ "summary": {
+  "label": "haiku-fix2-flaky",
+  "planner": "claude-cli",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "54764ddb1bc5",
+  "tier": "strong",
+  "scenarios": 2,
+  "repeat": 10,
+  "runs": 20,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 2,
+  "measured": 2,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 14146,
+   "p95": 21068
+  },
+  "firstReplyMs": {
+   "p50": 14137,
+   "p95": 21059
+  },
+  "plannerRoundsPerRun": 1.6,
+  "callsPerRun": 2.6,
+  "costUsd": {
+   "perRun": 0.0178,
+   "total": 0.36
+  },
+  "wallMs": 63371
+ },
+ "runs": [
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Send review request, already done earlier.\nDone: Create review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A02",
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 17852,
+     "ms": 17862,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "d147a0cf46d1a403",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s5",
+       "planHash": "d147a0cf46d1a403",
+       "targetsHash": "78d01d2aab63378c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 17862,
+    "firstReplyMs": 17852,
+    "plannerMs": 15285,
+    "plannerRounds": 2,
+    "calls": 5,
+    "usage": {
+     "input": 14783,
+     "cachedRead": 14592,
+     "cacheWrite": 187,
+     "output": 1850,
+     "thinking": 0,
+     "costUsd": 0.0221744,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Create review request, already done earlier.\nDone: Send review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A01",
+      "M45.A02",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25"
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 18500,
+     "ms": 18518,
+     "confirmations": [
+      {
+       "stepId": "sn1",
+       "planHash": "72f09c53c9b6dbd1",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "sn2",
+       "planHash": "72f09c53c9b6dbd1",
+       "targetsHash": "78d01d2aab63378c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 18518,
+    "firstReplyMs": 18500,
+    "plannerMs": 14911,
+    "plannerRounds": 2,
+    "calls": 5,
+    "usage": {
+     "input": 14783,
+     "cachedRead": 14779,
+     "cacheWrite": 0,
+     "output": 2010,
+     "thinking": 0,
+     "costUsd": 0.023063800000000002,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Create review request, already done earlier.\nDone: Send review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A01",
+      "M45.A02",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 18571,
+     "ms": 18585,
+     "confirmations": [
+      {
+       "stepId": "x1",
+       "planHash": "2af7eef7817a8714",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "x2",
+       "planHash": "2af7eef7817a8714",
+       "targetsHash": "78d01d2aab63378c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 18585,
+    "firstReplyMs": 18571,
+    "plannerMs": 16923,
+    "plannerRounds": 2,
+    "calls": 5,
+    "usage": {
+     "input": 14783,
+     "cachedRead": 14592,
+     "cacheWrite": 187,
+     "output": 2006,
+     "thinking": 0,
+     "costUsd": 0.023734400000000003,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Create review request, already done earlier.\nDone: Send review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A01",
+      "M45.A02",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 21059,
+     "ms": 21068,
+     "confirmations": [
+      {
+       "stepId": "x1",
+       "planHash": "2af7eef7817a8714",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "x2",
+       "planHash": "2af7eef7817a8714",
+       "targetsHash": "78d01d2aab63378c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 21068,
+    "firstReplyMs": 21059,
+    "plannerMs": 20320,
+    "plannerRounds": 2,
+    "calls": 5,
+    "usage": {
+     "input": 14783,
+     "cachedRead": 14592,
+     "cacheWrite": 187,
+     "output": 2814,
+     "thinking": 0,
+     "costUsd": 0.0318144,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Create review request, already done earlier.\nDone: Send review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A01",
+      "M45.A02",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 14137,
+     "ms": 14146,
+     "confirmations": [
+      {
+       "stepId": "x1",
+       "planHash": "cf828e6cbfc01f5f",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "x2",
+       "planHash": "cf828e6cbfc01f5f",
+       "targetsHash": "78d01d2aab63378c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 14146,
+    "firstReplyMs": 14137,
+    "plannerMs": 13419,
+    "plannerRounds": 2,
+    "calls": 5,
+    "usage": {
+     "input": 22766,
+     "cachedRead": 21930,
+     "cacheWrite": 830,
+     "output": 1977,
+     "thinking": 0,
+     "costUsd": 0.027488,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Create review request, already done earlier.\nDone: Send review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A01",
+      "M45.A02",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 15261,
+     "ms": 15268,
+     "confirmations": [
+      {
+       "stepId": "v1",
+       "planHash": "bf387e8c28554624",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "v2",
+       "planHash": "bf387e8c28554624",
+       "targetsHash": "78d01d2aab63378c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 15268,
+    "firstReplyMs": 15261,
+    "plannerMs": 14415,
+    "plannerRounds": 2,
+    "calls": 5,
+    "usage": {
+     "input": 14783,
+     "cachedRead": 14779,
+     "cacheWrite": 0,
+     "output": 2154,
+     "thinking": 0,
+     "costUsd": 0.0245038,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Create review request, already done earlier.\nDone: Send review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A01",
+      "M45.A02",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 16601,
+     "ms": 16607,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "cf1068546c251658",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s2",
+       "planHash": "cf1068546c251658",
+       "targetsHash": "78d01d2aab63378c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 16607,
+    "firstReplyMs": 16601,
+    "plannerMs": 16077,
+    "plannerRounds": 2,
+    "calls": 5,
+    "usage": {
+     "input": 14783,
+     "cachedRead": 14779,
+     "cacheWrite": 0,
+     "output": 2080,
+     "thinking": 0,
+     "costUsd": 0.0237638,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Create review request, already done earlier.\nDone: Send review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A01",
+      "M45.A02",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 15258,
+     "ms": 15268,
+     "confirmations": [
+      {
+       "stepId": "s_1",
+       "planHash": "ea2a331402cb1ebe",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s_2",
+       "planHash": "ea2a331402cb1ebe",
+       "targetsHash": "78d01d2aab63378c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 15268,
+    "firstReplyMs": 15258,
+    "plannerMs": 14970,
+    "plannerRounds": 2,
+    "calls": 5,
+    "usage": {
+     "input": 22599,
+     "cachedRead": 21930,
+     "cacheWrite": 663,
+     "output": 1932,
+     "thinking": 0,
+     "costUsd": 0.02637,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Create review request, already done earlier.\nDone: Send review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A01",
+      "M45.A02",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25"
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 16344,
+     "ms": 16358,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "cf1068546c251658",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s2",
+       "planHash": "cf1068546c251658",
+       "targetsHash": "78d01d2aab63378c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 16358,
+    "firstReplyMs": 16344,
+    "plannerMs": 15721,
+    "plannerRounds": 2,
+    "calls": 5,
+    "usage": {
+     "input": 22700,
+     "cachedRead": 21930,
+     "cacheWrite": 764,
+     "output": 2022,
+     "thinking": 0,
+     "costUsd": 0.027674000000000004,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Create review request, already done earlier.\nDone: Send review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A01",
+      "M45.A02",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25"
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 16693,
+     "ms": 16704,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "cf1068546c251658",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s2",
+       "planHash": "cf1068546c251658",
+       "targetsHash": "78d01d2aab63378c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 16704,
+    "firstReplyMs": 16693,
+    "plannerMs": 16351,
+    "plannerRounds": 2,
+    "calls": 5,
+    "usage": {
+     "input": 22475,
+     "cachedRead": 21930,
+     "cacheWrite": 539,
+     "output": 1679,
+     "thinking": 0,
+     "costUsd": 0.023344000000000004,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5833,
+     "ms": 5833
+    }
+   ],
+   "metrics": {
+    "ms": 5833,
+    "firstReplyMs": 5833,
+    "plannerMs": 5651,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 8302,
+     "cachedRead": 8113,
+     "cacheWrite": 187,
+     "output": 698,
+     "thinking": 0,
+     "costUsd": 0.0093546,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6748,
+     "ms": 6748
+    }
+   ],
+   "metrics": {
+    "ms": 6748,
+    "firstReplyMs": 6748,
+    "plannerMs": 6697,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 8302,
+     "cachedRead": 8300,
+     "cacheWrite": 0,
+     "output": 694,
+     "thinking": 0,
+     "costUsd": 0.008604,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6793,
+     "ms": 6793
+    }
+   ],
+   "metrics": {
+    "ms": 6793,
+    "firstReplyMs": 6793,
+    "plannerMs": 6483,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 8302,
+     "cachedRead": 8300,
+     "cacheWrite": 0,
+     "output": 785,
+     "thinking": 0,
+     "costUsd": 0.009514,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6745,
+     "ms": 6745
+    }
+   ],
+   "metrics": {
+    "ms": 6745,
+    "firstReplyMs": 6745,
+    "plannerMs": 6590,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 8302,
+     "cachedRead": 8300,
+     "cacheWrite": 0,
+     "output": 608,
+     "thinking": 0,
+     "costUsd": 0.007744,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8437,
+     "ms": 8437
+    }
+   ],
+   "metrics": {
+    "ms": 8437,
+    "firstReplyMs": 8437,
+    "plannerMs": 7205,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 8302,
+     "cachedRead": 8300,
+     "cacheWrite": 0,
+     "output": 717,
+     "thinking": 0,
+     "costUsd": 0.008833999999999998,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7302,
+     "ms": 7302
+    }
+   ],
+   "metrics": {
+    "ms": 7302,
+    "firstReplyMs": 7302,
+    "plannerMs": 7093,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 8302,
+     "cachedRead": 8300,
+     "cacheWrite": 0,
+     "output": 746,
+     "thinking": 0,
+     "costUsd": 0.009124,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5422,
+     "ms": 5422
+    }
+   ],
+   "metrics": {
+    "ms": 5422,
+    "firstReplyMs": 5422,
+    "plannerMs": 5026,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 8302,
+     "cachedRead": 8300,
+     "cacheWrite": 0,
+     "output": 658,
+     "thinking": 0,
+     "costUsd": 0.008243999999999998,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A03",
+       "args": {
+        "query": "Owen Hale Mailbox delivery"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 13175,
+     "ms": 13175
+    }
+   ],
+   "metrics": {
+    "ms": 13175,
+    "firstReplyMs": 13175,
+    "plannerMs": 12382,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 16831,
+     "cachedRead": 16640,
+     "cacheWrite": 187,
+     "output": 1164,
+     "thinking": 0,
+     "costUsd": 0.015724,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5656,
+     "ms": 5656
+    }
+   ],
+   "metrics": {
+    "ms": 5656,
+    "firstReplyMs": 5656,
+    "plannerMs": 5620,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 8302,
+     "cachedRead": 8300,
+     "cacheWrite": 0,
+     "output": 640,
+     "thinking": 0,
+     "costUsd": 0.008064,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A03",
+       "args": {
+        "query": "Mailbox delivery"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 13355,
+     "ms": 13355
+    }
+   ],
+   "metrics": {
+    "ms": 13355,
+    "firstReplyMs": 13355,
+    "plannerMs": 12779,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 16831,
+     "cachedRead": 16640,
+     "cacheWrite": 187,
+     "output": 1304,
+     "thinking": 0,
+     "costUsd": 0.017124,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  }
+ ]
+}
