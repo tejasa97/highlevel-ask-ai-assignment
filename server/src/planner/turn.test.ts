@@ -7,7 +7,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { planTurn, type TurnDeps, type TurnEvent } from "./turn.js";
+import { planTurn, type TurnDeps, type TurnEvent, withLookSteps } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -120,6 +120,28 @@ describe("planTurn", () => {
       assert.equal(planner.requests.length, 2);
       assert.match(planner.requests[1]!.user, /<looked>\[\{"id":"s1","output":\{"items":\[\{"title":"Call Ana &lt;soon&gt;"\}\]/);
       assert.doesNotMatch(planner.requests[0]!.user, /<looked>/);
+    });
+
+    test("a plan after a look may still refer to the look's steps; they run first", async () => {
+      const refers = reply({
+        steps: [{ id: "s2", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "Call {{$s1.items[0].title}}" }) }],
+      });
+      const planner = scripted(listTasks, refers);
+      const { out, events } = await run("create a task like the Ana one", planner, {}, async () => [{ id: "s1", output: { items: [{ title: "Ana" }], total: 1 } }]);
+      assert.equal(out.kind, "plan");
+      assert.deepEqual(out.kind === "plan" ? out.plan.steps.map((s) => s.id) : [], ["s1", "s2"]);
+      assert.equal(events.filter((e) => e.type === "compile.errors").length, 0);
+      assert.equal(planner.requests.length, 2, "no repair round");
+    });
+
+    test("only the look steps a plan refers to (and what they read from) are added", () => {
+      const read = (id: string, args: object) => ({ id, kind: "action" as const, action: "M06.A03", argsJson: JSON.stringify(args) });
+      const look = [read("s1", {}), read("s2", { query: "{{$s1.items[0].title}}" }), read("s3", {})];
+      const write = (id: string, ref: string) => ({ id, kind: "action" as const, action: "M06.A01", argsJson: JSON.stringify({ title: ref }) });
+      const ids = (p: SubmitPlan) => p.steps!.map((s) => s.id);
+      assert.deepEqual(ids(withLookSteps(reply({ steps: [write("s4", "{{$s2.items[0].title}}")] }), look)), ["s1", "s2", "s4"]);
+      assert.deepEqual(ids(withLookSteps(reply({ steps: [write("s4", "plain")] }), look)), ["s4"]);
+      assert.deepEqual(ids(withLookSteps(reply({ steps: [read("s1", {}), write("s4", "{{$s1.items[0].title}}")] }), look)), ["s1", "s4"], "its own s1 wins");
     });
 
     test("a write in a look is never run; it goes to repair", async () => {

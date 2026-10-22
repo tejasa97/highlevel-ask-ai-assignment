@@ -6,7 +6,7 @@ import type { Retrieval, Retriever } from "../retrieval/retrieve.js";
 import type { Clock } from "../store/clock.js";
 import type { Store } from "../store/db.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
-import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
+import { SUBMIT_PLAN_SCHEMA, SubmitPlan, type Step } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
@@ -151,6 +151,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let searched = false;
   let repaired = false;
   let lookPlan: CompiledPlan | undefined;
+  let lookSteps: Step[] = [];
   // Each reply is one of: search_tools (retrieve once more, re-plan), a plan (compile; repair once if invalid),
   // or a reply for the user. The repair prompt may itself say "reply search_tools" or "reply unsupported".
   for (;;) {
@@ -186,6 +187,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         continue;
       }
       lookPlan = compiled.plan;
+      lookSteps = d.steps ?? [];
       looked = JSON.stringify(await deps.look!(compiled.plan));
       if (looked.length > LOOKED_MAX) looked = `${looked.slice(0, LOOKED_MAX)}…(cut)`;
       user = prompt();
@@ -202,7 +204,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       return { kind: "reply", status: d.type, text, options: d.options ?? undefined };
     }
 
-    const compiled = compile(d, registry, new Set(offered.map((a) => a.id)));
+    const compiled = compile(withLookSteps(d, lookSteps), registry, new Set(offered.map((a) => a.id)));
     // A plan that only finds records does nothing the user can see: run, it would end "done" with no reply.
     const errors = !compiled.ok
       ? compiled.errors
@@ -215,6 +217,30 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     repaired = true;
     reply = await call(repairBlock(user, reply.json, errors), "repair");
   }
+}
+
+/**
+ * The planner plans again after a look and may still refer to the look's steps ("$s1"), as it did while writing them.
+ * Those reads are cheap and safe to run again, so a plan that refers to one gets it (and what it reads from) put first.
+ */
+export function withLookSteps(plan: SubmitPlan, look: Step[]): SubmitPlan {
+  if (!look.length || !plan.steps) return plan;
+  const own = new Set(plan.steps.map((s) => s.id));
+  const byId = new Map(look.filter((s) => !own.has(s.id)).map((s) => [s.id, s]));
+  // argsJson and whereJson are strings holding JSON, so scan the step's text for "$id" rather than walking it.
+  const rootsOf = (s: Step) => [...JSON.stringify(s).matchAll(/\$([A-Za-z_]\w*)/g)].map((m) => m[1]!);
+  const needed = new Set<string>();
+  const visit = (s: Step) => {
+    for (const root of rootsOf(s)) {
+      const dep = byId.get(root);
+      if (dep && !needed.has(root)) {
+        needed.add(root);
+        visit(dep);
+      }
+    }
+  };
+  plan.steps.forEach(visit);
+  return needed.size ? { ...plan, steps: [...look.filter((s) => needed.has(s.id)), ...plan.steps] } : plan;
 }
 
 /** Characters of look results shown to the planner. */
