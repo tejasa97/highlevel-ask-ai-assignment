@@ -3,10 +3,14 @@
 // serve (quota, timeout, provider down) are "infra": counted apart, never in the pass rate. Hitting the quota stops
 // the run, since every later job would fail the same way. A run with --label is also recorded in
 // eval/results/history.jsonl, unless it's a spot check (--only) or no run reached the app.
-// Run: npm run eval:scenarios -- [--repeat 3] [--concurrency 4] [--only id-or-prefix,...] [--label name] [--fast]
+// --cache replays recorded planner replies (eval/cache/) for prompts it has seen and goes live only for the rest, so a
+// change that leaves a scenario's prompts alone is re-checked for free; --refresh re-records. A run that replayed
+// anything is not a latency or cost measurement, so it isn't recorded in the history.
+// Run: npm run eval:scenarios -- [--repeat 3] [--concurrency 4] [--only id-or-prefix,...] [--label name] [--fast] [--cache [--refresh]]
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { appendHistory, fingerprint, gitState } from "../eval/history.js";
+import { replayPlanner } from "../eval/replay.js";
 import { runScenario, type ScenarioRun } from "../eval/scenario.js";
 import { selectScenarios } from "../eval/selection.js";
 import { makePlanner } from "../planner/index.js";
@@ -36,7 +40,9 @@ if (!scenarios.length) throw new Error("no scenarios match");
 const registry = await loadRegistry();
 const cards = buildCards(registry);
 const retriever = new Retriever(cards, {}, await loadDense(cards, () => {}));
-const planner = makePlanner();
+const live = makePlanner();
+const useCache = args.includes("--cache") || args.includes("--refresh");
+const planner = useCache ? replayPlanner(live, `${EVAL}cache/${live.name}-${process.env.CLAUDE_MODEL ?? "default"}-${tier}.jsonl`, { refresh: args.includes("--refresh") }) : live;
 
 const jobs = scenarios.flatMap((s) => Array.from({ length: repeat }, () => s));
 const runs: ScenarioRun[] = [];
@@ -141,7 +147,12 @@ const file = `${EVAL}results/scenarios-${label}.json`;
 writeFileSync(file, JSON.stringify({ summary, runs: [...runs].sort((a, b) => a.id.localeCompare(b.id)) }, null, 1));
 console.log(`\nwrote ${file}`);
 
+if (useCache) {
+  const { hits, live: calls, liveUsd, savedUsd } = (planner as ReturnType<typeof replayPlanner>).stats;
+  console.log(`planner replies: ${hits} replayed (saved ~$${savedUsd.toFixed(2)}), ${calls} live ($${liveUsd.toFixed(2)})`);
+}
 if (!opt("label") || only) console.log("not recorded in the history: give it a --label, and run every scenario");
+else if (useCache && (planner as ReturnType<typeof replayPlanner>).stats.hits) console.log("not recorded in the history: replayed replies are not a latency or cost measurement");
 else if (!clean.length) console.log("not recorded in the history: no run reached the app, so there's nothing to measure");
 else {
   appendHistory(ROOT, {
