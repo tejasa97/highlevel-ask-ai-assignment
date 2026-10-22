@@ -114,7 +114,7 @@ every run.
 retrieval eval question takes 13.3 ms hybrid against 1.5 ms BM25 alone.
 
 ## 7. End-to-end scenario eval
-`uncommitted` · 2026-10-22 · runs: pilot-1 → pilot-3x
+`5359c12` · 2026-10-22 · runs: pilot-1 → pilot-3x
 
 **Problem.** Retrieval recall says the right tool was offered, not that the user got the right result.
 
@@ -127,7 +127,7 @@ class that the web app and the eval both drive, so the eval tests the real path.
 scenarios failed every time, each a different failure class (below).
 
 ## 8. Deactivated users are reported, not silently skipped
-`uncommitted` · 2026-10-22 · runs: pilot-3x → fix-3x
+`5359c12` · 2026-10-22 · runs: pilot-3x → fix-3x
 
 **Problem.** "Assign this to Dan Ortiz" when Dan is deactivated: the resolver ignored him, so the plan failed with
 "no user named Dan Ortiz", which is wrong and unhelpful.
@@ -141,7 +141,7 @@ covers inactive contacts, closed opportunities and tasks, appointments no longer
 **Result.** failure-deactivated-assignee 0/3 → 3/3.
 
 ## 9. Lists named by their person, and a wrong expectation fixed
-`uncommitted` · 2026-10-22 · runs: fix-3x → fix2-3x
+`5359c12` · 2026-10-22 · runs: fix-3x → fix2-3x
 
 **Problem.** "Who is waiting on a reply?" listed conversations as "?, ?, ?": the summary looked only for a `name`
 or `title` field, and conversations carry `personName`. The scenario also expected Sarah Johnson first; she is 11th of 11.
@@ -153,7 +153,7 @@ now expects 11 conversations led by Tara Silva.
 comparable with the pilot.
 
 ## 10. A "look" before planning, for values worked out from a record
-`uncommitted` · 2026-10-22 · runs: fix-3x → fix2-3x
+`5359c12` · 2026-10-22 · runs: fix-3x → fix2-3x
 
 **Problem.** "Move Sarah's walkthrough to Monday, same time": the time comes from the appointment as it is now,
 which the planner can't see, and a `$ref` can't change a date. The planner asked a question instead. The appointment
@@ -175,7 +175,7 @@ of planning. Fixed by a prompt rule ("to show records, plan the reads") and a gu
 the look as the plan, so the reply is the usual summary. Not yet measured end to end.
 
 ## 11. Infrastructure failures counted apart
-`uncommitted` · 2026-10-22 · runs: fix2-3x
+`5359c12` · 2026-10-22 · runs: fix2-3x
 
 **Problem.** fix2-3x reported 73.9%, which looked like a regression. 14 of its 69 runs had hit the Claude CLI session
 limit and never reached the app.
