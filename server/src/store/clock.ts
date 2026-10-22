@@ -19,6 +19,19 @@ export function localDate(d: Date): string {
   return d.toLocaleDateString("en-CA", { timeZone: TIMEZONE });
 }
 
+/** HH:MM:SS of a date's wall-clock time in the app's timezone. */
+export function localTime(d: Date): string {
+  return d.toLocaleTimeString("en-GB", { timeZone: TIMEZONE, hour12: false });
+}
+
+/** The instant a wall-clock time on a date has in the app's timezone, across daylight-saving changes. */
+export function atLocal(date: string, time: string): Date {
+  const wall = Date.parse(`${date}T${time}Z`);
+  const offset = (ms: number) => Date.parse(`${localDate(new Date(ms))}T${localTime(new Date(ms))}Z`) - ms;
+  const guess = wall - offset(wall);
+  return new Date(wall - offset(guess));
+}
+
 export function addDays(date: string, days: number): string {
   const d = new Date(`${date}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);

@@ -201,11 +201,17 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     }
 
     const compiled = compile(d, registry, new Set(offered.map((a) => a.id)));
-    if (compiled.ok) return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
-    emit({ type: "compile.errors", data: { errors: compiled.errors } });
-    if (repaired) return failed(`The plan was still invalid after one repair:\n${compiled.errors.join("\n")}`);
+    // A plan that only finds records does nothing the user can see: run, it would end "done" with no reply.
+    const errors = !compiled.ok
+      ? compiled.errors
+      : compiled.plan.steps.some((s) => callsOf(s).length)
+        ? []
+        : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
+    if (compiled.ok && !errors.length) return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
+    emit({ type: "compile.errors", data: { errors } });
+    if (repaired) return failed(`The plan was still invalid after one repair:\n${errors.join("\n")}`);
     repaired = true;
-    reply = await call(repairBlock(user, reply.json, compiled.errors), "repair");
+    reply = await call(repairBlock(user, reply.json, errors), "repair");
   }
 }
 

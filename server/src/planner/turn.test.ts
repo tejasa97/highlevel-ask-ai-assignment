@@ -164,6 +164,15 @@ describe("planTurn", () => {
     assert.match(planner.requests[1]!.user, /M48\.A01 was not in <actions>/);
   });
 
+  test("a plan that only finds records gets one repair round, so it never ends done with nothing said", async () => {
+    const findOnly = reply({ steps: [{ id: "s1", kind: "resolve", entity: "contact", name: "Ana" }] });
+    const { out, events } = await run("create a task to call Ana", scripted(findOnly, createTask()));
+    assert.equal(out.kind, "plan");
+    assert.match(events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : [])).join("\n"), /calls no action/);
+    const again = await run("create a task to call Ana", scripted(findOnly, findOnly));
+    assert.ok(again.out.kind === "reply" && again.out.status === "failed");
+  });
+
   test("a plan still invalid after the repair fails the turn", async () => {
     const planner = scripted(createTask("M48.A01"), createTask("M48.A01"));
     const { out } = await run("create a task to call Ana", planner);

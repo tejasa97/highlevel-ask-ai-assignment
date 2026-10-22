@@ -227,4 +227,28 @@ planner couldn't read the meeting and asked the user its time instead. Three oth
 turn that went through a look. Reverted; the run is kept in the history, marked `reverted`.
 
 **What it says.** The fix belongs where the planner gets what it needs from one look, not in reinterpreting its
-replies.
+replies. Entry 14 goes further: the planner needn't read the time at all.
+
+## 14. Reschedule to a day, keeping the time; a plan that calls no action is repaired
+`uncommitted` · 2026-10-22 · runs: resolver-fix-3x → reschedule-date-3x
+
+**Problem.** "Push Sarah Johnson's Agency plan walkthrough to Monday, same time" still passed 1 of 3. To fill
+reschedule's `startAt` the planner needed the meeting's current time, which a resolve doesn't give; so it had to
+look, then work out Monday 11:00 New York in UTC itself, across a daylight-saving date. When it skipped the look it
+sent a plan that only found the meeting: it ran, ended "done", and the user saw an empty reply.
+
+**Change.** Reschedule takes `date` as well as `startAt`: the meeting moves to that day at the same time of day in
+the business timezone, worked out in code (it holds across the change to standard time). Separately, a plan whose
+steps call no action is sent back for one repair round, like any invalid plan, and fails with a message if it's
+still empty; it can no longer end "done" with nothing said.
+
+**Why this way.** Requests name the part of the time that changes ("to Thursday", "same time next week"); the
+action takes that part, and the date and timezone arithmetic moves from the model to code that's tested. The repair
+is the general rule entry 13 lacked: it tells the planner what's wrong instead of reinterpreting its reply.
+
+**Result.** 97.1% → 100% of 69 clean runs, no infra failures; 22/23 → 23/23 scenarios pass every run, none flaky.
+direct-appointment-reschedule 1/3 → 3/3. Planner rounds per run 1.30 → 1.28.
+
+**Cost.** Cost per run $0.020 → $0.0125, from more prompt-cache hits rather than this change. Latency went the other
+way: end-to-end p50 5.8 s → 7.3 s, p95 11.1 s → 15.9 s, with fewer planner rounds; the reverted run (entry 13) sat
+in between. It looks like `claude -p` timing from run to run, not the change, but one run can't show that.

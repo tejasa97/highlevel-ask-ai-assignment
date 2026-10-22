@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { activeUser, candidates, inDateRange, Limit, listOf, norm, page, person, PersonArgs, personName, personRef, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
+import { atLocal, localTime } from "../../store/clock.js";
 import type { Store } from "../../store/db.js";
 import type { User } from "../m48-users/schema.js";
 import { Appointment, APPOINTMENT_STATUSES, Attendee } from "./schema.js";
@@ -128,16 +129,24 @@ const searchAppointments = defineAction({
 
 const reschedule = defineAction({
   id: "M21.A04",
-  description: "Move a booked appointment to a new future time, keeping its length unless durationMinutes or endAt is given.",
+  description:
+    "Move a booked appointment to a new future time, keeping its length unless durationMinutes or endAt is given. Give startAt, or date alone to move it to that day at the same time of day.",
   risk: "write",
-  input: z.strictObject({ appointmentId: AppointmentId, startAt: When, durationMinutes: z.number().int().min(5).max(480).optional(), endAt: When.optional() }),
+  input: z.strictObject({
+    appointmentId: AppointmentId,
+    startAt: When.optional().describe("new start; give this or date"),
+    date: z.iso.date().optional().describe("new day, keeping the time of day; give this or startAt"),
+    durationMinutes: z.number().int().min(5).max(480).optional(), endAt: When.optional(),
+  }),
   output: Appointment,
   entities: { consumes: ["appointment"] },
   example: (f) => ({ appointmentId: "ap_1", startAt: f.at(9, 16) }),
   handler: (a, { store, clock }) => {
     const ap = booked(store, a.appointmentId, "be rescheduled");
+    if (!a.startAt === !a.date) throw new ActionError("INVALID", "Give exactly one of startAt or date");
     const length = (Date.parse(ap.endAt) - Date.parse(ap.startAt)) / 60_000;
-    const t = slot(a.startAt, a.durationMinutes ?? length, a.endAt, clock.now());
+    const startAt = a.startAt ?? atLocal(a.date!, localTime(new Date(ap.startAt))).toISOString();
+    const t = slot(startAt, a.durationMinutes ?? length, a.endAt, clock.now());
     if (t.startAt === ap.startAt && t.endAt === ap.endAt) throw new ActionError("CONFLICT", `"${ap.title}" is already at that time`);
     requireHost(store, ap.hostId, t.startAt, t.endAt, ap.id);
     return store.update<Appointment>("appointments", ap.id, t);

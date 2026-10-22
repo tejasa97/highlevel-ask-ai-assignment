@@ -18,6 +18,16 @@ test("book: 30 minutes by default; past time INVALID; host unavailable, deactiva
   w.call("M21.A01", { contactId: c.id, hostId: "us_2", startAt: w.f.at(2, 15).replace(":00:00", ":30:00") });
 });
 
+test("reschedule to a date: keeps the time of day across daylight saving; exactly one of startAt or date", async () => {
+  const w = await testWorld();
+  // ap_1 is Fri 23 Oct 11:00 New York (15:00Z, daylight time); 2 Nov is after the clocks go back.
+  assert.equal(w.call("M21.A04", { appointmentId: "ap_1", date: "2026-10-26" }).startAt, "2026-10-26T15:00:00.000Z");
+  assert.equal(w.call("M21.A04", { appointmentId: "ap_1", date: "2026-11-02" }).startAt, "2026-11-02T16:00:00.000Z");
+  assert.equal(failure(() => w.call("M21.A04", { appointmentId: "ap_1", date: "2026-10-20" })).code, "INVALID");
+  assert.equal(failure(() => w.call("M21.A04", { appointmentId: "ap_1" })).code, "INVALID");
+  assert.equal(failure(() => w.call("M21.A04", { appointmentId: "ap_1", date: "2026-11-03", startAt: w.f.at(7, 10) })).code, "INVALID");
+});
+
 test("reschedule: keeps the length; same time CONFLICT; can move within its own slot", async () => {
   const w = await testWorld();
   const ap = w.call("M21.A02", { appointmentId: "ap_3" });
