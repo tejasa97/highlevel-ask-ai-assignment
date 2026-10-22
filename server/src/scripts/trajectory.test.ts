@@ -8,6 +8,13 @@ import { parseJourney, render } from "./trajectory.js";
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 
 describe("trajectory", () => {
+  test("rendered browser script parses and embeds separated scenario groups", () => {
+    const html = render({preface:"",entries:[]},[],"2026-10-22");
+    const script=html.match(/<script>([\s\S]*?)<\/script>/)![1]!;
+    assert.doesNotThrow(()=>new Function(script));
+    assert.match(script,/scenarioGroups/);
+    assert.match(script,/No eligible 3× eval\/scenarios run/);
+  });
   test("parses entries: number, title, commit, date, runs and labelled parts", () => {
     const { preface, entries } = parseJourney(
       "# Journey\n\nintro\n\n## 3. BM25 retrieval\n`d3d9942` · 2026-10-21 · runs: a → b\n\n**Problem.** Needs `cards`.\n\n**Result.** **82%** now.\n",

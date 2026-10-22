@@ -7,7 +7,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { appendHistory, fingerprint, gitState } from "../eval/history.js";
-import { loadScenarios, runScenario, type ScenarioRun } from "../eval/scenario.js";
+import { runScenario, type ScenarioRun } from "../eval/scenario.js";
+import { selectScenarios } from "../eval/selection.js";
 import { makePlanner } from "../planner/index.js";
 import { loadRegistry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
@@ -27,22 +28,21 @@ const only = opt("only")?.split(",");
 const label = opt("label") ?? "latest";
 const tier = args.includes("--fast") ? "fast" : "strong";
 
+const { scenarioDir, scenarios: selected } = selectScenarios(ROOT, args.includes("--scenario-dir") ? opt("scenario-dir") ?? "" : undefined);
+const scenarios = selected.filter((s) => !only || only.some((o) => s.id.startsWith(o)));
+if (!scenarios.length) throw new Error("no scenarios match");
+
 const registry = await loadRegistry();
 const cards = buildCards(registry);
 const retriever = new Retriever(cards, {}, await loadDense(cards, () => {}));
 const planner = makePlanner();
-const scenarios = loadScenarios(`${EVAL}scenarios`).filter((s) => !only || only.some((o) => s.id.startsWith(o)));
-if (!scenarios.length) {
-  console.error("no scenarios match");
-  process.exit(2);
-}
 
 const jobs = scenarios.flatMap((s) => Array.from({ length: repeat }, () => s));
 const runs: ScenarioRun[] = [];
 let next = 0;
 let quotaHit = false;
 const started = performance.now();
-console.log(`${scenarios.length} scenarios × ${repeat} on ${planner.name} (${tier}), ${concurrency} at a time\n`);
+console.log(`${scenarioDir}: ${scenarios.length} scenarios × ${repeat} on ${planner.name} (${tier}), ${concurrency} at a time\n`);
 await Promise.all(
   Array.from({ length: Math.min(concurrency, jobs.length) }, async () => {
     while (next < jobs.length) {
@@ -98,6 +98,8 @@ const cleanCost = clean.map((r) => r.metrics.usage.costUsd);
 const summary = {
   label,
   planner: planner.name,
+  scenarioDir,
+  set: fingerprint(JSON.stringify(scenarios)),
   tier,
   scenarios: scenarios.length,
   repeat,
@@ -141,7 +143,7 @@ else {
     label,
     git: gitState(ROOT),
     set: fingerprint(JSON.stringify(scenarios)),
-    config: { planner: planner.name, tier, repeat },
+    config: { planner: planner.name, tier, repeat, scenarioDir },
     metrics: {
       scenarios: scenarios.length,
       runs: summary.runs,
