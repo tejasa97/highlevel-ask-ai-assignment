@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import {
@@ -50,7 +51,7 @@ function change(
   const l = get(ctx.store, id);
   if (
     Object.entries(patch).every(
-      ([k, v]) => JSON.stringify(l[k as keyof Listing]) === JSON.stringify(v),
+      ([k, v]) => isDeepStrictEqual(l[k as keyof Listing], v),
     )
   )
     throw new ActionError("CONFLICT", "The listing is unchanged");
