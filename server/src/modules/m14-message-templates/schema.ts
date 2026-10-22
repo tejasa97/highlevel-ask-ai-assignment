@@ -25,6 +25,8 @@ export const MessageTemplate = z.object({
   versions: z.array(TemplateVersion),
   status: z.enum(["active", "archived"]),
   createdBy: z.string(),
+  /** Who last changed the content, variables or status. */
+  updatedBy: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
