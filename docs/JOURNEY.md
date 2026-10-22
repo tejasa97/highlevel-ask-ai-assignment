@@ -282,3 +282,14 @@ in between. It looks like `claude -p` timing from run to run, not the change, bu
 **Comparison and data.** Before switching providers, corrected development v2 passed 135/135 on Claude; original regression went 69/69 → 68/69, with the lost assignment repeat investigated. The later Luna regression is not a same-model before/after comparison. Development v2 fixes a test expectation and preserves archived v1/results; seed and reporting hashes are unchanged. The old scenario fingerprint still excludes the expanded seed, as entry 15 explains. Reporting is now exposed; no implementation tuning followed its results.
 
 **Conditions.** Three repeats; concurrency four for Luna development/regression, two for reporting. Reporting overlapped regression; the Sol diagnostic overlapped development. Latencies are descriptive rather than controlled comparisons. Full result files, reproduction commands and unresolved shared-planner work are in M45-M47-FINAL-REPORT.md. Earlier entry 15 is a historical checkpoint, not the current evaluation status.
+
+## 17. Full GPT-6.1 Sol evaluation, with no implementation changes
+`28268dc` · 2026-10-22 · runs: codex-sol-module-regression-3x
+
+**Question.** Does Sol recover quality lost when switching from Claude to Luna?
+
+**Measurement.** All 80 cases ×3, low reasoning, identical prompts/cards/code/seed/expectations. Original regression 63/69 (91.3%, Luna 56.5%); development 124/135 (91.9%, Luna 85.2%); reporting 30/36 (83.3%, Luna 72.2%). Respectively 21/23, 40/45 and 9/12 cases pass every repeat; zero infrastructure failures. Direct module cases pass 88/90, below the 100% target; development remains below 95%. All evidence is saved in the three scenarios-codex-sol-module-*-3x.json files.
+
+**Findings.** Sol is stronger overall, not uniformly better. Two consistent original-suite failures and five reporting listing failures use descriptive/company/possessive strings that the resolvers cannot match. Appointment→reviews still produces invalid loop/post-look references. Bulk partial replies clarify instead of completing the valid item. Missing-address development failures stop at compiler errors, so they do not prove an address-check bypass. SLA, reopening, invoice/conversation→tickets and reply+task improve. No handler, prompt, retrieval or default-model edits were made during this comparison.
+
+**Conditions and limits.** Suites ran sequentially, concurrency four for regression/development and two for reporting, matching Luna's per-suite settings but not its overlap. This is not controlled latency attribution. Reporting was already exposed, so this is model comparison on a fixed set, not fresh holdout evidence. Shared account usage was 72% before and 83% after (account-wide, not isolated billing); USD remains unknown. The report records per-case regressions and next diagnostic areas. AI acceptance is still unmet.

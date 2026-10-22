@@ -4,7 +4,7 @@
 
 ## Outcome
 
-All thirty catalog actions are implemented, integrated and deterministically verified. **795 backend tests pass**, no skips/failures; TypeScript and the production web build pass. The registry has 180 executable actions. However, **AI acceptance is not met**: GPT-6 Luna's repeated module-development score is 85.2%, below the 95% target, and direct happy paths are not 100%. Do not describe the entire acceptance contract as complete.
+All thirty catalog actions are implemented, integrated and deterministically verified. **795 backend tests pass**, no skips/failures; TypeScript and the production web build pass. The registry has 180 executable actions. However, **AI acceptance is not met**: GPT-6.1 Sol improves repeated module-development success from Luna's 85.2% to 91.9%, still below the 95% target, and direct happy paths are not 100%. Do not describe the entire acceptance contract as complete.
 
 ## Implementation delivered
 
@@ -34,10 +34,26 @@ All new live runs explicitly set `PLANNER=codex-cli`; no Claude calls were made 
 | Sol diagnostic | 4/5 | One repeat on selected failures; not a full-suite comparison |
 | Luna original regression | 39/69; 56.5% | 10/23 cases pass every repeat; 7 flaky; no infrastructure failures |
 | Luna reporting | 26/36; 72.2% | 7/12 cases pass every repeat; 4 flaky; no infrastructure failures |
+| Sol original regression | 63/69; 91.3% | 21/23 cases pass every repeat; 0 flaky; no infrastructure failures |
+| Sol development | 124/135; 91.9% | 40/45 cases pass every repeat; 3 flaky; no infrastructure failures |
+| Sol reporting | 30/36; 83.3% | 9/12 cases pass every repeat; 2 flaky; no infrastructure failures |
 
 Luna uses `gpt-6-luna`, low reasoning, three repeats, concurrency four for development/regression. Reporting uses concurrency two and overlaps the latter part of regression; latency is descriptive, not a controlled speed comparison. Sol diagnostic uses `gpt-6.1-sol`, low reasoning, concurrency one; it overlapped the end of development. Subscription USD cost is unavailable, **not zero**. Full JSON files are in eval/results; labels identify each provider/model run. Future history entries explicitly record model and reasoning so Sol/Luna cannot silently share a curve.
 
 The development failures include incomplete create→send plans, unnecessary clarification for explicit listing IDs, confusing ticket resolution with internal notes, failure to resolve ticket titles, and missing tool-search recovery. Sol corrected the three direct diagnostic cases but still failed appointment→review planning by inventing `$prev` and invalid list references, even after repair. The deterministic executor can run this workflow correctly; this is an unresolved planner-contract/model-interpretation issue, not proof of an unavailable handler.
+
+## Full Sol comparison, requested after the Luna checkpoint
+
+Tested `gpt-6.1-sol`, low reasoning, on all 80 scenarios three times (240 runs). Code, prompts, cards, seed, expectations and scoring remained unchanged from checkpoint `28268dc`. Suites ran sequentially: original regression, development, reporting. Concurrency matched Luna: four for regression/development, two for reporting. Unlike Luna's partially overlapping runs, these suites did not overlap, so timing is descriptive, not a controlled model-speed claim. End-to-end p50/p95: regression 10.604s/31.069s; development 9.923s/38.645s; reporting 10.160s/36.863s. Subscription USD remains unavailable. Shared account usage was 72% before and 83% after; that is an account-wide observation, not isolated run billing.
+
+Sol gains 34.8 percentage points on original regression, 6.7 on development and 11.1 on reporting, but is not uniformly better per case. Reporting was already exposed by Luna; this is a fixed-set model comparison, not a fresh holdout. No tuning or implementation edits followed either reporting run.
+
+- **Original regression:** both failures repeat 0/3. For Zoe, the planner passes a decorated name/email/company string to the contact resolver after clarification. For Sarah, it passes “Sarah Johnson at Brightside”. The resolver matches contact names, with company details displayed but not parsed as disambiguating query constraints. Correct actions are selected but no writes execute.
+- **Development direct actions:** 88/90 pass (97.8%); reviews 30/30, listings 30/30, tickets 28/30. Ticket requester relinking passes 1/3: one failure only lists tickets; the other creates invalid references. The unchanged requirement is 100%, so this gate fails.
+- **Development workflows:** invoice∩conversation→tickets and ticket reply+task pass 3/3. Appointment→reviews remains 1/3 due to invalid list/loop and post-look references. Missing-address 0/3 failures stop at invalid references and report compiler errors, not the required address error; these do not demonstrate a consent/address bypass. Partial bulk replies 0/3 clarify instead of processing the valid item. An unavailable-owner case clarifies once rather than returning the expected failure/partial status. These remain scored failures.
+- **Reporting:** SLA, reopen and reply+task now pass 3/3 each. However, listing publication falls from Luna's 3/3 to 1/3 and categories from 3/3 to 0/3: Sol includes possessive/descriptive text such as “Harbor Optics' Google listing” in the resolver query, which does not match. Missing address passes 2/3, with one unnecessary clarification.
+
+The strongest next diagnostic target is the **planner/resolver contract**, followed by post-look references, list/loop shapes and partial-failure policy. These findings identify shared behavior to improve; they do not authorize silently normalizing arbitrary names or tuning against exposed reporting outcomes. No default provider/model change was made by these evaluation commands.
 
 ## Preserve evidence and test-set independence
 
@@ -62,6 +78,8 @@ PLANNER=codex-cli CODEX_MODEL=gpt-6-luna CODEX_FAST_MODEL=gpt-6-luna CODEX_REASO
 ```
 
 Use new labels for future runs to preserve these result files. Re-running reporting is measurement on an exposed set, not fresh holdout validation. Commands consume subscription allowance.
+
+For the completed Sol comparison, the same commands used `CODEX_MODEL=gpt-6.1-sol CODEX_FAST_MODEL=gpt-6.1-sol`, with labels `codex-sol-module-development-3x`, `codex-sol-module-regression-3x`, and `codex-sol-module-reporting-3x`; reasoning, repeats, folders and concurrency stayed as above. Result filenames follow those labels in `eval/results/`.
 
 ## Retrieval and remaining gaps
 
