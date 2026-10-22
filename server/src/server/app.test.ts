@@ -88,6 +88,24 @@ const kinds = (evs: Sse[]) => evs.map((e) => e.event);
 const last = (evs: Sse[], event: string) => evs.findLast((e) => e.event === event)?.data;
 
 describe("M45–M47 through real HTTP (scripted plans, not AI evaluation)", () => {
+  test("separate external steps retain earlier approvals and finish partial instead of ping-ponging gates", async () => {
+    const p=scripted(reply({steps:[
+      {id:"s1",kind:"action",action:"M47.A08",argsJson:JSON.stringify({ticketId:"tic_1",body:"We received your report"})},
+      {id:"s2",kind:"action",action:"M47.A08",argsJson:JSON.stringify({ticketId:"tic_4",body:"We received your report"})},
+    ]}));
+    const app=await start(p),store=app.world().store,emails=store.all("emails").length;
+    const first=await app.ask("Reply to tickets tic_1 and tic_4 with we received your report");
+    assert.equal(last(first,"confirm").pending.stepId,"s1");
+    const turnId=last(first,"turn").turnId;
+    const second=await app.confirm(turnId,true);
+    assert.equal(last(second,"confirm").pending.stepId,"s2");
+    assert.equal(store.all("emails").length,emails+1);
+    const done=await app.confirm(turnId,true);
+    assert.equal(last(done,"reply").status,"partial",JSON.stringify(done));
+    assert.equal(store.all("emails").length,emails+1,"approved earlier send must not repeat");
+    assert.equal(store.get<any>("tickets","tic_4").firstResponseAt,null);
+    assert.equal(p.requests.length,1,"approval progression never replans");
+  });
   test("search_tools offers additional tools without dropping a previously offered ticket action", async () => {
     const p = scripted(reply({type:"search_tools",query:"create support ticket"}),action("M47.A01",{contactId:"ct_31",title:"Invoice follow-up",body:"Recent reply and overdue invoice"}));
     const app = await start(p);

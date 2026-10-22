@@ -1,7 +1,7 @@
 // One chat over one database: plan a message, run it, hold it for approval, remember the last few turns.
 // The HTTP app streams its events to the web UI; the scenario evals drive it headless, so both take the same path.
 import type { CompiledPlan, CStep } from "../core/compile.js";
-import { execute, type Pending, type RunResult } from "../core/execute.js";
+import { execute, type Approval, type Pending, type RunResult } from "../core/execute.js";
 import { summarize } from "../core/summarize.js";
 import { type Carry, type InfraKind, planTurn } from "../planner/turn.js";
 import type { Planner, Tier } from "../planner/types.js";
@@ -28,6 +28,7 @@ interface Turn {
   plan: CompiledPlan;
   executionId: string;
   pending?: Pending;
+  approvals?: Approval[];
 }
 
 export class Conversation {
@@ -85,7 +86,11 @@ export class Conversation {
       turn.pending = undefined;
       return this.finish(turn.message, "cancelled", "Cancelled. Nothing was changed by that step.", emit);
     }
-    await this.run(turn, actorId, emit, [turn.pending]);
+    // A plan can have several independent external steps. Retain earlier approvals as later gates
+    // are answered; passing only the newest one otherwise ping-pongs between the first two gates.
+    // Replacement is per step, so changed targets still require their own new bound approval.
+    turn.approvals = [...(turn.approvals ?? []).filter((a) => a.stepId !== turn.pending!.stepId), turn.pending];
+    await this.run(turn, actorId, emit, turn.approvals);
   }
 
   private async run(turn: Turn, actorId: string, emit: Emit, approvals?: Pending[]): Promise<void> {
