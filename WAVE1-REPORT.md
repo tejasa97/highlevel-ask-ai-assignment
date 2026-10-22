@@ -38,10 +38,12 @@ Group A was implemented on `wave1/modules` itself, and a second copy landed on `
 | M41 lessons | `c987e64a056746a962f7566339fb1008fbd1d346` | 10 | 10 | done |
 | M42 enrollments | `e789f48fd2b42c75c357dc999359a6bc03318f48` | 10 | 11 | done |
 | M43 communities | `b4191b04f631a41fcb5228165c47b2e4aebe524e` | 10 | 11 | done |
-| M44 memberships | `bf588b171b7fcd6c6092bb98bdc49e4893a5aa43` | 10 | 11 | done |
+| M44 memberships | `bf588b171b7fcd6c6092bb98bdc49e4893a5aa43` | 10 | 12 | done |
 | M50 reports | `7919a1f58cfce21807845c77c500298a623d429f` | 10 | 12 | done |
 
 Test counts are the verifier's `test(` count for that module folder. Every module registers 10 actions.
+
+Two follow-up commits correct behavior after the module landed. `0b063d86ee1aac683d3c6faab9289b9da5bd265b` changes M33 so an executed refund removes the money from the payment instead of adding it to `unallocated`. `f20d47127f2cee17284ccbd7101ffa274dfeba0c` changes M44 so revoke only sets `leftAt` on community members that grant created or brought back.
 
 Registry check: 50 modules, 500 actions, M01 through M50 with no gaps.
 
@@ -59,14 +61,14 @@ Exit code 0.
 `npm test`:
 
 ```
-ℹ tests 1940
+ℹ tests 1941
 ℹ suites 531
-ℹ pass 1935
+ℹ pass 1936
 ℹ fail 5
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 10782.833667
+ℹ duration_ms 7996.04
 ```
 
 The five failures are outside the module folders. They are listed under gaps. Baseline before this work was 830 passing.
@@ -114,7 +116,7 @@ These files were not edited. Each one now fails because the new modules exist.
 
 `Email.kind` has no quote or report value, so sending a quote and scheduling a report do not insert an `emails` row. Quote send still checks that the contact can be emailed.
 
-`CommunityMember` has no `membershipId`. Revoking a membership sets `leftAt` on that contact for every community on the plan, including a community they had already joined on their own.
+`CommunityMember` has no `membershipId`. `Membership.grantedCommunityMemberIds` records the member rows a grant created or reactivated, and revoke sets `leftAt` only on those. A contact who was already an active member stays in the community.
 
 M05 does not define its own pipeline builder. `Fixtures.prototype.pipeline` in `store/fixtures.ts` is the one tests already use. New stages created by M05 get ids from `store.nextId`.
 
@@ -130,9 +132,9 @@ M05 does not define its own pipeline builder. `Fixtures.prototype.pipeline` in `
 - Tax uses the longer region (`US-CA` before `US`) and does not fall through to a broader rule when the specific region has no matching category. A category match beats a null category. Inclusive tax is reported and not added on top. Exclusive tax is added. A valid exemption zeros the tax. Quote and order invoice totals are the discounted, taxed totals. Invoice line items are the product lines, so their sum can be short of `total` by the discount and the exclusive tax.
 - Sending a quote requires `billing.manage` and `messaging.send`, marks a draft as sent, and does not insert an email. Only an accepted quote converts. The invoice is `open`, lines are copied, and the quote becomes `converted` with `invoiceId` set. There is no action that marks a quote declined or expired. A past expiry blocks acceptance and leaves the quote sent.
 - Submitting an order checks stock before it writes. Pause then resume shifts both period ends forward by the time spent paused. The period is not restarted when the plan changes. A trial that is still in the future resumes as `trialing`.
-- A cash refund is stored as a failed refund. The payment stays succeeded and its allocations are left alone. Cancelling an order restores inventory and voids an unpaid invoice, and it does not give the coupon redemption back.
+- A cash refund is stored as a failed refund. The payment stays succeeded and its allocations are left alone. A card refund peels invoice allocations newest first and does not put that money back on `unallocated`. Money that was already unallocated is subtracted from `unallocated`. Cancelling an order restores inventory and voids an unpaid invoice, and it does not give the coupon redemption back.
 - Publishing a funnel requires every linked landing page to be published. Linking also requires the page to be published already. A step with no page is allowed. Publishing a landing page refuses a draft form. Attaching a draft form to a page that is already published is refused. Deleting a media asset scans `mediaIds` on landing pages, blog posts, and lessons.
-- A course publishes only when it has a published lesson. Lesson completion requires that published lesson, and it honors drip and enrollment expiry. A certificate is issued only when every published lesson is done, and the enrollment becomes `completed`. Granting a membership enrolls the contact in each course entitlement (a draft course is allowed here; direct enroll still requires the course to be published) and joins each community. If they were already enrolled, grant stamps `membershipId` on that enrollment, and revoke then revokes it.
+- A course publishes only when it has a published lesson. Lesson completion requires that published lesson, and it honors drip and enrollment expiry. A certificate is issued only when every published lesson is done, and the enrollment becomes `completed`. Granting a membership enrolls the contact in each course entitlement (a draft course is allowed here; direct enroll still requires the course to be published) and joins each community the contact is not already in. If they were already enrolled, grant stamps `membershipId` on that enrollment, and revoke then revokes it. If they had left the community, grant clears `leftAt` and revoke sets it again. If they were already an active member, revoke leaves them there.
 - `pipeline_value` sums open opportunities and ignores the report's date range. Grouping that metric by day, week, or month still uses `createdAt`. Week starts on Monday in UTC. `source` applies only to new leads. `pipelineId` applies only to won deals and pipeline value.
 
 ## Not done
