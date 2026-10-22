@@ -2,6 +2,8 @@
 
 22 October 2026. Branch `codex/m45-m47-complete`, based on main `3d4588d`. No push or merge to main. This report supersedes the earlier verification checkpoint's pending/quota status.
 
+Historical evaluation checkpoint: later eligible-subset confirmation and integration with GitHub main are documented in [PARTIAL-CONFIRMATION.md](PARTIAL-CONFIRMATION.md). The 795-test count and full-suite AI scores below precede that change; historical results are not rewritten. The branch is subsequently being published as a draft PR, not merged to main.
+
 ## Outcome
 
 All thirty catalog actions are implemented, integrated and deterministically verified. **795 backend tests pass**, no skips/failures; TypeScript and the production web build pass. The registry has 180 executable actions. However, **AI acceptance is not met**: GPT-6.1 Sol improves repeated module-development success from Luna's 85.2% to 91.9%, still below the 95% target, and direct happy paths are not 100%. Do not describe the entire acceptance contract as complete.

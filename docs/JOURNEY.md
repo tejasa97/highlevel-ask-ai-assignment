@@ -320,3 +320,12 @@ $0.011 vs $0.070, 6.4× more for the baseline, since every step resends the prom
 **What it says.** On these tasks a capable model picks the right actions either way; planning the whole task in
 one call is what makes it fast and cheap. The gap grows with the number of records a task touches: the baseline
 makes one model call per record, where the planner writes one forEach.
+
+## 19. Ask before proceeding with the eligible ticket-reply subset
+`739d986` · 2026-10-22 · runs: codex-sol-partial-confirmation-v1-3x
+
+**Policy.** The user chose explicit consent to partial completion: explain which ticket cannot receive a reply and why, then ask whether to send only the eligible replies. Do not silently drop blocked targets or ask an unbound model-generated question in place of approval.
+
+**Change.** Added side-effect-free ticket-reply preflight and reused the existing confirmation route. Single-call forEach and consecutive independent checked sends show eligible recipients plus blocked reasons. Approval hashes include eligibility and recipients; changes require renewed consent. Cancel sends nothing. Approved eligible items send once; blocked items remain failed and the final result is partial. All-blocked requests fail without an empty gate. Dependent/multi-call write transactions retain existing semantics; no speculative dry-run executes handlers.
+
+**Verification.** Integrated GitHub main d63f198, retaining its baseline/report implementation and historical evidence. 814 backend tests pass, typecheck and web build pass. Sol low-reasoning passes both new policy cases ×3 (6/6), no infrastructure failures. Confirmation-content assertions ensure success requires the actual bound subset preview. A scripted browser check verified zero writes before approval, the blocked email-address reason, the eligible recipient and one send after approval. This targeted result does not replace full-suite acceptance. Frozen seed/development/reporting files and old results remain untouched. Details: PARTIAL-CONFIRMATION.md.
