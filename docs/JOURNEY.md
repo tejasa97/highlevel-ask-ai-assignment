@@ -329,3 +329,35 @@ makes one model call per record, where the planner writes one forEach.
 **Change.** Added side-effect-free ticket-reply preflight and reused the existing confirmation route. Single-call forEach and consecutive independent checked sends show eligible recipients plus blocked reasons. Approval hashes include eligibility and recipients; changes require renewed consent. Cancel sends nothing. Approved eligible items send once; blocked items remain failed and the final result is partial. All-blocked requests fail without an empty gate. Dependent/multi-call write transactions retain existing semantics; no speculative dry-run executes handlers.
 
 **Verification.** Integrated GitHub main d63f198, retaining its baseline/report implementation and historical evidence. 814 backend tests pass, typecheck and web build pass. Sol low-reasoning passes both new policy cases ×3 (6/6), no infrastructure failures. Confirmation-content assertions ensure success requires the actual bound subset preview. A scripted browser check verified zero writes before approval, the blocked email-address reason, the eligible recipient and one send after approval. This targeted result does not replace full-suite acceptance. Frozen seed/development/reporting files and old results remain untouched. Details: PARTIAL-CONFIRMATION.md.
+
+## 20. Wave 1: the other 32 modules, all 500 actions
+`0c3fbe2` · 2026-10-23
+
+**Problem.** Only 18 of the 50 modules had handlers; a request that landed on one of the other 32 got a "not available" answer. The submission is a 500-action framework, so the catalog needed to run end to end.
+
+**Change.** All 32 remaining modules were built in seven groups (A to G) on parallel branches and merged into `wave1/modules`: registry actions with permissions, state guards and tests per action, no stubs. One registry check confirms 50 modules and 500 actions, M01 to M50 with no gaps. A second copy of group A on `wave1/group-a` conflicts with the merged one and was deliberately not merged. Details: WAVE1-REPORT.md.
+
+**Verification.** 1941 deterministic tests pass; typecheck is clean.
+
+**Side effects.** Every catalog action now executes, so the retrieval pool the planner draws from is all 500 real actions, not 180. Entry 21 measures what that did.
+
+## 21. Hardening Wave 1, and what it did to the numbers
+`5bbc440` · 2026-10-23 · runs: wave1-hardening-test, wave1-hardening-dev, wave1-hardening-haiku
+
+**Problem.** A review of the 32 new modules found thin tests (one test per module doing five jobs), look-alike actions the planner could confuse, and some real defects behind green tests.
+
+**Change.** Fixed what the review found, and nothing for the sake of a number:
+- M33: a cash refund was recorded as failed while the call reported success. It is now refused with a conflict at request, approve and execute, and nothing is written.
+- M22 and the shared clock: a local time inside a daylight-saving change could land an hour off. One conversion (`zonedInstant`) now lives in `store/clock.ts` and M22 and `atLocal` both use it.
+- M32: cancelling an order now releases the coupon redemption it held.
+- Permissions: publishing a workflow (M16.A08) and the publish and unpublish actions of M35 to M38 need `messaging.send`. Where every role already held the only fitting permission, no check was added. The reasoning is in WAVE1-ASSUMPTIONS.md.
+- Siblings: look-alike pairs are declared mutual when the cards are built, so retrieving either action brings the other.
+- Tests: the 32 modules went from 343 to 602 tests by splitting multi-action tests one per action; no assertion was removed. Chain tests run one action's output into the next across modules, a SQLite close-and-reopen test checks state survives, and a mutation spot-check of 11 guards found two untested ones, which now have tests.
+
+**Why this way.** Each defect was fixed in the one place the class lives (a shared helper, one clock function, one sibling rule), not per scenario. The cards were not regenerated, because no retrieval miss touched an action whose text or siblings changed.
+
+**Result.** 2215 deterministic tests pass. Retrieval on the unchanged test split (now 107 questions): R@15 95.6% → 96.0%, all@15 94.3% → 94.3%, MRR 0.65, mean shortlist 19.4 → 21.4; the dev split is R@15 97.0%. No in-scope question is wrongly rejected. Scenarios (23 × 3, haiku, as the 98.6% baseline): 94.2% both before and after hardening, with the same two scenarios failing, so hardening changed nothing there. The fall from 98.6% was already in `wave1/modules`. `unsupported-card-refund` fails 0 of 3 because its premise ("no refund action") stopped being true; the planner now correctly plans M29.A06 then M33.A01, and the scenario should change, not the code. `multi-bulk-archive-declined` is 2 of 3: the planner is offered about 22 actions now instead of 11 and in the failing run reads companies instead of archiving. Not patched.
+
+**Cost.** About $3.7 for the 3x haiku scenario run; retrieval evals use no model. The pre-hardening comparison (`0c3fbe2`) was measured in a scratch checkout and is not in the history file.
+
+**Open.** The scenario above and the wider candidate pool are the next measured work; WAVE1-HARDENING-REPORT.md has the full list, including the places this work stopped (no quote email kind, no `CommunityMember.membershipId`, no dedicated site permission).

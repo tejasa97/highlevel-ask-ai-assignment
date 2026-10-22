@@ -1,5 +1,7 @@
 # Wave 1 report
 
+> A snapshot of the state at `0c3fbe2`. Later fixes, the final test count (2215) and the eval results are in [WAVE1-HARDENING-REPORT.md](WAVE1-HARDENING-REPORT.md); the permission and scope decisions are in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md).
+
 Every catalog module is now registered: 50 modules, 500 actions. The table in the task lists 32 modules (the ones that were still unbuilt). All 32 are done. None were skipped. Nothing was pushed.
 
 Group A was implemented on `wave1/modules` itself, and a second copy landed on `wave1/group-a`. The two copies conflict, so `wave1/group-a` was not merged. The commits below are the ones on `wave1/modules`. Groups B through G were merged with `git merge --no-ff`.
