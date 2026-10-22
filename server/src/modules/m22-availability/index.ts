@@ -181,10 +181,9 @@ function openings(store: Store, calendar: Calendar, av: Availability, from: stri
       if (!(close > open)) continue;
       for (let t = open; t + calendar.durationMinutes <= close; t += calendar.durationMinutes) {
         const startHH = fromMinutes(t);
-        const endHH = fromMinutes(t + calendar.durationMinutes);
         const start = zonedInstant(date, startHH, calendar.timezone);
-        const end = zonedInstant(date, endHH, calendar.timezone);
-        if (!(Date.parse(end) > Date.parse(start))) continue;
+        // A slot is as long as the meeting, even when a clock change falls inside it.
+        const end = addMinutes(start, calendar.durationMinutes);
         if (Date.parse(start) < earliest) continue;
         if (blockHit(av, date, t, t + calendar.durationMinutes)) continue;
         const startMs = Date.parse(start);

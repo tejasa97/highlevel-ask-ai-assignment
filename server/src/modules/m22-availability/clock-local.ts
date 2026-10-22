@@ -29,7 +29,13 @@ function parts(ms: number, timeZone: string): { date: string; time: string } {
   return { date: date.replaceAll("/", "-"), time: `${hour}:${bits.minute ?? "00"}:${bits.second ?? "00"}` };
 }
 
-/** ISO instant for HH:MM on a calendar date in `timeZone`. Two passes so a DST boundary settles. */
+const DAY_MS = 86_400_000;
+
+/**
+ * ISO instant for HH:MM on a calendar date in `timeZone`.
+ * A wall time that happens twice (clocks going back) is its first occurrence; one that never happens
+ * (clocks going forward) lands the same distance after the gap, as if the old offset still applied.
+ */
 export function zonedInstant(date: string, hhmm: string, timeZone: string): string {
   const hm = hhmm.length === 5 ? `${hhmm}:00` : hhmm;
   const wall = Date.parse(`${date}T${hm}Z`);
@@ -37,8 +43,11 @@ export function zonedInstant(date: string, hhmm: string, timeZone: string): stri
     const p = parts(ms, timeZone);
     return Date.parse(`${p.date}T${p.time}Z`) - ms;
   };
-  const guess = wall - offset(wall);
-  return new Date(wall - offset(guess)).toISOString();
+  // The offsets in force a day before and a day after bracket any single transition.
+  const before = offset(wall - DAY_MS);
+  const after = offset(wall + DAY_MS);
+  const candidates = [wall - before, wall - after].filter((ms) => offset(ms) === wall - ms);
+  return new Date(candidates.length ? Math.min(...candidates) : wall - before).toISOString();
 }
 
 function instantMs(instant: Date | string | number): number {
