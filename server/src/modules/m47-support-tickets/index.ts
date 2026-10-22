@@ -248,7 +248,7 @@ const note = defineAction({
   risk: "write",
   input: z.strictObject({ ticketId: TicketId, body: Text }),
   output: Ticket,
-  entities: { consumes: ["ticket"] },
+  entities: { produces: "ticket", consumes: ["ticket"] },
   example: (f) => ({ ticketId: f.ticket().id, body: "Investigating" }),
   handler: ({ ticketId, body }, { store, clock, actorId }) => {
     const t = get(store, ticketId),
@@ -266,7 +266,7 @@ const reply = defineAction({
   risk: "external",
   input: z.strictObject({ ticketId: TicketId, body: Text }),
   output: Ticket,
-  entities: { consumes: ["ticket"] },
+  entities: { produces: "ticket", consumes: ["ticket"] },
   example: (f) => ({ ticketId: f.ticket().id, body: "We are investigating" }),
   handler: ({ ticketId, body }, ctx) => {
     requirePermission(ctx.store, ctx.actorId, "tickets.manage");

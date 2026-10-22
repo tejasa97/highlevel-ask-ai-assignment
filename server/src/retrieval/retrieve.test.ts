@@ -24,6 +24,12 @@ const ids = (x: { picks: { id: string }[] }) => x.picks.map((p) => p.id);
 const QUERIES = fileURLToPath(new URL("../../../eval/retrieval/queries.jsonl", import.meta.url));
 
 describe("cards", () => {
+  test("module card metadata describes returned records and implemented capabilities", () => {
+    for (const id of ["M47.A07", "M47.A08"]) assert.equal(cards.find(c=>c.id===id)!.produces,"ticket",`${id} returns a ticket, not a standalone note/email`);
+    for (const [id, unsupported] of [["M45.A02","text review link"],["M46.A07","holiday hours"],["M47.A06","mark ticket pending"],["M47.A10","time to resolve"]]) {
+      assert.ok(!cards.find(c=>c.id===id)!.synonyms.includes(unsupported!));
+    }
+  });
   test("one per catalog action, all with generated metadata", () => {
     assert.equal(cards.length, CATALOG_ACTIONS.size);
     const meta = loadCardMeta();
