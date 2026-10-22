@@ -4,6 +4,7 @@
 // and writing is in scripts/report.ts.
 import type { HistoryEntry } from "./history.js";
 import type { Scenario, ScenarioRun } from "./scenario.js";
+import { sumUsd } from "../planner/usage.js";
 
 export interface ResultFile {
   summary: { label: string; planner: string; tier: string; agent?: string; scenarios: number; repeat: number; runs: number; infraRuns: number; notRun: number };
@@ -47,7 +48,7 @@ export interface GroupStats {
   modelCalls: { mean: number; p50: number };
   actionCalls: { mean: number };
   tokens: { input: number; cachedRead: number; cacheWrite: number; output: number };
-  costUsd: { total: number; perRun: number; perSuccess: number | null };
+  costUsd: { total: number | null; perRun: number | null; perSuccess: number | null };
 }
 
 export function quantile(xs: number[], q: number): number {
@@ -69,7 +70,7 @@ export function groupStats(runs: ScenarioRun[], defs: Map<string, Scenario>, cat
     return { ok: rs.filter((r) => !r.failures.some((f) => kinds.includes(f.kind))).length, of: rs.length };
   };
   const passed = clean.filter((r) => r.pass).length;
-  const total = sum(all.map((r) => r.metrics.usage.costUsd));
+  const total = sumUsd(all.map((r) => r.metrics.usage.costUsd));
   const usage = (k: "input" | "cachedRead" | "cacheWrite" | "output") => sum(clean.map((r) => r.metrics.usage[k]));
   return {
     runs: clean.length,
@@ -83,7 +84,7 @@ export function groupStats(runs: ScenarioRun[], defs: Map<string, Scenario>, cat
     modelCalls: { mean: mean(clean.map((r) => r.metrics.plannerRounds)), p50: quantile(clean.map((r) => r.metrics.plannerRounds), 0.5) },
     actionCalls: { mean: mean(clean.map((r) => r.metrics.calls)) },
     tokens: { input: usage("input"), cachedRead: usage("cachedRead"), cacheWrite: usage("cacheWrite"), output: usage("output") },
-    costUsd: { total, perRun: all.length ? total / all.length : 0, perSuccess: passed ? total / passed : null },
+    costUsd: { total, perRun: total === null ? null : all.length ? total / all.length : 0, perSuccess: passed && total !== null ? total / passed : null },
   };
 }
 
@@ -325,6 +326,9 @@ export function renderReport(input: ReportInput): string {
 function pricingNote(planner: string): string {
   if (planner === "claude-cli") {
     return "**Pricing and test conditions:** this planner runs `claude -p` on a Claude subscription. Cost is Claude Code's own estimate at Anthropic API list prices (`total_cost_usd`), not money spent. Each model call also starts a process, about 1.5 s of every call's latency, which an API client wouldn't pay. Prompt caching is Claude's automatic prefix cache: the system prompt is kept byte-identical between calls so it can be read from cache.";
+  }
+  if (planner === "codex-cli") {
+    return "**Pricing and test conditions:** this planner uses Codex CLI with ChatGPT subscription access. Token counts include runtime context and latency includes process startup. Subscription USD cost is unavailable; cost cells show –. See docs/CODEX-PROVIDER-CAPTURE.md for the measured prompt and tool framing.";
   }
   return `**Pricing and test conditions:** cost is computed by the \`${planner}\` adapter from the tokens the provider reports and the list prices in \`server/src/planner/index.ts\`.`;
 }

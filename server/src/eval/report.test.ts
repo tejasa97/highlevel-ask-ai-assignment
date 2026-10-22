@@ -14,7 +14,7 @@ function run(id: string, category: Scenario["category"], o: { pass?: boolean; ki
     ...(o.infra ? { infra: o.infra } : {}),
     failures: kinds.map((kind) => ({ kind, detail: "x" })),
     turns: [],
-    metrics: { ms: o.ms ?? 1000, firstReplyMs: o.first ?? 500, plannerMs: 0, plannerRounds: o.rounds ?? 1, calls: 1, usage: { input: 100, cachedRead: 40, cacheWrite: 0, output: 10, thinking: 0, costUsd: o.cost ?? 0.01 } },
+    metrics: { ms: o.ms ?? 1000, firstReplyMs: o.first ?? 500, plannerMs: 0, plannerRounds: o.rounds ?? 1, calls: 1, usage: { input: 100, cachedRead: 40, cacheWrite: 0, output: 10, thinking: 0, costUsd: o.cost ?? 0.01, billing: "none" } },
   };
 }
 
@@ -38,9 +38,9 @@ test("rates count only the runs of scenarios that check that thing, and leave in
 test("cost per success divides everything spent, infra and failed runs included, by the passes", () => {
   const runs = [run("d1", "direct", { cost: 0.02 }), run("d1", "direct", { pass: false, cost: 0.03 }), run("d1", "direct", { infra: "timeout", cost: 0.01 })];
   const g = groupStats(runs, defs, GROUPS.direct);
-  assert.equal(g.costUsd.total.toFixed(2), "0.06");
+  assert.equal(g.costUsd.total!.toFixed(2), "0.06");
   assert.equal(g.costUsd.perSuccess!.toFixed(2), "0.06");
-  assert.equal(g.costUsd.perRun.toFixed(2), "0.02");
+  assert.equal(g.costUsd.perRun!.toFixed(2), "0.02");
   assert.equal(groupStats([run("d1", "direct", { pass: false })], defs, GROUPS.direct).costUsd.perSuccess, null);
 });
 
@@ -51,6 +51,14 @@ test("groups split latency: direct and complex don't mix", () => {
   assert.equal(groupStats(runs, defs, GROUPS.complex).modelCalls.p50, 3);
   assert.equal(quantile([], 0.5), 0);
   assert.equal(quantile([3, 1, 2, 4], 0.5), 3);
+});
+
+test("unknown subscription costs propagate through benchmark totals and cost per success", () => {
+  const subscription = run("d1", "direct");
+  subscription.metrics.usage.costUsd = null;
+  subscription.metrics.usage.billing = "subscription";
+  const g = groupStats([run("d1", "direct"), subscription], defs, GROUPS.direct);
+  assert.deepEqual(g.costUsd, { total: null, perRun: null, perSuccess: null });
 });
 
 test("a target is judged only when committed on or before the run's date", () => {

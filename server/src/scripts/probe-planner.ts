@@ -3,6 +3,7 @@
 // parses, passes Zod, and has valid argsJson. Run: npm run probe:planner [-- fast|strong]
 // Plans through PLANNER (default claude-cli, dev only, uses the Claude subscription).
 import { makePlanner } from "../planner/index.js";
+import { formatCost } from "../planner/usage.js";
 import { SYSTEM, userBlock } from "../planner/prompt.js";
 import { badArgs, SUBMIT_PLAN_SCHEMA, SubmitPlan } from "../planner/submit-plan.js";
 import type { PlannerError, Tier } from "../planner/types.js";
@@ -31,7 +32,7 @@ for (const message of MESSAGES) {
     const pass = parsed.success && bad.length === 0;
     if (pass) ok++;
     console.log(`\n> ${message}`);
-    console.log(`  ${pass ? "PASS" : "FAIL"}  ${r.model}  ${Math.round(r.latencyMs)} ms  in ${r.usage.input} (cached ${r.usage.cachedRead})  out ${r.usage.output} + think ${r.usage.thinking}  $${r.usage.costUsd.toFixed(5)}`);
+    console.log(`  ${pass ? "PASS" : "FAIL"}  ${r.model}  ${Math.round(r.latencyMs)} ms  in ${r.usage.input} (cached ${r.usage.cachedRead})  out ${r.usage.output} + think ${r.usage.thinking}  ${formatCost(r.usage.costUsd, r.usage.billing)}`);
     if (!parsed.success) console.log("  zod:", parsed.error.issues.slice(0, 3));
     if (bad.length) console.log("  bad JSON in:", bad);
     console.log(JSON.stringify(compact(r.json), null, 1).replace(/^/gm, "  "));
@@ -42,6 +43,7 @@ for (const message of MESSAGES) {
   }
 }
 console.log(`\n${ok}/${MESSAGES.length} valid`);
+if (ok !== MESSAGES.length) process.exitCode = 1;
 
 // Drop nulls so the printout stays readable.
 function compact(v: unknown): unknown {
