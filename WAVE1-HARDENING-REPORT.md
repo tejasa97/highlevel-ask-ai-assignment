@@ -1,7 +1,7 @@
 # Wave 1 hardening report
 
 Branch `wave1/hardening`, cut from `wave1/modules` at `0c3fbe2`. Nothing merged, nothing pushed.
-Wave 2 and Wave 3 are not started. No LLM calls, no `eval:*`, no `cards`, no `serve`.
+Wave 2 and Wave 3 are not started. The eval results are in "Eval after hardening".
 
 ## Final gate
 
@@ -108,10 +108,42 @@ Eleven mutations in ten modules. Two survived at first; both were real gaps and 
 
 - `EMAIL_KINDS` (in M13) has no quote kind, so `M27.A08` stores no `emails` row. Left as it is on purpose, see `WAVE1-ASSUMPTIONS.md` A3. (An earlier version of this note also said `ENTITY_TYPES` lacked the new entities; that was wrong, it already lists quote, refund and the rest.)
 - `CommunityMember` has no `membershipId`.
-- The retrieval cards (`cards.json`) were not regenerated after the sibling changes. They are built from the registry at run time, but the checked-in file is stale.
+- The retrieval cards (`cards.json`) were not regenerated. Siblings are merged from the registry at run time, and no miss touched a module whose description changed, so regenerating would only have risked the reviewed cards (see "Eval after hardening").
+- `eval/scenarios/unsupported.json` `unsupported-card-refund` is out of date: its note says there is no refund action, but M33 now has one. The planner now correctly plans `M29.A06` then `M33.A01` and the run ends `done`. The scenario's expectation should change, not the code. `eval/` is outside this brief, so it was left alone.
 - `registry/helpers.ts` (`noChange`) and `retrieval/cards.ts` (mutual siblings) were edited here as structural fixes, although the brief lists those folders as off limits. Revert-or-keep is the integrator's call.
 
 - A real permission for site and calendar management would be better than reusing `messaging.send` for the publishing family (M35 to M38); that needs a change to `m48-users`.
+
+## Eval after hardening
+
+Run on `2f94c70`. Retrieval uses no LLM. Scenarios use the `claude-cli` planner.
+
+**Retrieval** (500 cards, hybrid). The held-out test split is compared with the stored `m45-m47-final-retrieval` run:
+
+| | R@5 | R@10 | R@15 | all@15 | MRR | picks |
+|---|---|---|---|---|---|---|
+| before (test) | 89.0 | 93.2 | 95.6 | 94.3 | 0.65 | 19.4 |
+| after (test, 107 questions) | 91.0 | 95.1 | 96.0 | 94.3 | 0.65 | 21.4 |
+| after (dev, 140 questions) | 86.9 | 94.7 | 97.0 | 95.5 | 0.68 | 21.0 |
+
+Recall is the same or up, no in-scope question was wrongly rejected, and the mutual siblings add about two picks per question. Misses at k=15 on the test split are M49.A09, M28.A01, M03.A03 (twice), M08.A07 and M21.A08. None is an action whose text or siblings changed here.
+
+**Scenarios**, 23 main scenarios, 3 runs each, with `CLAUDE_MODEL=claude-haiku-5-5` to match the stored baseline `haiku-fix3-main` (98.6%). The default planner model is now `claude-sonnet-5-5`, so a run without that variable is not comparable.
+
+| Run | Commit | Pass |
+|---|---|---|
+| `haiku-fix3-main` (stored) | `2280e59` | 98.6% |
+| `base-0c3fbe2-haiku` | `0c3fbe2`, before hardening | 94.2% |
+| `wave1-hardening-haiku` | `2f94c70`, after hardening | 94.2% |
+
+The two runs fail on the same two scenarios with the same counts, so hardening changed nothing here. The fall from 98.6% was already in `wave1/modules`:
+
+- `unsupported-card-refund` 0 of 3: stale scenario, see the gaps list. Correct behaviour now.
+- `multi-bulk-archive-declined` 2 of 3: the offered action set grew from 11 to about 22 once the 500-card pool was in. In the failing run the planner chose a read, `M02.A03`, over `M01.A05`. This is not caused by hardening and was not patched.
+
+## Merge
+
+`wave1/hardening` is 15 commits ahead of `wave1/modules` and fast-forwards onto it. The merge was not done from this session, because `wave1/modules` is checked out in `/Users/tejas/projects/highlevel-ask-ai-wave1` and this session may only run git in its own worktree. Nothing is pushed.
 
 ## Not committed
 
