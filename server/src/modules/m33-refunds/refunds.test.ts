@@ -135,7 +135,7 @@ test("execute reopens invoices newest allocation first, including two peels of o
   assert.equal(w.store.get<Payment>("payments", loose.id)?.unallocated, 25);
 });
 
-test("a cash payment is declined and its allocations are left alone", async () => {
+test("M33.A01/A07/A09 a cash payment can't be refunded here: refused at every step, nothing recorded as refunded", async () => {
   const w = await testWorld();
   const contact = w.f.contact();
   const inv = paidInvoice(w, contact.id, 40);
@@ -146,14 +146,25 @@ test("a cash payment is declined and its allocations are left alone", async () =
     unallocated: 0,
     allocations: [{ invoiceId: inv.id, amount: 40, at: w.f.at(-1) }],
   });
-  const refund = w.f.refund({ paymentId: payment.id, contactId: contact.id, amount: 40, status: "approved", decidedBy: "us_1", decidedAt: w.f.now() });
-  const failed = w.call("M33.A09", { refundId: refund.id });
-  assert.equal(failed.status, "failed");
-  assert.equal(failed.failure, "Cash payments can't be reversed by the processor");
+
+  const asked = failure(() => w.call("M33.A01", { paymentId: payment.id, amount: 40 }));
+  assert.equal(asked.code, "CONFLICT");
+  assert.match(asked.message, /cash/i);
+  assert.equal(w.call("M33.A03", { paymentId: payment.id }).total, 0);
+
+  const requested = w.f.refund({ paymentId: payment.id, contactId: contact.id, amount: 40 });
+  assert.equal(failure(() => w.call("M33.A07", { refundId: requested.id })).code, "CONFLICT");
+  assert.equal(w.call("M33.A02", { refundId: requested.id }).status, "requested");
+
+  const approved = w.f.refund({ paymentId: payment.id, contactId: contact.id, amount: 40, status: "approved", decidedBy: "us_1", decidedAt: w.f.now() });
+  const executed = failure(() => w.call("M33.A09", { refundId: approved.id }));
+  assert.equal(executed.code, "CONFLICT");
+  assert.match(executed.message, /cash/i);
+  assert.equal(w.call("M33.A10", { refundId: approved.id }).status, "approved");
+
   const after = w.store.get<Payment>("payments", payment.id);
   assert.equal(after?.status, "succeeded");
   assert.deepEqual(after?.allocations, payment.allocations);
   assert.equal(after?.unallocated, 0);
   assert.equal(w.store.get<Invoice>("invoices", inv.id)?.status, "paid");
-  assert.equal(w.call("M33.A10", { refundId: refund.id }).failure, failed.failure);
 });

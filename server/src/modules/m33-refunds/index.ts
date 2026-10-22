@@ -11,7 +11,7 @@ import { REFUND_STATUSES, Refund } from "./schema.js";
 import "./fixtures.js";
 
 // Refunds sit on a succeeded payment. Requested, approved and executed amounts count against the refundable balance.
-// Executing peels allocations newest-first and reopens those invoices. Cash is a simulated decline.
+// Executing peels allocations newest-first and reopens those invoices. Cash payments are refused at every step.
 
 const RefundId = z.string().describe("refund id (rf_…)");
 const OPEN_REFUND = ["requested", "approved", "executed"] as const;
@@ -23,6 +23,15 @@ function load(store: Store, id: string): Refund {
 function paymentOf(store: Store, id: string): Payment {
   const payment = mustGet<Payment>(store, "payments", id, "payment");
   if (payment.status !== "succeeded") throw new ActionError("CONFLICT", `Payment ${payment.id} did not succeed; only a succeeded payment can be refunded`);
+  return payment;
+}
+
+/** Cash never went through the processor, so there is nothing to send back; refuse rather than record a refund that didn't happen. */
+function refundablePayment(store: Store, id: string): Payment {
+  const payment = paymentOf(store, id);
+  if (payment.method === "cash") {
+    throw new ActionError("CONFLICT", `Payment ${payment.id} was paid in cash and can't be refunded here; hand the cash back outside the system and record that instead`, { paymentId: payment.id });
+  }
   return payment;
 }
 
@@ -40,7 +49,7 @@ function refundableOf(store: Store, payment: Payment, exceptId?: string): number
 const createRefund = defineAction({
   id: "M33.A01",
   description:
-    "Request a refund against a succeeded payment. The amount defaults to whatever is still refundable (payment amount minus requested, approved and executed refunds). Unlike M29.A01 Record payment, this does not move money until the request is approved and executed.",
+    "Request a refund against a succeeded payment. The amount defaults to whatever is still refundable (payment amount minus requested, approved and executed refunds). Cash payments are refused with CONFLICT. Unlike M29.A01 Record payment, this does not move money until the request is approved and executed.",
   risk: "write",
   input: z.strictObject({
     paymentId: z.string().describe("payment id (pay_…)"),
@@ -52,7 +61,7 @@ const createRefund = defineAction({
   entities: { produces: "refund" },
   example: (f) => ({ paymentId: f.payment({ amount: 25, unallocated: 25 }).id, reason: "Duplicate charge" }),
   handler: (a, { store, clock, actorId }) => {
-    const payment = paymentOf(store, a.paymentId);
+    const payment = refundablePayment(store, a.paymentId);
     const refundable = refundableOf(store, payment);
     const amount = cents(a.amount ?? refundable);
     if (amount <= 0) throw new ActionError("CONFLICT", `Nothing left to refund on payment ${payment.id}`);
@@ -191,6 +200,7 @@ const approveRefund = defineAction({
     requirePermission(store, actorId, "billing.manage");
     const refund = load(store, refundId);
     requireState(`Refund ${refund.id}`, refund.status, ["requested"], "be approved");
+    refundablePayment(store, refund.paymentId);
     const now = clock.now().toISOString();
     return store.update<Refund>("refunds", refund.id, { status: "approved", decidedBy: actorId ?? "us_1", decidedAt: now, decisionNote: note ?? null });
   },
@@ -217,7 +227,7 @@ const rejectRefund = defineAction({
 const executeRefund = defineAction({
   id: "M33.A09",
   description:
-    "Execute an approved refund. Invoice allocations are peeled newest first (later array index breaks a tie) and those invoices reopen. That money leaves: unallocated does not grow, and any part of the refund that was already unallocated is subtracted from it. A cash payment is declined instead and its allocations stay put. Unlike M29.A08 Remove payment allocation, this does not keep the money on the payment. Requires billing.manage.",
+    "Execute an approved refund. Invoice allocations are peeled newest first (later array index breaks a tie) and those invoices reopen. That money leaves: unallocated does not grow, and any part of the refund that was already unallocated is subtracted from it. A cash payment can't be refunded here and is refused with CONFLICT. Unlike M29.A08 Remove payment allocation, this does not keep the money on the payment. Requires billing.manage.",
   risk: "destructive",
   input: z.strictObject({ refundId: RefundId }),
   output: Refund,
@@ -231,10 +241,7 @@ const executeRefund = defineAction({
     requirePermission(store, actorId, "billing.manage");
     const refund = load(store, refundId);
     requireState(`Refund ${refund.id}`, refund.status, ["approved"], "be executed");
-    const payment = paymentOf(store, refund.paymentId);
-    if (payment.method === "cash") {
-      return store.update<Refund>("refunds", refund.id, { status: "failed", failure: "Cash payments can't be reversed by the processor" });
-    }
+    const payment = refundablePayment(store, refund.paymentId);
     const now = clock.now().toISOString();
     const left = payment.allocations.map((a) => a.amount);
     const order = payment.allocations.map((a, index) => ({ index, at: a.at }));
@@ -267,7 +274,7 @@ const executeRefund = defineAction({
 const executionStatus = defineAction({
   id: "M33.A10",
   description:
-    "Show whether a refund was executed or the processor declined it, including the failure text. Unlike M33.A02 Get refund request, this is only the execution outcome, not the request itself.",
+    "Show a refund's execution outcome: its status, when it executed, and any recorded failure text. Unlike M33.A02 Get refund request, this is only the execution outcome, not the request itself.",
   risk: "read",
   input: z.strictObject({ refundId: RefundId }),
   output: z.object({
