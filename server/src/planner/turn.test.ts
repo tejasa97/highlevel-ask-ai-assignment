@@ -40,7 +40,7 @@ function scripted(...replies: SubmitPlan[]): Planner & { requests: PlanRequest[]
       requests.push(req);
       const json = replies.shift();
       if (!json) throw new Error("planner called more times than scripted");
-      return { model: "fake", json, text: JSON.stringify(json), usage: { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0 }, latencyMs: 1 };
+      return { model: "fake", json, text: JSON.stringify(json), usage: { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0, billing: "none" }, latencyMs: 1 };
     },
   };
 }

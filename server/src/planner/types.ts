@@ -16,7 +16,8 @@ export interface Usage {
   cacheWrite: number;
   output: number; // visible output
   thinking: number; // reasoning tokens, when the provider reports them apart from output
-  costUsd: number; // at list price
+  billing: "api" | "subscription" | "api_estimate" | "none";
+  costUsd: number | null; // list-price estimate, or unknown for subscription usage
 }
 
 export interface PlanResult {

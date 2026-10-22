@@ -7,6 +7,7 @@ import type { CompiledPlan } from "../core/compile.js";
 import { execute, type RunResult } from "../core/execute.js";
 import { summarize } from "../core/summarize.js";
 import { makePlanner } from "../planner/index.js";
+import { formatCost } from "../planner/usage.js";
 import { planTurn } from "../planner/turn.js";
 import { loadRegistry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
@@ -32,7 +33,7 @@ const timings: string[] = [];
 const cards = buildCards(registry);
 const retriever = new Retriever(cards, {}, await loadDense(cards, debug ? console.log : () => {}));
 const outcome = await planTurn({ message, tier }, { registry, retriever, planner, clock, store }, (e) => {
-  if (e.type === "planner.reply") timings.push(`${e.data.label} ${e.data.latencyMs} ms (${e.data.model}, in ${e.data.usage.input}, out ${e.data.usage.output})`);
+  if (e.type === "planner.reply") timings.push(`${e.data.label} ${e.data.latencyMs} ms (${e.data.model}, in ${e.data.usage.input}, out ${e.data.usage.output}, ${formatCost(e.data.usage.costUsd, e.data.usage.billing)})`);
   if (e.type === "compile.errors") console.log(`\nplan rejected:\n  ${e.data.errors.join("\n  ")}`);
   if (!debug) return;
   if (e.type === "planner.reply") console.log(`\n${e.data.label} reply:`, JSON.stringify(e.data.json));

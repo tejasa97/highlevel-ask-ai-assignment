@@ -25,7 +25,7 @@ function scripted(...replies: SubmitPlan[]): Planner {
     async plan() {
       const json = replies.shift();
       if (!json) throw new Error("planner called more times than scripted");
-      return { model: "fake", json, text: JSON.stringify(json), usage: { input: 100, cachedRead: 0, cacheWrite: 0, output: 10, thinking: 0, costUsd: 0.01 }, latencyMs: 5 };
+      return { model: "fake", json, text: JSON.stringify(json), usage: { input: 100, cachedRead: 0, cacheWrite: 0, output: 10, thinking: 0, costUsd: 0.01, billing: "none" }, latencyMs: 5 };
     },
   };
 }
@@ -34,6 +34,23 @@ const scenario = (s: Record<string, unknown>): Scenario => ScenarioSchema.parse(
 const run = (s: Scenario, ...replies: SubmitPlan[]) => runScenario(s, { registry, retriever, planner: scripted(...replies) });
 
 describe("runScenario", () => {
+  test("subscription usage stays unknown while numeric tokens accumulate across turns", async () => {
+    const base = scripted(reply({ type: "clarify", question: "What should the task say?" }), action("M06.A01", { title: "Call Ana" }));
+    const planner: Planner = { name: "codex-cli", async plan(req) {
+      const result = await base.plan(req);
+      return { ...result, usage: { ...result.usage, costUsd: null, billing: "subscription" } };
+    } };
+    const r = await runScenario(scenario({
+      turns: [{ user: "Create a task", status: ["clarify"] }, { user: "Call Ana", status: ["done"] }],
+      expect: { status: ["done"] },
+    }), { registry, retriever, planner });
+    assert.equal(r.pass, true);
+    assert.equal(r.metrics.usage.input, 200);
+    assert.equal(r.metrics.usage.output, 20);
+    assert.equal(r.metrics.usage.costUsd, null);
+    assert.equal(r.metrics.usage.billing, "subscription");
+  });
+
   test("a plan that does what was asked passes every kind of check", async () => {
     const s = scenario({
       turns: [{ user: "create a task to call Ana for Raj", status: ["done"] }],

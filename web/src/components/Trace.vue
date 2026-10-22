@@ -4,16 +4,20 @@ import Json from "./Json.vue";
 
 const props = defineProps({ turn: { type: Object, required: true } });
 
-const tokens = (u) => `${u.input.toLocaleString()} in (${u.cachedRead.toLocaleString()} cached) · ${u.output.toLocaleString()} out`;
+const tokens = (u) => `${u.input.toLocaleString()} in (${u.cachedRead.toLocaleString()} cached) · ${u.output.toLocaleString()} out${u.thinking ? ` + ${u.thinking.toLocaleString()} reasoning` : ""}`;
+const cost = (u) => u.billing === "subscription" ? "subscription usage" : u.costUsd == null ? "USD unavailable" : `$${u.costUsd.toFixed(4)}${u.billing === "api_estimate" ? " (API estimate)" : ""}`;
 const callsFor = (step) => {
   const ids = new Set((step.calls ?? []).map((c) => c.action));
   return props.turn.calls.filter((c) => ids.has(c.action));
 };
 const totals = computed(() => {
   const r = props.turn.planner.map((p) => p.reply).filter(Boolean);
+  const costUsd = r.some((x) => x.usage.costUsd == null) ? null : r.reduce((a, x) => a + x.usage.costUsd, 0);
+  const billing = r.some((x) => x.usage.billing === "subscription") ? "subscription"
+    : r.some((x) => x.usage.billing === "api_estimate") ? "api_estimate" : "api";
   return {
     llmMs: r.reduce((a, x) => a + x.latencyMs, 0),
-    cost: r.reduce((a, x) => a + x.usage.costUsd, 0),
+    cost: cost({ costUsd, billing }),
     execMs: props.turn.runs.reduce((a, x) => a + x.ms, 0),
   };
 });
@@ -41,7 +45,7 @@ const stepLine = (s) =>
 <template>
   <div class="trace">
     <div class="summary-bar">
-      <span><b>{{ turn.planner.length }}</b> LLM call{{ turn.planner.length === 1 ? "" : "s" }} · {{ (totals.llmMs / 1000).toFixed(1) }} s · ${{ totals.cost.toFixed(4) }}</span>
+      <span><b>{{ turn.planner.length }}</b> LLM call{{ turn.planner.length === 1 ? "" : "s" }} · {{ (totals.llmMs / 1000).toFixed(1) }} s · {{ totals.cost }}</span>
       <span><b>{{ turn.calls.length }}</b> tool calls · exec {{ totals.execMs }} ms</span>
       <span><b>{{ turn.changes.length }}</b> rows changed</span>
       <span v-if="turn.live" class="live">live</span>
@@ -85,7 +89,7 @@ const stepLine = (s) =>
       <div class="card-head">
         <span class="tag">{{ p.request.label }}</span>
         <span v-if="p.reply" class="mono">{{ p.reply.model }}</span>
-        <span v-if="p.reply" class="muted small">{{ (p.reply.latencyMs / 1000).toFixed(1) }} s · {{ tokens(p.reply.usage) }} · ${{ p.reply.usage.costUsd.toFixed(4) }}</span>
+        <span v-if="p.reply" class="muted small">{{ (p.reply.latencyMs / 1000).toFixed(1) }} s · {{ tokens(p.reply.usage) }} · {{ cost(p.reply.usage) }}</span>
         <span v-else-if="turn.live" class="live">waiting for model…</span>
         <span v-else class="muted small">no reply</span>
       </div>
