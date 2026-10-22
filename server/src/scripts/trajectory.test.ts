@@ -56,8 +56,16 @@ describe("trajectory", () => {
       const elements = new Map<string, ReturnType<typeof element>>();
       const hovers: (() => void)[] = [];
       function element() {
+        let html = "", text = "";
+        const children: any[] = [];
         return {
-          innerHTML: "", textContent: "", clientWidth: 800, offsetWidth: 100, offsetHeight: 50, style: {},
+          get innerHTML() { return html + children.map(c => c.innerHTML).join(""); },
+          set innerHTML(value: string) { html = value; children.length = 0; },
+          get textContent() { return text + children.map(c => c.textContent).join(""); },
+          set textContent(value: string) { text = value; children.length = 0; },
+          append(...items: any[]) { children.push(...items); },
+          replaceChildren() { children.length = 0; html = text = ""; },
+          dataset: {} as Record<string,string>, clientWidth: 800, offsetWidth: 100, offsetHeight: 50, style: {},
           querySelectorAll: () => [],
           querySelector() {
             const hits = [...this.innerHTML.matchAll(/<rect data-i="(\d+)"/g)];
@@ -72,6 +80,7 @@ describe("trajectory", () => {
       }
       const context = createContext({
         document: {
+          createElement: () => element(),
           getElementById(id: string) { if (!elements.has(id)) elements.set(id, element()); return elements.get(id)!; },
           createElementNS: () => ({ style: {}, setAttribute() {} }),
         },
