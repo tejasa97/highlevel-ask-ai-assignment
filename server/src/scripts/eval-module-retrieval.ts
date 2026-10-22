@@ -14,10 +14,8 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { world } from "../store/world.js";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
-const selection = selectScenarios(
-  root,
-  "eval/module-scenarios/m45-m47/development",
-);
+const regression = process.argv.includes("--regression");
+const selection = selectScenarios(root, regression ? "eval/scenarios" : "eval/module-scenarios/m45-m47/development");
 const registry = await loadRegistry();
 const cards = buildCards(registry);
 const dense = await Embedder.load(cards); // Fail, rather than silently calling a BM25 run hybrid.
@@ -32,10 +30,11 @@ const pairs = [
 ];
 for (const pair of pairs)
   for (const id of pair) assert.ok(registry.get(id), id);
-const variants = [
+const variants: {name:string; pairs:string[][]; forward?:string[][]}[] = [
   { name: "existing-links", pairs: [] as string[][] },
   ...pairs.map((pair) => ({ name: pair.join("<->"), pairs: [pair] })),
   { name: "all-candidates", pairs },
+  { name: "team-strategy->workload", pairs: [], forward: [["M49.A08", "M49.A09"]] },
 ];
 // Inference is independent of sibling links. Compute once and reuse byte-identical rankings.
 const original = new Retriever(cards, {}, dense);
@@ -62,6 +61,7 @@ const results = variants.map((v) => {
         ...v.pairs.flatMap(([a, b]) =>
           c.id === a ? [b!] : c.id === b ? [a!] : [],
         ),
+        ...(v.forward ?? []).flatMap(([a,b]) => c.id === a ? [b!] : []),
       ]),
     ],
   }));
@@ -108,7 +108,7 @@ const report = {
   note: "development tool availability, not task pass rate; no reporting cases read",
   results,
 };
-const file = `${root}eval/results/retrieval-m45-m47-development-ablation-${report.set}.json`;
+const file = `${root}eval/results/retrieval-m45-m47-${regression ? "regression" : "development"}-ablation-${report.set}.json`;
 writeFileSync(file, JSON.stringify(report, null, 2));
 console.table(results.map(({ cases, ...r }) => r));
 console.log(

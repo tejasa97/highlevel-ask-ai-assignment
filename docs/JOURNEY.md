@@ -252,3 +252,20 @@ direct-appointment-reschedule 1/3 → 3/3. Planner rounds per run 1.30 → 1.28.
 **Cost.** Cost per run $0.020 → $0.0125, from more prompt-cache hits rather than this change. Latency went the other
 way: end-to-end p50 5.8 s → 7.3 s, p95 11.1 s → 15.9 s, with fewer planner rounds; the reverted run (entry 13) sat
 in between. It looks like `claude -p` timing from run to run, not the change, but one run can't show that.
+
+## 15. Thirty reviews/listings/ticket actions; isolated eval sets and guarded reporting
+`c5df916` · 2026-10-22 · runs: m45-m47-after
+
+**Problem.** Three more catalog modules needed full integration, not thirty unconditional-success handlers. Closely related messaging/note/ownership/publication actions can be confused; new seed data and interleaved scenario sets could also make regression numbers misleading.
+
+**Change.** A separate branch from main `3d4588d` froze seed IDs, 45 development scenarios and 12 separate reporting scenarios at `080618f`, before handlers. Added all ten actions per module with strict inputs, persistent state, permissions, reusable delivery, resolver identity rules, first-response SLA and normal confirmation/audit/replay. Generic email preview/send/schedule refuse module-owned kinds so request status and ticket SLA cannot be bypassed. Added folder selection and per-folder trajectory lines, leaving the old suite as the headline. README and the module-building guide document the conventions and simulator limitations.
+
+**Verification.** 769 deterministic tests pass without skips, including real local embeddings, all-180 smoke checks, actual SQLite close/reopen, role/consent matrices, DST/SLA boundaries, HTTP/SSE and cross-module execution. A scripted browser run verified ticket reply approval, task creation and row changes; it is not an AI result. Browser inspection exposed an inherited conversation bug: spreading an email/SMS reference copied its ID and private fields into a new conversation. Whitelisting contact/lead IDs fixes it; new tests require clean cv_ records.
+
+**Retrieval.** On the unchanged test split, hybrid recall@15 moves 94.9% → 95.6%, mean shortlist 19.5 → 19.4. No in-scope false rejects; the two off-topic cases still need planner rejection. The module-development ablation has 97.56% explicitly required-action availability and 44/45 cases with every required action retrieved across their turns, mean/max shortlist 17.83/25 and 9,573 prompt characters. Six extra symmetric sibling links together give no recall gain, but raise mean/max to 18.11/26 and 9,806 characters; none were adopted. Initial retrieval still misses Create support ticket in the invoice/conversation chain. Tool-search plumbing is tested; real planner recovery is not yet measured.
+
+**Data caveat.** Original 23 scenario definitions and fingerprint fcc7ddef4615 are unchanged, but the starting seed is expanded by four contacts, two appointments, three review requests, two reviews, three listings and four tickets. Every legacy row hash is preserved. Equal scenario fingerprints therefore do not mean identical seeded data. Freeze hashes and implementation commits are recorded in M45-M47-VERIFICATION.md; retrieval's after measurement records the dirty implementation tree that was subsequently committed.
+
+**AI evaluation pending.** Before implementation, m45-m47-before passed 69/69 original-suite runs, no flaky or infrastructure cases, p50 5.438s/p95 13.100s. The first new development evaluation then hit session quota: four infrastructure failures, 41 cases unstarted, zero clean runs. It is saved separately and correctly not recorded as an application score. Development 45×3, regression 23×3 and reporting 12×3 remain required; no after-regression or reporting success is claimed. Reporting outcomes remain unrun. The separated trajectory still needs visual browser verification.
+
+**Cost.** The before regression recorded $1.47 total, $0.0213/run using the existing CLI estimates. Offline deterministic/retrieval checks add no planner calls. Quota failures establish no task cost or success rate; provider accounting and cost-per-success methodology were not changed in this batch.

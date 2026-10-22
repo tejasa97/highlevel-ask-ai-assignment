@@ -1,7 +1,7 @@
 # M45–M47: complete implementation scope
 
 Date: 22 October 2026
-Status: revised implementation contract; module implementation and verification remain to be done.
+Status: thirty actions implemented on the worktree branch; deterministic, persistence, HTTP and retrieval checks pass. Repeated real-planner evaluation remains pending after a provider quota stop. See M45-M47-VERIFICATION.md for current evidence and unmet gates.
 Base: main at 3d4588d (also origin/main when checked).
 Branch: codex/m45-m47-complete, in a separate managed worktree.
 
@@ -195,4 +195,4 @@ Sibling links are selective, not an all-to-all expansion. Test candidate links o
 
 All 30 catalog actions are implemented and reviewed; the registry reports 180 executable actions; fixtures/reset and persistent storage work; all 180 actions pass smoke tests; domain and execution tests pass; retrieval and UI integration are verified; repeated end-to-end results and remaining limitations are recorded; README, JOURNEY and trajectory reflect the delivered code. Any unmet gate is reported explicitly, not described as completed.
 
-This note was prepared by inspecting the existing registry/action contract, module tests, smoke suite, retrieval-card builder, conversation controller, shared clock, fixtures/test helpers, scenario runner and role-permission definitions in the main checkout. No module implementation is claimed by this note.
+The contract was prepared against the existing registry/action contract, module tests, smoke suite, retrieval-card builder, conversation controller, shared clock, fixtures/test helpers, scenario runner and role-permission definitions in main. Its implementation status is recorded separately; the contract's acceptance gates have not been weakened to match incomplete evaluations.
