@@ -3,7 +3,6 @@ import { ActionError, defineAction, mustGet, type ActionContext } from "../../re
 import {
   activeUser,
   candidates,
-  contains,
   inDateRange,
   Limit,
   listOf,
@@ -50,6 +49,9 @@ const detail = (s: Store, t: Ticket) => ({
   ...t,
   personName: personName(s, { contactId: t.contactId, leadId: null }),
 });
+/** What a search words match against: the ticket's own text plus who asked, so "Dorian Vale receipt" finds it. */
+const text = (s: Store, t: Ticket) =>
+  norm([t.title, t.body, personName(s, { contactId: t.contactId, leadId: null }), t.requesterEmail].filter(Boolean).join(" "));
 const Detail = Ticket.extend({ personName: z.string().nullable() });
 const create = defineAction({
   id: "M47.A01",
@@ -122,7 +124,7 @@ const details = defineAction({
 const search = defineAction({
   id: "M47.A03",
   description:
-    "Search support tickets by title/body text, contact, owner, priority or status; newest first. With no status filter includes resolved and closed tickets.",
+    "Search support tickets by text (matched against title, body, requester name and email: every word must appear somewhere), contact, owner, priority or status; newest first. With no status filter includes resolved and closed tickets.",
   risk: "read",
   input: z.strictObject({
     query: Text.optional(),
@@ -137,15 +139,15 @@ const search = defineAction({
   output: listOf(Detail),
   entities: { produces: "ticket" },
   example: () => ({ status: "open" }),
-  handler: (a, { store }) =>
-    page(
+  handler: (a, { store }) => {
+    const words = a.query ? norm(a.query).split(" ").filter(Boolean) : null;
+    return page(
       store
         .find<Ticket>(
           "tickets",
           (t) =>
-            (!a.query ||
-              contains(t.title, a.query) ||
-              contains(t.body, a.query)) &&
+            (!words ||
+              words.every((w) => text(store, t).includes(w))) &&
             (!a.contactId || t.contactId === a.contactId) &&
             (!a.ownerId || t.ownerId === a.ownerId) &&
             (!a.priority || t.priority === a.priority) &&
@@ -158,7 +160,8 @@ const search = defineAction({
         )
         .map((t) => detail(store, t)),
       a.limit,
-    ),
+    );
+  },
 });
 const assign = defineAction({
   id: "M47.A04",
@@ -270,7 +273,7 @@ function replyTarget(ticketId: string, ctx: ActionContext) {
 const reply = defineAction({
   id: "M47.A08",
   description:
-    "Reply by email to a support ticket's requester with body. Only this action updates ticket replies and first-response SLA; do not use generic email/SMS/conversation send. Resolved/closed tickets must be reopened; success moves open to in_progress. Transactional: marketing opt-outs do not block, but an email address is required.",
+    "Reply by email to a support ticket's requester with body. Only this action updates ticket replies and first-response SLA; do not use generic email/SMS/conversation send. Resolved/closed tickets must be reopened; success moves open to in_progress. If the email bounces, the reply is kept on the ticket with its failure reason, but it does not count as a first response and the status does not change. Transactional: marketing opt-outs do not block, but an email address is required.",
   risk: "external",
   input: z.strictObject({ ticketId: TicketId, body: Text }),
   output: Ticket,
@@ -279,6 +282,12 @@ const reply = defineAction({
   preflight: ({ ticketId }, ctx) => {
     const { ticket, to } = replyTarget(ticketId, ctx);
     return { ticketId, contactId: ticket.contactId, to };
+  },
+  caveat: (t) => {
+    const why = t.replies.at(-1)?.failureReason;
+    return why
+      ? `the email bounced (${why}); the reply is saved on the ticket but is not a first response and the status is unchanged`
+      : undefined;
   },
   handler: ({ ticketId, body }, ctx) => {
     const { ticket: t } = replyTarget(ticketId, ctx);
@@ -290,6 +299,21 @@ const reply = defineAction({
         body,
       }),
       at = ctx.clock.now().toISOString();
+    // A bounced reply stays on the ticket as a trail, but the requester has not been answered:
+    // no first-response credit, no status change.
+    if (e.status !== "delivered")
+      return ctx.store.update<Ticket>("tickets", t.id, {
+        updatedAt: at,
+        replies: [
+          ...t.replies,
+          {
+            body,
+            emailId: e.id,
+            at,
+            failureReason: e.failureReason ?? "The email was not delivered",
+          },
+        ],
+      });
     return ctx.store.update<Ticket>("tickets", t.id, {
       status: "in_progress",
       updatedAt: at,

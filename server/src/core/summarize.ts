@@ -55,11 +55,16 @@ function describe(step: CStep, r: StepResult, registry: Registry): string | null
     const a = step.call.action;
     if (a.risk === "read") return null; // reads only matter through what they feed
     const name = titleOf(r.output);
-    return `Done: ${a.name}${name ? ` (${name})` : ""}${r.items?.[0]?.replayed ? ", already done earlier" : ""}.`;
+    const caveat = r.output === undefined ? undefined : a.caveat?.(r.output);
+    return `Done: ${a.name}${name ? ` (${name})` : ""}${r.items?.[0]?.replayed ? ", already done earlier" : ""}${caveat ? `, but ${caveat}` : ""}.`;
   }
   if (step.kind === "forEach" && r.items) {
     const writes = step.calls.filter((c) => c.action.risk !== "read");
-    if (writes.length === 0) return null;
+    // A loop of reads is the answer when nothing uses it: show what each item's reads returned.
+    if (writes.length === 0) {
+      const shownReads = r.items.flatMap((i) => (i.results ?? []).filter((x) => x && typeof x === "object").map((x) => record(x)));
+      return shownReads.length ? `${shownReads.slice(0, NAMES_MAX).join("; ")}${shownReads.length > NAMES_MAX ? `; and ${shownReads.length - NAMES_MAX} more` : ""}.` : null;
+    }
     const actions = writes.map((c) => c.action.name).join(" + ");
     const ok = r.items.filter((i) => i.status === "done");
     const bad = r.items.filter((i) => i.status === "failed");
@@ -67,6 +72,9 @@ function describe(step: CStep, r: StepResult, registry: Registry): string | null
     const out: string[] = [];
     if (r.items.length === 0) return `${actions}: nothing matched, so nothing was changed.`;
     if (ok.length) out.push(`${actions} for ${ok.length} of ${r.items.length}: ${list(names(ok), ok.length)}.`);
+    // A write that recorded its outcome as a failure (a bounced email, a failed sync) is not a plain success.
+    const caveats = ok.flatMap((i) => step.calls.flatMap((c, n) => (c.action.risk !== "read" && c.action.caveat?.(i.results?.[n]) ? [`${i.label ?? i.key} (${c.action.caveat(i.results?.[n])})`] : [])));
+    if (caveats.length) out.push(`But ${caveats.length} of those did not go through: ${caveats.slice(0, NAMES_MAX).join("; ")}${caveats.length > NAMES_MAX ? "; …" : ""}.`);
     if (bad.length) out.push(`Failed for ${bad.length}: ${bad.slice(0, NAMES_MAX).map((i) => `${i.label ?? i.key} (${i.error!.message})`).join("; ")}${bad.length > NAMES_MAX ? "; …" : ""}.`);
     return out.join(" ");
   }

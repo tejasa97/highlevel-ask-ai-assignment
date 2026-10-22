@@ -43,6 +43,17 @@ test("create and search preserve requester identity, defaults, totals and filter
   assert.equal(r.items.length, 1);
   assert.equal(w.call("M47.A02", { ticketId: t.id }).personName, c.name);
 });
+test("search words may span title, body and who asked, in any order", async () => {
+  const w = await testWorld(),
+    c = w.f.contact({ name: "Marcus Quillfeather" }),
+    t = w.f.ticket({ contactId: c.id, title: "Receipt download fails", body: "The link is broken" });
+  w.f.ticket({ title: "Receipt download fails" });
+  const ids = (query: string) => w.call("M47.A03", { query }).items.map((x: { id: string }) => x.id);
+  assert.deepEqual(ids("Marcus Quillfeather Receipt"), [t.id]);
+  assert.deepEqual(ids("receipt marcus"), [t.id]);
+  assert.deepEqual(ids("Marcus broken link"), [t.id]);
+  assert.deepEqual(ids("Marcus invoice"), []);
+});
 test("owner must be active, available and eligible; unrelated ownership is untouched", async () => {
   const w = await testWorld(),
     t = w.f.ticket();
@@ -150,7 +161,7 @@ test("transactional bypass permits opt-outs/DND but never missing or invalid ema
     w.call("M47.A08", { ticketId: t.id, body: "Support update" }).status,
     "in_progress",
   );
-  for (const email of [null, "not-an-email", "unreachable@bounce.example"]) {
+  for (const email of [null, "not-an-email"]) {
     const ctx = await testWorld(),
       c = ctx.f.contact({ email }),
       t = ctx.f.ticket({ contactId: c.id });
@@ -165,6 +176,29 @@ test("transactional bypass permits opt-outs/DND but never missing or invalid ema
     assert.deepEqual(ctx.store.audit(), audit);
     assert.deepEqual(ctx.call("M47.A10", { ticketId: t.id }), sla);
   }
+});
+test("a bounced reply stays as a trail but is not a first response, and a later good one is", async () => {
+  const w = await testWorld(),
+    c = w.f.contact({ email: "unreachable@bounce.example" }),
+    t = w.f.ticket({ contactId: c.id });
+  const r = w.call("M47.A08", { ticketId: t.id, body: "Hello" });
+  assert.equal(r.status, "open", "the requester has not been answered");
+  assert.equal(r.firstResponseAt, null);
+  assert.equal(r.firstResponseDueAt, null);
+  assert.deepEqual(r.history, []);
+  assert.equal(r.replies.length, 1);
+  assert.match(r.replies[0].failureReason, /hard bounce/);
+  const e = w.call("M13.A06", { emailId: r.replies[0].emailId });
+  assert.equal(e.kind, "ticket_reply");
+  assert.equal(e.status, "bounced");
+  assert.equal(w.call("M47.A10", { ticketId: t.id }).firstResponseAt ?? null, null);
+  // Fixing the address and replying again records the real first response next to the failed one.
+  w.call("M47.A09", { ticketId: t.id, contactId: w.f.contact().id });
+  const ok = w.call("M47.A08", { ticketId: t.id, body: "Hello again" });
+  assert.equal(ok.status, "in_progress");
+  assert.equal(ok.firstResponseAt, w.clock.now().toISOString());
+  assert.equal(ok.replies.length, 2);
+  assert.equal(ok.replies[1].failureReason, undefined);
 });
 test("unlinked requester replies use their own address without touching another person's conversation", async () => {
   const w = await testWorld(),

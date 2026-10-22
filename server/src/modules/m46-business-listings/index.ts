@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import {
@@ -50,7 +51,7 @@ function change(
   const l = get(ctx.store, id);
   if (
     Object.entries(patch).every(
-      ([k, v]) => JSON.stringify(l[k as keyof Listing]) === JSON.stringify(v),
+      ([k, v]) => isDeepStrictEqual(l[k as keyof Listing], v),
     )
   )
     throw new ActionError("CONFLICT", "The listing is unchanged");
@@ -213,21 +214,32 @@ const categories = defineAction({
       categories: [...new Set(categories.map((x) => x.toLowerCase()))],
     }),
 });
+/** The simulated directories are all reachable except one whose name says it is down, like an email domain that says "bounce". */
+const unreachable = (directory: string) => /down/i.test(directory);
 const publish = defineAction({
   id: "M46.A09",
   description:
-    "Publish or sync the latest version of a business listing to its simulated directory. This publishes a business profile, not a customer review response. No real directory is contacted.",
+    "Publish or sync the latest version of a business listing to its simulated directory. This publishes a business profile, not a customer review response. No real directory is contacted. A directory whose name contains \"down\" is simulated as unreachable: the sync is recorded as failed with its reason (status failed in Check listing sync), the published version stays as it was, and publishing again retries.",
   risk: "external",
   input: z.strictObject({ listingId: ListingId }),
   output: Listing,
   entities: { consumes: ["listing"] },
   example: (f) => ({ listingId: f.listing().id }),
+  caveat: (l) =>
+    l.failureReason
+      ? `the sync to ${l.directory} failed (${l.failureReason}), so the listing is still ${l.publishedVersion === null ? "unpublished" : `at published version ${l.publishedVersion}`}`
+      : undefined,
   handler: ({ listingId }, { store, clock, actorId }) => {
     requirePermission(store, actorId, "reputation.manage");
     const l = get(store, listingId);
     if (l.publishedVersion === l.version)
       throw new ActionError("CONFLICT", "This listing is already in sync");
     const at = clock.now().toISOString();
+    if (unreachable(l.directory))
+      return store.update<Listing>("listings", l.id, {
+        lastSyncAt: at,
+        failureReason: `${l.directory} is not responding`,
+      });
     return store.update<Listing>("listings", l.id, {
       publishedVersion: l.version,
       publishedAt: at,
@@ -239,7 +251,7 @@ const publish = defineAction({
 const sync = defineAction({
   id: "M46.A10",
   description:
-    "Check whether a business listing is never published, pending changes, synced or failed. Computed from current and last-published versions; no real directory is queried.",
+    "Check whether a business listing is never published, pending changes, synced or failed. Computed from current and last-published versions and the last sync attempt's outcome; no real directory is queried.",
   risk: "read",
   input: z.strictObject({ listingId: ListingId }),
   output: z.object({

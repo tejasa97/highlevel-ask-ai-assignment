@@ -185,6 +185,14 @@ describe("compile errors the planner can act on", () => {
     assert.match(e, /\$s1\.items is a list; use \$s1\.items\[\*\]\.id/);
   });
 
+  test("a filter's result is the list itself, and .items on it reads as that list", () => {
+    const p = plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.items[*].id", ownerId: "us_2" })]);
+    assert.equal(compile(p, registry).ok, false, "still a list where a single value is needed");
+    assert.equal(compile(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), op("g", "filter", { in: "$f.items", where: { score: { gte: 0 } } })]), registry).ok, true);
+    const e = errs(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.nope", ownerId: "us_2" })]));
+    assert.match(e, /already the list of records/);
+  });
+
   test("forward ref", () => {
     assert.match(errs(plan([action("s1", "M03.A05", { leadId: "$s2.id", ownerId: "us_2" }), action("s2", "M03.A03", {})])), /not an earlier step/);
   });
@@ -221,6 +229,17 @@ describe("compile errors the planner can act on", () => {
 });
 
 describe("runtime outcomes", () => {
+  test("a filter read through .items gives the same records as read directly", async () => {
+    const ctx = fresh();
+    const viaItems = compiled(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), op("g", "filter", { in: "$f.items", where: { score: { gte: 0 } } })]));
+    const direct = compiled(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), op("g", "filter", { in: "$f", where: { score: { gte: 0 } } })]));
+    const a = await execute(viaItems, registry, ctx, { executionId: "alias-a" });
+    const b = await execute(direct, registry, ctx, { executionId: "alias-b" });
+    assert.equal(a.status, "done");
+    assert.ok((a.steps.at(-1)!.output as unknown[]).length > 0);
+    assert.deepEqual(a.steps.at(-1)!.output, b.steps.at(-1)!.output);
+  });
+
   test("a name that isn't the asked-for type says which type it is", async () => {
     const ctx = fresh();
     ctx.f.lead({ firstName: "Quinn", lastName: "Leadonly" });

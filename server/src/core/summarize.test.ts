@@ -24,10 +24,13 @@ const plan = (steps: SubmitPlan["steps"]): SubmitPlan => ({
   text: null,
 });
 
-async function reply(steps: SubmitPlan["steps"], ctx = world()) {
+let runs = 0;
+async function reply(steps: SubmitPlan["steps"], ctx = world(), approve = false) {
   const r = compile(plan(steps), registry);
   if (!r.ok) assert.fail(r.errors.join("\n"));
-  const run = await execute(r.plan, registry, ctx, { executionId: "sum" });
+  runs++;
+  let run = await execute(r.plan, registry, ctx, { executionId: `sum${runs}` });
+  if (approve && run.pending) run = await execute(r.plan, registry, ctx, { executionId: `sum${runs}`, approvals: [run.pending] });
   return { text: summarize(r.plan, run, registry), ctx };
 }
 
@@ -35,6 +38,18 @@ describe("summarize: writes", () => {
   test("say which record they made", async () => {
     const { text } = await reply([action("s1", "M06.A01", { title: "Call Ana" })]);
     assert.equal(text, "Done: Create task (Call Ana).");
+  });
+
+  test("an outcome recorded as a failure is not reported as a plain success", async () => {
+    const ctx = world();
+    const request = ctx.f.reviewRequest({ contactId: ctx.f.contact({ email: "gone@bounce.example" }).id });
+    const bounced = await reply([action("s1", "M45.A02", { requestId: request.id })], ctx, true);
+    assert.match(bounced.text, /^Done: .*, but the email bounced \(Mailbox doesn't exist \(hard bounce\)\), so the request is marked failed and was not sent\.$/);
+    const listing = ctx.f.listing({ directory: "yelp-down" });
+    const down = await reply([action("s1", "M46.A09", { listingId: listing.id })], ctx, true);
+    assert.match(down.text, /but the sync to yelp-down failed \(yelp-down is not responding\), so the listing is still unpublished\.$/);
+    const ok = await reply([action("s1", "M46.A09", { listingId: ctx.f.listing().id })], ctx, true);
+    assert.doesNotMatch(ok.text, /but/);
   });
 });
 
@@ -110,6 +125,28 @@ describe("summarize: a plan that only reads still answers", () => {
       action("s2", "M49.A09", { teamId: "$s1.id" }),
     ]);
     assert.equal(text.split("\n").length, 1, text);
+  });
+
+  test("a loop of reads is the answer, so it shows what each item returned", async () => {
+    const ctx = world();
+    const listing = ctx.f.listing({ name: "Harbor Dental", directory: "yelp" });
+    const { text } = await reply([
+      action("s1", "M46.A03", { query: "Harbor Dental" }),
+      { id: "s2", kind: "op" as const, op: "forEach" as const, in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M46.A10", argsJson: JSON.stringify({ listingId: "$item.id" }) }] },
+    ], ctx);
+    assert.ok(text.length > 0 && text.includes(listing.name) && /never_published/.test(text), text);
+  });
+
+  test("a loop of writes names the ones whose outcome was recorded as a failure", async () => {
+    const ctx = world();
+    const good = ctx.f.reviewRequest({ contactId: ctx.f.contact({ email: "ok@example.com" }).id });
+    const bad = ctx.f.reviewRequest({ contactId: ctx.f.contact({ email: "gone@bounce.example" }).id });
+    const { text } = await reply([
+      action("s1", "M45.A04", {}),
+      { id: "s2", kind: "op" as const, op: "forEach" as const, in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M45.A02", argsJson: JSON.stringify({ requestId: "$item.id" }) }] },
+    ], ctx, true);
+    assert.match(text, /But 1 of those did not go through: .*email bounced/, text);
+    assert.ok(good.id && bad.id);
   });
 });
 

@@ -104,6 +104,33 @@ test("publication/sync derive state from versions, preserve publication across d
   const failed = w.f.listing({ failureReason: "Directory down" });
   assert.equal(w.call("M46.A10", { listingId: failed.id }).status, "failed");
 });
+test("publishing to a directory that is down records the failure, keeps what was published, and a retry clears it", async () => {
+  const w = await testWorld(),
+    ok = w.f.listing({ directory: "google" });
+  w.call("M46.A09", { listingId: ok.id });
+  w.call("M46.A04", { listingId: ok.id, name: "Renamed" });
+  const l = w.f.listing({ directory: "yelp-down", version: 2, publishedVersion: 1, publishedAt: w.f.at(-1) });
+  const audit = w.store.audit().length;
+  const r = w.call("M46.A09", { listingId: l.id });
+  assert.equal(r.publishedVersion, 1, "the earlier publication is untouched");
+  assert.equal(r.publishedAt, l.publishedAt);
+  assert.equal(r.lastSyncAt, w.clock.now().toISOString());
+  assert.match(r.failureReason, /yelp-down is not responding/);
+  assert.equal(w.store.audit().length, audit + 1, "the failed attempt is on the audit trail");
+  const s = w.call("M46.A10", { listingId: l.id });
+  assert.equal(s.status, "failed");
+  assert.equal(s.failureReason, r.failureReason);
+  // Trying again fails the same way, and an edit starts a fresh attempt (pending, no stale failure).
+  assert.equal(w.call("M46.A09", { listingId: l.id }).publishedVersion, 1);
+  w.call("M46.A04", { listingId: l.id, name: "Edited while down" });
+  assert.equal(w.call("M46.A10", { listingId: l.id }).status, "pending");
+  // The directory comes back: the same listing moves to another working directory's behaviour by being republished.
+  w.store.update("listings", l.id, { directory: "yelp" });
+  const fixed = w.call("M46.A09", { listingId: l.id });
+  assert.equal(fixed.publishedVersion, fixed.version);
+  assert.equal(fixed.failureReason, null);
+  assert.equal(w.call("M46.A10", { listingId: l.id }).status, "synced");
+});
 test("injected publication failure and denied permission do not change the listing or audit", async () => {
   const w = await testWorld(),
     l = w.f.listing(),

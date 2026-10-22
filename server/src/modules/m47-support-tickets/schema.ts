@@ -21,7 +21,13 @@ export const Ticket = z.object({
     z.object({ body: z.string(), by: z.string(), at: z.string() }),
   ),
   replies: z.array(
-    z.object({ body: z.string(), emailId: z.string(), at: z.string() }),
+    z.object({
+      body: z.string(),
+      emailId: z.string(),
+      at: z.string(),
+      /** Set when the reply bounced: it is on the ticket, but never counted as a response. */
+      failureReason: z.string().optional(),
+    }),
   ),
   createdAt: z.string(),
   updatedAt: z.string(),
