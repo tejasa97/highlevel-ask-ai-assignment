@@ -93,6 +93,8 @@ export interface Pick {
 }
 
 export interface Retrieval {
+  /** Actual mode of this round, including an embedding failure's BM25 fallback. */
+  mode: "hybrid" | "bm25";
   query: string;
   clauses: string[];
   terms: string[];
@@ -251,7 +253,7 @@ export class Retriever {
       }
     }
 
-    return { query, clauses: parts, terms: terms(query), picks, ranking: ranking.slice(0, 50), topScore: round(topScore), noMatch, ms: round(performance.now() - started) };
+    return { mode: dense.length ? "hybrid" : "bm25", query, clauses: parts, terms: terms(query), picks, ranking: ranking.slice(0, 50), topScore: round(topScore), noMatch, ms: round(performance.now() - started) };
   }
 
   /** The whole-message query and the clauses, shared by BM25 and the embedding model. */

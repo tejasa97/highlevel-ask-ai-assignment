@@ -59,6 +59,13 @@ describe("cards", () => {
 });
 
 describe("retrieve", () => {
+  test("trace mode follows actual rankings rather than whether an embedder was configured", async () => {
+    assert.equal(r.retrieve({message:"create support ticket"}).mode,"bm25");
+    const good = new Retriever(cards,{}, {rank:async()=>[[{id:"M47.A01",score:1}]]});
+    assert.equal(good.retrieve(await good.prepare({message:"create support ticket"})).mode,"hybrid");
+    const broken = new Retriever(cards,{}, {rank:async()=>{throw Error("test inference failure");}});
+    assert.equal(broken.retrieve(await broken.prepare({message:"create support ticket"})).mode,"bm25");
+  });
   test("finds the obvious action first", () => {
     assert.equal(r.retrieve({ message: "create a contact for Ana Ruiz" }).picks[0]!.id, "M01.A01");
   });
