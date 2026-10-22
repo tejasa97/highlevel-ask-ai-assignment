@@ -21,6 +21,8 @@ export interface HistoryEntry {
   file?: string;
   /** Added afterwards from a saved result file or a re-run of an old commit, not by the run itself. */
   backfilled?: string;
+  /** The change it measured was reverted: the run stays in the history, off the main lines. */
+  reverted?: boolean;
   note?: string;
 }
 

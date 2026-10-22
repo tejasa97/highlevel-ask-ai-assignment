@@ -15,6 +15,7 @@ the numbers. `docs/trajectory.html` is built from this file and `eval/results/hi
   Runs the planner couldn't serve (quota, timeout, provider down) are **infra**: counted apart, never in the pass rate.
 - Every recorded run is one line in `eval/results/history.jsonl`, with the commit, whether there were uncommitted
   edits, and a fingerprint of the question set. Runs are comparable only when the fingerprint matches.
+  A run of a change that was later reverted is marked `reverted`: it stays in the table, off the charts.
 
 ## How to add an entry
 
@@ -210,3 +211,20 @@ sent a plan of reads (a lone resolve, so the reply was empty) instead of a look.
 
 **Cost.** None at run time. Cost per run is about $0.02 against fix2-3x's $0.012, with or without these changes:
 the token counts show fewer prompt-cache hits, not a bigger prompt.
+
+## 13. Tried and reverted: a plan that only finds records, taken as a look
+`uncommitted` · 2026-10-22 · runs: resolver-fix-3x → no-action-look-3x
+
+**Problem.** direct-appointment-reschedule still failed 2 of 3: the planner sent "find Sarah's walkthrough" as the
+plan, with no action after it, so nothing moved and the reply was empty.
+
+**Change.** A plan that only resolves names, running no action, was run as a look instead, and the planner asked
+to plan again with the results.
+
+**Result.** Worse: 97.1% → 92.8%, 22/23 → 19/23 scenarios pass every run, and the reschedule stayed at 1/3. A
+resolve gives back only the record's id, not its time; turned into a look it used up the turn's one look, so the
+planner couldn't read the meeting and asked the user its time instead. Three other scenarios each failed once on a
+turn that went through a look. Reverted; the run is kept in the history, marked `reverted`.
+
+**What it says.** The fix belongs where the planner gets what it needs from one look, not in reinterpreting its
+replies.

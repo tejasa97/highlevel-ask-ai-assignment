@@ -203,14 +203,14 @@ const day = (iso) => new Date(iso).toLocaleDateString("en-CA");
 const commitOf = (h) => (h.git ? h.git.sha + (h.git.dirty ? "+" : "") : "?");
 
 // Main lines: the newest question set for each suite, without ablations.
-const retr = history.filter((h) => h.suite === "retrieval" && h.config.split === "test" && !h.config.ablation);
+const retr = history.filter((h) => h.suite === "retrieval" && h.config.split === "test" && !h.config.ablation && !h.reverted);
 const retrSet = retr.at(-1)?.set;
 const retrLine = retr.filter((h) => h.set === retrSet);
 const retrNow = retrLine.at(-1);
 const ablations = history.filter((h) => h.suite === "retrieval" && h.set === retrSet && h.git?.sha === retrNow?.git?.sha && h.config.ablation);
 // Scenario runs are drawn for the latest planner and tier only; a run on another model is in the table.
-const lastScen = history.filter((h) => h.suite === "scenarios").at(-1);
-const scen = history.filter((h) => h.suite === "scenarios" && h.metrics.measured > 0 && h.config.planner === lastScen?.config.planner && h.config.tier === lastScen?.config.tier);
+const lastScen = history.filter((h) => h.suite === "scenarios" && !h.reverted).at(-1);
+const scen = history.filter((h) => h.suite === "scenarios" && h.metrics.measured > 0 && !h.reverted && h.config.planner === lastScen?.config.planner && h.config.tier === lastScen?.config.tier);
 const scen3 = scen.filter((h) => h.config.repeat >= 3);
 
 // ---- headline ----
@@ -331,7 +331,7 @@ if (retrNow) {
   barChart($("ablation"), rows, { lo: 50, hi: 100, fmt: (v) => pct(v) });
 }
 if (scen.length) {
-  lineChart($("scenarios"), scen.map((h) => [h.label, "×" + h.config.repeat + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "")]), [
+  lineChart($("scenarios"), scen.map((h) => [h.label, "×" + h.config.repeat + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "") + (h.reverted ? " · reverted" : "")]), [
     { name: "pass", color: "var(--s1)", values: scen.map((h) => h.metrics.passRate) },
   ], { lo: 50, hi: 100, fmt: (v) => Math.round(v) + "%", breaks: scen.map((h, i) => (i && h.set !== scen[i - 1].set ? i : 0)).filter(Boolean), tipOf: (i) => { const h = scen[i]; return runTip(h, [pct(h.metrics.passRate) + " of " + (h.metrics.runs - h.metrics.infraRuns) + " clean runs", h.metrics.allPass + "/" + h.metrics.measured + " scenarios pass every run · " + h.metrics.flaky + " flaky", h.metrics.infraRuns ? h.metrics.infraRuns + " runs failed outside the app" : "no infra failures"]); } });
   const sets = [...new Set(scen.map((h) => h.set))];
@@ -380,7 +380,7 @@ $("timeline").innerHTML = journey.map((e) => {
 
 // ---- table view ----
 const cols = [["at", (h) => day(h.at) + " " + new Date(h.at).toTimeString().slice(0, 5)], ["suite", (h) => h.suite], ["label", (h) => h.label], ["commit", commitOf], ["set", (h) => h.set],
-  ["headline", (h) => h.suite === "retrieval" ? "R@15 " + pct(h.metrics.r15) + " · R@5 " + pct(h.metrics.r5) + (h.config.ablation ? " · ablation" : "") : pct(h.metrics.passRate) + " · " + h.metrics.allPass + "/" + h.metrics.measured + " · " + (h.metrics.e2eP50Ms / 1000).toFixed(1) + " s · $" + h.metrics.costPerRunUsd + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "")],
+  ["headline", (h) => h.suite === "retrieval" ? "R@15 " + pct(h.metrics.r15) + " · R@5 " + pct(h.metrics.r5) + (h.config.ablation ? " · ablation" : "") : pct(h.metrics.passRate) + " · " + h.metrics.allPass + "/" + h.metrics.measured + " · " + (h.metrics.e2eP50Ms / 1000).toFixed(1) + " s · $" + h.metrics.costPerRunUsd + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "") + (h.reverted ? " · reverted" : "")],
   ["source", (h) => h.backfilled || "recorded by the run"]];
 $("table").innerHTML = "<table><thead><tr>" + cols.map(([c]) => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>" + history.map((h) => "<tr>" + cols.map(([, f]) => "<td>" + esc(f(h)) + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
 </script>
