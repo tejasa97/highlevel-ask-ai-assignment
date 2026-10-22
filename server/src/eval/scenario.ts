@@ -114,6 +114,8 @@ export interface ScenarioRun {
   failures: Failure[];
   turns: TurnTrace[];
   metrics: RunMetrics;
+  /** Models the planner replied with, in order of first use. */
+  models?: string[];
 }
 
 export interface RunDeps {
@@ -140,6 +142,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
   const usage: Usage = { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0 };
   let plannerMs = 0;
   let changes = 0;
+  const models: string[] = [];
 
   for (const t of s.turns) {
     const trace: TurnTrace = { user: t.user, status: "", reply: "", offered: [], planned: [], calls: [], plannerRounds: 0, compileErrors: [], errors: [], approvals: 0, firstReplyMs: 0, ms: 0 };
@@ -150,6 +153,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       else if (event === "planner.reply") {
         trace.plannerRounds++;
         plannerMs += data.latencyMs;
+        if (data.model && !models.includes(data.model)) models.push(data.model);
         for (const k of Object.keys(usage) as (keyof Usage)[]) usage[k] += data.usage?.[k] ?? 0;
       } else if (event === "compile.errors") trace.compileErrors.push(...data.errors);
       else if (event === "plan") trace.planned.push(...data.steps.flatMap((st: { calls?: { action: string }[] }) => (st.calls ?? []).map((c) => c.action)));
@@ -195,6 +199,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       calls: turns.reduce((a, t) => a + t.calls.length, 0),
       usage,
     },
+    models,
   };
 }
 

@@ -6,6 +6,7 @@ A natural-language assistant over a simulated CRM: 50 modules × 10 actions, wit
 
 - `docs/ASSIGNMENT.md` (local only, not in the repo): what's being asked, with a requirements checklist
 - [docs/PLAN.md](docs/PLAN.md): architecture, design and the 5-day schedule
+- [BENCHMARK.md](BENCHMARK.md): quality, latency (direct vs complex), tokens and cost per successful task, from the latest recorded run; regenerate with `npm run report` in `server/`
 - [docs/PROMPT-EXAMPLE.md](docs/PROMPT-EXAMPLE.md): the planner prompt over two turns, with real payloads and token counts
 - [docs/assignment/](docs/assignment/): the original brief and catalog PDFs
 
