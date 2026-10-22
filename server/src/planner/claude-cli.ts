@@ -63,6 +63,7 @@ export class ClaudeCliPlanner implements Planner {
       text: out.result,
       latencyMs,
       usage: {
+        billing: "api_estimate",
         input: u.input_tokens + cachedRead + cacheWrite, // total input: uncached + cache read + cache write
         cachedRead,
         cacheWrite,

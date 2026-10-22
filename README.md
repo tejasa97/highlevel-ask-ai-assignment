@@ -59,6 +59,46 @@ The 45 development cases cover all thirty new action IDs. The 12 reporting cases
 
 AI validation is still pending: the baseline passed 69/69 runs before implementation; the first new development run hit provider quota, producing four infrastructure failures and 41 unstarted cases, not a measured task pass rate. Do not treat deterministic/scripted tests or retrieval scores as a substitute for the pending 3× development, regression and reporting runs. See [JOURNEY](docs/JOURNEY.md) and [trajectory](docs/trajectory.html) for measured history.
 
+## Use a Codex subscription locally
+
+Install Codex CLI and run `codex login` with ChatGPT sign-in. The adapter is verified with
+CLI 0.159.0. Set `PLANNER=codex-cli` in your local `.env`, or select it for one command
+from `server/`:
+
+```sh
+PLANNER=codex-cli npm run probe:planner
+PLANNER=codex-cli npm run serve
+PLANNER=codex-cli npm run ask -- "create a task to call Jo"
+```
+
+`CODEX_MODEL` and `CODEX_FAST_MODEL` select the strong/fast models (default `gpt-6.1-sol`).
+Set both to `gpt-6-luna` to use GPT-6 Luna. `CODEX_REASONING` and `CODEX_FAST_REASONING`
+accept `low`, `medium`, `high` or `xhigh` (default `low`; fast inherits strong if omitted).
+Model access depends on your account. `CODEX_BIN` optionally selects an executable;
+`CODEX_HOME` may select your existing CLI authentication directory. Claude remains the default.
+Card generation stays on Claude so its provenance stamp remains accurate.
+
+The adapter uses the Codex runtime, rather than raw model API calls. It supplies our planner
+instructions, request and output schema, while Codex adds runtime framing. **The captured request
+still advertised skills and tools despite the disabling flags.** See the measured
+[provider capture note](docs/CODEX-PROVIDER-CAPTURE.md) for the actual request, limitations and
+local evidence. Do not treat the adapter as a tool-free or prompt-only inference boundary.
+The [main-based validation results](docs/CODEX-VALIDATION.md) record the live Luna sample,
+including its planning failures.
+
+This is a trusted local development provider. It strips inherited API credentials, checks the
+current login before enforcing ChatGPT authentication, uses a private working directory and
+read-only sandbox, and requests restricted runtime capabilities. Unexpected tool events and
+configuration errors fail the request; this cannot undo any tool action already started by
+the runtime. Keep it out of public or untrusted services. Direct API calls need their own
+API-key provider and billing.
+
+Calls have a 120-second deadline, bounded output, cancellation and temporary-file cleanup.
+Subscription usage consumes your shared allowance; USD cost remains unknown in the UI, scenario
+results and benchmark reports, with no automatic API fallback. The app still validates plans
+and owns CRM execution and confirmation. See the
+[official non-interactive documentation](https://learn.chatgpt.com/docs/non-interactive-mode).
+
 ## Layout
 
 ```

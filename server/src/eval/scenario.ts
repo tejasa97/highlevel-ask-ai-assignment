@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { z } from "zod";
 import type { Planner, Tier, Usage } from "../planner/types.js";
+import { sumUsd } from "../planner/usage.js";
 import type { Registry } from "../registry/registry.js";
 import type { Retriever } from "../retrieval/retrieve.js";
 import { Conversation } from "../server/conversation.js";
@@ -137,7 +138,8 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
   }
   const chat = new Conversation(deps, w);
   const turns: TurnTrace[] = [];
-  const usage: Usage = { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0 };
+  const subscription = deps.planner.name === "codex-cli";
+  const usage: Usage = { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: subscription ? null : 0, billing: subscription ? "subscription" : "none" };
   let plannerMs = 0;
   let changes = 0;
 
@@ -150,7 +152,10 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       else if (event === "planner.reply") {
         trace.plannerRounds++;
         plannerMs += data.latencyMs;
-        for (const k of Object.keys(usage) as (keyof Usage)[]) usage[k] += data.usage?.[k] ?? 0;
+        const next: Usage = data.usage;
+        for (const k of ["input", "cachedRead", "cacheWrite", "output", "thinking"] as const) usage[k] += next[k];
+        usage.costUsd = sumUsd([usage.costUsd, next.costUsd]);
+        usage.billing = next.billing;
       } else if (event === "compile.errors") trace.compileErrors.push(...data.errors);
       else if (event === "plan") trace.planned.push(...data.steps.flatMap((st: { calls?: { action: string }[] }) => (st.calls ?? []).map((c) => c.action)));
       else if (event === "call") trace.calls.push({ action: data.action, args: data.args, ...(data.error ? { error: `${data.error.code}: ${data.error.message}` } : {}) });

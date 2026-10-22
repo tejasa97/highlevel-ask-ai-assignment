@@ -10,6 +10,7 @@ import { appendHistory, fingerprint, gitState } from "../eval/history.js";
 import { runScenario, type ScenarioRun } from "../eval/scenario.js";
 import { selectScenarios } from "../eval/selection.js";
 import { makePlanner } from "../planner/index.js";
+import { formatCost, sumUsd } from "../planner/usage.js";
 import { loadRegistry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
 import { loadDense } from "../retrieval/embed.js";
@@ -23,7 +24,7 @@ const opt = (name: string) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const repeat = Number(opt("repeat") ?? 1);
-const concurrency = Number(opt("concurrency") ?? 4);
+const concurrency = Number(opt("concurrency") ?? (process.env.PLANNER === "codex-cli" ? 1 : 4));
 const only = opt("only")?.split(",");
 const label = opt("label") ?? "latest";
 const tier = args.includes("--fast") ? "fast" : "strong";
@@ -95,6 +96,8 @@ const first = clean.map((r) => r.metrics.firstReplyMs);
 const measured = scenarios.filter((s) => byId.has(s.id));
 const cost = runs.map((r) => r.metrics.usage.costUsd);
 const cleanCost = clean.map((r) => r.metrics.usage.costUsd);
+const totalCost = sumUsd(cost);
+const totalCleanCost = planner.name === "codex-cli" ? null : sumUsd(cleanCost);
 const summary = {
   label,
   planner: planner.name,
@@ -121,13 +124,16 @@ const summary = {
   firstReplyMs: { p50: quantile(first, 0.5), p95: quantile(first, 0.95) },
   plannerRoundsPerRun: Math.round(mean(clean.map((r) => r.metrics.plannerRounds)) * 100) / 100,
   callsPerRun: Math.round(mean(clean.map((r) => r.metrics.calls)) * 10) / 10,
-  costUsd: { perRun: Math.round(mean(cleanCost) * 10000) / 10000, total: Math.round(cost.reduce((a, b) => a + b, 0) * 100) / 100 },
+  costUsd: {
+    perRun: totalCleanCost === null ? null : Math.round((totalCleanCost / (cleanCost.length || 1)) * 10000) / 10000,
+    total: totalCost === null ? null : Math.round(totalCost * 100) / 100,
+  },
   wallMs: Math.round(performance.now() - started),
 };
 console.log(`\npass ${summary.passRate}% of clean runs · ${summary.allPass}/${summary.measured} scenarios pass every run · ${summary.flaky} flaky`);
 if (summary.infraRuns || summary.notRun) console.log(`NOT A CLEAN RUN: ${summary.infraRuns} runs failed outside the app, ${summary.notRun} not started; ${scenarios.length - summary.measured} scenarios unmeasured`);
 console.log(`e2e p50 ${summary.e2eMs.p50} ms, p95 ${summary.e2eMs.p95} ms · first reply p50 ${summary.firstReplyMs.p50} ms, p95 ${summary.firstReplyMs.p95} ms`);
-console.log(`planner rounds/run ${summary.plannerRoundsPerRun} · calls/run ${summary.callsPerRun} · cost/run $${summary.costUsd.perRun} (total $${summary.costUsd.total}) · wall ${Math.round(summary.wallMs / 1000)} s`);
+console.log(`planner rounds/run ${summary.plannerRoundsPerRun} · calls/run ${summary.callsPerRun} · cost/run ${formatCost(summary.costUsd.perRun, planner.name === "codex-cli" ? "subscription" : "api_estimate")} (total ${formatCost(summary.costUsd.total)}) · wall ${Math.round(summary.wallMs / 1000)} s`);
 
 mkdirSync(`${EVAL}results`, { recursive: true });
 const file = `${EVAL}results/scenarios-${label}.json`;
@@ -157,7 +163,7 @@ else {
       e2eP95Ms: summary.e2eMs.p95,
       firstReplyP50Ms: summary.firstReplyMs.p50,
       plannerRoundsPerRun: summary.plannerRoundsPerRun,
-      costPerRunUsd: summary.costUsd.perRun,
+      ...(summary.costUsd.perRun === null ? {} : { costPerRunUsd: summary.costUsd.perRun }),
     },
     file: `eval/results/scenarios-${label}.json`,
   });

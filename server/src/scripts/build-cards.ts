@@ -70,7 +70,7 @@ const todo = CATALOG.filter((m) =>
 );
 console.log(`generating cards for ${todo.length} module(s)`);
 
-const planner = makePlanner();
+const planner = makePlanner("claude-cli"); // Keep the existing Claude provenance stamp accurate.
 const ids = new Set(CATALOG.flatMap((m) => m.actions.map((a) => a.id)));
 let cost = 0;
 
@@ -78,6 +78,7 @@ async function one(m: CatalogModule): Promise<void> {
   for (let attempt = 1; ; attempt++) {
     try {
       const r = await planner.plan({ tier: "strong", system: SYSTEM, user: userBlock(m), schema: SCHEMA });
+      if (r.usage.costUsd === null) throw new Error("card generation needs an API-equivalent cost estimate");
       cost += r.usage.costUsd;
       const got = (r.json as { actions: (CardMeta & { id: string })[] }).actions;
       const want = m.actions.map((a) => a.id);
