@@ -254,7 +254,7 @@ way: end-to-end p50 5.8 s → 7.3 s, p95 11.1 s → 15.9 s, with fewer planner r
 in between. It looks like `claude -p` timing from run to run, not the change, but one run can't show that.
 
 ## 15. A baseline: one call per step, against a whole plan per call
-`pending` · 2026-10-22 · runs: baseline-3x → planner-3x
+`b10bd51` · 2026-10-22 · runs: baseline-3x → planner-3x
 
 **Problem.** The planner writes the whole plan in one model call. Nothing showed that this beats the usual design,
 an agent that calls one tool per model call and reads each result before picking the next.
