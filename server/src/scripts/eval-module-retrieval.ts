@@ -108,7 +108,7 @@ const report = {
   note: "development tool availability, not task pass rate; no reporting cases read",
   results,
 };
-const file = `${root}eval/results/retrieval-m45-m47-development-ablation.json`;
+const file = `${root}eval/results/retrieval-m45-m47-development-ablation-${report.set}.json`;
 writeFileSync(file, JSON.stringify(report, null, 2));
 console.table(results.map(({ cases, ...r }) => r));
 console.log(

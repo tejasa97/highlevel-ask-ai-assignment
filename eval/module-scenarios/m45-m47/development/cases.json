@@ -826,18 +826,42 @@
     "expect": {
       "actions": {
         "includes": [
-          "M21.A03",
           "M45.A01",
           "M45.A02"
         ]
       },
       "state": [
         {
-          "sql": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.contactId') IN (SELECT json_extract(data,'$.contactId') FROM appointments WHERE json_extract(data,'$.status')='completed' AND substr(json_extract(data,'$.startAt'),1,10) BETWEEN '2026-10-19' AND '2026-10-25')",
+          "sql": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.subject')='Visit feedback' AND json_extract(data,'$.body')='Please review your visit.' AND json_extract(data,'$.status')='sent'",
           "equals": 2
+        },
+        {
+          "sql": "SELECT count(DISTINCT json_extract(data,'$.contactId')) FROM review_requests WHERE json_extract(data,'$.subject')='Visit feedback' AND json_extract(data,'$.body')='Please review your visit.' AND json_extract(data,'$.status')='sent'",
+          "equals": 2
+        },
+        {
+          "sql": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.subject')='Visit feedback' AND json_extract(data,'$.body')='Please review your visit.' AND json_extract(data,'$.status')='sent' AND json_extract(data,'$.contactId') NOT IN ('ct_35','ct_36')",
+          "equals": 0
+        },
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM review_requests WHERE id='rrq_1'",
+          "equals": "draft"
+        }
+      ],
+      "status": [
+        "done"
+      ],
+      "args": [
+        {
+          "action": "M21.A03",
+          "match": {
+            "status": "completed",
+            "from": "2026-10-19"
+          }
         }
       ]
-    }
+    },
+    "note": "Development revision 2: original SQL counted seeded requests; require newly requested sent messages. Appointment reads may run in a look, so assert their actual call instead of final-plan membership. Reporting and seed unchanged."
   },
   {
     "id": "tickets-from-invoices-messages",

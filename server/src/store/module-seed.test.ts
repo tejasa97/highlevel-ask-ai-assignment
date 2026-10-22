@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { world } from "./world.js";
 import { MODULE_SEED_URL } from "./module-seed.js";
 
-test("seed and scenario bytes still match the pre-handler freeze", () => {
+test("frozen seed/reporting and archived/current development bytes match their recorded hashes", () => {
   const dir = new URL(
     "../../../eval/module-scenarios/m45-m47/",
     import.meta.url,
