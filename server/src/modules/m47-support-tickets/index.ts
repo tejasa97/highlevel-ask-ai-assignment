@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ActionError, defineAction, mustGet } from "../../registry/define.js";
+import { ActionError, defineAction, mustGet, type ActionContext } from "../../registry/define.js";
 import {
   activeUser,
   candidates,
@@ -17,7 +17,7 @@ import {
 } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
-import { sendOwnedEmail } from "../m13-email/owned.js";
+import { ownedEmailRecipient, sendOwnedEmail } from "../m13-email/owned.js";
 import {
   dueAt,
   PRIORITIES,
@@ -259,6 +259,14 @@ const note = defineAction({
     });
   },
 });
+function replyTarget(ticketId: string, ctx: ActionContext) {
+  requirePermission(ctx.store, ctx.actorId, "tickets.manage");
+  requirePermission(ctx.store, ctx.actorId, "messaging.send");
+  const t = get(ctx.store, ticketId);
+  mutable(t);
+  const to = ownedEmailRecipient(ctx, { kind: "ticket_reply", contactId: t.contactId, to: t.requesterEmail });
+  return { ticket: t, to };
+}
 const reply = defineAction({
   id: "M47.A08",
   description:
@@ -268,11 +276,12 @@ const reply = defineAction({
   output: Ticket,
   entities: { produces: "ticket", consumes: ["ticket"] },
   example: (f) => ({ ticketId: f.ticket().id, body: "We are investigating" }),
+  preflight: ({ ticketId }, ctx) => {
+    const { ticket, to } = replyTarget(ticketId, ctx);
+    return { ticketId, contactId: ticket.contactId, to };
+  },
   handler: ({ ticketId, body }, ctx) => {
-    requirePermission(ctx.store, ctx.actorId, "tickets.manage");
-    requirePermission(ctx.store, ctx.actorId, "messaging.send");
-    const t = get(ctx.store, ticketId);
-    mutable(t);
+    const { ticket: t } = replyTarget(ticketId, ctx);
     const e = sendOwnedEmail(ctx, {
         kind: "ticket_reply",
         contactId: t.contactId,

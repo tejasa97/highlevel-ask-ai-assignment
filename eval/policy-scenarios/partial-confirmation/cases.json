@@ -1,0 +1,27 @@
+[
+  {
+    "id": "subset-replies-approved-v1",
+    "category": "multi",
+    "modules": ["M47"],
+    "note": "New user-approved policy: disclose blocked targets and confirm the eligible subset. Original frozen scenarios/results remain unchanged.",
+    "turns": [{"user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'", "approve": true}],
+    "expect": {
+      "status": ["partial"],
+      "confirmation": {"count": 1, "blockedCount": 1, "preview": [{"args": {"ticketId": "tic_1"}}], "blocked": [{"error": {"message": {"$contains": "email"}}}]},
+      "state": [
+        {"sql": "SELECT json_extract(data,'$.status') FROM tickets WHERE id='tic_1'", "equals": "in_progress"},
+        {"sql": "SELECT json_extract(data,'$.firstResponseAt') FROM tickets WHERE id='tic_4'", "equals": null}
+      ]
+    }
+  },
+  {
+    "id": "subset-replies-declined-v1",
+    "category": "failure",
+    "modules": ["M47"],
+    "turns": [{"user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'", "approve": false}],
+    "expect": {
+      "status": ["cancelled"], "noChanges": true,
+      "confirmation": {"count": 1, "blockedCount": 1, "preview": [{"args": {"ticketId": "tic_1"}}]}
+    }
+  }
+]

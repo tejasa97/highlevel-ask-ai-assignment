@@ -186,14 +186,21 @@ const tabs = computed(() => [
             <div class="text">{{ m.text }}</div>
             <div v-if="m.pending" class="pending">
               <div class="pending-list">
+                <div v-if="m.pending.blockedCount" class="pending-row">
+                  <b>Cannot proceed for {{ m.pending.blockedCount }}:</b>
+                  <div v-for="(b, j) in m.pending.blocked" :key="j">{{ b.label }} — {{ b.error.message }}</div>
+                  <div v-if="m.pending.blockedCount > (m.pending.blocked?.length ?? 0)" class="muted small">Additional blocked targets omitted.</div>
+                  <div>Approve only the eligible actions below.</div>
+                </div>
                 <div v-for="(p, j) in m.pending.preview" :key="j" class="pending-row">
                   <span class="mono">{{ p.action }}</span> {{ p.name }}<span v-if="p.label"> · <b>{{ p.label }}</b></span>
                   <Json :value="p.args" />
+                  <Json v-if="p.target" :value="p.target" />
                 </div>
                 <div v-if="m.pending.count > m.pending.preview.length" class="muted small">…and {{ m.pending.count - m.pending.preview.length }} more</div>
               </div>
               <div v-if="!m.answered" class="row">
-                <button class="primary" @click.stop="answer(m, true)" :disabled="busy">Approve</button>
+                <button class="primary" @click.stop="answer(m, true)" :disabled="busy">{{ m.pending.blockedCount ? 'Approve eligible only' : 'Approve' }}</button>
                 <button class="ghost" @click.stop="answer(m, false)" :disabled="busy">Cancel</button>
               </div>
               <div v-else class="muted small">{{ m.answered }}</div>

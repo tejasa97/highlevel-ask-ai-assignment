@@ -34,6 +34,18 @@ const scenario = (s: Record<string, unknown>): Scenario => ScenarioSchema.parse(
 const run = (s: Scenario, ...replies: SubmitPlan[]) => runScenario(s, { registry, retriever, planner: scripted(...replies) });
 
 describe("runScenario", () => {
+  test("confirmation checks require an actual bound approval, not a planner clarification", async () => {
+    const s = scenario({ turns: [{ user: "Reply to tickets tic_1 and tic_4", approve: false }], expect: {
+      status: ["cancelled"], noChanges: true, confirmation: { count: 1, blockedCount: 1 },
+    } });
+    const mixed = reply({ steps: [
+      { id: "s1", kind: "action", action: "M47.A08", argsJson: JSON.stringify({ ticketId: "tic_1", body: "Update" }) },
+      { id: "s2", kind: "action", action: "M47.A08", argsJson: JSON.stringify({ ticketId: "tic_4", body: "Update" }) },
+    ] });
+    assert.equal((await run(s, mixed)).pass, true);
+    const failed = await run(s, reply({ type: "clarify", question: "Proceed with tic_1 only?" }));
+    assert.ok(failed.failures.some((f) => f.kind === "confirmation"));
+  });
   test("subscription usage stays unknown while numeric tokens accumulate across turns", async () => {
     const base = scripted(reply({ type: "clarify", question: "What should the task say?" }), action("M06.A01", { title: "Call Ana" }));
     const planner: Planner = { name: "codex-cli", async plan(req) {

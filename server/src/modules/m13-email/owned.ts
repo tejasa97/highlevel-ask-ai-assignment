@@ -28,6 +28,39 @@ export function sendOwnedEmail(
     body: string;
   },
 ): Email {
+  const to = ownedEmailRecipient(ctx, a);
+  const at = ctx.clock.now().toISOString();
+  const e = ctx.store.insert("emails", "em", {
+    contactId: a.contactId,
+    leadId: null,
+    conversationId: null,
+    to,
+    from: OUR_EMAIL,
+    subject: a.subject,
+    body: a.body,
+    kind: a.kind,
+    invoiceId: null,
+    campaignId: null,
+    direction: "outbound",
+    status: "draft",
+    scheduledAt: null,
+    sentAt: null,
+    deliveredAt: null,
+    failureReason: null,
+    createdBy: ctx.actorId ?? "us_1",
+    createdAt: at,
+  }) as Email;
+  const out = deliverEmail(ctx.store, e, at);
+  if (out.status !== "delivered")
+    throw new ActionError("UNAVAILABLE", out.failureReason ?? "The email was not delivered");
+  return out;
+}
+
+/** Same eligibility rules as delivery, without creating records or attempting a send. */
+export function ownedEmailRecipient(
+  ctx: ActionContext,
+  a: { kind: "review_request" | "ticket_reply"; contactId: string | null; to?: string | null },
+): string {
   let to = a.to;
   if (a.contactId) {
     const p = person(
@@ -53,32 +86,5 @@ export function sendOwnedEmail(
       "CONFLICT",
       "The requester has no valid email address",
     );
-  const at = ctx.clock.now().toISOString();
-  const e = ctx.store.insert("emails", "em", {
-    contactId: a.contactId,
-    leadId: null,
-    conversationId: null,
-    to,
-    from: OUR_EMAIL,
-    subject: a.subject,
-    body: a.body,
-    kind: a.kind,
-    invoiceId: null,
-    campaignId: null,
-    direction: "outbound",
-    status: "draft",
-    scheduledAt: null,
-    sentAt: null,
-    deliveredAt: null,
-    failureReason: null,
-    createdBy: ctx.actorId ?? "us_1",
-    createdAt: at,
-  }) as Email;
-  const out = deliverEmail(ctx.store, e, at);
-  if (out.status !== "delivered")
-    throw new ActionError(
-      "UNAVAILABLE",
-      out.failureReason ?? "The email was not delivered",
-    );
-  return out;
+  return to;
 }
