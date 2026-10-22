@@ -93,7 +93,7 @@ export class Conversation {
     await this.run(turn, actorId, emit, turn.approvals);
   }
 
-  private async run(turn: Turn, actorId: string, emit: Emit, approvals?: Pending[]): Promise<void> {
+  private async run(turn: Turn, actorId: string, emit: Emit, approvals?: Approval[]): Promise<void> {
     const { store } = this.world;
     const before = snapshot(store);
     const auditBefore = store.audit().length;
