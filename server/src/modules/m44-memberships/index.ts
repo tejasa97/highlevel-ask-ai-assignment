@@ -46,6 +46,32 @@ function targetExists(store: Store, type: "course" | "community", targetId: stri
   if (c.status === "archived") throw new ActionError("CONFLICT", `${c.name} is archived; pick another community`);
 }
 
+const PlanView = MembershipPlan.extend({
+  members: z.array(z.object({ membershipId: z.string(), contactId: z.string(), name: z.string(), status: z.string(), expiresAt: z.string().nullable() })),
+});
+
+const Holder = {
+  membershipId: MembershipId.optional(),
+  planId: PlanId.optional(),
+  contactId: ContactId.optional(),
+};
+
+/** The membership a caller means: by its own id, or by plan and contact, since people say "take Priya's Gold membership away". */
+function membershipFor(store: Store, a: { membershipId?: string; planId?: string; contactId?: string }): Membership {
+  if (a.membershipId) {
+    const m = membershipOf(store, a.membershipId);
+    if ((a.planId && a.planId !== m.planId) || (a.contactId && a.contactId !== m.contactId)) {
+      throw new ActionError("INVALID", "membershipId belongs to a different plan or contact than the one given");
+    }
+    return m;
+  }
+  if (!a.planId || !a.contactId) throw new ActionError("INVALID", "Give membershipId, or both planId and contactId");
+  const rows = store.find<Membership>("memberships", (m) => m.planId === a.planId && m.contactId === a.contactId && m.status === "active");
+  const m = rows[0];
+  if (!m) throw new ActionError("NOT_FOUND", `That contact has no active membership on plan ${a.planId}`, { planId: a.planId, contactId: a.contactId });
+  return m;
+}
+
 const Access = z.object({ allowed: z.boolean(), reason: z.string().nullable() });
 
 const createPlan = defineAction({
@@ -86,13 +112,25 @@ const createPlan = defineAction({
 
 const getPlan = defineAction({
   id: "M44.A02",
-  description: "Get one membership plan: its description, entitlements and status. Unlike List membership plans, this loads a single plan by id.",
+  description: "Get one membership plan: its description, entitlements and status, and who holds it (members, with each membership's status and expiry). Unlike List membership plans, this loads a single plan by id.",
   risk: "read",
   input: z.strictObject({ planId: PlanId }),
-  output: MembershipPlan,
+  output: PlanView,
   entities: { consumes: ["membership_plan"] },
   example: (f) => ({ planId: f.membershipPlan().id }),
-  handler: ({ planId }, { store }) => planOf(store, planId),
+  handler: ({ planId }, { store }) => {
+    const plan = planOf(store, planId);
+    const held = store.find<Membership>("memberships", (m) => m.planId === plan.id);
+    held.sort((a, b) => a.id.localeCompare(b.id, "en"));
+    const members = held.map((m) => ({
+      membershipId: m.id,
+      contactId: m.contactId,
+      name: store.get<{ name: string }>("contacts", m.contactId)?.name ?? m.contactId,
+      status: m.status,
+      expiresAt: m.expiresAt,
+    }));
+    return { ...plan, members };
+  },
 });
 
 const listPlans = defineAction({
@@ -262,14 +300,14 @@ const grant = defineAction({
 
 const setExpiry = defineAction({
   id: "M44.A08",
-  description: "Set or clear when an active membership expires. Access checks treat a past expiry as closed, but the status stays active until revoke. Unlike Revoke membership, this does not take away enrollments. The same expiry is refused.",
+  description: "Set or clear when an active membership expires. Name the membership with membershipId, or with planId plus contactId. Access checks treat a past expiry as closed, but the status stays active until revoke. Unlike Revoke membership, this does not take away enrollments. The same expiry is refused.",
   risk: "write",
-  input: z.strictObject({ membershipId: MembershipId, expiresAt: When.nullable() }),
+  input: z.strictObject({ ...Holder, expiresAt: When.nullable() }),
   output: Membership,
-  entities: { consumes: ["membership_plan"] },
+  entities: { consumes: ["membership_plan", "contact"] },
   example: (f) => ({ membershipId: f.membership().id, expiresAt: f.at(20) }),
   handler: (a, { store }) => {
-    const m = membershipOf(store, a.membershipId);
+    const m = membershipFor(store, a);
     requireState("Membership", m.status, ["active"], "have its expiry changed");
     if (a.expiresAt === m.expiresAt) throw new ActionError("CONFLICT", "The membership already has that value");
     return store.update<Membership>("memberships", m.id, { expiresAt: a.expiresAt });
@@ -278,15 +316,15 @@ const setExpiry = defineAction({
 
 const revoke = defineAction({
   id: "M44.A09",
-  description: "Revoke an active membership. Enrollments with this membershipId become revoked, and community members this grant created or reactivated get leftAt set. A member who was already active is left in the community. Unlike M42.A01 or M43.A05, this removes access a plan granted instead of adding it.",
+  description: "Revoke an active membership. Name it with membershipId, or with planId plus contactId. Enrollments with this membershipId become revoked, and community members this grant created or reactivated get leftAt set. A member who was already active is left in the community. Unlike M42.A01 or M43.A05, this removes access a plan granted instead of adding it.",
   risk: "destructive",
-  input: z.strictObject({ membershipId: MembershipId, reason: z.string().trim().min(1) }),
+  input: z.strictObject({ ...Holder, reason: z.string().trim().min(1) }),
   output: Membership,
   siblings: ["M42.A01", "M43.A05"],
-  entities: { consumes: ["membership_plan"] },
+  entities: { consumes: ["membership_plan", "contact"] },
   example: (f) => ({ membershipId: f.membership().id, reason: "Requested by the contact" }),
   handler: (a, { store, clock }) => {
-    const m = membershipOf(store, a.membershipId);
+    const m = membershipFor(store, a);
     requireState("Membership", m.status, ["active"], "be revoked");
     const now = clock.now().toISOString();
     const reason = a.reason.trim();

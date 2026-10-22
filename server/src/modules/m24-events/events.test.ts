@@ -68,6 +68,41 @@ test("M24.A10 check-in needs a registered attendee and happens once", async () =
   assert.equal(w.call("M24.A02", { eventId: event.id }).checkedIn, 1);
 });
 
+test("M24.A10 and M24.A07 find the registration from the event and contact when no registration id is known", async () => {
+  const { w, event, a, first, second } = await fullEvent();
+  const checked = w.call("M24.A10", { eventId: event.id, contactId: a.id });
+  assert.equal(checked.id, first.id);
+  assert.equal(checked.status, "checked_in");
+  const cancelled = w.call("M24.A07", { eventId: event.id, contactId: second.contactId });
+  assert.equal(cancelled.id, second.id);
+  assert.equal(cancelled.status, "cancelled");
+});
+
+test("M24.A10 by contact: no registration is NOT_FOUND, half a key is INVALID, a mismatched pair is INVALID", async () => {
+  const { w, event, a, first } = await fullEvent();
+  const stranger = w.f.contact({ name: "Dee Park" });
+  assert.equal(failure(() => w.call("M24.A10", { eventId: event.id, contactId: stranger.id })).code, "NOT_FOUND");
+  assert.equal(failure(() => w.call("M24.A10", { eventId: event.id })).code, "INVALID");
+  assert.equal(failure(() => w.call("M24.A10", {})).code, "INVALID");
+  assert.equal(failure(() => w.call("M24.A10", { registrationId: first.id, contactId: stranger.id })).code, "INVALID");
+  assert.equal(w.call("M24.A10", { registrationId: first.id, contactId: a.id }).status, "checked_in");
+});
+
+test("M24.A02 names who is registered, waitlisted and checked in, and leaves out the cancelled", async () => {
+  const { w, event, a, first, second, third } = await fullEvent();
+  w.call("M24.A07", { registrationId: third.id });
+  w.call("M24.A10", { registrationId: first.id });
+  const got = w.call("M24.A02", { eventId: event.id });
+  assert.deepEqual(
+    got.attendees.map((x: { registrationId: string; name: string; status: string }) => [x.registrationId, x.name, x.status]),
+    [
+      [first.id, "Ada Lane", "checked_in"],
+      [second.id, "Bea Moss", "waitlisted"],
+    ],
+  );
+  assert.equal(got.attendees[0]!.contactId, a.id);
+});
+
 test("M24.A01 create refuses an event that ends before it starts", async () => {
   const w = await testWorld();
   assert.equal(failure(() => w.call("M24.A01", { title: "Backwards", startsAt: "2026-10-22T15:00:00.000Z", endsAt: "2026-10-22T14:00:00.000Z" })).code, "INVALID");

@@ -13,6 +13,26 @@ test("M41.A01 duplicate title is DUPLICATE", async () => {
   assert.equal(failure(() => w.call("M41.A01", { courseId: c.id, sectionId, title: "welcome" })).code, "DUPLICATE");
 });
 
+test("M41.A01 on a brand-new course makes the default section, then reuses it", async () => {
+  const w = await testWorld();
+  const course = w.call("M40.A01", { title: "Sales 101" });
+  assert.equal(course.sections.length, 0);
+  const first = w.call("M41.A01", { courseId: course.id, title: "Cold Calling Basics" });
+  const second = w.call("M41.A01", { courseId: course.id, title: "Discovery calls" });
+  const sections = w.call("M40.A02", { courseId: course.id }).sections;
+  assert.deepEqual(sections.map((s: { title: string }) => s.title), ["Lessons"]);
+  assert.equal(first.sectionId, sections[0].id);
+  assert.equal(second.sectionId, sections[0].id);
+  assert.equal(second.position, 2);
+});
+
+test("M41.A01 without a section on a course with several is INVALID and leaves the course alone", async () => {
+  const w = await testWorld();
+  const course = w.f.course({ sections: [{ id: "sc_a", title: "Start" }, { id: "sc_b", title: "Next" }] });
+  assert.equal(failure(() => w.call("M41.A01", { courseId: course.id, title: "Welcome" })).code, "INVALID");
+  assert.equal(w.call("M40.A02", { courseId: course.id }).sections.length, 2);
+});
+
 test("M41.A04 no-op is CONFLICT", async () => {
   const w = await testWorld();
   const l = w.f.lesson({ title: "Keep", body: "Same" });

@@ -1,0 +1,78 @@
+[
+  {
+    "id": "w1-ticket-contact-task",
+    "category": "multi",
+    "modules": ["M47", "M01", "M06"],
+    "note": "Ticket, contact, task. Rosa Ito is ct_1 and Raj Iyer is us_2. The world clock says today is Wed 21 Oct 2026.",
+    "turns": [{ "user": "Open a high-priority support ticket called Login loop for Rosa Ito, and create a task for Raj to look into it today" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M47.A01", "M06.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.contactId')='ct_1' AND json_extract(data,'$.priority')='high' AND json_extract(data,'$.title') LIKE '%Login loop%'", "equals": 1 },
+        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_2' AND json_extract(data,'$.dueDate')='2026-10-21' AND json_extract(data,'$.title') LIKE '%login%'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-ticket-priority-note",
+    "category": "followup",
+    "modules": ["M47"],
+    "note": "Marco Patel is ct_4.",
+    "turns": [
+      { "user": "Open a support ticket for Marco Patel: the invoice PDF won't download" },
+      { "user": "Make it urgent and add an internal note that billing is looking into it" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M47.A01", "M47.A05", "M47.A07"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.contactId')='ct_4' AND json_extract(data,'$.title') LIKE '%invoice PDF%'", "equals": 1 },
+        { "sql": "SELECT json_extract(data,'$.priority') FROM tickets WHERE json_extract(data,'$.contactId')='ct_4' AND json_extract(data,'$.title') LIKE '%invoice PDF%'", "equals": "urgent" },
+        { "sql": "SELECT json_array_length(json_extract(data,'$.notes')) FROM tickets WHERE json_extract(data,'$.contactId')='ct_4' AND json_extract(data,'$.title') LIKE '%invoice PDF%'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-landing-page-publish",
+    "category": "direct",
+    "modules": ["M37"],
+    "setup": [{ "fixture": "landingPage", "with": { "title": "Webinar signup", "slug": "webinar" } }],
+    "turns": [{ "user": "Publish the Webinar signup landing page" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M37.A09"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM landing_pages WHERE id='lp_1'", "equals": "published" }]
+    }
+  },
+  {
+    "id": "w1-blog-schedule",
+    "category": "multi",
+    "modules": ["M38"],
+    "note": "The world clock says today is Wed 21 Oct 2026.",
+    "turns": [{ "user": "Write a draft blog post called Our new pricing with the text \"We are simplifying our plans from November.\" and schedule it to go live on 28 October at 9am" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M38.A01", "M38.A08"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM blog_posts WHERE json_extract(data,'$.title')='Our new pricing'", "equals": "scheduled" },
+        { "sql": "SELECT json_extract(data,'$.publishAt') LIKE '2026-10-28%' FROM blog_posts WHERE json_extract(data,'$.title')='Our new pricing'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-custom-field-value",
+    "category": "multi",
+    "modules": ["M10", "M01"],
+    "note": "Jo Okafor is ct_11.",
+    "turns": [{ "user": "Add a date field for contacts called Contract renewal and set it to 1 March 2027 on Jo Okafor" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M10.A01", "M10.A09"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM custom_fields WHERE json_extract(data,'$.label')='Contract renewal' AND json_extract(data,'$.type')='date'", "equals": 1 },
+        { "sql": "SELECT json_extract(data,'$.value') FROM custom_field_values WHERE json_extract(data,'$.recordId')='ct_11'", "equals": "2027-03-01" }
+      ]
+    }
+  }
+]

@@ -53,6 +53,37 @@ test("M44.A09 revoking twice is CONFLICT", async () => {
   assert.equal(failure(() => w.call("M44.A09", { membershipId: m.id, reason: "Again" })).code, "CONFLICT");
 });
 
+test("M44.A09 and M44.A08 find the membership from the plan and contact when no membership id is known", async () => {
+  const w = await testWorld();
+  const m = w.f.membership();
+  const set = w.call("M44.A08", { planId: m.planId, contactId: m.contactId, expiresAt: w.f.at(30) });
+  assert.equal(set.id, m.id);
+  const revoked = w.call("M44.A09", { planId: m.planId, contactId: m.contactId, reason: "Cancelled" });
+  assert.equal(revoked.id, m.id);
+  assert.equal(revoked.status, "revoked");
+  assert.equal(failure(() => w.call("M44.A09", { planId: m.planId, contactId: m.contactId, reason: "Again" })).code, "NOT_FOUND");
+});
+
+test("M44.A09 by plan and contact: half a key and a mismatched pair are INVALID", async () => {
+  const w = await testWorld();
+  const m = w.f.membership();
+  const other = w.f.membershipPlan({ name: "Silver" });
+  assert.equal(failure(() => w.call("M44.A09", { planId: m.planId, reason: "x" })).code, "INVALID");
+  assert.equal(failure(() => w.call("M44.A09", { reason: "x" })).code, "INVALID");
+  assert.equal(failure(() => w.call("M44.A09", { membershipId: m.id, planId: other.id, reason: "x" })).code, "INVALID");
+});
+
+test("M44.A02 lists who holds the plan", async () => {
+  const w = await testWorld();
+  const m = w.f.membership();
+  const got = w.call("M44.A02", { planId: m.planId });
+  assert.deepEqual(
+    got.members.map((x: { membershipId: string; contactId: string; status: string }) => [x.membershipId, x.contactId, x.status]),
+    [[m.id, m.contactId, "active"]],
+  );
+  assert.ok(got.members[0]!.name);
+});
+
 test("unknown field is INVALID", async () => {
   const w = await testWorld();
   assert.equal(failure(() => w.call("M44.A02", { planId: w.f.membershipPlan().id, madeUp: 1 })).code, "INVALID");

@@ -31,6 +31,25 @@ function sectionOn(c: Course, sectionId: string): void {
   if (!c.sections.some((s) => s.id === sectionId)) throw new ActionError("CONFLICT", `Section ${sectionId} isn't on ${c.title}`);
 }
 
+const DEFAULT_SECTION = "Lessons";
+
+/**
+ * Where a new lesson goes when the caller names no section: the course's only section, or a default one
+ * when it has none yet. With several sections the caller has to choose.
+ */
+function sectionFor(store: Store, c: Course, sectionId: string | undefined, now: string): string {
+  if (sectionId) {
+    sectionOn(c, sectionId);
+    return sectionId;
+  }
+  const [only, ...rest] = c.sections;
+  if (rest.length) throw new ActionError("INVALID", `${c.title} has several sections (${c.sections.map((s) => `${s.title} ${s.id}`).join(", ")}); give sectionId`);
+  if (only) return only.id;
+  const section = { id: store.nextId("_nested", "sc"), title: DEFAULT_SECTION };
+  store.update<Course>("courses", c.id, { sections: [section], updatedAt: now });
+  return section.id;
+}
+
 function titleTaken(store: Store, courseId: string, title: string, exceptId?: string): boolean {
   const n = title.toLowerCase();
   return store.find<Lesson>("lessons", (l) => l.courseId === courseId && l.id !== exceptId && l.title.toLowerCase() === n).length > 0;
@@ -56,11 +75,11 @@ function completionOf(c?: { type: "view" | "time" | "manual"; minutes?: number |
 
 const createLesson = defineAction({
   id: "M41.A01",
-  description: "Add a draft lesson to a section of an existing course. Unlike M40.A01 Create course, this does not create a program; it adds one lesson inside a course that already exists.",
+  description: "Add a draft lesson to an existing course. Without sectionId it goes in the course's only section, and a course with no section gets a default one called Lessons. Unlike M40.A01 Create course, this does not create a program; it adds one lesson inside a course that already exists.",
   risk: "write",
   input: z.strictObject({
     courseId: CourseId,
-    sectionId: z.string().describe("section id on the course"),
+    sectionId: z.string().describe("section id on the course; leave out when the course has one section or none").optional(),
     title: Title,
     body: z.string().optional(),
     position: z.number().int().min(1).optional(),
@@ -78,15 +97,15 @@ const createLesson = defineAction({
   },
   handler: (a, { store, clock }) => {
     const c = openCourse(store, a.courseId, "receive a lesson");
-    sectionOn(c, a.sectionId);
     const title = a.title.trim();
     if (titleTaken(store, c.id, title)) throw new ActionError("DUPLICATE", `This course already has a lesson called "${title}"`);
-    const position = a.position ?? nextPosition(store, a.sectionId);
-    if (positionTaken(store, a.sectionId, position)) throw new ActionError("DUPLICATE", `Position ${position} is already used in that section`);
     const now = clock.now().toISOString();
+    const sectionId = sectionFor(store, c, a.sectionId, now);
+    const position = a.position ?? nextPosition(store, sectionId);
+    if (positionTaken(store, sectionId, position)) throw new ActionError("DUPLICATE", `Position ${position} is already used in that section`);
     return store.insert("lessons", "lsn", {
       courseId: c.id,
-      sectionId: a.sectionId,
+      sectionId,
       title,
       body: a.body ?? "",
       position,

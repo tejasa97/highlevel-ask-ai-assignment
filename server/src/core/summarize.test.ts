@@ -54,6 +54,22 @@ describe("summarize: a plan that only reads still answers", () => {
     assert.match(text, /\((new|contacted|qualified|disqualified|converted)\)/, "each name carries its status");
   });
 
+  test("a loop of reads nothing else uses is the answer, not silence", async () => {
+    const ctx = world();
+    const course = ctx.f.course({ title: "Sales 101", status: "published" });
+    ctx.f.lesson({ courseId: course.id, title: "Intro", status: "published" });
+    ctx.f.enrollment({ courseId: course.id, contactId: "ct_12" });
+    const loop = { id: "s2", kind: "op" as const, op: "forEach" as const, in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M42.A09", argsJson: JSON.stringify({ enrollmentId: "$item.id" }) }] };
+    const { text } = await reply([action("s1", "M42.A03", { courseId: course.id, contactId: "ct_12" }), loop], ctx);
+    assert.match(text, /completed 0, total 1/);
+  });
+
+  test("a loop of reads over nothing says so instead of going quiet", async () => {
+    const loop = { id: "s2", kind: "op" as const, op: "forEach" as const, in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M47.A10", argsJson: JSON.stringify({ ticketId: "$item.id" }) }] };
+    const { text } = await reply([action("s1", "M47.A03", { query: "no ticket is called this" }), loop]);
+    assert.match(text, /nothing/i);
+  });
+
   test("a search capped by its limit still counts everything, not just what came back", async () => {
     const { text, ctx } = await reply([action("s1", "M03.A03", { limit: 1 })]);
     const total = ctx.store.all("leads").length;

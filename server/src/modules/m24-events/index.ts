@@ -17,6 +17,9 @@ const EventView = Event.extend({
   registered: z.number().int().describe("status registered, not checked in"),
   waitlisted: z.number().int(),
   checkedIn: z.number().int(),
+  attendees: z.array(
+    z.object({ registrationId: z.string(), contactId: z.string(), name: z.string(), status: z.string(), waitlistPosition: z.number().int().nullable() }),
+  ),
 });
 
 function counts(store: Store, eventId: string): { registered: number; waitlisted: number; checkedIn: number } {
@@ -26,6 +29,18 @@ function counts(store: Store, eventId: string): { registered: number; waitlisted
     waitlisted: rows.filter((r) => r.status === "waitlisted").length,
     checkedIn: rows.filter((r) => r.status === "checked_in").length,
   };
+}
+
+function attendees(store: Store, eventId: string) {
+  const rows = store.find<EventRegistration>("event_registrations", (r) => r.eventId === eventId && r.status !== "cancelled");
+  rows.sort((a, b) => a.registeredAt.localeCompare(b.registeredAt) || a.id.localeCompare(b.id, "en"));
+  return rows.map((r) => ({
+    registrationId: r.id,
+    contactId: r.contactId,
+    name: store.get<Contact>("contacts", r.contactId)?.name ?? r.contactId,
+    status: r.status,
+    waitlistPosition: r.waitlistPosition,
+  }));
 }
 
 function taken(store: Store, eventId: string): number {
@@ -51,6 +66,27 @@ function openRegistration(store: Store, eventId: string, contactId: string): Eve
     "event_registrations",
     (r) => r.eventId === eventId && r.contactId === contactId && r.status !== "cancelled",
   )[0];
+}
+
+const Attendee = {
+  registrationId: RegistrationId.optional(),
+  eventId: EventId.optional(),
+  contactId: z.string().describe("contact id (ct_…)").optional(),
+};
+
+/** The registration a caller means: by its own id, or by who it is for, since people say "check Ben in" and not "check in evr_4". */
+function registrationOf(store: Store, a: { registrationId?: string; eventId?: string; contactId?: string }): EventRegistration {
+  if (a.registrationId) {
+    const reg = mustGet<EventRegistration>(store, "event_registrations", a.registrationId, "event registration");
+    if ((a.eventId && a.eventId !== reg.eventId) || (a.contactId && a.contactId !== reg.contactId)) {
+      throw new ActionError("INVALID", "registrationId belongs to a different event or contact than the one given");
+    }
+    return reg;
+  }
+  if (!a.eventId || !a.contactId) throw new ActionError("INVALID", "Give registrationId, or both eventId and contactId");
+  const reg = openRegistration(store, a.eventId, a.contactId);
+  if (!reg) throw new ActionError("NOT_FOUND", `That contact has no open registration for event ${a.eventId}`, { eventId: a.eventId, contactId: a.contactId });
+  return reg;
 }
 
 function nextWait(store: Store, eventId: string): number {
@@ -110,13 +146,13 @@ const createEvent = defineAction({
 const getEvent = defineAction({
   id: "M24.A02",
   description:
-    "Get one event plus how many people are registered, waitlisted and checked in. Seats taken are registered plus checked in. To browse several events, use M24.A03.",
+    "Get one event plus how many people are registered, waitlisted and checked in, and who they are (attendees; cancelled registrations are left out). Seats taken are registered plus checked in. To browse several events, use M24.A03.",
   risk: "read",
   input: z.strictObject({ eventId: EventId }),
   output: EventView,
   entities: { consumes: ["event"] },
   example: (f) => ({ eventId: f.event().id }),
-  handler: ({ eventId }, { store }) => ({ ...mustGet<Event>(store, "events", eventId, "event"), ...counts(store, eventId) }),
+  handler: ({ eventId }, { store }) => ({ ...mustGet<Event>(store, "events", eventId, "event"), ...counts(store, eventId), attendees: attendees(store, eventId) }),
 });
 
 const searchEvents = defineAction({
@@ -234,14 +270,14 @@ const registerAttendee = defineAction({
 const cancelRegistration = defineAction({
   id: "M24.A07",
   description:
-    "Cancel a registered or waitlisted attendee and, if they held a seat, free it. Nobody on the waitlist is promoted; use M24.A09 for that. Checked-in attendees cannot be cancelled.",
+    "Cancel a registered or waitlisted attendee and, if they held a seat, free it. Name the attendee with registrationId, or with eventId plus contactId. Nobody on the waitlist is promoted; use M24.A09 for that. Checked-in attendees cannot be cancelled.",
   risk: "destructive",
-  input: z.strictObject({ registrationId: RegistrationId }),
+  input: z.strictObject(Attendee),
   output: EventRegistration,
   entities: { consumes: ["event", "contact"] },
   example: (f) => ({ registrationId: f.registration().id }),
-  handler: ({ registrationId }, { store, clock }) => {
-    const reg = mustGet<EventRegistration>(store, "event_registrations", registrationId, "event registration");
+  handler: (a, { store, clock }) => {
+    const reg = registrationOf(store, a);
     if (reg.status === "checked_in") throw new ActionError("CONFLICT", "They're checked in; cancel isn't available after check-in");
     if (reg.status === "cancelled") throw new ActionError("CONFLICT", "The registration is already cancelled");
     requireState("The registration", reg.status, ["registered", "waitlisted"], "be cancelled");
@@ -314,14 +350,14 @@ const promoteWaitlist = defineAction({
 const checkIn = defineAction({
   id: "M24.A10",
   description:
-    "Record that a registered attendee has arrived, and set the time they were checked in. This writes attendance; it does not look anyone up. A waitlisted person must be promoted (M24.A09) first.",
+    "Record that a registered attendee has arrived, and set the time they were checked in. Name the attendee with registrationId, or with eventId plus contactId. This writes attendance; it does not look anyone up. A waitlisted person must be promoted (M24.A09) first.",
   risk: "write",
-  input: z.strictObject({ registrationId: RegistrationId }),
+  input: z.strictObject(Attendee),
   output: EventRegistration,
   entities: { consumes: ["event", "contact"] },
   example: (f) => ({ registrationId: f.registration({ status: "registered" }).id }),
-  handler: ({ registrationId }, { store, clock }) => {
-    const reg = mustGet<EventRegistration>(store, "event_registrations", registrationId, "event registration");
+  handler: (a, { store, clock }) => {
+    const reg = registrationOf(store, a);
     scheduled(store, reg.eventId, "check attendees in");
     if (reg.status === "waitlisted") throw new ActionError("CONFLICT", "Promote them first");
     if (reg.status === "checked_in") throw new ActionError("CONFLICT", "The attendee is already checked in");

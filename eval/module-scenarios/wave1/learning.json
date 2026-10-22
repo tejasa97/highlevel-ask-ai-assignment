@@ -1,0 +1,148 @@
+[
+  {
+    "id": "w1-course-build",
+    "category": "multi",
+    "modules": ["M40", "M41"],
+    "turns": [{ "user": "Create a course called Sales 101, add a lesson called Cold Calling Basics to it, and publish the course" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M40.A01", "M41.A01", "M40.A09"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM courses WHERE json_extract(data,'$.title')='Sales 101'", "equals": "published" },
+        { "sql": "SELECT count(*) FROM lessons WHERE json_extract(data,'$.title') LIKE '%Cold Calling%' AND json_extract(data,'$.courseId')=(SELECT id FROM courses WHERE json_extract(data,'$.title')='Sales 101')", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-enrol-learner",
+    "category": "direct",
+    "modules": ["M42", "M40"],
+    "note": "Tara Larsen is ct_9.",
+    "setup": [{ "fixture": "course", "with": { "title": "Onboarding Basics", "status": "published" } }],
+    "turns": [{ "user": "Enroll Tara Larsen in Onboarding Basics" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M42.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM enrollments WHERE json_extract(data,'$.contactId')='ct_9' AND json_extract(data,'$.courseId')='crs_1' AND json_extract(data,'$.status')='active'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-enrol-draft-course",
+    "category": "failure",
+    "modules": ["M42", "M40"],
+    "note": "Safety Induction (crs_1) is still a draft, so nobody can be enrolled in it. Kofi Brown's enrolment in crs_2 only makes sure the enrollments table exists.",
+    "setup": [
+      { "fixture": "course", "with": { "title": "Safety Induction", "status": "draft" } },
+      { "fixture": "course", "with": { "title": "Sales 101", "status": "published" } },
+      { "fixture": "enrollment", "with": { "courseId": "crs_2", "contactId": "ct_14" } }
+    ],
+    "turns": [{ "user": "Enroll Tara Larsen in Safety Induction" }],
+    "expect": {
+      "state": [{ "sql": "SELECT count(*) FROM enrollments WHERE json_extract(data,'$.courseId')='crs_1'", "equals": 0 }],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "w1-enrol-complete-certificate",
+    "category": "multi",
+    "modules": ["M42", "M41", "M40"],
+    "note": "Enrol, progress, certificate. Omar Larsen (ct_7) is enrolled in a one-lesson course; finishing that lesson is what earns the certificate.",
+    "setup": [
+      { "fixture": "course", "with": { "title": "Sales 101", "status": "published" } },
+      { "fixture": "lesson", "with": { "courseId": "crs_1", "title": "Intro", "status": "published" } },
+      { "fixture": "enrollment", "with": { "courseId": "crs_1", "contactId": "ct_7" } }
+    ],
+    "turns": [{ "user": "Omar Larsen has finished the Intro lesson in Sales 101, so record that and issue his completion certificate" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M42.A08", "M42.A10"] },
+      "state": [
+        { "sql": "SELECT json_array_length(json_extract(data,'$.completions')) FROM enrollments WHERE id='enr_1'", "equals": 1 },
+        { "sql": "SELECT json_extract(data,'$.certificate.number') IS NOT NULL FROM enrollments WHERE id='enr_1'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-suspend-enrollment",
+    "category": "indirect",
+    "modules": ["M42"],
+    "setup": [
+      { "fixture": "course", "with": { "title": "Sales 101", "status": "published" } },
+      { "fixture": "enrollment", "with": { "courseId": "crs_1", "contactId": "ct_11" } }
+    ],
+    "turns": [{ "user": "Jo Okafor is on leave, so pause her access to Sales 101 for now" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M42.A05"], "excludes": ["M42.A07"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM enrollments WHERE id='enr_1'", "equals": "suspended" }]
+    }
+  },
+  {
+    "id": "w1-learner-progress",
+    "category": "direct",
+    "modules": ["M42"],
+    "note": "Priya Haddad (ct_12) has finished one of two published lessons.",
+    "setup": [
+      { "fixture": "course", "with": { "title": "Sales 101", "status": "published" } },
+      { "fixture": "lesson", "with": { "courseId": "crs_1", "title": "Intro", "status": "published" } },
+      { "fixture": "lesson", "with": { "courseId": "crs_1", "title": "Discovery calls", "status": "published" } },
+      { "fixture": "enrollment", "with": { "courseId": "crs_1", "contactId": "ct_12", "completions": [{ "lessonId": "lsn_1", "at": "2026-10-20T10:00:00.000Z" }] } }
+    ],
+    "turns": [{ "user": "How far along is Priya Haddad in Sales 101?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M42.A09"] },
+      "reply": { "includes": ["completed 1, total 2"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "w1-membership-grant",
+    "category": "multi",
+    "modules": ["M44"],
+    "note": "Jo Okafor is ct_11.",
+    "turns": [{ "user": "Create a Gold membership plan and grant it to Jo Okafor" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M44.A01", "M44.A07"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM membership_plans WHERE json_extract(data,'$.name')='Gold'", "equals": 1 },
+        { "sql": "SELECT count(*) FROM memberships WHERE json_extract(data,'$.contactId')='ct_11' AND json_extract(data,'$.status')='active'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-membership-revoke",
+    "category": "indirect",
+    "modules": ["M44"],
+    "note": "Priya Haddad (ct_12) cancelled, so her Gold membership should be revoked.",
+    "setup": [
+      { "fixture": "membershipPlan", "with": { "name": "Gold" } },
+      { "fixture": "membership", "with": { "planId": "mpl_1", "contactId": "ct_12" } }
+    ],
+    "turns": [{ "user": "Priya Haddad cancelled, so take her Gold membership away" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M44.A09"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM memberships WHERE id='mbr_1'", "equals": "revoked" }]
+    }
+  },
+  {
+    "id": "w1-ambiguous-femi-enrol",
+    "category": "ambiguous",
+    "modules": ["M42", "M01"],
+    "note": "Three contacts are called Femi (Silva ct_10, Reyes ct_13, Schmidt ct_15); the assistant should ask which.",
+    "setup": [
+      { "fixture": "course", "with": { "title": "Sales 101", "status": "published" } },
+      { "fixture": "enrollment", "with": { "courseId": "crs_1", "contactId": "ct_14" } }
+    ],
+    "turns": [{ "user": "Enroll Femi in Sales 101" }],
+    "expect": {
+      "status": ["clarify", "needs_clarification"],
+      "state": [{ "sql": "SELECT count(*) FROM enrollments WHERE json_extract(data,'$.contactId') IN ('ct_10','ct_13','ct_15')", "equals": 0 }],
+      "noChanges": true
+    }
+  }
+]
