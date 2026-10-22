@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, candidates, inDateRange, Limit, listOf, page, person, PersonArgs, personName, personRef, requireState } from "../../registry/helpers.js";
+import { activeUser, candidates, inDateRange, Limit, listOf, norm, page, person, PersonArgs, personName, personRef, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { User } from "../m48-users/schema.js";
@@ -256,8 +256,9 @@ export default {
   resolvers: {
     appointment: (store, name) =>
       // People name a meeting by who it's with ("Sarah Johnson's walkthrough"), so the person is part of its name.
+      // A person's name alone names the person, though, not their meeting: some word must be of the title.
       candidates(
-        store.all<Appointment>("appointments"),
+        store.all<Appointment>("appointments").filter((a) => norm(name).split(" ").some((w) => !norm(personName(store, a) ?? "").split(" ").includes(w))),
         name,
         (a) => [a.title, personName(store, a)].filter(Boolean).join(" with "),
         (a) => a.startAt,

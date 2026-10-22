@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { failure, testWorld } from "../../testkit.js";
+import { failure, registry, testWorld } from "../../testkit.js";
 
 test("book: 30 minutes by default; past time INVALID; host unavailable, deactivated or busy CONFLICT", async () => {
   const w = await testWorld();
@@ -73,4 +73,12 @@ test("search: booked by default, soonest first; Sarah's booked meeting is with R
   assert.ok((w.call("M21.A03", { status: "any" }).items as unknown[]).length > items.length);
   const ap1 = w.call("M21.A02", { appointmentId: "ap_1" });
   assert.deepEqual([ap1.hostName, ap1.personName], ["Raj Iyer", "Sarah Johnson"]);
+});
+
+test("resolve: a meeting by its title, narrowed by who it's with; the person's name alone isn't the meeting", async () => {
+  const w = await testWorld();
+  const resolve = (await registry()).resolver("appointment")!;
+  assert.deepEqual(resolve(w.store, "Sarah Johnson Agency").map((c) => c.id), ["ap_1"]);
+  assert.deepEqual(resolve(w.store, "Agency plan walkthrough").map((c) => c.id), ["ap_1"]);
+  assert.deepEqual(resolve(w.store, "Sarah Johnson"), []);
 });

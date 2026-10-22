@@ -10,8 +10,7 @@ Reply with one submit_plan object. Set unused fields to null.
   plan          steps for the executor to run
   look          read-only steps to run first, when a value must be worked out from what a record holds now
                 (same time on another day, a week after its due date); their results come back in <looked>
-                and you plan again. Not for values a $ref can pass on unchanged, and not to show records:
-                to show or list records, plan the reads.
+                and you plan again. Not for values a $ref can pass on unchanged.
   clarify      ONE question, only when a required detail is missing
   unsupported   no listed action can do this; say why
   answer        a direct answer from <context>, no actions needed

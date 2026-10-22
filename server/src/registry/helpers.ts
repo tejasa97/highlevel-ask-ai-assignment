@@ -8,7 +8,7 @@ import type { Candidate } from "./registry.js";
 
 // Small helpers shared by module handlers.
 
-const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
+export const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
 
 /**
  * Name matching for resolvers: exact (case-insensitive) beats a whole-word match, which beats a prefix.

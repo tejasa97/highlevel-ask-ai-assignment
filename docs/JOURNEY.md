@@ -172,7 +172,8 @@ plan. Reads only, so a look can never change anything without approval.
 
 **Side effects.** In 2 of 64 turns the planner looked and then answered in its own words (raw ids included) instead
 of planning. Fixed by a prompt rule ("to show records, plan the reads") and a guard: an answer after a look runs
-the look as the plan, so the reply is the usual summary. Not yet measured end to end.
+the look as the plan, so the reply is the usual summary. Measured in entry 12: the prompt rule did harm and was
+removed.
 
 ## 11. Infrastructure failures counted apart
 `5359c12` · 2026-10-22 · runs: fix2-3x
@@ -186,3 +187,26 @@ either eval is appended to `eval/results/history.jsonl`; a run where nothing rea
 
 **Result.** fix2-3x read correctly: 92.7% of 55 clean runs, 15/19 measured scenarios pass every run; 4 scenarios
 unmeasured.
+
+## 12. The look guard measured; a person's name alone no longer names their meeting
+`uncommitted` · 2026-10-22 · runs: look-guard-3x → resolver-fix-3x
+
+**Problem.** The first full run with the look guard (look-guard-3x) fell to 91.3%, with two scenarios failing every
+run. direct-appointment-reschedule: the planner returned a plain plan of reads instead of a look, so nothing moved.
+ambiguous-two-sarahs: name linking ran the appointment resolver over "Sarah Johnson", matched "Agency plan
+walkthrough with Sarah Johnson" (the naming from entry 10), and `<mentions>` called her an appointment; the planner
+resolved the meeting, texted its contact and never asked which Sarah. It had started failing in fix2-3x (2/3).
+
+**Change.** A meeting still matches by who it's with, but some word of the name must be of its title: "Sarah Johnson
+Agency" finds her walkthrough, "Sarah Johnson" alone finds no meeting. Removed the prompt rule from entry 10 ("to
+show records, plan the reads"); the code guard covers the case it was written for.
+
+**Why this way.** The resolver rule fixes the class (any person with a meeting, for any message that names them),
+not this scenario. The prompt rule was a patch for 2 of 64 turns and pushed the planner away from look.
+
+**Result.** 91.3% → 97.1% of 69 clean runs, no infra failures; 21/23 → 22/23 scenarios pass every run.
+ambiguous-two-sarahs 0/3 → 3/3. direct-appointment-reschedule 0/3 → 1/3: in the two failures the planner still
+sent a plan of reads (a lone resolve, so the reply was empty) instead of a look. That's the open problem.
+
+**Cost.** None at run time. Cost per run is about $0.02 against fix2-3x's $0.012, with or without these changes:
+the token counts show fewer prompt-cache hits, not a bigger prompt.

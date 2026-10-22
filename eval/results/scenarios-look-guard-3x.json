@@ -1,0 +1,5160 @@
+{
+ "summary": {
+  "label": "look-guard-3x",
+  "planner": "claude-cli",
+  "tier": "strong",
+  "scenarios": 23,
+  "repeat": 3,
+  "runs": 69,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 91.3,
+  "allPass": 21,
+  "measured": 23,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 5000,
+   "p95": 11616
+  },
+  "firstReplyMs": {
+   "p50": 4772,
+   "p95": 11382
+  },
+  "plannerRoundsPerRun": 1.26,
+  "callsPerRun": 1.9,
+  "costUsd": {
+   "perRun": 0.0213,
+   "total": 1.47
+  },
+  "wallMs": 113868
+ },
+ "runs": [
+  {
+   "id": "ambiguous-two-sarahs",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "done, wanted clarify|needs_clarification"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM sms WHERE json_extract(data,'$.contactId') IN ('ct_31','ct_32') → 1, wanted 0"
+    },
+    {
+     "kind": "changes",
+     "detail": "2 records changed"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Text Sarah Johnson that we're running 10 minutes late",
+     "status": "done",
+     "reply": "Done: Send SMS.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M28.A10",
+      "M21.A01",
+      "M12.A03",
+      "M12.A06",
+      "M12.A01",
+      "M12.A07",
+      "M11.A10",
+      "M11.A05",
+      "M21.A09",
+      "M21.A02",
+      "M21.A03",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05"
+     ],
+     "planned": [
+      "M21.A02",
+      "M12.A03"
+     ],
+     "calls": [
+      {
+       "action": "M21.A02",
+       "args": {
+        "appointmentId": "ap_1"
+       }
+      },
+      {
+       "action": "M21.A02",
+       "args": {
+        "appointmentId": "ap_1"
+       }
+      },
+      {
+       "action": "M12.A03",
+       "args": {
+        "contactId": "ct_31",
+        "body": "Hi Sarah, we're running about 10 minutes late. Thanks for your patience!"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6149,
+     "ms": 6153
+    }
+   ],
+   "metrics": {
+    "ms": 6153,
+    "firstReplyMs": 6149,
+    "plannerMs": 6109,
+    "plannerRounds": 1,
+    "calls": 3,
+    "usage": {
+     "input": 7808,
+     "cachedRead": 0,
+     "cacheWrite": 7806,
+     "output": 588,
+     "thinking": 0,
+     "costUsd": 0.037107999999999995
+    }
+   }
+  },
+  {
+   "id": "ambiguous-two-sarahs",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "done, wanted clarify|needs_clarification"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM sms WHERE json_extract(data,'$.contactId') IN ('ct_31','ct_32') → 1, wanted 0"
+    },
+    {
+     "kind": "changes",
+     "detail": "2 records changed"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Text Sarah Johnson that we're running 10 minutes late",
+     "status": "done",
+     "reply": "Done: Send SMS.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M28.A10",
+      "M21.A01",
+      "M12.A03",
+      "M12.A06",
+      "M12.A01",
+      "M12.A07",
+      "M11.A10",
+      "M11.A05",
+      "M21.A09",
+      "M21.A02",
+      "M21.A03",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05"
+     ],
+     "planned": [
+      "M21.A02",
+      "M12.A03"
+     ],
+     "calls": [
+      {
+       "action": "M21.A02",
+       "args": {
+        "appointmentId": "ap_1"
+       }
+      },
+      {
+       "action": "M21.A02",
+       "args": {
+        "appointmentId": "ap_1"
+       }
+      },
+      {
+       "action": "M12.A03",
+       "args": {
+        "contactId": "ct_31",
+        "body": "Hi Sarah, we're running about 10 minutes late. Thank you for your patience!"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6170,
+     "ms": 6172
+    }
+   ],
+   "metrics": {
+    "ms": 6172,
+    "firstReplyMs": 6170,
+    "plannerMs": 6127,
+    "plannerRounds": 1,
+    "calls": 3,
+    "usage": {
+     "input": 7808,
+     "cachedRead": 0,
+     "cacheWrite": 7806,
+     "output": 594,
+     "thinking": 0,
+     "costUsd": 0.037168
+    }
+   }
+  },
+  {
+   "id": "ambiguous-two-sarahs",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "done, wanted clarify|needs_clarification"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM sms WHERE json_extract(data,'$.contactId') IN ('ct_31','ct_32') → 1, wanted 0"
+    },
+    {
+     "kind": "changes",
+     "detail": "2 records changed"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Text Sarah Johnson that we're running 10 minutes late",
+     "status": "done",
+     "reply": "Done: Send SMS.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M28.A10",
+      "M21.A01",
+      "M12.A03",
+      "M12.A06",
+      "M12.A01",
+      "M12.A07",
+      "M11.A10",
+      "M11.A05",
+      "M21.A09",
+      "M21.A02",
+      "M21.A03",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05"
+     ],
+     "planned": [
+      "M21.A02",
+      "M12.A03"
+     ],
+     "calls": [
+      {
+       "action": "M21.A02",
+       "args": {
+        "appointmentId": "ap_1"
+       }
+      },
+      {
+       "action": "M21.A02",
+       "args": {
+        "appointmentId": "ap_1"
+       }
+      },
+      {
+       "action": "M12.A03",
+       "args": {
+        "contactId": "ct_31",
+        "body": "Hi Sarah, we're running about 10 minutes late. Thanks for your patience!"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6194,
+     "ms": 6196
+    }
+   ],
+   "metrics": {
+    "ms": 6196,
+    "firstReplyMs": 6194,
+    "plannerMs": 6143,
+    "plannerRounds": 1,
+    "calls": 3,
+    "usage": {
+     "input": 7808,
+     "cachedRead": 0,
+     "cacheWrite": 7806,
+     "output": 627,
+     "thinking": 0,
+     "costUsd": 0.037498
+    }
+   }
+  },
+  {
+   "id": "ambiguous-zoe-then-answer",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Make Aisha the owner of Zoe Costa",
+     "status": "clarify",
+     "reply": "There are two contacts named Zoe Costa. Which one should Aisha own? Please share an email, phone number or company to tell them apart, or say if you mean both.",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M11.A03",
+      "M06.A05",
+      "M21.A06",
+      "M49.A06",
+      "M03.A10",
+      "M03.A03",
+      "M04.A03",
+      "M49.A07",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5126,
+     "ms": 5126
+    },
+    {
+     "user": "the one at Umbrella",
+     "status": "done",
+     "reply": "Assign contact owner for 1 of 1: Zoe Costa.",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M11.A03",
+      "M06.A05",
+      "M04.A03",
+      "M03.A10",
+      "M21.A06",
+      "M49.A06",
+      "M03.A03",
+      "M04.A05",
+      "M11.A02",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A07"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Umbrella"
+       }
+      },
+      {
+       "action": "M01.A07",
+       "args": {
+        "contactId": "ct_30",
+        "ownerId": "us_5"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5875,
+     "ms": 5875
+    }
+   ],
+   "metrics": {
+    "ms": 11001,
+    "firstReplyMs": 5126,
+    "plannerMs": 10919,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 14393,
+     "cachedRead": 1964,
+     "cacheWrite": 12425,
+     "output": 993,
+     "thinking": 0,
+     "costUsd": 0.060030799999999995
+    }
+   }
+  },
+  {
+   "id": "ambiguous-zoe-then-answer",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Make Aisha the owner of Zoe Costa",
+     "status": "clarify",
+     "reply": "There are two contacts named Zoe Costa. Which one should Aisha own (for example, by email, phone or company), or should she own both?",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M11.A03",
+      "M06.A05",
+      "M21.A06",
+      "M49.A06",
+      "M03.A10",
+      "M03.A03",
+      "M04.A03",
+      "M49.A07",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5112,
+     "ms": 5112
+    },
+    {
+     "user": "the one at Umbrella",
+     "status": "done",
+     "reply": "Assign contact owner for 1 of 1: Zoe Costa.",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M11.A03",
+      "M06.A05",
+      "M04.A03",
+      "M03.A10",
+      "M21.A06",
+      "M49.A06",
+      "M03.A03",
+      "M04.A05",
+      "M11.A02",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A07"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Zoe Costa"
+       }
+      },
+      {
+       "action": "M01.A07",
+       "args": {
+        "contactId": "ct_30",
+        "ownerId": "us_5"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5884,
+     "ms": 5884
+    }
+   ],
+   "metrics": {
+    "ms": 10996,
+    "firstReplyMs": 5112,
+    "plannerMs": 10968,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 14384,
+     "cachedRead": 8870,
+     "cacheWrite": 5510,
+     "output": 997,
+     "thinking": 0,
+     "costUsd": 0.033792
+    }
+   }
+  },
+  {
+   "id": "ambiguous-zoe-then-answer",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Make Aisha the owner of Zoe Costa",
+     "status": "clarify",
+     "reply": "There are two contacts named Zoe Costa. Which one should Aisha own? You could give me an email, phone number or company to tell them apart, or say you want both.",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M11.A03",
+      "M06.A05",
+      "M21.A06",
+      "M49.A06",
+      "M03.A10",
+      "M03.A03",
+      "M04.A03",
+      "M49.A07",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5039,
+     "ms": 5039
+    },
+    {
+     "user": "the one at Umbrella",
+     "status": "done",
+     "reply": "Assign contact owner for 1 of 1: Zoe Costa.",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M11.A03",
+      "M06.A05",
+      "M04.A03",
+      "M03.A10",
+      "M21.A06",
+      "M49.A06",
+      "M03.A03",
+      "M04.A05",
+      "M11.A02",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A07"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Zoe Costa"
+       }
+      },
+      {
+       "action": "M01.A07",
+       "args": {
+        "contactId": "ct_30",
+        "ownerId": "us_5"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6091,
+     "ms": 6091
+    }
+   ],
+   "metrics": {
+    "ms": 11130,
+    "firstReplyMs": 5039,
+    "plannerMs": 11102,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 14392,
+     "cachedRead": 8870,
+     "cacheWrite": 5518,
+     "output": 991,
+     "thinking": 0,
+     "costUsd": 0.033764
+    }
+   }
+  },
+  {
+   "id": "direct-appointment-reschedule",
+   "category": "direct",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M21.A04 not planned (was offered; planned: M21.A02)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.startAt') FROM appointments WHERE id='ap_1' → \"2026-10-23T15:00:00.000Z\", wanted \"2026-10-26T15:00:00.000Z\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Push Sarah Johnson's Agency plan walkthrough to Monday, same time",
+     "status": "done",
+     "reply": "Agency plan walkthrough (appointment): start at 2026-10-23T15:00:00.000Z, end at 2026-10-23T15:30:00.000Z, status booked, person name Sarah Johnson, host name Raj Iyer.",
+     "offered": [
+      "M12.A04",
+      "M15.A06",
+      "M13.A04",
+      "M21.A04",
+      "M06.A01",
+      "M07.A01",
+      "M21.A02",
+      "M21.A03"
+     ],
+     "planned": [
+      "M21.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A02",
+       "args": {
+        "appointmentId": "ap_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4420,
+     "ms": 4420
+    }
+   ],
+   "metrics": {
+    "ms": 4420,
+    "firstReplyMs": 4420,
+    "plannerMs": 4392,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5146,
+     "cachedRead": 1964,
+     "cacheWrite": 3180,
+     "output": 296,
+     "thinking": 0,
+     "costUsd": 0.016076800000000002
+    }
+   }
+  },
+  {
+   "id": "direct-appointment-reschedule",
+   "category": "direct",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M21.A04 not planned (was offered; planned: M21.A02)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.startAt') FROM appointments WHERE id='ap_1' → \"2026-10-23T15:00:00.000Z\", wanted \"2026-10-26T15:00:00.000Z\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Push Sarah Johnson's Agency plan walkthrough to Monday, same time",
+     "status": "done",
+     "reply": "Agency plan walkthrough (appointment): start at 2026-10-23T15:00:00.000Z, end at 2026-10-23T15:30:00.000Z, status booked, person name Sarah Johnson, host name Raj Iyer.",
+     "offered": [
+      "M12.A04",
+      "M15.A06",
+      "M13.A04",
+      "M21.A04",
+      "M06.A01",
+      "M07.A01",
+      "M21.A02",
+      "M21.A03"
+     ],
+     "planned": [
+      "M21.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A02",
+       "args": {
+        "appointmentId": "ap_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4229,
+     "ms": 4229
+    }
+   ],
+   "metrics": {
+    "ms": 4229,
+    "firstReplyMs": 4229,
+    "plannerMs": 4203,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5146,
+     "cachedRead": 5144,
+     "cacheWrite": 0,
+     "output": 296,
+     "thinking": 0,
+     "costUsd": 0.0039928
+    }
+   }
+  },
+  {
+   "id": "direct-appointment-reschedule",
+   "category": "direct",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M21.A04 not planned (was offered; planned: M21.A02)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.startAt') FROM appointments WHERE id='ap_1' → \"2026-10-23T15:00:00.000Z\", wanted \"2026-10-26T15:00:00.000Z\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Push Sarah Johnson's Agency plan walkthrough to Monday, same time",
+     "status": "done",
+     "reply": "Agency plan walkthrough (appointment): start at 2026-10-23T15:00:00.000Z, end at 2026-10-23T15:30:00.000Z, status booked, person name Sarah Johnson, host name Raj Iyer.",
+     "offered": [
+      "M12.A04",
+      "M15.A06",
+      "M13.A04",
+      "M21.A04",
+      "M06.A01",
+      "M07.A01",
+      "M21.A02",
+      "M21.A03"
+     ],
+     "planned": [
+      "M21.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A02",
+       "args": {
+        "appointmentId": "ap_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4772,
+     "ms": 4772
+    }
+   ],
+   "metrics": {
+    "ms": 4772,
+    "firstReplyMs": 4772,
+    "plannerMs": 4739,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5146,
+     "cachedRead": 5144,
+     "cacheWrite": 0,
+     "output": 296,
+     "thinking": 0,
+     "costUsd": 0.0039928
+    }
+   }
+  },
+  {
+   "id": "direct-campaign-pause",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Pause the fall webinar campaign",
+     "status": "done",
+     "reply": "Done: Pause campaign (Fall Webinar Series).",
+     "offered": [
+      "M15.A08",
+      "M15.A09",
+      "M15.A07",
+      "M15.A01",
+      "M15.A05",
+      "M15.A03",
+      "M15.A02",
+      "M15.A10"
+     ],
+     "planned": [
+      "M15.A08"
+     ],
+     "calls": [
+      {
+       "action": "M15.A08",
+       "args": {
+        "campaignId": "cp_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4369,
+     "ms": 4369
+    }
+   ],
+   "metrics": {
+    "ms": 4369,
+    "firstReplyMs": 4369,
+    "plannerMs": 4358,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4637,
+     "cachedRead": 1964,
+     "cacheWrite": 2671,
+     "output": 289,
+     "thinking": 0,
+     "costUsd": 0.0139708
+    }
+   }
+  },
+  {
+   "id": "direct-campaign-pause",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Pause the fall webinar campaign",
+     "status": "done",
+     "reply": "Done: Pause campaign (Fall Webinar Series).",
+     "offered": [
+      "M15.A08",
+      "M15.A09",
+      "M15.A07",
+      "M15.A01",
+      "M15.A05",
+      "M15.A03",
+      "M15.A02",
+      "M15.A10"
+     ],
+     "planned": [
+      "M15.A08"
+     ],
+     "calls": [
+      {
+       "action": "M15.A08",
+       "args": {
+        "campaignId": "cp_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4085,
+     "ms": 4085
+    }
+   ],
+   "metrics": {
+    "ms": 4085,
+    "firstReplyMs": 4085,
+    "plannerMs": 4069,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4637,
+     "cachedRead": 4635,
+     "cacheWrite": 0,
+     "output": 289,
+     "thinking": 0,
+     "costUsd": 0.0038209999999999997
+    }
+   }
+  },
+  {
+   "id": "direct-campaign-pause",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Pause the fall webinar campaign",
+     "status": "done",
+     "reply": "Done: Pause campaign (Fall Webinar Series).",
+     "offered": [
+      "M15.A08",
+      "M15.A09",
+      "M15.A07",
+      "M15.A01",
+      "M15.A05",
+      "M15.A03",
+      "M15.A02",
+      "M15.A10"
+     ],
+     "planned": [
+      "M15.A08"
+     ],
+     "calls": [
+      {
+       "action": "M15.A08",
+       "args": {
+        "campaignId": "cp_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5024,
+     "ms": 5024
+    }
+   ],
+   "metrics": {
+    "ms": 5024,
+    "firstReplyMs": 5024,
+    "plannerMs": 5010,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4637,
+     "cachedRead": 4635,
+     "cacheWrite": 0,
+     "output": 289,
+     "thinking": 0,
+     "costUsd": 0.0038209999999999997
+    }
+   }
+  },
+  {
+   "id": "direct-opportunity-stage",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Move the Hooli deal back to Proposal",
+     "status": "done",
+     "reply": "Done: Move opportunity to stage (Hooli - Agency plan).",
+     "offered": [
+      "M04.A05",
+      "M04.A10",
+      "M04.A04",
+      "M21.A04",
+      "M04.A09",
+      "M04.A01",
+      "M04.A06",
+      "M29.A08",
+      "M28.A06",
+      "M04.A02",
+      "M04.A03",
+      "M06.A09"
+     ],
+     "planned": [
+      "M04.A05"
+     ],
+     "calls": [
+      {
+       "action": "M04.A05",
+       "args": {
+        "opportunityId": "op_7",
+        "stage": "Proposal"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4202,
+     "ms": 4202
+    }
+   ],
+   "metrics": {
+    "ms": 4202,
+    "firstReplyMs": 4202,
+    "plannerMs": 4180,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5670,
+     "cachedRead": 1964,
+     "cacheWrite": 3704,
+     "output": 304,
+     "thinking": 0,
+     "costUsd": 0.0182528
+    }
+   }
+  },
+  {
+   "id": "direct-opportunity-stage",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Move the Hooli deal back to Proposal",
+     "status": "done",
+     "reply": "Done: Move opportunity to stage (Hooli - Agency plan).",
+     "offered": [
+      "M04.A05",
+      "M04.A10",
+      "M04.A04",
+      "M21.A04",
+      "M04.A09",
+      "M04.A01",
+      "M04.A06",
+      "M29.A08",
+      "M28.A06",
+      "M04.A02",
+      "M04.A03",
+      "M06.A09"
+     ],
+     "planned": [
+      "M04.A05"
+     ],
+     "calls": [
+      {
+       "action": "M04.A05",
+       "args": {
+        "opportunityId": "op_7",
+        "stage": "Proposal"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4171,
+     "ms": 4171
+    }
+   ],
+   "metrics": {
+    "ms": 4171,
+    "firstReplyMs": 4171,
+    "plannerMs": 4157,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5670,
+     "cachedRead": 5668,
+     "cacheWrite": 0,
+     "output": 304,
+     "thinking": 0,
+     "costUsd": 0.0041776
+    }
+   }
+  },
+  {
+   "id": "direct-opportunity-stage",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Move the Hooli deal back to Proposal",
+     "status": "done",
+     "reply": "Done: Move opportunity to stage (Hooli - Agency plan).",
+     "offered": [
+      "M04.A05",
+      "M04.A10",
+      "M04.A04",
+      "M21.A04",
+      "M04.A09",
+      "M04.A01",
+      "M04.A06",
+      "M29.A08",
+      "M28.A06",
+      "M04.A02",
+      "M04.A03",
+      "M06.A09"
+     ],
+     "planned": [
+      "M04.A05"
+     ],
+     "calls": [
+      {
+       "action": "M04.A05",
+       "args": {
+        "opportunityId": "op_7",
+        "stage": "Proposal"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4301,
+     "ms": 4301
+    }
+   ],
+   "metrics": {
+    "ms": 4301,
+    "firstReplyMs": 4301,
+    "plannerMs": 4289,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5670,
+     "cachedRead": 5668,
+     "cacheWrite": 0,
+     "output": 304,
+     "thinking": 0,
+     "costUsd": 0.0041776
+    }
+   }
+  },
+  {
+   "id": "direct-payment-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a payment request for Marcus Lee's overdue invoice",
+     "status": "done",
+     "reply": "Done: Create payment request.",
+     "offered": [
+      "M29.A01",
+      "M28.A10",
+      "M28.A08",
+      "M29.A02",
+      "M29.A04",
+      "M28.A01",
+      "M29.A07",
+      "M28.A02",
+      "M28.A03",
+      "M29.A03",
+      "M29.A06",
+      "M28.A07",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03"
+     ],
+     "planned": [
+      "M28.A10",
+      "M29.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "contactId": "ct_33"
+       }
+      },
+      {
+       "action": "M29.A01",
+       "args": {
+        "contactId": "ct_33",
+        "invoiceId": "inv_9"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4494,
+     "ms": 4494
+    }
+   ],
+   "metrics": {
+    "ms": 4494,
+    "firstReplyMs": 4494,
+    "plannerMs": 4477,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 7525,
+     "cachedRead": 1964,
+     "cacheWrite": 5559,
+     "output": 358,
+     "thinking": 0,
+     "costUsd": 0.026212799999999998
+    }
+   }
+  },
+  {
+   "id": "direct-payment-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a payment request for Marcus Lee's overdue invoice",
+     "status": "done",
+     "reply": "Done: Create payment request.",
+     "offered": [
+      "M29.A01",
+      "M28.A10",
+      "M28.A08",
+      "M29.A02",
+      "M29.A04",
+      "M28.A01",
+      "M29.A07",
+      "M28.A02",
+      "M28.A03",
+      "M29.A03",
+      "M29.A06",
+      "M28.A07",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03"
+     ],
+     "planned": [
+      "M28.A10",
+      "M29.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "contactId": "ct_33"
+       }
+      },
+      {
+       "action": "M29.A01",
+       "args": {
+        "contactId": "ct_33",
+        "invoiceId": "inv_9"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4987,
+     "ms": 4987
+    }
+   ],
+   "metrics": {
+    "ms": 4987,
+    "firstReplyMs": 4987,
+    "plannerMs": 4974,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 7525,
+     "cachedRead": 1964,
+     "cacheWrite": 5559,
+     "output": 361,
+     "thinking": 0,
+     "costUsd": 0.026242799999999997
+    }
+   }
+  },
+  {
+   "id": "direct-payment-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a payment request for Marcus Lee's overdue invoice",
+     "status": "done",
+     "reply": "Done: Create payment request.",
+     "offered": [
+      "M29.A01",
+      "M28.A10",
+      "M28.A08",
+      "M29.A02",
+      "M29.A04",
+      "M28.A01",
+      "M29.A07",
+      "M28.A02",
+      "M28.A03",
+      "M29.A03",
+      "M29.A06",
+      "M28.A07",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03"
+     ],
+     "planned": [
+      "M28.A10",
+      "M29.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "contactId": "ct_33",
+        "limit": 1
+       }
+      },
+      {
+       "action": "M29.A01",
+       "args": {
+        "contactId": "ct_33",
+        "invoiceId": "inv_9"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6652,
+     "ms": 6652
+    }
+   ],
+   "metrics": {
+    "ms": 6652,
+    "firstReplyMs": 6652,
+    "plannerMs": 6636,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 7525,
+     "cachedRead": 1964,
+     "cacheWrite": 5559,
+     "output": 368,
+     "thinking": 0,
+     "costUsd": 0.026312799999999997
+    }
+   }
+  },
+  {
+   "id": "direct-tag-rename",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Rename the partner tag to referral-partner",
+     "status": "done",
+     "reply": "Done: Rename tag (referral-partner).",
+     "offered": [
+      "M08.A03",
+      "M08.A09",
+      "M08.A01",
+      "M08.A06",
+      "M08.A08",
+      "M08.A05",
+      "M49.A04",
+      "M01.A09",
+      "M03.A04"
+     ],
+     "planned": [
+      "M08.A03"
+     ],
+     "calls": [
+      {
+       "action": "M08.A03",
+       "args": {
+        "tagId": "tg_4",
+        "name": "referral-partner"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4115,
+     "ms": 4115
+    }
+   ],
+   "metrics": {
+    "ms": 4115,
+    "firstReplyMs": 4115,
+    "plannerMs": 4102,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4605,
+     "cachedRead": 1964,
+     "cacheWrite": 2639,
+     "output": 298,
+     "thinking": 0,
+     "costUsd": 0.013932799999999999
+    }
+   }
+  },
+  {
+   "id": "direct-tag-rename",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Rename the partner tag to referral-partner",
+     "status": "done",
+     "reply": "Done: Rename tag (referral-partner).",
+     "offered": [
+      "M08.A03",
+      "M08.A09",
+      "M08.A01",
+      "M08.A06",
+      "M08.A08",
+      "M08.A05",
+      "M49.A04",
+      "M01.A09",
+      "M03.A04"
+     ],
+     "planned": [
+      "M08.A03"
+     ],
+     "calls": [
+      {
+       "action": "M08.A03",
+       "args": {
+        "tagId": "tg_4",
+        "name": "referral-partner"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4432,
+     "ms": 4432
+    }
+   ],
+   "metrics": {
+    "ms": 4432,
+    "firstReplyMs": 4432,
+    "plannerMs": 4421,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4605,
+     "cachedRead": 1964,
+     "cacheWrite": 2639,
+     "output": 298,
+     "thinking": 0,
+     "costUsd": 0.013932799999999999
+    }
+   }
+  },
+  {
+   "id": "direct-tag-rename",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Rename the partner tag to referral-partner",
+     "status": "done",
+     "reply": "Done: Rename tag (referral-partner).",
+     "offered": [
+      "M08.A03",
+      "M08.A09",
+      "M08.A01",
+      "M08.A06",
+      "M08.A08",
+      "M08.A05",
+      "M49.A04",
+      "M01.A09",
+      "M03.A04"
+     ],
+     "planned": [
+      "M08.A03"
+     ],
+     "calls": [
+      {
+       "action": "M08.A03",
+       "args": {
+        "tagId": "tg_4",
+        "name": "referral-partner"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4297,
+     "ms": 4297
+    }
+   ],
+   "metrics": {
+    "ms": 4297,
+    "firstReplyMs": 4297,
+    "plannerMs": 4285,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4605,
+     "cachedRead": 4603,
+     "cacheWrite": 0,
+     "output": 296,
+     "thinking": 0,
+     "costUsd": 0.0038846
+    }
+   }
+  },
+  {
+   "id": "direct-task-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a high priority task for Tom to call Rosa Ito tomorrow",
+     "status": "done",
+     "reply": "Done: Create task (Call Rosa Ito).",
+     "offered": [
+      "M06.A07",
+      "M06.A01",
+      "M07.A01",
+      "M06.A03",
+      "M06.A09",
+      "M06.A02",
+      "M06.A06",
+      "M21.A01",
+      "M03.A01",
+      "M15.A07",
+      "M06.A10",
+      "M06.A05",
+      "M06.A08",
+      "M06.A04",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Call Rosa Ito",
+        "assigneeId": "us_4",
+        "dueDate": "2026-10-22",
+        "priority": "high",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_1"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4517,
+     "ms": 4517
+    }
+   ],
+   "metrics": {
+    "ms": 4517,
+    "firstReplyMs": 4517,
+    "plannerMs": 4496,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7199,
+     "cachedRead": 1964,
+     "cacheWrite": 5233,
+     "output": 399,
+     "thinking": 0,
+     "costUsd": 0.0253188
+    }
+   }
+  },
+  {
+   "id": "direct-task-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a high priority task for Tom to call Rosa Ito tomorrow",
+     "status": "done",
+     "reply": "Done: Create task (Call Rosa Ito).",
+     "offered": [
+      "M06.A07",
+      "M06.A01",
+      "M07.A01",
+      "M06.A03",
+      "M06.A09",
+      "M06.A02",
+      "M06.A06",
+      "M21.A01",
+      "M03.A01",
+      "M15.A07",
+      "M06.A10",
+      "M06.A05",
+      "M06.A08",
+      "M06.A04",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Call Rosa Ito",
+        "assigneeId": "us_4",
+        "dueDate": "2026-10-22",
+        "priority": "high",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_1"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4444,
+     "ms": 4444
+    }
+   ],
+   "metrics": {
+    "ms": 4444,
+    "firstReplyMs": 4444,
+    "plannerMs": 4427,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7199,
+     "cachedRead": 7197,
+     "cacheWrite": 0,
+     "output": 399,
+     "thinking": 0,
+     "costUsd": 0.0054334
+    }
+   }
+  },
+  {
+   "id": "direct-task-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a high priority task for Tom to call Rosa Ito tomorrow",
+     "status": "done",
+     "reply": "Done: Create task (Call Rosa Ito).",
+     "offered": [
+      "M06.A07",
+      "M06.A01",
+      "M07.A01",
+      "M06.A03",
+      "M06.A09",
+      "M06.A02",
+      "M06.A06",
+      "M21.A01",
+      "M03.A01",
+      "M15.A07",
+      "M06.A10",
+      "M06.A05",
+      "M06.A08",
+      "M06.A04",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Call Rosa Ito",
+        "assigneeId": "us_4",
+        "dueDate": "2026-10-22",
+        "priority": "high",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_1"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6251,
+     "ms": 6251
+    }
+   ],
+   "metrics": {
+    "ms": 6251,
+    "firstReplyMs": 6251,
+    "plannerMs": 6232,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7199,
+     "cachedRead": 7197,
+     "cacheWrite": 0,
+     "output": 399,
+     "thinking": 0,
+     "costUsd": 0.0054334
+    }
+   }
+  },
+  {
+   "id": "failure-deactivated-assignee",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task for Dan Ortiz to prepare the Q4 forecast",
+     "status": "failed",
+     "reply": "Couldn't find user \"Dan Ortiz\": Dan Ortiz is deactivated.\nSkipped create task: an earlier step didn't complete.",
+     "offered": [
+      "M06.A01",
+      "M06.A03",
+      "M07.A01",
+      "M06.A06",
+      "M06.A09",
+      "M06.A07",
+      "M04.A01",
+      "M49.A01",
+      "M04.A07",
+      "M28.A01",
+      "M03.A01",
+      "M13.A01",
+      "M15.A01",
+      "M21.A01",
+      "M07.A03",
+      "M21.A03",
+      "M11.A08"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4178,
+     "ms": 4178
+    }
+   ],
+   "metrics": {
+    "ms": 4178,
+    "firstReplyMs": 4178,
+    "plannerMs": 4165,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 7597,
+     "cachedRead": 1964,
+     "cacheWrite": 5631,
+     "output": 312,
+     "thinking": 0,
+     "costUsd": 0.0260408
+    }
+   }
+  },
+  {
+   "id": "failure-deactivated-assignee",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task for Dan Ortiz to prepare the Q4 forecast",
+     "status": "failed",
+     "reply": "Couldn't find user \"Dan Ortiz\": Dan Ortiz is deactivated.\nSkipped create task: an earlier step didn't complete.",
+     "offered": [
+      "M06.A01",
+      "M06.A03",
+      "M07.A01",
+      "M06.A06",
+      "M06.A09",
+      "M06.A07",
+      "M04.A01",
+      "M49.A01",
+      "M04.A07",
+      "M28.A01",
+      "M03.A01",
+      "M13.A01",
+      "M15.A01",
+      "M21.A01",
+      "M07.A03",
+      "M21.A03",
+      "M11.A08"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6044,
+     "ms": 6044
+    }
+   ],
+   "metrics": {
+    "ms": 6044,
+    "firstReplyMs": 6044,
+    "plannerMs": 6025,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 7597,
+     "cachedRead": 1964,
+     "cacheWrite": 5631,
+     "output": 312,
+     "thinking": 0,
+     "costUsd": 0.0260408
+    }
+   }
+  },
+  {
+   "id": "failure-deactivated-assignee",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task for Dan Ortiz to prepare the Q4 forecast",
+     "status": "failed",
+     "reply": "Couldn't find user \"Dan Ortiz\": Dan Ortiz is deactivated.\nSkipped create task: an earlier step didn't complete.",
+     "offered": [
+      "M06.A01",
+      "M06.A03",
+      "M07.A01",
+      "M06.A06",
+      "M06.A09",
+      "M06.A07",
+      "M04.A01",
+      "M49.A01",
+      "M04.A07",
+      "M28.A01",
+      "M03.A01",
+      "M13.A01",
+      "M15.A01",
+      "M21.A01",
+      "M07.A03",
+      "M21.A03",
+      "M11.A08"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4350,
+     "ms": 4350
+    }
+   ],
+   "metrics": {
+    "ms": 4350,
+    "firstReplyMs": 4350,
+    "plannerMs": 4335,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 7597,
+     "cachedRead": 7595,
+     "cacheWrite": 0,
+     "output": 312,
+     "thinking": 0,
+     "costUsd": 0.004643
+    }
+   }
+  },
+  {
+   "id": "failure-dnd-contact",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Marcus Lee that his onboarding call is confirmed for Monday",
+     "status": "failed",
+     "reply": "Couldn't send email: Marcus Lee is on do-not-disturb.",
+     "offered": [
+      "M13.A01",
+      "M13.A04",
+      "M13.A03",
+      "M48.A01",
+      "M28.A07",
+      "M28.A08",
+      "M15.A05",
+      "M07.A01",
+      "M13.A05",
+      "M01.A08",
+      "M15.A07",
+      "M03.A01",
+      "M13.A10",
+      "M13.A02",
+      "M01.A02",
+      "M01.A03",
+      "M12.A01",
+      "M12.A04",
+      "M15.A06",
+      "M12.A03"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_33",
+        "subject": "Your onboarding call is confirmed for Monday",
+        "body": "Hi Marcus,\n\nThis is to confirm that your onboarding call is scheduled for Monday. We look forward to speaking with you.\n\nBest regards"
+       },
+       "error": "CONFLICT: Marcus Lee is on do-not-disturb"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4941,
+     "ms": 4944
+    }
+   ],
+   "metrics": {
+    "ms": 4944,
+    "firstReplyMs": 4941,
+    "plannerMs": 4925,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 8772,
+     "cachedRead": 1964,
+     "cacheWrite": 6806,
+     "output": 383,
+     "thinking": 0,
+     "costUsd": 0.0314508
+    }
+   }
+  },
+  {
+   "id": "failure-dnd-contact",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Marcus Lee that his onboarding call is confirmed for Monday",
+     "status": "failed",
+     "reply": "Couldn't send email: Marcus Lee is on do-not-disturb.",
+     "offered": [
+      "M13.A01",
+      "M13.A04",
+      "M13.A03",
+      "M48.A01",
+      "M28.A07",
+      "M28.A08",
+      "M15.A05",
+      "M07.A01",
+      "M13.A05",
+      "M01.A08",
+      "M15.A07",
+      "M03.A01",
+      "M13.A10",
+      "M13.A02",
+      "M01.A02",
+      "M01.A03",
+      "M12.A01",
+      "M12.A04",
+      "M15.A06",
+      "M12.A03"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_33",
+        "subject": "Your onboarding call is confirmed for Monday",
+        "body": "Hi Marcus,\n\nThis is to confirm that your onboarding call is scheduled for Monday, October 26. We look forward to speaking with you.\n\nBest regards"
+       },
+       "error": "CONFLICT: Marcus Lee is on do-not-disturb"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5386,
+     "ms": 5388
+    }
+   ],
+   "metrics": {
+    "ms": 5388,
+    "firstReplyMs": 5386,
+    "plannerMs": 5366,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 8772,
+     "cachedRead": 1964,
+     "cacheWrite": 6806,
+     "output": 387,
+     "thinking": 0,
+     "costUsd": 0.0314908
+    }
+   }
+  },
+  {
+   "id": "failure-dnd-contact",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Marcus Lee that his onboarding call is confirmed for Monday",
+     "status": "failed",
+     "reply": "Couldn't send email: Marcus Lee is on do-not-disturb.",
+     "offered": [
+      "M13.A01",
+      "M13.A04",
+      "M13.A03",
+      "M48.A01",
+      "M28.A07",
+      "M28.A08",
+      "M15.A05",
+      "M07.A01",
+      "M13.A05",
+      "M01.A08",
+      "M15.A07",
+      "M03.A01",
+      "M13.A10",
+      "M13.A02",
+      "M01.A02",
+      "M01.A03",
+      "M12.A01",
+      "M12.A04",
+      "M15.A06",
+      "M12.A03"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_33",
+        "subject": "Your onboarding call is confirmed for Monday",
+        "body": "Hi Marcus,\n\nThis is to confirm that your onboarding call is scheduled for Monday, October 26. We look forward to speaking with you.\n\nBest regards"
+       },
+       "error": "CONFLICT: Marcus Lee is on do-not-disturb"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4653,
+     "ms": 4656
+    }
+   ],
+   "metrics": {
+    "ms": 4656,
+    "firstReplyMs": 4653,
+    "plannerMs": 4637,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 8772,
+     "cachedRead": 8770,
+     "cacheWrite": 0,
+     "output": 387,
+     "thinking": 0,
+     "costUsd": 0.005628
+    }
+   }
+  },
+  {
+   "id": "failure-email-provider-down",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Rosa Ito to thank her for renewing",
+     "status": "failed",
+     "reply": "Couldn't send email: The email provider is not responding.",
+     "offered": [
+      "M13.A03",
+      "M13.A01",
+      "M13.A10",
+      "M13.A04",
+      "M28.A08",
+      "M48.A01",
+      "M48.A08",
+      "M13.A05",
+      "M13.A02",
+      "M03.A01",
+      "M01.A02",
+      "M01.A03",
+      "M12.A03",
+      "M12.A01",
+      "M12.A10",
+      "M01.A08"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_1",
+        "subject": "Thank you for renewing",
+        "body": "Hi Rosa,\n\nThank you so much for renewing with us. We truly appreciate your continued trust and support. If there is anything we can do for you, please don't hesitate to reach out.\n\nBest regards"
+       },
+       "error": "UNAVAILABLE: The email provider is not responding"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4616,
+     "ms": 4618
+    }
+   ],
+   "metrics": {
+    "ms": 4618,
+    "firstReplyMs": 4616,
+    "plannerMs": 4604,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7550,
+     "cachedRead": 1964,
+     "cacheWrite": 5584,
+     "output": 390,
+     "thinking": 0,
+     "costUsd": 0.0266328
+    }
+   }
+  },
+  {
+   "id": "failure-email-provider-down",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Rosa Ito to thank her for renewing",
+     "status": "failed",
+     "reply": "Couldn't send email: The email provider is not responding.",
+     "offered": [
+      "M13.A03",
+      "M13.A01",
+      "M13.A10",
+      "M13.A04",
+      "M28.A08",
+      "M48.A01",
+      "M48.A08",
+      "M13.A05",
+      "M13.A02",
+      "M03.A01",
+      "M01.A02",
+      "M01.A03",
+      "M12.A03",
+      "M12.A01",
+      "M12.A10",
+      "M01.A08"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_1",
+        "subject": "Thank you for renewing",
+        "body": "Hi Rosa,\n\nThank you so much for renewing with us. We truly appreciate your continued trust and look forward to serving you.\n\nIf there's anything you need, please don't hesitate to reach out.\n\nBest regards"
+       },
+       "error": "UNAVAILABLE: The email provider is not responding"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4607,
+     "ms": 4609
+    }
+   ],
+   "metrics": {
+    "ms": 4609,
+    "firstReplyMs": 4607,
+    "plannerMs": 4592,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7550,
+     "cachedRead": 7548,
+     "cacheWrite": 0,
+     "output": 400,
+     "thinking": 0,
+     "costUsd": 0.0055136
+    }
+   }
+  },
+  {
+   "id": "failure-email-provider-down",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Rosa Ito to thank her for renewing",
+     "status": "failed",
+     "reply": "Couldn't send email: The email provider is not responding.",
+     "offered": [
+      "M13.A03",
+      "M13.A01",
+      "M13.A10",
+      "M13.A04",
+      "M28.A08",
+      "M48.A01",
+      "M48.A08",
+      "M13.A05",
+      "M13.A02",
+      "M03.A01",
+      "M01.A02",
+      "M01.A03",
+      "M12.A03",
+      "M12.A01",
+      "M12.A10",
+      "M01.A08"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_1",
+        "subject": "Thank you for renewing",
+        "body": "Hi Rosa,\n\nThank you so much for renewing with us. We truly appreciate your continued trust and support. If there's anything we can do for you, please don't hesitate to reach out.\n\nBest regards"
+       },
+       "error": "UNAVAILABLE: The email provider is not responding"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4702,
+     "ms": 4704
+    }
+   ],
+   "metrics": {
+    "ms": 4704,
+    "firstReplyMs": 4702,
+    "plannerMs": 4688,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7550,
+     "cachedRead": 7548,
+     "cacheWrite": 0,
+     "output": 390,
+     "thinking": 0,
+     "costUsd": 0.0054136
+    }
+   }
+  },
+  {
+   "id": "followup-task-amend",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task to send the proposal to Marco Patel, due Friday",
+     "status": "done",
+     "reply": "Done: Create task (Send the proposal to Marco Patel).",
+     "offered": [
+      "M28.A06",
+      "M06.A01",
+      "M06.A06",
+      "M28.A01",
+      "M06.A03",
+      "M29.A01",
+      "M28.A07",
+      "M07.A01",
+      "M06.A02",
+      "M06.A07",
+      "M06.A05",
+      "M01.A02",
+      "M01.A03",
+      "M21.A01"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Send the proposal to Marco Patel",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_4"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4655,
+     "ms": 4655
+    },
+    {
+     "user": "Actually give it to Aisha and make it high priority",
+     "status": "done",
+     "reply": "Done: Assign task owner (Send the proposal to Marco Patel).\nDone: Set task priority (Send the proposal to Marco Patel).",
+     "offered": [
+      "M06.A05",
+      "M06.A07",
+      "M06.A03",
+      "M11.A03",
+      "M06.A01",
+      "M06.A02",
+      "M06.A06",
+      "M28.A06",
+      "M21.A06",
+      "M13.A09",
+      "M04.A05",
+      "M48.A02",
+      "M03.A05",
+      "M04.A06"
+     ],
+     "planned": [
+      "M06.A03",
+      "M06.A05",
+      "M06.A07"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "status": "open",
+        "query": "Marco Patel",
+        "limit": 5
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_20",
+        "assigneeId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A07",
+       "args": {
+        "taskId": "tk_20",
+        "priority": "high"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5695,
+     "ms": 5695
+    }
+   ],
+   "metrics": {
+    "ms": 10350,
+    "firstReplyMs": 4655,
+    "plannerMs": 10295,
+    "plannerRounds": 2,
+    "calls": 4,
+    "usage": {
+     "input": 12895,
+     "cachedRead": 3928,
+     "cacheWrite": 8963,
+     "output": 891,
+     "thinking": 0,
+     "costUsd": 0.0455556
+    }
+   }
+  },
+  {
+   "id": "followup-task-amend",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task to send the proposal to Marco Patel, due Friday",
+     "status": "done",
+     "reply": "Done: Create task (Send the proposal to Marco Patel).",
+     "offered": [
+      "M28.A06",
+      "M06.A01",
+      "M06.A06",
+      "M28.A01",
+      "M06.A03",
+      "M29.A01",
+      "M28.A07",
+      "M07.A01",
+      "M06.A02",
+      "M06.A07",
+      "M06.A05",
+      "M01.A02",
+      "M01.A03",
+      "M21.A01"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Send the proposal to Marco Patel",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_4"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6070,
+     "ms": 6070
+    },
+    {
+     "user": "Actually give it to Aisha and make it high priority",
+     "status": "done",
+     "reply": "Done: Assign task owner (Send the proposal to Marco Patel).\nDone: Set task priority (Send the proposal to Marco Patel).",
+     "offered": [
+      "M06.A05",
+      "M06.A07",
+      "M06.A03",
+      "M11.A03",
+      "M06.A01",
+      "M06.A02",
+      "M06.A06",
+      "M28.A06",
+      "M21.A06",
+      "M13.A09",
+      "M04.A05",
+      "M48.A02",
+      "M03.A05",
+      "M04.A06"
+     ],
+     "planned": [
+      "M06.A03",
+      "M06.A05",
+      "M06.A07"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "query": "Send the proposal to Marco Patel",
+        "limit": 1
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_20",
+        "assigneeId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A07",
+       "args": {
+        "taskId": "tk_20",
+        "priority": "high"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6181,
+     "ms": 6181
+    }
+   ],
+   "metrics": {
+    "ms": 12251,
+    "firstReplyMs": 6070,
+    "plannerMs": 12193,
+    "plannerRounds": 2,
+    "calls": 4,
+    "usage": {
+     "input": 12895,
+     "cachedRead": 12891,
+     "cacheWrite": 0,
+     "output": 941,
+     "thinking": 0,
+     "costUsd": 0.011996199999999999
+    }
+   }
+  },
+  {
+   "id": "followup-task-amend",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task to send the proposal to Marco Patel, due Friday",
+     "status": "done",
+     "reply": "Done: Create task (Send the proposal to Marco Patel).",
+     "offered": [
+      "M28.A06",
+      "M06.A01",
+      "M06.A06",
+      "M28.A01",
+      "M06.A03",
+      "M29.A01",
+      "M28.A07",
+      "M07.A01",
+      "M06.A02",
+      "M06.A07",
+      "M06.A05",
+      "M01.A02",
+      "M01.A03",
+      "M21.A01"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Send the proposal to Marco Patel",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_4"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4651,
+     "ms": 4651
+    },
+    {
+     "user": "Actually give it to Aisha and make it high priority",
+     "status": "done",
+     "reply": "Assign task owner + Set task priority for 1 of 1: Send the proposal to Marco Patel.",
+     "offered": [
+      "M06.A05",
+      "M06.A07",
+      "M06.A03",
+      "M11.A03",
+      "M06.A01",
+      "M06.A02",
+      "M06.A06",
+      "M28.A06",
+      "M21.A06",
+      "M13.A09",
+      "M04.A05",
+      "M48.A02",
+      "M03.A05",
+      "M04.A06"
+     ],
+     "planned": [
+      "M06.A03",
+      "M06.A05",
+      "M06.A07"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "status": "open",
+        "query": "Send the proposal to Marco Patel",
+        "limit": 1
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_20",
+        "assigneeId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A07",
+       "args": {
+        "taskId": "tk_20",
+        "priority": "high"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6111,
+     "ms": 6111
+    }
+   ],
+   "metrics": {
+    "ms": 10762,
+    "firstReplyMs": 4651,
+    "plannerMs": 10704,
+    "plannerRounds": 2,
+    "calls": 4,
+    "usage": {
+     "input": 12895,
+     "cachedRead": 12891,
+     "cacheWrite": 0,
+     "output": 1052,
+     "thinking": 0,
+     "costUsd": 0.013106200000000002
+    }
+   }
+  },
+  {
+   "id": "followup-void-draft-invoice",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "What's the status of Omar Larsen's invoice?",
+     "status": "done",
+     "reply": "Found 1 invoice: Omar Larsen: number INV-1007, status draft, total 1200, amount paid 0, amount due 1200, currency USD.",
+     "offered": [
+      "M28.A07",
+      "M28.A03",
+      "M28.A02",
+      "M28.A01",
+      "M28.A08",
+      "M28.A09",
+      "M29.A02",
+      "M29.A06",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A01",
+      "M28.A10"
+     ],
+     "planned": [
+      "M28.A03"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_7"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4542,
+     "ms": 4542
+    },
+    {
+     "user": "Void it, they cancelled the order",
+     "status": "done",
+     "reply": "Done: Void unpaid invoice.",
+     "offered": [
+      "M28.A09",
+      "M29.A03",
+      "M06.A10",
+      "M13.A05",
+      "M12.A05",
+      "M21.A05",
+      "M29.A08",
+      "M28.A03",
+      "M06.A08",
+      "M21.A10"
+     ],
+     "planned": [
+      "M28.A09"
+     ],
+     "calls": [
+      {
+       "action": "M28.A09",
+       "args": {
+        "invoiceId": "inv_7",
+        "reason": "Customer cancelled the order"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4957,
+     "ms": 4960
+    }
+   ],
+   "metrics": {
+    "ms": 9502,
+    "firstReplyMs": 4542,
+    "plannerMs": 9456,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 11926,
+     "cachedRead": 3928,
+     "cacheWrite": 7994,
+     "output": 673,
+     "thinking": 0,
+     "costUsd": 0.039499599999999996
+    }
+   }
+  },
+  {
+   "id": "followup-void-draft-invoice",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "What's the status of Omar Larsen's invoice?",
+     "status": "done",
+     "reply": "Found 1 invoice: Omar Larsen: number INV-1007, status draft, total 1200, amount paid 0, amount due 1200, currency USD.",
+     "offered": [
+      "M28.A07",
+      "M28.A03",
+      "M28.A02",
+      "M28.A01",
+      "M28.A08",
+      "M28.A09",
+      "M29.A02",
+      "M29.A06",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A01",
+      "M28.A10"
+     ],
+     "planned": [
+      "M28.A03"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_7"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3961,
+     "ms": 3961
+    },
+    {
+     "user": "Void it, they cancelled the order",
+     "status": "done",
+     "reply": "Done: Void unpaid invoice.",
+     "offered": [
+      "M28.A09",
+      "M29.A03",
+      "M06.A10",
+      "M13.A05",
+      "M12.A05",
+      "M21.A05",
+      "M29.A08",
+      "M28.A03",
+      "M06.A08",
+      "M21.A10"
+     ],
+     "planned": [
+      "M28.A09"
+     ],
+     "calls": [
+      {
+       "action": "M28.A09",
+       "args": {
+        "invoiceId": "inv_7",
+        "reason": "Customer cancelled the order"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4451,
+     "ms": 4453
+    }
+   ],
+   "metrics": {
+    "ms": 8414,
+    "firstReplyMs": 3961,
+    "plannerMs": 8377,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 11926,
+     "cachedRead": 11922,
+     "cacheWrite": 0,
+     "output": 648,
+     "thinking": 0,
+     "costUsd": 0.008872399999999999
+    }
+   }
+  },
+  {
+   "id": "followup-void-draft-invoice",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "What's the status of Omar Larsen's invoice?",
+     "status": "done",
+     "reply": "Found 1 invoice: Omar Larsen: number INV-1007, status draft, total 1200, amount paid 0, amount due 1200, currency USD.",
+     "offered": [
+      "M28.A07",
+      "M28.A03",
+      "M28.A02",
+      "M28.A01",
+      "M28.A08",
+      "M28.A09",
+      "M29.A02",
+      "M29.A06",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A01",
+      "M28.A10"
+     ],
+     "planned": [
+      "M28.A03"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_7"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4752,
+     "ms": 4752
+    },
+    {
+     "user": "Void it, they cancelled the order",
+     "status": "done",
+     "reply": "Done: Void unpaid invoice.",
+     "offered": [
+      "M28.A09",
+      "M29.A03",
+      "M06.A10",
+      "M13.A05",
+      "M12.A05",
+      "M21.A05",
+      "M29.A08",
+      "M28.A03",
+      "M06.A08",
+      "M21.A10"
+     ],
+     "planned": [
+      "M28.A09"
+     ],
+     "calls": [
+      {
+       "action": "M28.A09",
+       "args": {
+        "invoiceId": "inv_7",
+        "reason": "Customer cancelled the order"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4944,
+     "ms": 4945
+    }
+   ],
+   "metrics": {
+    "ms": 9697,
+    "firstReplyMs": 4752,
+    "plannerMs": 9648,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 11926,
+     "cachedRead": 11922,
+     "cacheWrite": 0,
+     "output": 666,
+     "thinking": 0,
+     "costUsd": 0.009052399999999999
+    }
+   }
+  },
+  {
+   "id": "indirect-chase-late-payers",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Chase everyone who's more than two weeks late paying, but skip anyone we already reminded this week",
+     "status": "done",
+     "reply": "Send invoice reminder for 3 of 3: #0, #1, #2.",
+     "offered": [
+      "M28.A10",
+      "M28.A08",
+      "M28.A06",
+      "M21.A03",
+      "M06.A03",
+      "M06.A01",
+      "M29.A03",
+      "M21.A09",
+      "M03.A03",
+      "M21.A08",
+      "M13.A01",
+      "M06.A06",
+      "M13.A05",
+      "M28.A03",
+      "M13.A03"
+     ],
+     "planned": [
+      "M28.A10",
+      "M28.A08"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 200
+       }
+      },
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 200
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_6"
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_5"
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_9"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6733,
+     "ms": 6738
+    }
+   ],
+   "metrics": {
+    "ms": 6738,
+    "firstReplyMs": 6733,
+    "plannerMs": 6702,
+    "plannerRounds": 1,
+    "calls": 5,
+    "usage": {
+     "input": 7348,
+     "cachedRead": 1964,
+     "cacheWrite": 5382,
+     "output": 755,
+     "thinking": 0,
+     "costUsd": 0.0294748
+    }
+   }
+  },
+  {
+   "id": "indirect-chase-late-payers",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Chase everyone who's more than two weeks late paying, but skip anyone we already reminded this week",
+     "status": "done",
+     "reply": "Send invoice reminder for 3 of 3: #0, #1, #2.",
+     "offered": [
+      "M28.A10",
+      "M28.A08",
+      "M28.A06",
+      "M21.A03",
+      "M06.A03",
+      "M06.A01",
+      "M29.A03",
+      "M21.A09",
+      "M03.A03",
+      "M21.A08",
+      "M13.A01",
+      "M06.A06",
+      "M13.A05",
+      "M28.A03",
+      "M13.A03"
+     ],
+     "planned": [
+      "M28.A10",
+      "M28.A08"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 200
+       }
+      },
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 200
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_6"
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_5"
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_9"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6524,
+     "ms": 6527
+    }
+   ],
+   "metrics": {
+    "ms": 6527,
+    "firstReplyMs": 6524,
+    "plannerMs": 6495,
+    "plannerRounds": 1,
+    "calls": 5,
+    "usage": {
+     "input": 7348,
+     "cachedRead": 1964,
+     "cacheWrite": 5382,
+     "output": 748,
+     "thinking": 0,
+     "costUsd": 0.0294048
+    }
+   }
+  },
+  {
+   "id": "indirect-chase-late-payers",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Chase everyone who's more than two weeks late paying, but skip anyone we already reminded this week",
+     "status": "done",
+     "reply": "Send invoice reminder: nothing matched, so nothing was changed.\nSend invoice reminder for 2 of 2: #0, #1.",
+     "offered": [
+      "M28.A10",
+      "M28.A08",
+      "M28.A06",
+      "M21.A03",
+      "M06.A03",
+      "M06.A01",
+      "M29.A03",
+      "M21.A09",
+      "M03.A03",
+      "M21.A08",
+      "M13.A01",
+      "M06.A06",
+      "M13.A05",
+      "M28.A03",
+      "M13.A03"
+     ],
+     "planned": [
+      "M28.A10",
+      "M28.A08",
+      "M28.A08"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 200
+       }
+      },
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 200
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_9"
+       }
+      },
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 200
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_6"
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_5"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 6923,
+     "ms": 6928
+    }
+   ],
+   "metrics": {
+    "ms": 6928,
+    "firstReplyMs": 6923,
+    "plannerMs": 6892,
+    "plannerRounds": 1,
+    "calls": 6,
+    "usage": {
+     "input": 7348,
+     "cachedRead": 7346,
+     "cacheWrite": 0,
+     "output": 909,
+     "thinking": 0,
+     "costUsd": 0.0105632
+    }
+   }
+  },
+  {
+   "id": "indirect-cover-for-lucia",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Lucia is out this week, have Raj cover her open tasks",
+     "status": "done",
+     "reply": "Assign task owner for 1 of 1: Follow up on old quote.",
+     "offered": [
+      "M06.A03",
+      "M03.A03",
+      "M06.A09",
+      "M06.A04",
+      "M06.A08",
+      "M06.A07",
+      "M06.A05",
+      "M04.A07",
+      "M28.A08",
+      "M49.A09",
+      "M48.A02",
+      "M07.A03",
+      "M21.A03",
+      "M01.A03",
+      "M04.A10",
+      "M11.A07"
+     ],
+     "planned": [
+      "M06.A03",
+      "M06.A05"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "assigneeId": "us_3",
+        "status": "open",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_19",
+        "assigneeId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4828,
+     "ms": 4828
+    }
+   ],
+   "metrics": {
+    "ms": 4828,
+    "firstReplyMs": 4828,
+    "plannerMs": 4799,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 7004,
+     "cachedRead": 1964,
+     "cacheWrite": 5038,
+     "output": 450,
+     "thinking": 0,
+     "costUsd": 0.0250488
+    }
+   }
+  },
+  {
+   "id": "indirect-cover-for-lucia",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Lucia is out this week, have Raj cover her open tasks",
+     "status": "done",
+     "reply": "Assign task owner for 1 of 1: Follow up on old quote.",
+     "offered": [
+      "M06.A03",
+      "M03.A03",
+      "M06.A09",
+      "M06.A04",
+      "M06.A08",
+      "M06.A07",
+      "M06.A05",
+      "M04.A07",
+      "M28.A08",
+      "M49.A09",
+      "M48.A02",
+      "M07.A03",
+      "M21.A03",
+      "M01.A03",
+      "M04.A10",
+      "M11.A07"
+     ],
+     "planned": [
+      "M06.A03",
+      "M06.A05"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "assigneeId": "us_3",
+        "status": "open",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_19",
+        "assigneeId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5000,
+     "ms": 5000
+    }
+   ],
+   "metrics": {
+    "ms": 5000,
+    "firstReplyMs": 5000,
+    "plannerMs": 4977,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 7004,
+     "cachedRead": 1964,
+     "cacheWrite": 5038,
+     "output": 452,
+     "thinking": 0,
+     "costUsd": 0.0250688
+    }
+   }
+  },
+  {
+   "id": "indirect-cover-for-lucia",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Lucia is out this week, have Raj cover her open tasks",
+     "status": "done",
+     "reply": "Assign task owner for 1 of 1: Follow up on old quote.",
+     "offered": [
+      "M06.A03",
+      "M03.A03",
+      "M06.A09",
+      "M06.A04",
+      "M06.A08",
+      "M06.A07",
+      "M06.A05",
+      "M04.A07",
+      "M28.A08",
+      "M49.A09",
+      "M48.A02",
+      "M07.A03",
+      "M21.A03",
+      "M01.A03",
+      "M04.A10",
+      "M11.A07"
+     ],
+     "planned": [
+      "M06.A03",
+      "M06.A05"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "assigneeId": "us_3",
+        "status": "open",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_19",
+        "assigneeId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6789,
+     "ms": 6789
+    }
+   ],
+   "metrics": {
+    "ms": 6789,
+    "firstReplyMs": 6789,
+    "plannerMs": 6759,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 7004,
+     "cachedRead": 7002,
+     "cacheWrite": 0,
+     "output": 452,
+     "thinking": 0,
+     "costUsd": 0.0059244
+    }
+   }
+  },
+  {
+   "id": "indirect-noah-helps-sales",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Noah is going to help out on the sales team for a while",
+     "status": "done",
+     "reply": "Done: Add team member (Sales).",
+     "offered": [
+      "M49.A01",
+      "M49.A03",
+      "M49.A07",
+      "M04.A01",
+      "M49.A06",
+      "M49.A08",
+      "M49.A04",
+      "M04.A06",
+      "M03.A10",
+      "M21.A06",
+      "M48.A02",
+      "M48.A03",
+      "M49.A05",
+      "M48.A01",
+      "M49.A02",
+      "M48.A08",
+      "M48.A05",
+      "M21.A07",
+      "M48.A07",
+      "M49.A09",
+      "M49.A10",
+      "M01.A01"
+     ],
+     "planned": [
+      "M49.A05"
+     ],
+     "calls": [
+      {
+       "action": "M49.A05",
+       "args": {
+        "teamId": "tm_1",
+        "userId": "us_6"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8720,
+     "ms": 8720
+    }
+   ],
+   "metrics": {
+    "ms": 8720,
+    "firstReplyMs": 8720,
+    "plannerMs": 8696,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 13335,
+     "cachedRead": 3928,
+     "cacheWrite": 9403,
+     "output": 622,
+     "thinking": 0,
+     "costUsd": 0.0446256
+    }
+   }
+  },
+  {
+   "id": "indirect-noah-helps-sales",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Noah is going to help out on the sales team for a while",
+     "status": "done",
+     "reply": "Done: Add team member (Sales).",
+     "offered": [
+      "M49.A01",
+      "M49.A03",
+      "M49.A07",
+      "M04.A01",
+      "M49.A06",
+      "M49.A08",
+      "M49.A04",
+      "M04.A06",
+      "M03.A10",
+      "M21.A06",
+      "M48.A02",
+      "M48.A03",
+      "M49.A05",
+      "M48.A01",
+      "M49.A02",
+      "M48.A08",
+      "M48.A05",
+      "M21.A07",
+      "M48.A07",
+      "M49.A09",
+      "M49.A10",
+      "M01.A01"
+     ],
+     "planned": [
+      "M49.A05"
+     ],
+     "calls": [
+      {
+       "action": "M49.A05",
+       "args": {
+        "teamId": "tm_1",
+        "userId": "us_6"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9151,
+     "ms": 9151
+    }
+   ],
+   "metrics": {
+    "ms": 9151,
+    "firstReplyMs": 9151,
+    "plannerMs": 9128,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 13335,
+     "cachedRead": 3928,
+     "cacheWrite": 9403,
+     "output": 628,
+     "thinking": 0,
+     "costUsd": 0.04468559999999999
+    }
+   }
+  },
+  {
+   "id": "indirect-noah-helps-sales",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Noah is going to help out on the sales team for a while",
+     "status": "done",
+     "reply": "Done: Add team member (Sales).",
+     "offered": [
+      "M49.A01",
+      "M49.A03",
+      "M49.A07",
+      "M04.A01",
+      "M49.A06",
+      "M49.A08",
+      "M49.A04",
+      "M04.A06",
+      "M03.A10",
+      "M21.A06",
+      "M48.A02",
+      "M48.A03",
+      "M49.A05",
+      "M48.A01",
+      "M48.A08",
+      "M49.A02",
+      "M48.A05",
+      "M21.A07",
+      "M48.A07",
+      "M49.A09",
+      "M49.A10",
+      "M01.A01"
+     ],
+     "planned": [
+      "M49.A05"
+     ],
+     "calls": [
+      {
+       "action": "M49.A05",
+       "args": {
+        "teamId": "tm_1",
+        "userId": "us_6"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9124,
+     "ms": 9124
+    }
+   ],
+   "metrics": {
+    "ms": 9124,
+    "firstReplyMs": 9124,
+    "plannerMs": 9099,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 13335,
+     "cachedRead": 7524,
+     "cacheWrite": 5807,
+     "output": 640,
+     "thinking": 0,
+     "costUsd": 0.0311408
+    }
+   }
+  },
+  {
+   "id": "indirect-who-is-waiting",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Who's still waiting on a reply from us?",
+     "status": "done",
+     "reply": "Found 11 conversations matching waiting on team: Tara Silva, Nina Novak, Grace Patel, Wen Patel, Victor Reyes and 6 more.",
+     "offered": [
+      "M11.A10",
+      "M11.A02",
+      "M13.A09",
+      "M12.A09",
+      "M11.A08",
+      "M11.A09",
+      "M28.A08",
+      "M11.A03",
+      "M12.A07",
+      "M13.A07"
+     ],
+     "planned": [
+      "M11.A10"
+     ],
+     "calls": [
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "team"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3910,
+     "ms": 3910
+    }
+   ],
+   "metrics": {
+    "ms": 3910,
+    "firstReplyMs": 3910,
+    "plannerMs": 3896,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6085,
+     "cachedRead": 1964,
+     "cacheWrite": 4119,
+     "output": 252,
+     "thinking": 0,
+     "costUsd": 0.0193928
+    }
+   }
+  },
+  {
+   "id": "indirect-who-is-waiting",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Who's still waiting on a reply from us?",
+     "status": "done",
+     "reply": "Found 11 conversations matching waiting on team: Tara Silva, Nina Novak, Grace Patel, Wen Patel, Victor Reyes and 6 more.",
+     "offered": [
+      "M11.A10",
+      "M11.A02",
+      "M13.A09",
+      "M12.A09",
+      "M11.A08",
+      "M11.A09",
+      "M28.A08",
+      "M11.A03",
+      "M12.A07",
+      "M13.A07"
+     ],
+     "planned": [
+      "M11.A10"
+     ],
+     "calls": [
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "team"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3988,
+     "ms": 3988
+    }
+   ],
+   "metrics": {
+    "ms": 3988,
+    "firstReplyMs": 3988,
+    "plannerMs": 3974,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6085,
+     "cachedRead": 1964,
+     "cacheWrite": 4119,
+     "output": 252,
+     "thinking": 0,
+     "costUsd": 0.0193928
+    }
+   }
+  },
+  {
+   "id": "indirect-who-is-waiting",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Who's still waiting on a reply from us?",
+     "status": "done",
+     "reply": "Found 11 conversations matching waiting on team: Tara Silva, Nina Novak, Grace Patel, Wen Patel, Victor Reyes and 6 more.",
+     "offered": [
+      "M11.A10",
+      "M11.A02",
+      "M13.A09",
+      "M12.A09",
+      "M11.A08",
+      "M11.A09",
+      "M28.A08",
+      "M11.A03",
+      "M12.A07",
+      "M13.A07"
+     ],
+     "planned": [
+      "M11.A10"
+     ],
+     "calls": [
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "team"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4691,
+     "ms": 4691
+    }
+   ],
+   "metrics": {
+    "ms": 4691,
+    "firstReplyMs": 4691,
+    "plannerMs": 4679,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6085,
+     "cachedRead": 1964,
+     "cacheWrite": 4119,
+     "output": 252,
+     "thinking": 0,
+     "costUsd": 0.0193928
+    }
+   }
+  },
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M01.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A09",
+      "M49.A10",
+      "M01.A10",
+      "M01.A03",
+      "M07.A06",
+      "M03.A02",
+      "M08.A09"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A05"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "limit": 200
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5071,
+     "ms": 5071
+    }
+   ],
+   "metrics": {
+    "ms": 5071,
+    "firstReplyMs": 5071,
+    "plannerMs": 5059,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5417,
+     "cachedRead": 1964,
+     "cacheWrite": 3451,
+     "output": 436,
+     "thinking": 0,
+     "costUsd": 0.018560800000000002
+    }
+   }
+  },
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M01.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A09",
+      "M49.A10",
+      "M01.A10",
+      "M01.A03",
+      "M07.A06",
+      "M03.A02",
+      "M08.A09"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A05"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "limit": 200
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4585,
+     "ms": 4585
+    }
+   ],
+   "metrics": {
+    "ms": 4585,
+    "firstReplyMs": 4585,
+    "plannerMs": 4573,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5417,
+     "cachedRead": 5415,
+     "cacheWrite": 0,
+     "output": 436,
+     "thinking": 0,
+     "costUsd": 0.005447
+    }
+   }
+  },
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M01.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A09",
+      "M49.A10",
+      "M01.A10",
+      "M01.A03",
+      "M07.A06",
+      "M03.A02",
+      "M08.A09"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A05"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "limit": 200
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6603,
+     "ms": 6603
+    }
+   ],
+   "metrics": {
+    "ms": 6603,
+    "firstReplyMs": 6603,
+    "plannerMs": 6585,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5417,
+     "cachedRead": 5415,
+     "cacheWrite": 0,
+     "output": 436,
+     "thinking": 0,
+     "costUsd": 0.005447
+    }
+   }
+  },
+  {
+   "id": "multi-email-and-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Sarah Johnson at Brightside that the Agency plan is $297 a month, and create a task for Raj to follow up with her on Friday",
+     "status": "done",
+     "reply": "Done: Send email.\nDone: Create task (Follow up with Sarah Johnson (Brightside) about the Agency plan).",
+     "offered": [
+      "M13.A03",
+      "M06.A01",
+      "M13.A04",
+      "M06.A03",
+      "M28.A08",
+      "M15.A05",
+      "M15.A01",
+      "M13.A01",
+      "M07.A01",
+      "M04.A01",
+      "M28.A07",
+      "M06.A09",
+      "M21.A02",
+      "M21.A03",
+      "M01.A02",
+      "M01.A03",
+      "M04.A02",
+      "M04.A03",
+      "M48.A02",
+      "M12.A03",
+      "M21.A01",
+      "M12.A04",
+      "M15.A06"
+     ],
+     "planned": [
+      "M13.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Brightside"
+       }
+      },
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_31",
+        "subject": "Agency plan pricing",
+        "body": "Hi Sarah,\n\nThe Agency plan is $297 a month. Let me know if you have any questions.\n\nBest regards"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sarah Johnson (Brightside) about the Agency plan",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_31"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 11613,
+     "ms": 11616
+    }
+   ],
+   "metrics": {
+    "ms": 11616,
+    "firstReplyMs": 11613,
+    "plannerMs": 11579,
+    "plannerRounds": 2,
+    "calls": 3,
+    "usage": {
+     "input": 19806,
+     "cachedRead": 3928,
+     "cacheWrite": 15874,
+     "output": 1044,
+     "thinking": 0,
+     "costUsd": 0.07472960000000001
+    }
+   }
+  },
+  {
+   "id": "multi-email-and-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Sarah Johnson at Brightside that the Agency plan is $297 a month, and create a task for Raj to follow up with her on Friday",
+     "status": "done",
+     "reply": "Done: Send email.\nDone: Create task (Follow up with Sarah Johnson).",
+     "offered": [
+      "M13.A03",
+      "M06.A01",
+      "M13.A04",
+      "M06.A03",
+      "M28.A08",
+      "M15.A05",
+      "M15.A01",
+      "M13.A01",
+      "M07.A01",
+      "M04.A01",
+      "M28.A07",
+      "M06.A09",
+      "M21.A02",
+      "M21.A03",
+      "M01.A02",
+      "M01.A03",
+      "M04.A02",
+      "M04.A03",
+      "M48.A02",
+      "M12.A03",
+      "M21.A01",
+      "M12.A04",
+      "M15.A06"
+     ],
+     "planned": [
+      "M13.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Sarah Johnson"
+       }
+      },
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_31",
+        "subject": "Agency plan pricing",
+        "body": "Hi Sarah,\n\nThe Agency plan is $297 a month. Let me know if you have any questions.\n\nBest regards"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sarah Johnson",
+        "description": "Follow up about the Agency plan ($297/month).",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_31"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 11382,
+     "ms": 11386
+    }
+   ],
+   "metrics": {
+    "ms": 11386,
+    "firstReplyMs": 11382,
+    "plannerMs": 11346,
+    "plannerRounds": 2,
+    "calls": 3,
+    "usage": {
+     "input": 19960,
+     "cachedRead": 3928,
+     "cacheWrite": 16028,
+     "output": 981,
+     "thinking": 0,
+     "costUsd": 0.0747156
+    }
+   }
+  },
+  {
+   "id": "multi-email-and-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Sarah Johnson at Brightside that the Agency plan is $297 a month, and create a task for Raj to follow up with her on Friday",
+     "status": "done",
+     "reply": "Done: Send email.\nDone: Create task (Follow up with Sarah Johnson about the Agency plan).",
+     "offered": [
+      "M13.A03",
+      "M06.A01",
+      "M13.A04",
+      "M06.A03",
+      "M28.A08",
+      "M15.A05",
+      "M15.A01",
+      "M13.A01",
+      "M07.A01",
+      "M04.A01",
+      "M28.A07",
+      "M06.A09",
+      "M21.A02",
+      "M21.A03",
+      "M01.A02",
+      "M01.A03",
+      "M04.A02",
+      "M04.A03",
+      "M48.A02",
+      "M12.A03",
+      "M21.A01",
+      "M12.A04",
+      "M15.A06"
+     ],
+     "planned": [
+      "M13.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Sarah Johnson"
+       }
+      },
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_31",
+        "subject": "Agency plan pricing",
+        "body": "Hi Sarah,\n\nThe Agency plan is $297 a month. Let me know if you have any questions.\n\nBest regards"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sarah Johnson about the Agency plan",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_31"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 13463,
+     "ms": 13465
+    }
+   ],
+   "metrics": {
+    "ms": 13465,
+    "firstReplyMs": 13463,
+    "plannerMs": 13423,
+    "plannerRounds": 2,
+    "calls": 3,
+    "usage": {
+     "input": 19960,
+     "cachedRead": 19956,
+     "cacheWrite": 0,
+     "output": 995,
+     "thinking": 0,
+     "costUsd": 0.0139492
+    }
+   }
+  },
+  {
+   "id": "multi-facebook-leads",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Assign last week's Facebook leads to the available sales reps, round robin",
+     "status": "done",
+     "reply": "Assign lead owner for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A05",
+      "M49.A08",
+      "M04.A06",
+      "M01.A07",
+      "M03.A03",
+      "M03.A06",
+      "M11.A03",
+      "M21.A07",
+      "M21.A06",
+      "M21.A01",
+      "M21.A03",
+      "M48.A03",
+      "M49.A03",
+      "M48.A02",
+      "M48.A04",
+      "M49.A09",
+      "M04.A03",
+      "M48.A09",
+      "M48.A05",
+      "M01.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M48.A03",
+      "M03.A05"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 9726,
+     "ms": 9729
+    }
+   ],
+   "metrics": {
+    "ms": 9729,
+    "firstReplyMs": 9726,
+    "plannerMs": 9689,
+    "plannerRounds": 2,
+    "calls": 8,
+    "usage": {
+     "input": 14514,
+     "cachedRead": 3928,
+     "cacheWrite": 10582,
+     "output": 819,
+     "thinking": 0,
+     "costUsd": 0.0513116
+    }
+   }
+  },
+  {
+   "id": "multi-facebook-leads",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Assign last week's Facebook leads to the available sales reps, round robin",
+     "status": "done",
+     "reply": "Assign lead owner for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A05",
+      "M49.A08",
+      "M04.A06",
+      "M01.A07",
+      "M03.A03",
+      "M03.A06",
+      "M11.A03",
+      "M21.A07",
+      "M21.A06",
+      "M21.A01",
+      "M21.A03",
+      "M48.A03",
+      "M49.A03",
+      "M49.A09",
+      "M48.A02",
+      "M49.A01",
+      "M49.A05",
+      "M49.A02",
+      "M48.A01",
+      "M49.A07",
+      "M48.A07",
+      "M48.A04",
+      "M48.A08",
+      "M01.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M48.A03",
+      "M03.A05"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 10960,
+     "ms": 10963
+    }
+   ],
+   "metrics": {
+    "ms": 10963,
+    "firstReplyMs": 10960,
+    "plannerMs": 10919,
+    "plannerRounds": 2,
+    "calls": 8,
+    "usage": {
+     "input": 15161,
+     "cachedRead": 8078,
+     "cacheWrite": 7079,
+     "output": 820,
+     "thinking": 0,
+     "costUsd": 0.0381396
+    }
+   }
+  },
+  {
+   "id": "multi-facebook-leads",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Assign last week's Facebook leads to the available sales reps, round robin",
+     "status": "done",
+     "reply": "Assign lead owner for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A05",
+      "M49.A08",
+      "M04.A06",
+      "M01.A07",
+      "M03.A03",
+      "M03.A06",
+      "M11.A03",
+      "M21.A07",
+      "M21.A06",
+      "M21.A01",
+      "M21.A03",
+      "M48.A03",
+      "M49.A03",
+      "M49.A09",
+      "M48.A02",
+      "M49.A02",
+      "M49.A01",
+      "M49.A05",
+      "M48.A01",
+      "M49.A06",
+      "M48.A08",
+      "M48.A07",
+      "M48.A04",
+      "M01.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M48.A03",
+      "M03.A05"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 16094,
+     "ms": 16096
+    }
+   ],
+   "metrics": {
+    "ms": 16096,
+    "firstReplyMs": 16094,
+    "plannerMs": 16057,
+    "plannerRounds": 2,
+    "calls": 8,
+    "usage": {
+     "input": 15157,
+     "cachedRead": 8078,
+     "cacheWrite": 7075,
+     "output": 815,
+     "thinking": 0,
+     "costUsd": 0.0380736
+    }
+   }
+  },
+  {
+   "id": "multi-lost-deal-with-note",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Mark the Soylent Pro plan deal as lost, they went with a competitor, and add a note on it that we should revisit in Q2",
+     "status": "done",
+     "reply": "Done: Mark opportunity lost (Soylent - Pro plan).\nDone: Create note.",
+     "offered": [
+      "M04.A09",
+      "M07.A06",
+      "M04.A05",
+      "M03.A09",
+      "M07.A01",
+      "M04.A08",
+      "M04.A10",
+      "M04.A03",
+      "M28.A04",
+      "M04.A01",
+      "M28.A08",
+      "M07.A04",
+      "M04.A02"
+     ],
+     "planned": [
+      "M04.A09",
+      "M07.A01"
+     ],
+     "calls": [
+      {
+       "action": "M04.A09",
+       "args": {
+        "opportunityId": "op_5",
+        "reason": "Went with a competitor"
+       }
+      },
+      {
+       "action": "M07.A01",
+       "args": {
+        "body": "Revisit in Q2.",
+        "attachTo": {
+         "type": "opportunity",
+         "id": "op_5"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4593,
+     "ms": 4593
+    }
+   ],
+   "metrics": {
+    "ms": 4593,
+    "firstReplyMs": 4593,
+    "plannerMs": 4551,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 6100,
+     "cachedRead": 1964,
+     "cacheWrite": 4134,
+     "output": 398,
+     "thinking": 0,
+     "costUsd": 0.0209128
+    }
+   }
+  },
+  {
+   "id": "multi-lost-deal-with-note",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Mark the Soylent Pro plan deal as lost, they went with a competitor, and add a note on it that we should revisit in Q2",
+     "status": "done",
+     "reply": "Done: Mark opportunity lost (Soylent - Pro plan).\nDone: Create note.",
+     "offered": [
+      "M04.A09",
+      "M07.A06",
+      "M04.A05",
+      "M03.A09",
+      "M07.A01",
+      "M04.A08",
+      "M04.A10",
+      "M04.A03",
+      "M28.A04",
+      "M04.A01",
+      "M28.A08",
+      "M07.A04",
+      "M04.A02"
+     ],
+     "planned": [
+      "M04.A09",
+      "M07.A01"
+     ],
+     "calls": [
+      {
+       "action": "M04.A09",
+       "args": {
+        "opportunityId": "op_5",
+        "reason": "Went with a competitor"
+       }
+      },
+      {
+       "action": "M07.A01",
+       "args": {
+        "body": "Revisit in Q2.",
+        "attachTo": {
+         "type": "opportunity",
+         "id": "op_5"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5963,
+     "ms": 5963
+    }
+   ],
+   "metrics": {
+    "ms": 5963,
+    "firstReplyMs": 5963,
+    "plannerMs": 5916,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 6100,
+     "cachedRead": 1964,
+     "cacheWrite": 4134,
+     "output": 398,
+     "thinking": 0,
+     "costUsd": 0.0209128
+    }
+   }
+  },
+  {
+   "id": "multi-lost-deal-with-note",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Mark the Soylent Pro plan deal as lost, they went with a competitor, and add a note on it that we should revisit in Q2",
+     "status": "done",
+     "reply": "Done: Mark opportunity lost (Soylent - Pro plan).\nDone: Create note.",
+     "offered": [
+      "M04.A09",
+      "M07.A06",
+      "M04.A05",
+      "M03.A09",
+      "M07.A01",
+      "M04.A08",
+      "M04.A10",
+      "M04.A03",
+      "M28.A04",
+      "M04.A01",
+      "M28.A08",
+      "M07.A04",
+      "M04.A02"
+     ],
+     "planned": [
+      "M04.A09",
+      "M07.A01"
+     ],
+     "calls": [
+      {
+       "action": "M04.A09",
+       "args": {
+        "opportunityId": "op_5",
+        "reason": "Went with a competitor"
+       }
+      },
+      {
+       "action": "M07.A01",
+       "args": {
+        "body": "Revisit in Q2.",
+        "attachTo": {
+         "type": "opportunity",
+         "id": "op_5"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4513,
+     "ms": 4513
+    }
+   ],
+   "metrics": {
+    "ms": 4513,
+    "firstReplyMs": 4513,
+    "plannerMs": 4466,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 6100,
+     "cachedRead": 6098,
+     "cacheWrite": 0,
+     "output": 398,
+     "thinking": 0,
+     "costUsd": 0.0052036
+    }
+   }
+  },
+  {
+   "id": "unsupported-card-refund",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "unsupported",
+     "reply": "Refunds (creating, approving or executing a refund) aren't available in this version, so I can't refund Rosa Ito's payment back to her card.\nAlternatives: Remove the payment's allocation from an invoice so the money goes back to unallocated; Create a payment request for Rosa Ito; Record a payment for Rosa Ito",
+     "offered": [
+      "M29.A08",
+      "M29.A03",
+      "M29.A04",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M28.A06",
+      "M28.A10",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4309,
+     "ms": 4309
+    }
+   ],
+   "metrics": {
+    "ms": 4309,
+    "firstReplyMs": 4309,
+    "plannerMs": 4293,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 5327,
+     "cachedRead": 1964,
+     "cacheWrite": 3361,
+     "output": 310,
+     "thinking": 0,
+     "costUsd": 0.0169408
+    }
+   }
+  },
+  {
+   "id": "unsupported-card-refund",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "unsupported",
+     "reply": "Refunds (creating, approving or executing a refund) aren't available in this version, so I can't send money back to Rosa Ito's card.\nAlternatives: Remove a payment's allocation from an invoice, so the invoice reopens and the money goes back to unallocated; Record a new payment for Rosa Ito; Create a payment request for Rosa Ito; Explain why a payment failed",
+     "offered": [
+      "M29.A08",
+      "M29.A03",
+      "M29.A04",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M28.A06",
+      "M28.A10",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4363,
+     "ms": 4363
+    }
+   ],
+   "metrics": {
+    "ms": 4363,
+    "firstReplyMs": 4363,
+    "plannerMs": 4353,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 5327,
+     "cachedRead": 5325,
+     "cacheWrite": 0,
+     "output": 328,
+     "thinking": 0,
+     "costUsd": 0.0043490000000000004
+    }
+   }
+  },
+  {
+   "id": "unsupported-card-refund",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "unsupported",
+     "reply": "Refunds (creating, approving or executing a refund) aren't available in this version, so I can't refund Rosa Ito's payment back to her card.\nAlternatives: Remove a payment's allocation from an invoice, which reopens the invoice and returns the money to unallocated; Record a new payment or create a payment request for Rosa Ito; Look up details on why a payment failed",
+     "offered": [
+      "M29.A08",
+      "M29.A03",
+      "M29.A04",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M28.A06",
+      "M28.A10",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4933,
+     "ms": 4933
+    }
+   ],
+   "metrics": {
+    "ms": 4933,
+    "firstReplyMs": 4933,
+    "plannerMs": 4920,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 5327,
+     "cachedRead": 5325,
+     "cacheWrite": 0,
+     "output": 322,
+     "thinking": 0,
+     "costUsd": 0.004289
+    }
+   }
+  },
+  {
+   "id": "unsupported-linkedin-post",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Post our fall webinar announcement on LinkedIn",
+     "status": "unsupported",
+     "reply": "Publishing or scheduling a social post, such as a LinkedIn announcement, isn't available in this version. The publish post and schedule post publication actions are both missing, so I can't post the fall webinar announcement.\nAlternatives: Book appointments with contacts or leads, for example follow-up calls about the webinar; Create deals for contacts who show interest in the webinar",
+     "offered": [
+      "M04.A05",
+      "M04.A01",
+      "M07.A08",
+      "M21.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5972,
+     "ms": 5972
+    }
+   ],
+   "metrics": {
+    "ms": 5972,
+    "firstReplyMs": 5972,
+    "plannerMs": 5961,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 3899,
+     "cachedRead": 1964,
+     "cacheWrite": 1933,
+     "output": 436,
+     "thinking": 0,
+     "costUsd": 0.012488800000000001
+    }
+   }
+  },
+  {
+   "id": "unsupported-linkedin-post",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Post our fall webinar announcement on LinkedIn",
+     "status": "unsupported",
+     "reply": "Publishing a post to LinkedIn isn't available in this version. The publish post and schedule post publication actions aren't enabled, so I can't post the fall webinar announcement.\nAlternatives: Book appointments with contacts or leads for the webinar; Pin a note with the announcement text on a record",
+     "offered": [
+      "M04.A05",
+      "M04.A01",
+      "M07.A08",
+      "M21.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4755,
+     "ms": 4755
+    }
+   ],
+   "metrics": {
+    "ms": 4755,
+    "firstReplyMs": 4755,
+    "plannerMs": 4741,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 3899,
+     "cachedRead": 3897,
+     "cacheWrite": 0,
+     "output": 352,
+     "thinking": 0,
+     "costUsd": 0.0043034
+    }
+   }
+  },
+  {
+   "id": "unsupported-linkedin-post",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Post our fall webinar announcement on LinkedIn",
+     "status": "unsupported",
+     "reply": "Publishing a post to LinkedIn isn't available in this version. The publish post and schedule post publication actions are both missing, so I can't post the fall webinar announcement.\nAlternatives: Book appointments with contacts or leads for the webinar; Create opportunities for contacts interested in the webinar",
+     "offered": [
+      "M04.A05",
+      "M04.A01",
+      "M07.A08",
+      "M21.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4764,
+     "ms": 4764
+    }
+   ],
+   "metrics": {
+    "ms": 4764,
+    "firstReplyMs": 4764,
+    "plannerMs": 4751,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 3899,
+     "cachedRead": 3897,
+     "cacheWrite": 0,
+     "output": 362,
+     "thinking": 0,
+     "costUsd": 0.0044034
+    }
+   }
+  }
+ ]
+}
