@@ -44,7 +44,7 @@ const RESOLVED: JsonSchema = {
  * `offered`: the action ids the planner was shown this turn. A plan may only use those, so a model that
  * remembers an id from an earlier turn (or makes one up) can't reach an action retrieval didn't pick.
  */
-export function compile(plan: SubmitPlan, registry: Registry, offered?: ReadonlySet<string>): CompileResult {
+export function compile(plan: SubmitPlan, registry: Registry, offered?: ReadonlySet<string>, looked?: ReadonlySet<string>): CompileResult {
   const errors: string[] = [];
   if (plan.type !== "plan") return { ok: false, errors: [`expected type "plan", got "${plan.type}"`] };
   const raw = plan.steps ?? [];
@@ -64,7 +64,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
       continue;
     }
     const deps = new Set<string>();
-    const scope: Scope = { types, deps, at, item: null, rr: null, offered };
+    const scope: Scope = { types, deps, at, item: null, rr: null, offered, looked };
     const err = (m: string) => errors.push(`${at}: ${m}`);
 
     // A step with errors still gets its output type, so later steps are checked against it
@@ -143,6 +143,8 @@ interface Scope {
   item: JsonSchema | null;
   rr: JsonSchema | null;
   offered?: ReadonlySet<string>;
+  /** Ids of the steps a look round already ran: their results are text in <looked>, not refs. */
+  looked?: ReadonlySet<string>;
 }
 
 /** Static type of a ref, or null after reporting why it's wrong. */
@@ -174,7 +176,11 @@ function rootType(ref: Ref, scope: Scope, err: (m: string) => void): JsonSchema 
   }
   const t = scope.types.get(ref.root);
   if (!t) {
-    err(`$${ref.root} is not an earlier step (refs can only point back)`);
+    err(
+      scope.looked && (scope.looked.has(ref.root) || ref.root === "look")
+        ? `$${ref.root} was a look step: its result is the text in <looked>, not a ref. Write the values you need into this step, or repeat that read as a step of this plan`
+        : `$${ref.root} is not an earlier step (refs can only point back)`,
+    );
     return null;
   }
   scope.deps.add(ref.root);
