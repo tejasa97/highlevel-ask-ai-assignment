@@ -117,6 +117,12 @@ test("M27.A08 send marks the quote sent, after which lines are refused", async (
   assert.equal(failure(() => w.call("M27.A04", { quoteId: quote.id, priceId: price.id })).code, "CONFLICT");
 });
 
+test("M27.A08 send refuses a quote that was already sent", async () => {
+  const { w, quote } = await auditQuote();
+  w.call("M27.A08", { quoteId: quote.id });
+  assert.equal(failure(() => w.call("M27.A08", { quoteId: quote.id })).code, "CONFLICT");
+});
+
 test("M27.A08 send ignores do-not-disturb and stores no emails row", async () => {
   const w = await testWorld();
   const quiet = w.f.contact({ preferences: { email: false, sms: false, call: false, dnd: true } });

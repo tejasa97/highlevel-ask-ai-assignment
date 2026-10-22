@@ -155,6 +155,13 @@ test("M33.A08 reject only from requested, and a rejected refund can't be execute
   assert.equal(failure(() => w.call("M33.A09", { refundId: other.id })).code, "CONFLICT");
 });
 
+test("M33.A09 execute refuses a refund that hasn't been approved", async () => {
+  const { w, payment, refund } = await requestedRefund();
+  assert.equal(failure(() => w.call("M33.A09", { refundId: refund.id })).code, "CONFLICT");
+  assert.equal(w.call("M33.A10", { refundId: refund.id }).status, "requested");
+  assert.equal(w.store.get<Payment>("payments", payment.id)?.unallocated, 50);
+});
+
 test("M33.A03 list filters by payment", async () => {
   const { w, payment } = await resizableRefund();
   const listed = w.call("M33.A03", { paymentId: payment.id });
