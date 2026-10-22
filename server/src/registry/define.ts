@@ -42,6 +42,11 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   /** Synchronous: every call runs inside a transaction. Throw ActionError for expected failures. */
   handler: (args: z.output<I>, ctx: ActionContext) => z.input<O>;
   /**
+   * For an action that records an outcome which did not go through (a bounced email, a failed sync) instead of throwing,
+   * so the trail survives. Returns the clause the reply adds after "Done: …, but ", or nothing when it all went through.
+   */
+  caveat?: (out: z.output<O>) => string | undefined;
+  /**
    * A valid call for the smoke test: create whatever records it needs with `f`, return the args.
    * The smoke test also derives the invalid call from it (an unknown id, or a made-up param).
    */

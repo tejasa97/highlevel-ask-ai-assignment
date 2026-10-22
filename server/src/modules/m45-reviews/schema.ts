@@ -3,6 +3,7 @@ import { z } from "zod";
 export const REQUEST_STATUSES = [
   "draft",
   "sent",
+  "failed",
   "cancelled",
   "fulfilled",
 ] as const;
@@ -13,6 +14,8 @@ export const ReviewRequest = z.object({
   subject: z.string(),
   body: z.string(),
   emailId: z.string().nullable(),
+  /** Why the email bounced, while the request is `failed`. */
+  failureReason: z.string().nullable().optional(),
   createdAt: z.string(),
   sentAt: z.string().nullable(),
   cancelledAt: z.string().nullable(),
