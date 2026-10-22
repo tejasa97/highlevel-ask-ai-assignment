@@ -95,7 +95,7 @@ test("execute reopens invoices newest allocation first, including two peels of o
   const done = w.call("M33.A09", { refundId: refund.id });
   assert.equal(done.status, "executed");
   const after = w.store.get<Payment>("payments", payment.id);
-  assert.equal(after?.unallocated, 65);
+  assert.equal(after?.unallocated, 40);
   assert.deepEqual(
     after?.allocations.map((a) => [a.invoiceId, a.amount]),
     [
@@ -127,7 +127,12 @@ test("execute reopens invoices newest allocation first, including two peels of o
   assert.equal(reopened?.amountPaid, 5);
   assert.equal(reopened?.amountDue, 15);
   assert.equal(reopened?.status, "open");
-  assert.equal(w.store.get<Payment>("payments", stacked.id)?.unallocated, 15);
+  assert.equal(w.store.get<Payment>("payments", stacked.id)?.unallocated, 0);
+
+  const loose = w.f.payment({ contactId: contact.id, amount: 40, unallocated: 40 });
+  const back = w.f.refund({ paymentId: loose.id, contactId: contact.id, amount: 15, status: "approved", decidedBy: "us_1", decidedAt: w.f.now() });
+  w.call("M33.A09", { refundId: back.id });
+  assert.equal(w.store.get<Payment>("payments", loose.id)?.unallocated, 25);
 });
 
 test("a cash payment is declined and its allocations are left alone", async () => {

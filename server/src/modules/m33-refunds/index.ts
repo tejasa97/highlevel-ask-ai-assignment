@@ -217,7 +217,7 @@ const rejectRefund = defineAction({
 const executeRefund = defineAction({
   id: "M33.A09",
   description:
-    "Execute an approved refund. Invoice allocations are peeled newest first (later array index breaks a tie) and those invoices reopen. The payment's unallocated balance grows by the refund amount. A cash payment is declined instead and its allocations stay put. Unlike M29.A01 Record payment, this gives money back. Requires billing.manage.",
+    "Execute an approved refund. Invoice allocations are peeled newest first (later array index breaks a tie) and those invoices reopen. That money leaves: unallocated does not grow, and any part of the refund that was already unallocated is subtracted from it. A cash payment is declined instead and its allocations stay put. Unlike M29.A08 Remove payment allocation, this does not keep the money on the payment. Requires billing.manage.",
   risk: "destructive",
   input: z.strictObject({ refundId: RefundId }),
   output: Refund,
@@ -256,7 +256,10 @@ const executeRefund = defineAction({
       const amount = left[index] ?? 0;
       return amount > 0 ? [{ invoiceId: a.invoiceId, amount, at: a.at }] : [];
     });
-    store.update<Payment>("payments", payment.id, { allocations, unallocated: cents(payment.unallocated + refund.amount) });
+    if (remaining > payment.unallocated) {
+      throw new ActionError("CONFLICT", `Refund ${refund.id} is larger than payment ${payment.id}'s allocations plus its unallocated balance; reduce the amount first`);
+    }
+    store.update<Payment>("payments", payment.id, { allocations, unallocated: cents(payment.unallocated - remaining) });
     return store.update<Refund>("refunds", refund.id, { status: "executed", executedAt: now });
   },
 });
