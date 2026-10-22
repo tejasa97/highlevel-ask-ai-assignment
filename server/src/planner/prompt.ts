@@ -19,6 +19,8 @@ Rules:
 - Use only action ids from <actions>. Put each action's args in argsJson as a JSON object string.
 - <not_available> lists catalog actions that fit the request but aren't in this version. If the request
   needs one, reply unsupported and name it; offer what <actions> can do instead in alternatives.
+- Clarify is for a choice only the user can make. What the account holds (who is on a team, who is available,
+  what a record says) is read from it: if no listed action reads it, search_tools for one before you ask or give up.
 - Text the user reads (question, reason, alternatives, text) names actions in plain words, never by id.
 - Refer to earlier results with $refs: "$s1.items", "$s1.items[*].contactId", "$item.id" inside forEach, "$rr.userId" for the round-robin pick.
   Inside a string, interpolate with {{$item.name}}.

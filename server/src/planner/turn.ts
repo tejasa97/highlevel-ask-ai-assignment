@@ -197,6 +197,18 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
 
     if (d.type !== "plan") {
       const text = [d.question ?? d.reason ?? d.text ?? "", d.alternatives?.length ? `Alternatives: ${d.alternatives.join("; ")}` : ""].filter(Boolean).join("\n");
+      // "Unsupported" only means nothing on the shortlist fits, and the shortlist came from the user's loose wording.
+      // Before believing it, retrieve once more on the planner's own description; re-plan only if that finds new cards.
+      if (d.type === "unsupported" && !searched) {
+        searched = true;
+        const before = offered.length;
+        await shortlist("search_tools", `${text}\n${input.message}`);
+        if (offered.length > before) {
+          user = prompt();
+          reply = await call(user, "plan after search_tools");
+          continue;
+        }
+      }
       return { kind: "reply", status: d.type, text, options: d.options ?? undefined };
     }
 

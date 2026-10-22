@@ -105,6 +105,21 @@ describe("planTurn", () => {
     assert.equal(planner.requests.length, 2);
   });
 
+  test("an unsupported reply is checked with one more retrieval on its own words, and re-planned if that finds actions", async () => {
+    const planner = scripted(reply({ type: "unsupported", reason: "I can't create a task to call Ana." }), createTask());
+    const { out, events } = await run("remind me to call Ana tomorrow", planner);
+    assert.equal(out.kind, "plan");
+    assert.deepEqual(events.flatMap((e) => (e.type === "retrieval" ? [e.data.label] : [])), ["retrieve", "search_tools"]);
+    assert.match(events.flatMap((e) => (e.type === "retrieval" ? [e.data.query] : []))[1]!, /create a task to call Ana/);
+  });
+
+  test("an unsupported reply stands once the extra retrieval has been spent", async () => {
+    const planner = scripted(reply({ type: "search_tools", query: "x" }), reply({ type: "unsupported", reason: "No." }));
+    const { out } = await run("have Ana join the follow-up", planner);
+    assert.ok(out.kind === "reply" && out.status === "unsupported");
+    assert.equal(planner.requests.length, 2);
+  });
+
   describe("look", () => {
     const listTasks = reply({ type: "look", steps: [{ id: "s1", kind: "action", action: "M06.A03", argsJson: JSON.stringify({ query: "Ana" }) }] });
 
@@ -180,7 +195,7 @@ describe("planTurn", () => {
   });
 
   test("the repair round may answer unsupported, as the error for an unbuilt action asks", async () => {
-    const planner = scripted(createTask("M02.A03"), reply({ type: "unsupported", reason: "Companies aren't in this version." }));
+    const planner = scripted(createTask("M02.A03"), reply({ type: "unsupported", reason: "Companies aren't in this version." }), reply({ type: "unsupported", reason: "Still not." }));
     const { out } = await run("create a task to call Ana", planner);
     assert.ok(out.kind === "reply" && out.status === "unsupported", JSON.stringify(out));
     assert.match(planner.requests[1]!.user, /M02\.A03 \(.+\) is not available in this version/);
@@ -204,7 +219,7 @@ describe("planTurn", () => {
   test("clarify and unsupported pass through with their options and alternatives", async () => {
     const q = await run("create a task", scripted(reply({ type: "clarify", question: "What should the task say?", options: ["Call Ana", "Email Ana"] })));
     assert.deepEqual(q.out, { kind: "reply", status: "clarify", text: "What should the task say?", options: ["Call Ana", "Email Ana"] });
-    const u = await run("send Priya an invoice reminder", scripted(reply({ type: "unsupported", reason: "Invoices aren't in this version.", alternatives: ["Create a task to follow up"] })));
+    const u = await run("send Priya an invoice reminder", scripted(reply({ type: "unsupported", reason: "Invoices aren't in this version." }), reply({ type: "unsupported", reason: "Invoices aren't in this version.", alternatives: ["Create a task to follow up"] })));
     assert.ok(u.out.kind === "reply" && u.out.status === "unsupported");
     if (u.out.kind === "reply") assert.match(u.out.text, /Alternatives: Create a task to follow up/);
   });
@@ -225,7 +240,7 @@ describe("planTurn", () => {
   });
 
   test("the prompt names built and unbuilt matches separately", async () => {
-    const planner = scripted(reply({ type: "unsupported", reason: "x" }));
+    const planner = scripted(reply({ type: "unsupported", reason: "x" }), reply({ type: "unsupported", reason: "x" }));
     await run("add a product called Gold Plan to Priya's invoice", planner);
     const user = planner.requests[0]!.user;
     assert.match(user, /<actions>[\s\S]*M28\.A04[\s\S]*<\/actions>/);

@@ -8,7 +8,8 @@ import type { Candidate } from "./registry.js";
 
 // Small helpers shared by module handlers.
 
-export const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
+// A possessive is dropped before punctuation is, so "Sarah Johnson's walkthrough" names the same words as "Sarah Johnson walkthrough".
+export const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/['\u2019]s\b/gu, "").replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
 
 /**
  * Name matching for resolvers: exact (case-insensitive) beats a whole-word match, which beats a prefix.
