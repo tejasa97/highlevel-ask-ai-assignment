@@ -20,6 +20,8 @@ export function scenarioGroups(history: HistoryEntry[]) {
       runs: rows.filter(
         (h) =>
           h.config.planner === latest.config.planner &&
+          h.config.model === latest.config.model &&
+          h.config.reasoning === latest.config.reasoning &&
           h.config.tier === latest.config.tier,
       ),
     };

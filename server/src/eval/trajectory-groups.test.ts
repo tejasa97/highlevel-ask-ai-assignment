@@ -22,6 +22,12 @@ const row = (
   metrics: { measured: 23, passRate: 100 },
   ...extra,
 });
+test("different Codex models do not become one comparable series", () => {
+  const luna = row("luna"), sol = row("sol");
+  luna.config = {...luna.config, planner:"codex-cli",model:"gpt-6-luna",reasoning:"low"};
+  sol.config = {...sol.config, planner:"codex-cli",model:"gpt-6.1-sol",reasoning:"low"};
+  assert.deepEqual(headlineScenarios([luna,sol]).map(x=>x.label),["sol"]);
+});
 test("interleaved folders form separate series; legacy regression runs remain the headline", () => {
   const rows = [
     row("old-before"),

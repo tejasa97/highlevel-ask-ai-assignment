@@ -101,6 +101,7 @@ const totalCleanCost = planner.name === "codex-cli" ? null : sumUsd(cleanCost);
 const summary = {
   label,
   planner: planner.name,
+  model: planner.name === "codex-cli" ? (tier === "fast" ? process.env.CODEX_FAST_MODEL ?? process.env.CODEX_MODEL ?? "gpt-6.1-sol" : process.env.CODEX_MODEL ?? "gpt-6.1-sol") : undefined,
   scenarioDir,
   set: fingerprint(JSON.stringify(scenarios)),
   tier,
@@ -149,7 +150,7 @@ else {
     label,
     git: gitState(ROOT),
     set: fingerprint(JSON.stringify(scenarios)),
-    config: { planner: planner.name, tier, repeat, scenarioDir },
+    config: { planner: planner.name, tier, repeat, scenarioDir, ...(planner.name === "codex-cli" ? { model: summary.model, reasoning: process.env.CODEX_REASONING ?? "low" } : {}) },
     metrics: {
       scenarios: scenarios.length,
       runs: summary.runs,
