@@ -5,7 +5,7 @@ How a breadth module (one of the 32 not yet built) is added, so several can be b
 ## What already exists (do not redesign)
 
 - **`schema.ts` in every module folder.** The row shape, status enums and the cross-module references are settled. A module may add fields or tighten types in *its own* `schema.ts`; if it needs a field on another module's record, stop and tell the integrator (the seams below are the known ones).
-- **`store/entities.ts`.** Every table, its id prefix and its owning module. New tables are added here and only here; `entities.test.ts` fails on a duplicate prefix, on a table that isn't in the map, and on an `insert(...)`/`make(...)` that uses a different prefix than the map. `rrq`, `rv`, `bl`, `tic` are reserved for the M45–M47 branch.
+- **`store/entities.ts`.** Every table, its id prefix and its owning module. New tables are added here and only here; `entities.test.ts` fails on a duplicate prefix, on a table that isn't in the map, and on an `insert(...)`/`make(...)` that uses a different prefix than the map. M45–M47 (`rrq`, `rv`, `bl`, `tic`) are in the map too.
 - **Seams in v1 records.** `contacts.companyId` (M01, null until M02 links it), `appointments.calendarId` (M21, null until M20/M22 book on a calendar). Editing a contact's company *name* unlinks the company record (M01.A04); merging contacts (M01.A06) carries the link along with a filled-in company name. A dev database made before this change lacks the two fields: `npm run db:reset`.
 
 ## Files a module adds (and only these)

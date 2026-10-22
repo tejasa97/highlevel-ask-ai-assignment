@@ -5,7 +5,7 @@ import { type Planner, PlannerError } from "../planner/types.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
 import { Retriever } from "../retrieval/retrieve.js";
-import { matches, runScenario, type Scenario, ScenarioSchema } from "./scenario.js";
+import { check, matches, runScenario, type Scenario, ScenarioSchema } from "./scenario.js";
 
 // The scenario runner over a scripted planner: does it drive the turn, approve, and check the right things?
 
@@ -34,6 +34,18 @@ const scenario = (s: Record<string, unknown>): Scenario => ScenarioSchema.parse(
 const run = (s: Scenario, ...replies: SubmitPlan[]) => runScenario(s, { registry, retriever, planner: scripted(...replies) });
 
 describe("runScenario", () => {
+  test("confirmation checks require an actual bound approval, not a planner clarification", async () => {
+    const s = scenario({ turns: [{ user: "Reply to tickets tic_1 and tic_4", approve: false }], expect: {
+      status: ["cancelled"], noChanges: true, confirmation: { count: 1, blockedCount: 1 },
+    } });
+    const mixed = reply({ steps: [
+      { id: "s1", kind: "action", action: "M47.A08", argsJson: JSON.stringify({ ticketId: "tic_1", body: "Update" }) },
+      { id: "s2", kind: "action", action: "M47.A08", argsJson: JSON.stringify({ ticketId: "tic_4", body: "Update" }) },
+    ] });
+    assert.equal((await run(s, mixed)).pass, true);
+    const failed = await run(s, reply({ type: "clarify", question: "Proceed with tic_1 only?" }));
+    assert.ok(failed.failures.some((f) => f.kind === "confirmation"));
+  });
   test("subscription usage stays unknown while numeric tokens accumulate across turns", async () => {
     const base = scripted(reply({ type: "clarify", question: "What should the task say?" }), action("M06.A01", { title: "Call Ana" }));
     const planner: Planner = { name: "codex-cli", async plan(req) {
@@ -87,6 +99,17 @@ describe("runScenario", () => {
     const r = await run(s, action("M06.A01", { title: "Call Ana" }));
     assert.equal(r.pass, false);
     assert.deepEqual(r.failures.map((f) => f.kind).sort(), ["action-missing", "action-unwanted", "args", "changes", "reply", "reply", "state", "status"]);
+  });
+
+  test("a read run in a look round counts as done, a failed one or one never run does not", () => {
+    const s = scenario({ turns: [{ user: "x" }], expect: { actions: { includes: ["M28.A10", "M47.A01"] } } });
+    const turn = (calls: { action: string; args: Record<string, unknown>; error?: string }[]) => ({
+      user: "x", status: "done", reply: "", offered: ["M28.A10", "M47.A01"], planned: ["M47.A01"], calls, plannerRounds: 2, compileErrors: [], errors: [], approvals: 0, firstReplyMs: 1, ms: 1,
+    });
+    const detail = (calls: Parameters<typeof turn>[0]) => check(s, [turn(calls)], 0, () => 0).map((f) => f.detail);
+    assert.deepEqual(detail([{ action: "M28.A10", args: {} }, { action: "M47.A01", args: {} }]), []);
+    assert.match(detail([{ action: "M28.A10", args: {}, error: "boom" }])[0]!, /^M28\.A10 not planned/);
+    assert.match(detail([])[0]!, /^M28\.A10 not planned/);
   });
 
   test("approval: approved by default, declined when the turn says so", async () => {

@@ -65,6 +65,72 @@ const facebookWorkflow = plan([
   }),
 ]);
 
+describe("preflight subset approval", () => {
+  const tickets = () => compiled(plan([
+    action("s1", "M47.A03", {}),
+    op("s2", "filter", { in: "$s1.items", where: { id: { in: ["tic_1", "tic_4"] } } }),
+    op("s3", "forEach", { in: "$s2", do: [{ action: "M47.A08", args: { ticketId: "$item.id", body: "Update" } }] }),
+  ]));
+  test("forEach previews eligible/blocked items, rechecks a changed subset, then sends exactly once", async () => {
+    const ctx = fresh(), p = tickets(), baseline = ctx.store.all("emails").length;
+    const first = await execute(p, registry, ctx, { executionId: "subset" });
+    assert.equal(first.status, "awaiting_confirmation");
+    assert.equal(first.pending?.count, 1);
+    assert.equal(first.pending?.blockedCount, 1);
+    assert.equal(ctx.store.all("emails").length, baseline);
+    ctx.store.update("contacts", "ct_38", { email: "owen@example.com" });
+    const changed = await execute(p, registry, ctx, { executionId: "subset", approvals: [first.pending!] });
+    assert.equal(changed.status, "awaiting_confirmation");
+    assert.equal(changed.pending?.changed, true);
+    assert.equal(changed.pending?.count, 2);
+    assert.equal(changed.pending?.blockedCount, undefined);
+    assert.equal(ctx.store.all("emails").length, baseline);
+    const done = await execute(p, registry, ctx, { executionId: "subset", approvals: [changed.pending!] });
+    assert.equal(done.status, "done");
+    assert.equal(ctx.store.all("emails").length, baseline + 2);
+    const again = await execute(p, registry, ctx, { executionId: "subset", approvals: [changed.pending!] });
+    assert.equal(again.status, "done");
+    assert.equal(ctx.store.all("emails").length, baseline + 2);
+  });
+  test("recipient changes invalidate an approval even if ticket ids/body are unchanged", async () => {
+    const ctx = fresh(), p = tickets();
+    const first = await execute(p, registry, ctx, { executionId: "recipient" });
+    ctx.store.update("contacts", "ct_35", { email: "new@example.com" });
+    ctx.store.update("tickets", "tic_1", { requesterEmail: "new@example.com" });
+    const next = await execute(p, registry, ctx, { executionId: "recipient", approvals: [first.pending!] });
+    assert.equal(next.status, "awaiting_confirmation");
+    assert.equal(next.pending?.changed, true);
+    assert.equal(next.pending?.preview[0]?.target?.to, "new@example.com");
+  });
+  test("all-blocked plans fail without an empty approval or effects", async () => {
+    const ctx = fresh();
+    const p = compiled(plan([action("s1", "M47.A08", { ticketId: "tic_4", body: "Update" })]));
+    const baseline = ctx.store.all("emails").length;
+    const r = await execute(p, registry, ctx, { executionId: "blocked" });
+    assert.equal(r.status, "failed");
+    assert.equal(r.pending, undefined);
+    assert.match(r.steps[0]!.error!.message, /email address/);
+    assert.equal(ctx.store.all("emails").length, baseline);
+  });
+  test("a revoked permission after preview blocks delivery despite the old approval", async () => {
+    const ctx = { ...fresh(), actorId: "us_1" }, p = tickets(), baseline = ctx.store.all("emails").length;
+    const first = await execute(p, registry, ctx, { executionId: "revoked" });
+    ctx.store.update("users", "us_1", { status: "deactivated" });
+    const result = await execute(p, registry, ctx, { executionId: "revoked", approvals: [first.pending!] });
+    assert.equal(result.status, "failed");
+    assert.equal(ctx.store.all("emails").length, baseline);
+  });
+  test("preflight does not consume injected delivery faults", async () => {
+    const ctx = fresh(), p = tickets(), baseline = ctx.store.all("emails").length;
+    ctx.f.fault("M47.A08", { code: "UNAVAILABLE", match: { ticketId: "tic_1" }, times: 1 });
+    const first = await execute(p, registry, ctx, { executionId: "fault" });
+    assert.equal(first.pending?.count, 1);
+    const result = await execute(p, registry, ctx, { executionId: "fault", approvals: [first.pending!] });
+    assert.equal(result.status, "failed");
+    assert.equal(ctx.store.all("emails").length, baseline);
+  });
+});
+
 describe("facebook leads workflow", () => {
   test("pauses at the bulk gate, then resumes without doing anything twice", async () => {
     const ctx = fresh();
@@ -117,6 +183,12 @@ describe("compile errors the planner can act on", () => {
   test("field on a list", () => {
     const e = errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: "$s1.items.id", ownerId: "us_2" })]));
     assert.match(e, /\$s1\.items is a list; use \$s1\.items\[\*\]\.id/);
+  });
+
+  test("a filter's result is the list itself, so .items is steered away from, not toward", () => {
+    const e = errs(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.items[*].id", ownerId: "us_2" })]));
+    assert.match(e, /already the list of records/);
+    assert.doesNotMatch(e, /use \$f\[\*\]\.items/);
   });
 
   test("forward ref", () => {

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const EMAIL_STATUSES = ["draft", "scheduled", "sent", "delivered", "bounced", "cancelled", "received"] as const;
 /** invoice and invoice_reminder are transactional: they go out even to people who unsubscribed from marketing. */
-export const EMAIL_KINDS = ["general", "invoice", "invoice_reminder", "campaign"] as const;
+export const EMAIL_KINDS = ["general", "invoice", "invoice_reminder", "campaign", "review_request", "ticket_reply"] as const;
 
 export const Email = z.object({
   id: z.string(),

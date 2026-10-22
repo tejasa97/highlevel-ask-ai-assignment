@@ -5,6 +5,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { type HistoryEntry, readHistory } from "../eval/history.js";
+import { headlineScenarios, scenarioGroups } from "../eval/trajectory-groups.js";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 
@@ -47,7 +48,7 @@ const inline = (s: string) =>
     .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
 
 export function render(journey: ReturnType<typeof parseJourney>, history: HistoryEntry[], built: string): string {
-  const data = JSON.stringify({ journey: journey.entries, history }).replace(/</g, "\\u003c");
+  const data = JSON.stringify({ journey: journey.entries, history, scenarioGroups: scenarioGroups(history), headlineScenarios: headlineScenarios(history) }).replace(/</g, "\\u003c");
   return TEMPLATE.replace("/*DATA*/", () => data).replace("<!--BUILT-->", () => esc(built));
 }
 
@@ -195,7 +196,7 @@ th{font-weight:600; color:var(--muted)}
 </div>
 <div class="tip" id="tip"></div>
 <script>
-const { journey, history } = /*DATA*/;
+const { journey, history, scenarioGroups, headlineScenarios } = /*DATA*/;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const byLabel = Object.fromEntries(history.map((h) => [h.label, h]));
@@ -209,9 +210,7 @@ const retrLine = retr.filter((h) => h.set === retrSet);
 const retrNow = retrLine.at(-1);
 const ablations = history.filter((h) => h.suite === "retrieval" && h.set === retrSet && h.git?.sha === retrNow?.git?.sha && h.config.ablation);
 // Scenario runs are drawn for the latest planner and tier only; a run on another model is in the table.
-const lastScen = history.filter((h) => h.suite === "scenarios" && !h.reverted).at(-1);
-const scen = history.filter((h) => h.suite === "scenarios" && h.metrics.measured > 0 && !h.reverted && h.config.planner === lastScen?.config.planner && h.config.tier === lastScen?.config.tier);
-const scen3 = scen.filter((h) => h.config.repeat >= 3);
+const scen3 = headlineScenarios;
 
 // ---- headline ----
 const first = retrLine[0], firstS = scen3[0], lastS = scen3.at(-1);
@@ -222,7 +221,7 @@ const usd = (v, digits = 3) => Number.isFinite(v) ? "$" + v.toFixed(digits) : "U
 $("tiles").innerHTML = [
   first && retrNow ? tile("Retrieval R@15", pct(first.metrics.r15), pct(retrNow.metrics.r15), retrNow.metrics.questions + " held-out questions") : "",
   first && retrNow ? tile("Retrieval R@5", pct(first.metrics.r5), pct(retrNow.metrics.r5), "right action in the top 5") : "",
-  firstS && lastS ? tile("Scenario runs passed", pct(firstS.metrics.passRate), pct(lastS.metrics.passRate), lastS.metrics.allPass + "/" + lastS.metrics.measured + " scenarios pass every run" + (firstS.set !== lastS.set ? "; the set changed between" : "")) : "",
+  firstS && lastS ? tile("Scenario runs passed", pct(firstS.metrics.passRate), pct(lastS.metrics.passRate), "eval/scenarios · " + lastS.metrics.allPass + "/" + lastS.metrics.measured + " scenarios pass every run" + (firstS.set !== lastS.set ? "; the set changed between" : "")) : tile("Scenario runs passed", null, "Not measured", "No eligible 3× eval/scenarios run"),
   firstS && lastS ? tile("Median time per scenario", (firstS.metrics.e2eP50Ms / 1000).toFixed(1) + " s", (lastS.metrics.e2eP50Ms / 1000).toFixed(1) + " s", "end to end, real planner") : "",
 ].join("");
 
@@ -256,8 +255,9 @@ function lineChart(el, xs, series, { lo, hi, fmt, tipOf, height = 260, breaks = 
   xs.forEach((lab, i) => (s += '<text x="' + ax(i) + '" y="' + (H - m.b + 18) + '" text-anchor="' + anchor(i) + '" data-max="' + budget(i) + '">' + esc(lab[0]) + '</text><text x="' + ax(i) + '" y="' + (H - m.b + 34) + '" text-anchor="' + anchor(i) + '" data-max="' + budget(i) + '" style="font-size:11px">' + esc(lab[1] || "") + "</text>"));
   for (const b of breaks) { const bx = (x(b - 1) + x(b)) / 2; s += '<line x1="' + bx + '" x2="' + bx + '" y1="' + m.t + '" y2="' + (m.t + ih) + '" stroke="var(--warn)" stroke-dasharray="4 4"/><text x="' + (bx - 4) + '" y="' + (m.t + ih - 6) + '" text-anchor="end" style="fill:var(--warn);font-size:11px">set changed</text>'; }
   for (const se of series) {
-    const pts = se.values.map((v, i) => (v == null ? null : [x(i), y(v)])).filter(Boolean);
-    s += '<polyline fill="none" stroke="' + se.color + '" stroke-width="2" stroke-linejoin="round" points="' + pts.map((p) => p.join(",")).join(" ") + '"/>';
+    let drawing = false;
+    const path = se.values.map((v,i) => { if(v == null){ drawing = false; return ""; } const move = !drawing || breaks.includes(i); drawing = true; return (move ? "M" : "L") + x(i) + " " + y(v); }).join(" ");
+    s += '<path fill="none" stroke="' + se.color + '" stroke-width="2" stroke-linejoin="round" d="' + path + '"/>';
     se.values.forEach((v, i) => { if (v != null) s += '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="4.5" fill="' + se.color + '" stroke="var(--surface)" stroke-width="2"/>'; });
     const lastI = se.values.length - 1;
     if (se.values[lastI] != null) s += '<text x="' + (x(lastI) - 8) + '" y="' + (y(se.values[lastI]) - 10) + '" text-anchor="end" style="fill:var(--ink);font-weight:600">' + fmt(se.values[lastI]) + "</text>";
@@ -331,27 +331,34 @@ if (retrNow) {
   const rows = [{ label: "everything on", value: retrNow.metrics.r15, sub: "R@5 " + pct(retrNow.metrics.r5) }, ...[...ablations].sort((a, b) => b.metrics.r15 - a.metrics.r15).map((h) => ({ label: name(h), value: h.metrics.r15, color: "var(--s2)", sub: "R@5 " + pct(h.metrics.r5) + " · " + (h.metrics.r15 - retrNow.metrics.r15).toFixed(1) + " points" }))];
   barChart($("ablation"), rows, { lo: 50, hi: 100, fmt: (v) => pct(v) });
 }
-if (scen.length) {
-  lineChart($("scenarios"), scen.map((h) => [h.label, "×" + h.config.repeat + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "") + (h.reverted ? " · reverted" : "")]), [
-    { name: "pass", color: "var(--s1)", values: scen.map((h) => h.metrics.passRate) },
-  ], { lo: 50, hi: 100, fmt: (v) => Math.round(v) + "%", breaks: scen.map((h, i) => (i && h.set !== scen[i - 1].set ? i : 0)).filter(Boolean), tipOf: (i) => { const h = scen[i]; return runTip(h, [pct(h.metrics.passRate) + " of " + (h.metrics.runs - h.metrics.infraRuns) + " clean runs", h.metrics.allPass + "/" + h.metrics.measured + " scenarios pass every run · " + h.metrics.flaky + " flaky", h.metrics.infraRuns ? h.metrics.infraRuns + " runs failed outside the app" : "no infra failures"]); } });
-  const sets = [...new Set(scen.map((h) => h.set))];
-  const notes = [];
-  if (sets.length > 1) notes.push("The scenario set changed " + (sets.length - 1) + "× (a corrected expectation); runs either side of a change aren't strictly comparable.");
-  const infra = scen.filter((h) => h.metrics.infraRuns);
-  if (infra.length) notes.push(infra.map((h) => h.label + ": " + h.metrics.infraRuns + " of " + h.metrics.runs + " runs failed outside the app (planner quota or timeout) and are left out").join("; ") + ".");
-  $("scenario-notes").innerHTML = notes.map((n) => '<div class="note">' + esc(n) + "</div>").join("");
-  lineChart($("latency"), scen.map((h) => [h.label, ""]), [{ name: "p50", color: "var(--s1)", values: scen.map((h) => h.metrics.e2eP50Ms / 1000) }],
-    { lo: 0, hi: Math.ceil(Math.max(...scen.map((h) => h.metrics.e2eP50Ms / 1000)) + 2), fmt: (v) => v.toFixed(1) + " s", height: 220, tipOf: (i) => runTip(scen[i], ["p50 " + (scen[i].metrics.e2eP50Ms / 1000).toFixed(1) + " s", "p95 " + (scen[i].metrics.e2eP95Ms / 1000).toFixed(1) + " s", scen[i].metrics.plannerRoundsPerRun + " planner calls per run"]) });
-  const costs = scen.map((h) => Number.isFinite(h.metrics.costPerRunUsd) ? h.metrics.costPerRunUsd : null);
-  const knownCosts = costs.filter((v) => v !== null);
-  if (knownCosts.length) {
-    lineChart($("cost"), scen.map((h) => [h.label, ""]), [{ name: "cost", color: "var(--s1)", values: costs }],
-      { lo: 0, hi: Math.max(...knownCosts, 0.001) * 1.3, fmt: usd, height: 220, tipOf: (i) => runTip(scen[i], [usd(costs[i], 4) + " per run", scen[i].config.planner + " (" + scen[i].config.tier + ")"]) });
-  } else {
-    $("cost").textContent = "USD unavailable for these runs.";
-  }
+for (const id of ["scenarios","latency","cost"]) $(id).replaceChildren();
+const notes = [];
+for (const group of scenarioGroups) {
+  const scen = group.runs;
+  const breaks = scen.map((h,i) => i && h.set !== scen[i-1].set ? i : 0).filter(Boolean);
+  const slot = (id) => {
+    const section = document.createElement("div");
+    section.dataset.scenarioFolder = group.folder;
+    const heading = document.createElement("h3");
+    heading.textContent = group.folder + " · " + group.planner + " (" + group.tier + ")";
+    const chart = document.createElement("div"); section.append(heading,chart); $(id).append(section);
+    return chart;
+  };
+  lineChart(slot("scenarios"), scen.map((h) => [h.label, "×" + h.config.repeat]), [
+    { name: group.folder, color: "var(--s1)", values: scen.map((h) => h.metrics.passRate) },
+  ], { lo: Math.max(0, Math.floor(Math.min(...scen.map(h=>h.metrics.passRate))/10)*10-10), hi: 100, fmt: (v) => Math.round(v) + "%", breaks, tipOf: (i) => { const h = scen[i]; return runTip(h, [esc(group.folder), pct(h.metrics.passRate) + " of " + (h.metrics.runs - h.metrics.infraRuns) + " clean runs", h.metrics.allPass + "/" + h.metrics.measured + " scenarios pass every run · " + h.metrics.flaky + " flaky"]); } });
+  if (breaks.length) notes.push(group.folder + ": fingerprint changed; segments are not directly comparable.");
+  const infra = scen.filter(h=>h.metrics.infraRuns);
+  if (infra.length) notes.push(group.folder + ": " + infra.map(h=>h.label + " (" + h.metrics.infraRuns + " infrastructure failures excluded)").join("; "));
+  lineChart(slot("latency"), scen.map(h=>[h.label,""]), [{name:group.folder,color:"var(--s1)",values:scen.map(h=>h.metrics.e2eP50Ms/1000)}],
+    {lo:0,hi:Math.max(1,Math.ceil(Math.max(...scen.map(h=>h.metrics.e2eP50Ms/1000))+2)),fmt:v=>v.toFixed(1)+" s",height:220,breaks,tipOf:i=>runTip(scen[i],[esc(group.folder),"p50 "+(scen[i].metrics.e2eP50Ms/1000).toFixed(1)+" s","p95 "+(scen[i].metrics.e2eP95Ms/1000).toFixed(1)+" s"])});
+  const costs = scen.map(h => Number.isFinite(h.metrics.costPerRunUsd) ? h.metrics.costPerRunUsd : null);
+  const knownCosts = costs.filter(v => v !== null);
+  if (knownCosts.length) lineChart(slot("cost"), scen.map(h=>[h.label,""]), [{name:group.folder,color:"var(--s1)",values:costs}],
+    {lo:0,hi:Math.max(0.001,Math.max(...knownCosts)*1.3),fmt:usd,height:220,breaks,tipOf:i=>runTip(scen[i],[esc(group.folder),usd(costs[i],4)+" per run"])});
+  else slot("cost").textContent = "USD unavailable for these runs.";
 }
+$("scenario-notes").innerHTML = notes.map(n=>'<div class="note">'+esc(n)+"</div>").join("");
 }
 // Charts are drawn at their box's real width, so text stays readable on a phone; redrawn when the width changes.
 drawCharts();
@@ -386,8 +393,8 @@ $("timeline").innerHTML = journey.map((e) => {
 }).join("");
 
 // ---- table view ----
-const cols = [["at", (h) => day(h.at) + " " + new Date(h.at).toTimeString().slice(0, 5)], ["suite", (h) => h.suite], ["label", (h) => h.label], ["commit", commitOf], ["set", (h) => h.set],
-  ["headline", (h) => h.suite === "retrieval" ? "R@15 " + pct(h.metrics.r15) + " · R@5 " + pct(h.metrics.r5) + (h.config.ablation ? " · ablation" : "") : pct(h.metrics.passRate) + " · " + h.metrics.allPass + "/" + h.metrics.measured + " · " + (h.metrics.e2eP50Ms / 1000).toFixed(1) + " s · " + usd(h.metrics.costPerRunUsd, 4) + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "") + (h.reverted ? " · reverted" : "")],
+const cols = [["at", (h) => day(h.at) + " " + new Date(h.at).toTimeString().slice(0, 5)], ["suite", (h) => h.suite], ["scenario folder", (h) => h.suite === "scenarios" ? (h.config.scenarioDir || "eval/scenarios") : ""], ["label", (h) => h.label], ["commit", commitOf], ["set", (h) => h.set],
+  ["headline", (h) => h.suite === "retrieval" ? "R@15 " + pct(h.metrics.r15) + " · R@5 " + pct(h.metrics.r5) + (h.config.ablation ? " · ablation" : "") : pct(h.metrics.passRate) + " · " + h.metrics.allPass + "/" + h.metrics.measured + " · " + (h.metrics.e2eP50Ms / 1000).toFixed(1) + " s · " + usd(h.metrics.costPerRunUsd,4) + (h.metrics.infraRuns ? " · " + h.metrics.infraRuns + " infra" : "") + (h.reverted ? " · reverted" : "")],
   ["source", (h) => h.backfilled || "recorded by the run"]];
 $("table").innerHTML = "<table><thead><tr>" + cols.map(([c]) => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>" + history.map((h) => "<tr>" + cols.map(([, f]) => "<td>" + esc(f(h)) + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
 </script>

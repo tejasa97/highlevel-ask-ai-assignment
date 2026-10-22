@@ -1,0 +1,624 @@
+{
+ "summary": {
+  "label": "codex-sol-partial-confirmation-v1-3x",
+  "planner": "codex-cli",
+  "model": "gpt-6.1-sol",
+  "scenarioDir": "eval/policy-scenarios/partial-confirmation",
+  "set": "d6f559cccec2",
+  "tier": "strong",
+  "scenarios": 2,
+  "repeat": 3,
+  "runs": 6,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 2,
+  "measured": 2,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 29510,
+   "p95": 35865
+  },
+  "firstReplyMs": {
+   "p50": 29505,
+   "p95": 35865
+  },
+  "plannerRoundsPerRun": 1.67,
+  "callsPerRun": 0.8,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 93575
+ },
+ "runs": [
+  {
+   "id": "subset-replies-approved-v1",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "partial",
+     "reply": "Done: Reply to ticket requester (Portal export fails).\nCouldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A09",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We received your report."
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "step s1: $input is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 28102,
+     "ms": 28109,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c201d215b4922fea",
+       "targetsHash": "a988d0cb30a77f27",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "Reply to ticket requester (tic_4)",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 28109,
+    "firstReplyMs": 28102,
+    "plannerMs": 28039,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 16329,
+     "cachedRead": 3072,
+     "cacheWrite": 0,
+     "output": 230,
+     "thinking": 77,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6.1-sol"
+   ]
+  },
+  {
+   "id": "subset-replies-approved-v1",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "partial",
+     "reply": "Done: Reply to ticket requester (Portal export fails).\nCouldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A09",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      },
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_4"
+       }
+      },
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We received your report."
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 32438,
+     "ms": 32440,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "632fd5d74824c0c4",
+       "targetsHash": "a988d0cb30a77f27",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "Reply to ticket requester (tic_4)",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 32440,
+    "firstReplyMs": 32438,
+    "plannerMs": 32346,
+    "plannerRounds": 2,
+    "calls": 3,
+    "usage": {
+     "input": 16462,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 222,
+     "thinking": 163,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6.1-sol"
+   ]
+  },
+  {
+   "id": "subset-replies-approved-v1",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "partial",
+     "reply": "Done: Reply to ticket requester (Portal export fails).\nCouldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A09",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We received your report."
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "step s1: \"[\"tic_1\",\"tic_4\"]\" is not a valid $ref (forms: $s1.items, $s1.items[*].id, $item.id, $rr.userId)"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 29505,
+     "ms": 29510,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c201d215b4922fea",
+       "targetsHash": "a988d0cb30a77f27",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "Reply to ticket requester (tic_4)",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 29510,
+    "firstReplyMs": 29505,
+    "plannerMs": 29451,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 16361,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 237,
+     "thinking": 32,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6.1-sol"
+   ]
+  },
+  {
+   "id": "subset-replies-declined-v1",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A09",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 16618,
+     "ms": 16618,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c201d215b4922fea",
+       "targetsHash": "a988d0cb30a77f27",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "Reply to ticket requester (tic_4)",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 16618,
+    "firstReplyMs": 16618,
+    "plannerMs": 16580,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 8092,
+     "cachedRead": 3072,
+     "cacheWrite": 0,
+     "output": 118,
+     "thinking": 103,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6.1-sol"
+   ]
+  },
+  {
+   "id": "subset-replies-declined-v1",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A09",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 18337,
+     "ms": 18337,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c201d215b4922fea",
+       "targetsHash": "a988d0cb30a77f27",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "Reply to ticket requester (tic_4)",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 18337,
+    "firstReplyMs": 18337,
+    "plannerMs": 18292,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 8094,
+     "cachedRead": 3072,
+     "cacheWrite": 0,
+     "output": 118,
+     "thinking": 98,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6.1-sol"
+   ]
+  },
+  {
+   "id": "subset-replies-declined-v1",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A09",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "step s1: $input is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 35865,
+     "ms": 35865,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c201d215b4922fea",
+       "targetsHash": "a988d0cb30a77f27",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "Reply to ticket requester (tic_4)",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 35865,
+    "firstReplyMs": 35865,
+    "plannerMs": 35779,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 16330,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 231,
+     "thinking": 77,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6.1-sol"
+   ]
+  }
+ ]
+}

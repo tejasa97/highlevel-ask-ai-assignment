@@ -29,6 +29,10 @@ Rules:
 - Don't invent values the user didn't give (no due dates, no emails).
 - Dates come from <now>.
 - Don't ask for confirmation; the app asks the user before risky or bulk changes.
+- For a requested batch of ticket replies, include every requested ticket in the plan even if a read shows
+  a missing email or another eligibility blocker. Do not invent an address, relink a requester, or clarify
+  whether to do only part. The app checks eligibility and asks permission to send only the eligible subset;
+  blocked tickets are reported without sending. Use one forEach with a single reply call when iterating tickets.
 Ops (kind "op"):
 - filter:  keep items of "in" matching whereJson, a JSON object of field conditions:
            {"available": true}  {"score": {"gt": 80}}  {"contactId": {"in": "$s2.items[*].contactId"}}

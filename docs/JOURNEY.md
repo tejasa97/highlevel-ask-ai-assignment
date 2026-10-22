@@ -253,7 +253,48 @@ direct-appointment-reschedule 1/3 → 3/3. Planner rounds per run 1.30 → 1.28.
 way: end-to-end p50 5.8 s → 7.3 s, p95 11.1 s → 15.9 s, with fewer planner rounds; the reverted run (entry 13) sat
 in between. It looks like `claude -p` timing from run to run, not the change, but one run can't show that.
 
-## 15. A baseline: one call per step, against a whole plan per call
+## 15. Thirty reviews/listings/ticket actions; isolated eval sets and guarded reporting
+`c5df916` · 2026-10-22 · runs: m45-m47-after
+
+**Problem.** Three more catalog modules needed full integration, not thirty unconditional-success handlers. Closely related messaging/note/ownership/publication actions can be confused; new seed data and interleaved scenario sets could also make regression numbers misleading.
+
+**Change.** A separate branch from main `3d4588d` froze seed IDs, 45 development scenarios and 12 separate reporting scenarios at `080618f`, before handlers. Added all ten actions per module with strict inputs, persistent state, permissions, reusable delivery, resolver identity rules, first-response SLA and normal confirmation/audit/replay. Generic email preview/send/schedule refuse module-owned kinds so request status and ticket SLA cannot be bypassed. Added folder selection and per-folder trajectory lines, leaving the old suite as the headline. README and the module-building guide document the conventions and simulator limitations.
+
+**Verification.** 769 deterministic tests pass without skips, including real local embeddings, all-180 smoke checks, actual SQLite close/reopen, role/consent matrices, DST/SLA boundaries, HTTP/SSE and cross-module execution. A scripted browser run verified ticket reply approval, task creation and row changes; it is not an AI result. Browser inspection exposed an inherited conversation bug: spreading an email/SMS reference copied its ID and private fields into a new conversation. Whitelisting contact/lead IDs fixes it; new tests require clean cv_ records.
+
+**Retrieval.** On the unchanged test split, hybrid recall@15 moves 94.9% → 95.6%, mean shortlist 19.5 → 19.4. No in-scope false rejects; the two off-topic cases still need planner rejection. The module-development ablation has 97.56% explicitly required-action availability and 44/45 cases with every required action retrieved across their turns, mean/max shortlist 17.83/25 and 9,573 prompt characters. Six extra symmetric sibling links together give no recall gain, but raise mean/max to 18.11/26 and 9,806 characters; none were adopted. Initial retrieval still misses Create support ticket in the invoice/conversation chain. Tool-search plumbing is tested; real planner recovery is not yet measured.
+
+**Data caveat.** Original 23 scenario definitions and fingerprint fcc7ddef4615 are unchanged, but the starting seed is expanded by four contacts, two appointments, three review requests, two reviews, three listings and four tickets. Every legacy row hash is preserved. Equal scenario fingerprints therefore do not mean identical seeded data. Freeze hashes and implementation commits are recorded in M45-M47-VERIFICATION.md; retrieval's after measurement records the dirty implementation tree that was subsequently committed.
+
+**AI evaluation pending.** Before implementation, m45-m47-before passed 69/69 original-suite runs, no flaky or infrastructure cases, p50 5.438s/p95 13.100s. The first new development evaluation then hit session quota: four infrastructure failures, 41 cases unstarted, zero clean runs. It is saved separately and correctly not recorded as an application score. Development 45×3, regression 23×3 and reporting 12×3 remain required; no after-regression or reporting success is claimed. Reporting outcomes remain unrun. The separated trajectory still needs visual browser verification.
+
+**Cost.** The before regression recorded $1.47 total, $0.0213/run using the existing CLI estimates. Offline deterministic/retrieval checks add no planner calls. Quota failures establish no task cost or success rate; provider accounting and cost-per-success methodology were not changed in this batch.
+
+## 16. Codex integration; implementation verified, AI acceptance remains unmet
+`9295670` · 2026-10-22 · runs: codex-luna-module-development-3x
+
+**Change.** At the user's request, stopped Claude and ported the merged Codex provider into this separate worktree, retaining per-folder trajectory grouping. Explicit model/reasoning cohorts prevent future Luna/Sol curves from mixing. Subscription dollar cost is unknown, not zero. No API fallback, push or main-branch edits.
+
+**Verification.** 795 deterministic tests pass, no skips/failures; typecheck and production web build pass. This includes fixes for prior-approval retention and clean conversation records, real SQLite persistence, all-180 smoke checks, HTTP/SSE and the thirty module contracts. Actual and synthetic three-folder trajectory browser checks passed; the synthetic screenshot is labelled a fixture, not measured evidence.
+
+**Results.** Luna low reasoning: development 115/135 (85.2%, 34/45 cases pass every repeat), original regression 39/69 (56.5%, 10/23), frozen reporting 26/36 (72.2%, 7/12). No infrastructure failures. A selected Sol low-reasoning diagnostic passed 4/5, not a full-suite estimate: it still invented loop/list references for appointment→review planning. Initial action retrieval can omit Create support ticket; Luna did not reliably request missing tools. Other failures are unnecessary clarification, omitted mutations and choosing search instead of an offered SLA action. Acceptance targets are not met.
+
+**Comparison and data.** Before switching providers, corrected development v2 passed 135/135 on Claude; original regression went 69/69 → 68/69, with the lost assignment repeat investigated. The later Luna regression is not a same-model before/after comparison. Development v2 fixes a test expectation and preserves archived v1/results; seed and reporting hashes are unchanged. The old scenario fingerprint still excludes the expanded seed, as entry 15 explains. Reporting is now exposed; no implementation tuning followed its results.
+
+**Conditions.** Three repeats; concurrency four for Luna development/regression, two for reporting. Reporting overlapped regression; the Sol diagnostic overlapped development. Latencies are descriptive rather than controlled comparisons. Full result files, reproduction commands and unresolved shared-planner work are in M45-M47-FINAL-REPORT.md. Earlier entry 15 is a historical checkpoint, not the current evaluation status.
+
+## 17. Full GPT-6.1 Sol evaluation, with no implementation changes
+`28268dc` · 2026-10-22 · runs: codex-sol-module-regression-3x
+
+**Question.** Does Sol recover quality lost when switching from Claude to Luna?
+
+**Measurement.** All 80 cases ×3, low reasoning, identical prompts/cards/code/seed/expectations. Original regression 63/69 (91.3%, Luna 56.5%); development 124/135 (91.9%, Luna 85.2%); reporting 30/36 (83.3%, Luna 72.2%). Respectively 21/23, 40/45 and 9/12 cases pass every repeat; zero infrastructure failures. Direct module cases pass 88/90, below the 100% target; development remains below 95%. All evidence is saved in the three scenarios-codex-sol-module-*-3x.json files.
+
+**Findings.** Sol is stronger overall, not uniformly better. Two consistent original-suite failures and five reporting listing failures use descriptive/company/possessive strings that the resolvers cannot match. Appointment→reviews still produces invalid loop/post-look references. Bulk partial replies clarify instead of completing the valid item. Missing-address development failures stop at compiler errors, so they do not prove an address-check bypass. SLA, reopening, invoice/conversation→tickets and reply+task improve. No handler, prompt, retrieval or default-model edits were made during this comparison.
+
+**Conditions and limits.** Suites ran sequentially, concurrency four for regression/development and two for reporting, matching Luna's per-suite settings but not its overlap. This is not controlled latency attribution. Reporting was already exposed, so this is model comparison on a fixed set, not fresh holdout evidence. Shared account usage was 72% before and 83% after (account-wide, not isolated billing); USD remains unknown. The report records per-case regressions and next diagnostic areas. AI acceptance is still unmet.
+
+## 18. A baseline: one call per step, against a whole plan per call
 `b10bd51` · 2026-10-22 · runs: baseline-3x → planner-3x
 
 **Problem.** The planner writes the whole plan in one model call. Nothing showed that this beats the usual design,
@@ -279,3 +320,12 @@ $0.011 vs $0.070, 6.4× more for the baseline, since every step resends the prom
 **What it says.** On these tasks a capable model picks the right actions either way; planning the whole task in
 one call is what makes it fast and cheap. The gap grows with the number of records a task touches: the baseline
 makes one model call per record, where the planner writes one forEach.
+
+## 19. Ask before proceeding with the eligible ticket-reply subset
+`739d986` · 2026-10-22 · runs: codex-sol-partial-confirmation-v1-3x
+
+**Policy.** The user chose explicit consent to partial completion: explain which ticket cannot receive a reply and why, then ask whether to send only the eligible replies. Do not silently drop blocked targets or ask an unbound model-generated question in place of approval.
+
+**Change.** Added side-effect-free ticket-reply preflight and reused the existing confirmation route. Single-call forEach and consecutive independent checked sends show eligible recipients plus blocked reasons. Approval hashes include eligibility and recipients; changes require renewed consent. Cancel sends nothing. Approved eligible items send once; blocked items remain failed and the final result is partial. All-blocked requests fail without an empty gate. Dependent/multi-call write transactions retain existing semantics; no speculative dry-run executes handlers.
+
+**Verification.** Integrated GitHub main d63f198, retaining its baseline/report implementation and historical evidence. 814 backend tests pass, typecheck and web build pass. Sol low-reasoning passes both new policy cases ×3 (6/6), no infrastructure failures. Confirmation-content assertions ensure success requires the actual bound subset preview. A scripted browser check verified zero writes before approval, the blocked email-address reason, the eligible recipient and one send after approval. This targeted result does not replace full-suite acceptance. Frozen seed/development/reporting files and old results remain untouched. Details: PARTIAL-CONFIRMATION.md.

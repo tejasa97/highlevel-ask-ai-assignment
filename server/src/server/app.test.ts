@@ -87,6 +87,173 @@ async function start(planner: Planner) {
 const kinds = (evs: Sse[]) => evs.map((e) => e.event);
 const last = (evs: Sse[], event: string) => evs.findLast((e) => e.event === event)?.data;
 
+describe("M45–M47 through real HTTP (scripted plans, not AI evaluation)", () => {
+  for (const approve of [true, false]) test(`mixed ticket replies show the exact subset before ${approve ? "approval" : "cancellation"}`, async () => {
+    const p = scripted(reply({ steps: [
+      { id: "s1", kind: "action", action: "M47.A08", argsJson: JSON.stringify({ ticketId: "tic_4", body: "We received your report" }) },
+      { id: "s2", kind: "action", action: "M47.A08", argsJson: JSON.stringify({ ticketId: "tic_1", body: "We received your report" }) },
+    ] }));
+    const app = await start(p), store = app.world().store;
+    const emails = store.all("emails").length, audit = store.audit().length;
+    const first = await app.ask("Reply to support tickets tic_4 and tic_1");
+    const pending = last(first, "confirm").pending;
+    assert.equal(pending.count, 1);
+    assert.equal(pending.blockedCount, 1);
+    assert.match(pending.blocked[0].error.message, /email address/i);
+    assert.equal(pending.preview[0].args.ticketId, "tic_1");
+    assert.ok(pending.preview[0].target.to);
+    assert.match(last(first, "reply").text, /Proceed with only these/);
+    assert.equal(store.all("emails").length, emails, "no sends before user choice");
+    assert.equal(store.audit().length, audit, "preflight is side-effect free");
+    assert.deepEqual(last(first, "diff").changes, []);
+    const id = last(first, "turn").turnId;
+    const done = await app.confirm(id, approve);
+    assert.equal(last(done, "reply").status, approve ? "partial" : "cancelled");
+    assert.equal(store.all("emails").length, emails + Number(approve));
+    assert.equal(store.get<any>("tickets", "tic_1").status, approve ? "in_progress" : "open");
+    assert.equal(store.get<any>("tickets", "tic_4").firstResponseAt, null);
+    assert.equal(p.requests.length, 1, "choice resumes the saved plan, not another LLM call");
+    assert.ok(last(await app.confirm(id, true), "error"), "duplicate confirmation refused");
+  });
+  test("different external actions retain earlier approvals instead of ping-ponging gates", async () => {
+    const p=scripted(reply({steps:[
+      {id:"s1",kind:"action",action:"M47.A08",argsJson:JSON.stringify({ticketId:"tic_1",body:"We received your report"})},
+      {id:"s2",kind:"action",action:"M45.A02",argsJson:JSON.stringify({requestId:"rrq_1"})},
+    ]}));
+    const app=await start(p),store=app.world().store,emails=store.all("emails").length;
+    const first=await app.ask("Reply to support ticket tic_1 and send review request rrq_1 to Elodie Mercer");
+    assert.equal(last(first,"confirm").pending.stepId,"s1");
+    const turnId=last(first,"turn").turnId;
+    const second=await app.confirm(turnId,true);
+    assert.equal(last(second,"confirm").pending.stepId,"s2");
+    assert.equal(store.all("emails").length,emails+1);
+    const done=await app.confirm(turnId,true);
+    assert.equal(last(done,"reply").status,"done",JSON.stringify(done));
+    assert.equal(store.all("emails").length,emails+2,"approved earlier send must not repeat");
+    assert.equal(store.get<any>("tickets","tic_4").firstResponseAt,null);
+    assert.equal(p.requests.length,1,"approval progression never replans");
+  });
+  test("search_tools offers additional tools without dropping a previously offered ticket action", async () => {
+    const p = scripted(reply({type:"search_tools",query:"create support ticket"}),action("M47.A01",{contactId:"ct_31",title:"Invoice follow-up",body:"Recent reply and overdue invoice"}));
+    const app = await start(p);
+    const done = await app.ask("Find contacts with overdue invoices who replied in the last seven days, then open a support ticket for each");
+    assert.equal(last(done,"reply").status,"done",JSON.stringify(done));
+    assert.equal(p.requests.length,2);
+    assert.ok(done.filter(e=>e.event==="retrieval").length===2);
+    assert.match(p.requests[1]!.user,/M47.A01/);
+    assert.equal(app.world().store.find<any>("tickets",t=>t.title==="Invoice follow-up").length,1);
+  });
+  test("all thirty actions and their tables are visible to the existing UI", async () => {
+    const app = await start(scripted());
+    const meta = await (await app.get("/api/meta")).json() as any;
+    assert.equal(meta.actions.length, 180);
+    for (const module of ["M45", "M46", "M47"]) assert.equal(meta.actions.filter((a:any) => a.id.startsWith(module)).length, 10);
+    for (const table of ["review_requests", "reviews", "listings", "tickets"]) {
+      assert.ok(meta.tables.some((t:any) => t.name === table && t.count > 0));
+      assert.ok((await (await app.get(`/api/tables/${table}`)).json() as any[]).length > 0);
+    }
+  });
+
+  test("review send pauses, decline sends nothing, approve updates both email and request exactly once", async () => {
+    const p = scripted(action("M45.A02", {requestId:"rrq_1"}), action("M45.A02", {requestId:"rrq_1"}));
+    const app = await start(p), store = app.world().store;
+    const before = store.all("emails").length;
+    const first = await app.ask("Send draft review request rrq_1");
+    assert.equal(last(first,"reply").status, "awaiting_confirmation");
+    assert.equal(store.all("emails").length, before);
+    const id1 = last(first,"turn").turnId;
+    assert.equal(last(await app.confirm(id1,false),"reply").status,"cancelled");
+    assert.equal(store.get<any>("review_requests","rrq_1").status,"draft");
+    const second = await app.ask("Send draft review request rrq_1");
+    const id2 = last(second,"turn").turnId;
+    const done = await app.confirm(id2,true);
+    assert.equal(last(done,"reply").status,"done");
+    assert.equal(store.get<any>("review_requests","rrq_1").status,"sent");
+    assert.equal(store.all("emails").length,before+1);
+    const duplicate = await app.confirm(id2,true);
+    assert.match(last(duplicate,"error").message,/Nothing is waiting/);
+    assert.equal(store.all("emails").length,before+1);
+    assert.equal(p.requests.length,2,"approvals never call the planner");
+  });
+
+  test("ticket reply + task uses one execution path, waits for consent, and streams both changes", async () => {
+    const p = scripted(reply({steps:[
+      {id:"s1",kind:"action",action:"M47.A08",argsJson:JSON.stringify({ticketId:"tic_1",body:"We are investigating"})},
+      {id:"s2",kind:"action",action:"M06.A01",argsJson:JSON.stringify({title:"Follow up on export",relatedTo:{type:"contact",id:"ct_35"}})},
+    ]}));
+    const app = await start(p), store = app.world().store, tasks = store.all("tasks").length;
+    const first = await app.ask("Reply to ticket tic_1 and create a follow-up task");
+    assert.equal(last(first,"reply").status,"awaiting_confirmation");
+    assert.equal(store.all("tasks").length,tasks);
+    const done = await app.confirm(last(first,"turn").turnId,true);
+    assert.equal(last(done,"reply").status,"done");
+    assert.equal(store.all("tasks").length,tasks+1);
+    assert.equal(store.get<any>("tickets","tic_1").status,"in_progress");
+    assert.ok(store.get<any>("tickets","tic_1").firstResponseAt);
+    const tables = new Set(last(done,"diff").changes.map((c:any) => c.table));
+    for(const table of ["tickets","emails","tasks"])assert.ok(tables.has(table),table);
+    const conversation = last(done,"diff").changes.find((c:any)=>c.table==="conversations").after;
+    assert.match(conversation.id,/^cv_\d+$/);
+    assert.equal("body" in conversation,false,"message payload must not leak into a conversation row");
+    assert.equal(p.requests.length,1);
+  });
+
+  test("missing requester email fails before asking approval without advancing the ticket or SLA", async () => {
+    const app = await start(scripted(action("M47.A08",{ticketId:"tic_4",body:"An update"})));
+    const store = app.world().store, before = store.get("tickets","tic_4"), emails = store.all("emails");
+    const first = await app.ask("Reply to ticket tic_4 by email");
+    assert.equal(last(first,"reply").status,"failed");
+    assert.equal(last(first,"confirm"),undefined);
+    const done = first;
+    assert.equal(last(done,"reply").status,"failed");
+    assert.match(last(done,"reply").text,/no email|email address/i);
+    assert.deepEqual(store.get("tickets","tic_4"),before);
+    assert.deepEqual(store.all("emails"),emails);
+    assert.deepEqual(last(done,"diff").changes,[]);
+  });
+
+  test("listing name collision asks for the directory; the specified listing resolves next turn", async () => {
+    const planFor = (name:string) => reply({steps:[
+      {id:"s1",kind:"resolve",entity:"listing",name},
+      {id:"s2",kind:"action",action:"M46.A02",argsJson:JSON.stringify({listingId:"$s1.id"})},
+    ]});
+    const app = await start(scripted(planFor("Maple Dental"),planFor("Maple Dental google")));
+    const first = await app.ask("Show Maple Dental's business listing");
+    assert.equal(last(first,"reply").status,"needs_clarification");
+    assert.match(last(first,"reply").text,/google/);
+    assert.match(last(first,"reply").text,/yelp/);
+    const done = await app.ask("The Google listing");
+    assert.equal(last(done,"reply").status,"done");
+    assert.match(last(done,"reply").text,/Maple Dental.*directory google/);
+  });
+
+  test("internal ticket note never becomes a contact note or a delivered message", async () => {
+    const app = await start(scripted(action("M47.A07",{ticketId:"tic_1",body:"Private triage"})));
+    const store = app.world().store, notes = store.all("notes"), emails = store.all("emails");
+    const done = await app.ask("Add a private internal ticket note to tic_1");
+    assert.equal(last(done,"reply").status,"done");
+    assert.equal(store.get<any>("tickets","tic_1").notes.at(-1).body,"Private triage");
+    assert.deepEqual(store.all("notes"),notes);
+    assert.deepEqual(store.all("emails"),emails);
+    assert.equal(store.get<any>("tickets","tic_1").firstResponseAt,null);
+  });
+
+  for(const [id,args,message,table,recordId,field] of [
+    ["M45.A09",{reviewId:"rv_2",body:"Thanks for the feedback"},"Publish a response to customer review rv_2","reviews","rv_2","responsePublishedAt"],
+    ["M46.A09",{listingId:"bl_3"},"Publish business listing bl_3 to its directory","listings","bl_3","publishedAt"],
+  ] as const) test(`${id} publication is gated and emits audited state changes`,async()=>{
+    const app = await start(scripted(action(id,args))), store = app.world().store;
+    const before = store.get(table,recordId);
+    const first = await app.ask(message);
+    assert.equal(last(first,"reply").status,"awaiting_confirmation");
+    assert.deepEqual(store.get(table,recordId),before);
+    const done = await app.confirm(last(first,"turn").turnId,true);
+    assert.equal(last(done,"reply").status,"done",JSON.stringify(done));
+    assert.ok(last(done,"diff").audit.some((a:any)=>a.action===id));
+    assert.notDeepEqual(store.get(table,recordId),before);
+  });
+});
+
 describe("GET", () => {
   test("/api/meta lists the clock, tables, users and the implemented actions", async () => {
     const app = await start(scripted());

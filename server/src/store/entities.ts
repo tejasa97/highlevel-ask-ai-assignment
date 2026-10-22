@@ -22,6 +22,7 @@ import { Invoice } from "../modules/m28-invoices/schema.js";
 import { LandingPage } from "../modules/m37-landing-pages/schema.js";
 import { Lead } from "../modules/m03-leads/schema.js";
 import { Lesson } from "../modules/m41-lessons/schema.js";
+import { Listing } from "../modules/m46-business-listings/schema.js";
 import { MediaAsset } from "../modules/m39-media-assets/schema.js";
 import { Membership, MembershipPlan } from "../modules/m44-memberships/schema.js";
 import { MessageTemplate } from "../modules/m14-message-templates/schema.js";
@@ -33,6 +34,7 @@ import { Price } from "../modules/m26-prices/schema.js";
 import { Product } from "../modules/m25-products/schema.js";
 import { Quote } from "../modules/m27-quotes/schema.js";
 import { Refund } from "../modules/m33-refunds/schema.js";
+import { Review, ReviewRequest } from "../modules/m45-reviews/schema.js";
 import { SavedReport } from "../modules/m50-reports/schema.js";
 import { SmartList } from "../modules/m09-smart-lists/schema.js";
 import { Sms } from "../modules/m12-sms/schema.js";
@@ -42,6 +44,7 @@ import { Tag } from "../modules/m08-tags/schema.js";
 import { Task } from "../modules/m06-tasks/schema.js";
 import { TaxExemption, TaxRule } from "../modules/m34-tax-rules/schema.js";
 import { Team } from "../modules/m49-teams/schema.js";
+import { Ticket } from "../modules/m47-support-tickets/schema.js";
 import { User } from "../modules/m48-users/schema.js";
 import { Website } from "../modules/m35-websites/schema.js";
 import { Workflow, WorkflowRun } from "../modules/m16-workflows/schema.js";
@@ -112,20 +115,16 @@ export const ENTITIES = {
   community_posts: e("cmp", "M43", CommunityPost),
   membership_plans: e("mpl", "M44", MembershipPlan),
   memberships: e("mbr", "M44", Membership),
+  review_requests: e("rrq", "M45", ReviewRequest),
+  reviews: e("rv", "M45", Review),
+  listings: e("bl", "M46", Listing),
+  tickets: e("tic", "M47", Ticket),
   users: e("us", "M48", User),
   teams: e("tm", "M49", Team),
   saved_reports: e("rpt", "M50", SavedReport),
 } as const satisfies Record<string, EntityDef>;
 
 export type EntityName = keyof typeof ENTITIES;
-
-/** Tables and prefixes already used on the codex/m45-m47-complete branch (M45–M47), held back so merging it can't collide. */
-export const RESERVED = {
-  review_requests: "rrq",
-  reviews: "rv",
-  listings: "bl",
-  tickets: "tic",
-} as const;
 
 /** Prefixes used by the store itself. */
 export const INTERNAL_PREFIXES = ["fx"] as const;

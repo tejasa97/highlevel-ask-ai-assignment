@@ -2,16 +2,15 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { ENTITIES, INTERNAL_PREFIXES, RESERVED } from "./entities.js";
+import { ENTITIES, INTERNAL_PREFIXES } from "./entities.js";
 
 const catalog = JSON.parse(readFileSync(new URL("../registry/catalog.json", import.meta.url), "utf8")) as { modules: { id: string }[] };
 const moduleIds = new Set(catalog.modules.map((m) => m.id));
 
-test("no two tables share an id prefix, and none collides with a reserved or internal one", () => {
+test("no two tables share an id prefix, and none collides with an internal one", () => {
   const seen = new Map<string, string>();
   const all = [
     ...Object.entries(ENTITIES).map(([name, d]) => [name, d.prefix] as const),
-    ...Object.entries(RESERVED),
     ...INTERNAL_PREFIXES.map((p) => [`(internal ${p})`, p] as const),
   ];
   for (const [name, prefix] of all) {
@@ -19,7 +18,6 @@ test("no two tables share an id prefix, and none collides with a reserved or int
     assert.equal(seen.get(prefix), undefined, `prefix ${prefix} is used by both ${seen.get(prefix)} and ${name}`);
     seen.set(prefix, name);
   }
-  for (const name of Object.keys(RESERVED)) assert.equal((ENTITIES as Record<string, unknown>)[name], undefined, `${name} is reserved`);
 });
 
 test("every table belongs to a catalog module", () => {

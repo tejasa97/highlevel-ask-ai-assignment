@@ -151,6 +151,20 @@ describe("CodexCliPlanner", () => {
       }
     } finally { await rm(loginMode, { force: true }); }
   });
+
+  it("checks the sign-in once per planner, and a failed check is not remembered", async () => {
+    const loginMode = join(dir, "login-mode");
+    try {
+      const p = planner();
+      await writeFile(loginMode, "signed-out");
+      await assert.rejects(p.plan(req()), /ChatGPT sign-in is required/);
+      await writeFile(loginMode, "chatgpt");
+      await p.plan(req());
+      // The login check has passed, so it isn't run again: a later signed-out status goes unnoticed here.
+      await writeFile(loginMode, "signed-out");
+      await p.plan(req());
+    } finally { await rm(loginMode, { force: true }); }
+  });
 });
 
 it("keeps unknown costs unknown in totals and labels estimates separately", () => {

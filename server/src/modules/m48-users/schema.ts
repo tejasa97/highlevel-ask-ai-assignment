@@ -5,11 +5,11 @@ export type Role = (typeof ROLES)[number];
 
 /** What each role may do. A user's permissions are the union over their roles. */
 export const ROLE_PERMISSIONS: Record<Role, string[]> = {
-  admin: ["users.manage", "teams.manage", "contacts.manage", "leads.manage", "opportunities.manage", "tasks.manage", "billing.manage", "messaging.send", "reports.view"],
-  manager: ["teams.manage", "contacts.manage", "leads.manage", "opportunities.manage", "tasks.manage", "messaging.send", "reports.view"],
+  admin: ["users.manage", "teams.manage", "contacts.manage", "leads.manage", "opportunities.manage", "tasks.manage", "billing.manage", "messaging.send", "reports.view", "tickets.manage", "reputation.manage"],
+  manager: ["teams.manage", "contacts.manage", "leads.manage", "opportunities.manage", "tasks.manage", "messaging.send", "reports.view", "tickets.manage", "reputation.manage"],
   sales: ["contacts.manage", "leads.manage", "opportunities.manage", "tasks.manage", "messaging.send"],
-  support: ["contacts.manage", "tasks.manage", "messaging.send"],
-  marketing: ["contacts.manage", "leads.manage", "messaging.send", "reports.view"],
+  support: ["contacts.manage", "tasks.manage", "messaging.send", "tickets.manage"],
+  marketing: ["contacts.manage", "leads.manage", "messaging.send", "reports.view", "reputation.manage"],
   billing: ["contacts.manage", "billing.manage", "reports.view"],
 };
 

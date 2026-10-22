@@ -1,0 +1,1224 @@
+[
+  {
+    "id": "m45-01",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Create a review request for Elodie Mercer with subject 'Visit feedback' and body 'How was your visit?'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M45.A01"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.subject')='Visit feedback' AND json_extract(data,'$.contactId')='ct_35'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "m45-02",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M45.A02"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.contactId')='ct_36' AND json_extract(data,'$.subject')='Your feedback' AND json_extract(data,'$.status')='sent'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "m45-03",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Cancel Elodie Mercer's unsent review request rrq_1"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M45.A03"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM review_requests WHERE id='rrq_1'",
+          "equals": "cancelled"
+        }
+      ]
+    }
+  },
+  {
+    "id": "m45-04",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "List the draft review requests"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M45.A04"
+        ]
+      },
+      "state": [],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "m45-05",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Record a 4-star customer review from Dorian Vale for request rrq_2: 'Friendly service.'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M45.A05"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM review_requests WHERE id='rrq_2'",
+          "equals": "fulfilled"
+        },
+        {
+          "sql": "SELECT count(*) FROM reviews WHERE json_extract(data,'$.requestId')='rrq_2' AND json_extract(data,'$.rating')=4",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "m45-06",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Find customer reviews rated two stars"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M45.A06"
+        ]
+      },
+      "state": [],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "m45-07",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Show review rv_1 in full"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M45.A07"
+        ]
+      },
+      "state": [],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "m45-08",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Draft this response to review rv_2: 'Thank you. We will improve our waiting times.'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M45.A08"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.responseDraft') FROM reviews WHERE id='rv_2'",
+          "equals": "Thank you. We will improve our waiting times."
+        }
+      ]
+    }
+  },
+  {
+    "id": "m45-09",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Publish this response to review rv_2: 'We appreciate your feedback.'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M45.A09"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.publishedResponse') FROM reviews WHERE id='rv_2'",
+          "equals": "We appreciate your feedback."
+        }
+      ]
+    }
+  },
+  {
+    "id": "m45-10",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "What is our average customer review rating and how many reviews do we have?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M45.A10"
+        ]
+      },
+      "state": [],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "m46-01",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Create a business listing for Pine Studio on google at 30 Forest Lane with phone +15550123457"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A01"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM listings WHERE json_extract(data,'$.name')='Pine Studio' AND json_extract(data,'$.directory')='google'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "m46-02",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Show the details of listing bl_3"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A02"
+        ]
+      },
+      "state": [],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "m46-03",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Find all Maple Dental business listings"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A03"
+        ]
+      },
+      "state": [],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "m46-04",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Rename listing bl_3 to Harbor Eyecare"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A04"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.name') FROM listings WHERE id='bl_3'",
+          "equals": "Harbor Eyecare"
+        }
+      ]
+    }
+  },
+  {
+    "id": "m46-05",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Change listing bl_3's address to 21 Bay Street"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A05"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.address') FROM listings WHERE id='bl_3'",
+          "equals": "21 Bay Street"
+        }
+      ]
+    }
+  },
+  {
+    "id": "m46-06",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Change listing bl_3's phone to +15550987654"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A06"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.phone') FROM listings WHERE id='bl_3'",
+          "equals": "+15550987654"
+        }
+      ]
+    }
+  },
+  {
+    "id": "m46-07",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Set listing bl_3's business hours to Monday through Friday 10am to 6pm, closed Saturday and Sunday"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A07"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.hours.monday.open') FROM listings WHERE id='bl_3'",
+          "equals": "10:00"
+        }
+      ]
+    }
+  },
+  {
+    "id": "m46-08",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Set listing bl_3's categories to optician and eyewear"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A08"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.categories[0]') FROM listings WHERE id='bl_3'",
+          "equals": "optician"
+        }
+      ]
+    }
+  },
+  {
+    "id": "m46-09",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Publish the Harbor Optics listing bl_3 to its simulated directory"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A09"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.publishedVersion') FROM listings WHERE id='bl_3'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "m46-10",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Check the directory sync status of listing bl_3"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A10"
+        ]
+      },
+      "state": [],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "m47-01",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Open a support ticket for Elodie Mercer titled 'Billing screen blank' with description 'The billing screen is blank.'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A01"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.title')='Billing screen blank' AND json_extract(data,'$.contactId')='ct_35'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "m47-02",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Show support ticket tic_1"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A02"
+        ]
+      },
+      "state": [],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "m47-03",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "List open high-priority support tickets"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A03"
+        ]
+      },
+      "state": [],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "m47-04",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Assign support ticket tic_1 to Raj Iyer"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A04"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.ownerId') FROM tickets WHERE id='tic_1'",
+          "equals": "us_2"
+        }
+      ]
+    }
+  },
+  {
+    "id": "m47-05",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Make support ticket tic_1 urgent"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A05"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.priority') FROM tickets WHERE id='tic_1'",
+          "equals": "urgent"
+        }
+      ]
+    }
+  },
+  {
+    "id": "m47-06",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Resolve the Portal export fails support ticket tic_1"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A06"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM tickets WHERE id='tic_1'",
+          "equals": "resolved"
+        }
+      ]
+    }
+  },
+  {
+    "id": "m47-07",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Add an internal note to support ticket tic_1: 'Reproduced on Safari.'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A07"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.notes[0].body') FROM tickets WHERE id='tic_1'",
+          "equals": "Reproduced on Safari."
+        }
+      ]
+    }
+  },
+  {
+    "id": "m47-08",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Reply to support ticket tic_1: 'We are investigating the export issue.'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A08"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM tickets WHERE id='tic_1'",
+          "equals": "in_progress"
+        },
+        {
+          "sql": "SELECT json_extract(data,'$.firstResponseAt') FROM tickets WHERE id='tic_1'",
+          "equals": "2026-10-21T14:00:00.000Z"
+        },
+        {
+          "sql": "SELECT count(*) FROM emails WHERE json_extract(data,'$.kind')='ticket_reply' AND json_extract(data,'$.contactId')='ct_35'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "m47-09",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Link support ticket tic_1 to Dorian Vale"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A09"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.contactId') FROM tickets WHERE id='tic_1'",
+          "equals": "ct_36"
+        }
+      ]
+    }
+  },
+  {
+    "id": "m47-10",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Has support ticket tic_1 breached its first-response SLA?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A10"
+        ]
+      },
+      "state": [],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "reviews-from-appointments",
+    "category": "multi",
+    "modules": [
+      "M21",
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact."
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M21.A03",
+          "M45.A01",
+          "M45.A02"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.contactId') IN (SELECT json_extract(data,'$.contactId') FROM appointments WHERE json_extract(data,'$.status')='completed' AND substr(json_extract(data,'$.startAt'),1,10) BETWEEN '2026-10-19' AND '2026-10-25')",
+          "equals": 2
+        }
+      ]
+    }
+  },
+  {
+    "id": "tickets-from-invoices-messages",
+    "category": "multi",
+    "modules": [
+      "M28",
+      "M11",
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "For contacts who have an overdue invoice and an inbound reply in the last 7 days, open one support ticket per contact titled 'Overdue invoice follow-up' with description 'Check the invoice and recent reply.'"
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M28.A10",
+          "M47.A01"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.title')='Overdue invoice follow-up' AND json_extract(data,'$.contactId') NOT IN (SELECT json_extract(i.data,'$.contactId') FROM invoices i JOIN conversations c ON json_extract(i.data,'$.contactId')=json_extract(c.data,'$.contactId') WHERE json_extract(i.data,'$.status')='open' AND json_extract(i.data,'$.dueDate')<'2026-10-21' AND json_extract(c.data,'$.lastInboundAt')>='2026-10-15T00:00:00.000Z')",
+          "equals": 0
+        },
+        {
+          "sql": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.title')='Overdue invoice follow-up' AND json_extract(data,'$.contactId')='ct_31'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "ticket-reply-task",
+    "category": "multi",
+    "modules": [
+      "M47",
+      "M06"
+    ],
+    "turns": [
+      {
+        "user": "Reply to Elodie Mercer's Portal export fails ticket: 'We are investigating.' Then create a task for Noah Park titled 'Follow up on Elodie export' due tomorrow."
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M47.A08",
+          "M06.A01"
+        ],
+        "excludes": [
+          "M13.A03",
+          "M12.A03",
+          "M11.A02"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM tickets WHERE id='tic_1'",
+          "equals": "in_progress"
+        },
+        {
+          "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.title')='Follow up on Elodie export' AND json_extract(data,'$.assigneeId')='us_6' AND json_extract(data,'$.dueDate')='2026-10-22'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "ticket-note-not-contact",
+    "category": "indirect",
+    "modules": [
+      "M47",
+      "M07"
+    ],
+    "turns": [
+      {
+        "user": "Keep this private on the Portal export fails support ticket: 'Customer prefers an afternoon call.'"
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M47.A07"
+        ],
+        "excludes": [
+          "M07.A01",
+          "M47.A08"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.notes[0].body') FROM tickets WHERE id='tic_1'",
+          "equals": "Customer prefers an afternoon call."
+        }
+      ]
+    }
+  },
+  {
+    "id": "ticket-owner-not-task",
+    "category": "indirect",
+    "modules": [
+      "M47",
+      "M06",
+      "M01"
+    ],
+    "turns": [
+      {
+        "user": "Raj should take over the Portal export fails support issue."
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M47.A04"
+        ],
+        "excludes": [
+          "M06.A05",
+          "M01.A07"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.ownerId') FROM tickets WHERE id='tic_1'",
+          "equals": "us_2"
+        }
+      ]
+    }
+  },
+  {
+    "id": "listing-ambiguous",
+    "category": "ambiguous",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Change Maple Dental's listing phone to +15550987654"
+      }
+    ],
+    "expect": {
+      "status": [
+        "clarify",
+        "needs_clarification"
+      ],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "review-cancel-declined",
+    "category": "failure",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Cancel review request rrq_1",
+        "approve": false
+      }
+    ],
+    "expect": {
+      "status": [
+        "cancelled"
+      ],
+      "noChanges": true,
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM review_requests WHERE id='rrq_1'",
+          "equals": "draft"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ticket-reply-declined",
+    "category": "failure",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Reply to ticket tic_1: 'We have your report.'",
+        "approve": false
+      }
+    ],
+    "expect": {
+      "status": [
+        "cancelled"
+      ],
+      "noChanges": true,
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.firstResponseAt') FROM tickets WHERE id='tic_1'",
+          "equals": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "ticket-reply-no-address",
+    "category": "failure",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "failed",
+        "partial"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "email|address"
+        ]
+      }
+    }
+  },
+  {
+    "id": "ticket-owner-unavailable",
+    "category": "failure",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Assign support ticket tic_1 to Eva Rossi"
+      }
+    ],
+    "expect": {
+      "status": [
+        "failed",
+        "partial"
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.ownerId') FROM tickets WHERE id='tic_1'",
+          "equals": "us_6"
+        }
+      ]
+    }
+  },
+  {
+    "id": "listing-provider-down",
+    "category": "failure",
+    "modules": [
+      "M46"
+    ],
+    "setup": [
+      {
+        "fault": "M46.A09",
+        "code": "UNAVAILABLE",
+        "message": "Directory unavailable"
+      }
+    ],
+    "turns": [
+      {
+        "user": "Publish listing bl_3"
+      }
+    ],
+    "expect": {
+      "status": [
+        "failed",
+        "partial"
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.publishedVersion') FROM listings WHERE id='bl_3'",
+          "equals": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "ticket-followup-priority",
+    "category": "followup",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Show support ticket tic_1"
+      },
+      {
+        "user": "Make that urgent"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A05"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.priority') FROM tickets WHERE id='tic_1'",
+          "equals": "urgent"
+        }
+      ]
+    }
+  },
+  {
+    "id": "review-publish-not-listing",
+    "category": "indirect",
+    "modules": [
+      "M45",
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Make this response public on the two-star review rv_2: 'Thank you for telling us.'"
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M45.A09"
+        ],
+        "excludes": [
+          "M46.A09"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.publishedResponse') FROM reviews WHERE id='rv_2'",
+          "equals": "Thank you for telling us."
+        }
+      ]
+    }
+  },
+  {
+    "id": "unsupported-delete-review",
+    "category": "unsupported",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Permanently delete customer review rv_2"
+      }
+    ],
+    "expect": {
+      "status": [
+        "unsupported"
+      ],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "partial-ticket-replies",
+    "category": "multi",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "partial"
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM tickets WHERE id='tic_1'",
+          "equals": "in_progress"
+        },
+        {
+          "sql": "SELECT json_extract(data,'$.firstResponseAt') FROM tickets WHERE id='tic_4'",
+          "equals": null
+        }
+      ]
+    }
+  }
+]

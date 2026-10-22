@@ -9,6 +9,13 @@ import { parseJourney, render } from "./trajectory.js";
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 
 describe("trajectory", () => {
+  test("rendered browser script parses and embeds separated scenario groups", () => {
+    const html = render({preface:"",entries:[]},[],"2026-10-22");
+    const script=html.match(/<script>([\s\S]*?)<\/script>/)![1]!;
+    assert.doesNotThrow(()=>new Function(script));
+    assert.match(script,/scenarioGroups/);
+    assert.match(script,/No eligible 3× eval\/scenarios run/);
+  });
   test("parses entries: number, title, commit, date, runs and labelled parts", () => {
     const { preface, entries } = parseJourney(
       "# Journey\n\nintro\n\n## 3. BM25 retrieval\n`d3d9942` · 2026-10-21 · runs: a → b\n\n**Problem.** Needs `cards`.\n\n**Result.** **82%** now.\n",
@@ -49,8 +56,16 @@ describe("trajectory", () => {
       const elements = new Map<string, ReturnType<typeof element>>();
       const hovers: (() => void)[] = [];
       function element() {
+        let html = "", text = "";
+        const children: any[] = [];
         return {
-          innerHTML: "", textContent: "", clientWidth: 800, offsetWidth: 100, offsetHeight: 50, style: {},
+          get innerHTML() { return html + children.map(c => c.innerHTML).join(""); },
+          set innerHTML(value: string) { html = value; children.length = 0; },
+          get textContent() { return text + children.map(c => c.textContent).join(""); },
+          set textContent(value: string) { text = value; children.length = 0; },
+          append(...items: any[]) { children.push(...items); },
+          replaceChildren() { children.length = 0; html = text = ""; },
+          dataset: {} as Record<string,string>, clientWidth: 800, offsetWidth: 100, offsetHeight: 50, style: {},
           querySelectorAll: () => [],
           querySelector() {
             const hits = [...this.innerHTML.matchAll(/<rect data-i="(\d+)"/g)];
@@ -65,6 +80,7 @@ describe("trajectory", () => {
       }
       const context = createContext({
         document: {
+          createElement: () => element(),
           getElementById(id: string) { if (!elements.has(id)) elements.set(id, element()); return elements.get(id)!; },
           createElementNS: () => ({ style: {}, setAttribute() {} }),
         },
