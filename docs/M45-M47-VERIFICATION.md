@@ -1,5 +1,7 @@
 # M45–M47 implementation verification
 
+Historical checkpoint: this document preserves the initial implementation evidence. Later fixes, the Codex provider integration and completed evaluations supersede its pending status and test counts. See [the current delivery report](M45-M47-FINAL-REPORT.md); AI acceptance is not met.
+
 22 October 2026. Branch `codex/m45-m47-complete`, separate managed worktree based on main `3d4588d`. Nothing pushed. All external effects below are simulated.
 
 ## Delivered

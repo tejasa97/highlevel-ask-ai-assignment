@@ -1,7 +1,7 @@
 # M45–M47: complete implementation scope
 
 Date: 22 October 2026
-Status: thirty actions implemented on the worktree branch; deterministic, persistence, HTTP and retrieval checks pass. Repeated real-planner evaluation remains pending after a provider quota stop. See M45-M47-VERIFICATION.md for current evidence and unmet gates.
+Status: thirty actions implemented; 795 deterministic tests, typecheck and web build pass. Codex integration and repeated evaluations are complete, but AI acceptance targets are not met. See M45-M47-FINAL-REPORT.md for current evidence and remaining planner gaps.
 Base: main at 3d4588d (also origin/main when checked).
 Branch: codex/m45-m47-complete, in a separate managed worktree.
 
