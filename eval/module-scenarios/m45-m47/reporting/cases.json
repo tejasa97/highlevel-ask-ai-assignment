@@ -1,0 +1,306 @@
+[
+  {
+    "id": "report-review-request",
+    "category": "indirect",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Could you prepare a feedback invitation for Nisha Khatri? Subject 'A quick question', text 'How did we do?' Save it without sending."
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M45.A01"
+        ],
+        "excludes": [
+          "M45.A02"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.contactId')='ct_37' AND json_extract(data,'$.subject')='A quick question' AND json_extract(data,'$.status')='draft'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "report-review-search",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Show me the feedback where customers gave us fewer than three stars"
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M45.A06"
+        ]
+      },
+      "reply": {
+        "includes": [
+          "Elodie"
+        ]
+      },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "report-review-publish",
+    "category": "multi",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "On Nisha Khatri's five-star review, draft 'It was a pleasure helping you.' and publish it."
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M45.A08",
+          "M45.A09"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.publishedResponse') FROM reviews WHERE id='rv_1'",
+          "equals": "It was a pleasure helping you."
+        }
+      ]
+    }
+  },
+  {
+    "id": "report-review-cancel",
+    "category": "failure",
+    "modules": [
+      "M45"
+    ],
+    "turns": [
+      {
+        "user": "Withdraw the unsent feedback invitation rrq_1",
+        "approve": false
+      }
+    ],
+    "expect": {
+      "status": [
+        "cancelled"
+      ],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "report-listing-publish",
+    "category": "indirect",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Push Harbor Optics' google business profile live in the simulated directory"
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M46.A09"
+        ],
+        "excludes": [
+          "M45.A09"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.publishedVersion') FROM listings WHERE id='bl_3'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "report-listing-directory",
+    "category": "ambiguous",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Update the phone on Maple Dental's business profile to +15550888888"
+      }
+    ],
+    "expect": {
+      "status": [
+        "clarify",
+        "needs_clarification"
+      ],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "report-listing-categories",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Harbor Optics' google listing should be categorized as eyewear only"
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M46.A08"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.categories[0]') FROM listings WHERE id='bl_3'",
+          "equals": "eyewear"
+        }
+      ]
+    }
+  },
+  {
+    "id": "report-listing-sync",
+    "category": "followup",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Publish listing bl_3"
+      },
+      {
+        "user": "Is that listing in sync now?"
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M46.A09",
+          "M46.A10"
+        ]
+      },
+      "status": [
+        "done"
+      ]
+    }
+  },
+  {
+    "id": "report-ticket-reopen",
+    "category": "multi",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Reopen Dorian Vale's Receipt download ticket and reply 'We are taking another look.'"
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M47.A06",
+          "M47.A08"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM tickets WHERE id='tic_2'",
+          "equals": "in_progress"
+        },
+        {
+          "sql": "SELECT json_extract(data,'$.firstResponseAt') FROM tickets WHERE id='tic_2'",
+          "equals": "2026-10-19T15:00:00.000Z"
+        }
+      ]
+    }
+  },
+  {
+    "id": "report-ticket-sla",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "How long did we have to first respond to the Portal export fails issue, and did we miss it?"
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M47.A10"
+        ]
+      },
+      "reply": {
+        "includes": [
+          "breached"
+        ]
+      },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "report-ticket-followup-task",
+    "category": "multi",
+    "modules": [
+      "M47",
+      "M06"
+    ],
+    "turns": [
+      {
+        "user": "Tell the requester on Workspace login 'Please try again now.' Then give Noah Park a task called 'Check Nisha login' due tomorrow."
+      }
+    ],
+    "expect": {
+      "actions": {
+        "includes": [
+          "M47.A08",
+          "M06.A01"
+        ],
+        "excludes": [
+          "M13.A03"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM tickets WHERE id='tic_3'",
+          "equals": "in_progress"
+        },
+        {
+          "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.title')='Check Nisha login' AND json_extract(data,'$.assigneeId')='us_6'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "report-ticket-missing-address",
+    "category": "failure",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Send Owen Hale an update on Mailbox delivery: 'Checking this now.'"
+      }
+    ],
+    "expect": {
+      "status": [
+        "failed",
+        "partial"
+      ],
+      "noChanges": true
+    }
+  }
+]
