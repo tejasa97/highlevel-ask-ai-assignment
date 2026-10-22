@@ -213,7 +213,7 @@ sent a plan of reads (a lone resolve, so the reply was empty) instead of a look.
 the token counts show fewer prompt-cache hits, not a bigger prompt.
 
 ## 13. Tried and reverted: a plan that only finds records, taken as a look
-`uncommitted` · 2026-10-22 · runs: resolver-fix-3x → no-action-look-3x
+`4726980` · 2026-10-22 · runs: resolver-fix-3x → no-action-look-3x
 
 **Problem.** direct-appointment-reschedule still failed 2 of 3: the planner sent "find Sarah's walkthrough" as the
 plan, with no action after it, so nothing moved and the reply was empty.
