@@ -189,7 +189,7 @@ either eval is appended to `eval/results/history.jsonl`; a run where nothing rea
 unmeasured.
 
 ## 12. The look guard measured; a person's name alone no longer names their meeting
-`uncommitted` · 2026-10-22 · runs: look-guard-3x → resolver-fix-3x
+`af25b82` · 2026-10-22 · runs: look-guard-3x → resolver-fix-3x
 
 **Problem.** The first full run with the look guard (look-guard-3x) fell to 91.3%, with two scenarios failing every
 run. direct-appointment-reschedule: the planner returned a plain plan of reads instead of a look, so nothing moved.
