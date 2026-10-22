@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { contains, Limit, listOf, noChange, page, requireState } from "../../registry/helpers.js";
+import { contains, Limit, listOf, noChange, page, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { LandingPage } from "../m37-landing-pages/schema.js";
@@ -259,7 +259,8 @@ const publishFunnel = defineAction({
     const funnel = f.funnel({ steps: [{ id: stepId, name: "Start", landingPageId: null, visits: 0, advanced: 0 }] });
     return { funnelId: funnel.id };
   },
-  handler: ({ funnelId }, { store, clock }) => {
+  handler: ({ funnelId }, { store, clock, actorId }) => {
+    requirePermission(store, actorId, "messaging.send"); // public-facing, like M35.A09; see WAVE1-ASSUMPTIONS.md
     const funnel = load(store, funnelId);
     requireState(`Funnel "${funnel.name}"`, funnel.status, ["draft"], "be published");
     if (funnel.steps.length === 0) throw new ActionError("CONFLICT", "Add at least one step before publishing this funnel");

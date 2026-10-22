@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, atLeastOne, contains, inDateRange, Limit, listOf, noChange, page, requireState } from "../../registry/helpers.js";
+import { activeUser, atLeastOne, contains, inDateRange, Limit, listOf, noChange, page, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { BlogPost, POST_STATUSES } from "./schema.js";
@@ -256,7 +256,8 @@ const publishPost = defineAction({
   output: BlogPost,
   entities: { consumes: ["blog_post"] },
   example: (f) => ({ postId: f.blogPost({ status: "scheduled", publishAt: "2026-12-01T15:00:00.000Z" }).id }),
-  handler: ({ postId }, { store, clock }) => {
+  handler: ({ postId }, { store, clock, actorId }) => {
+    requirePermission(store, actorId, "messaging.send"); // public-facing, like M35.A09; see WAVE1-ASSUMPTIONS.md
     const post = load(store, postId);
     requireState(`Post "${post.title}"`, post.status, ["scheduled", "unpublished"], "be published — schedule a draft first");
     const at = clock.now().toISOString();
@@ -273,7 +274,8 @@ const unpublishPost = defineAction({
   output: BlogPost,
   entities: { consumes: ["blog_post"] },
   example: (f) => ({ postId: f.blogPost({ status: "published", publishedAt: f.now() }).id }),
-  handler: ({ postId }, { store, clock }) => {
+  handler: ({ postId }, { store, clock, actorId }) => {
+    requirePermission(store, actorId, "messaging.send");
     const post = load(store, postId);
     requireState(`Post "${post.title}"`, post.status, ["published"], "be unpublished");
     return store.update<BlogPost>("blog_posts", post.id, { status: "unpublished", updatedAt: clock.now().toISOString() });

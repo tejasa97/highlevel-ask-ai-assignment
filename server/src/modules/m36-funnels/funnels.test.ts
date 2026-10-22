@@ -112,3 +112,14 @@ test("unknown field is INVALID", async () => {
   const funnel = w.f.funnel();
   assert.equal(failure(() => w.call("M36.A02", { funnelId: funnel.id, madeUp: 1 })).code, "INVALID");
 });
+
+test("M36.A09 publish needs messaging.send, and a refusal leaves the funnel a draft", async () => {
+  const w = await testWorld();
+  const billing = w.f.user({ roles: ["billing"] });
+  const marketing = w.f.user({ roles: ["marketing"] });
+  const funnel = w.f.funnel({ steps: [step(`st_${w.f.seq()}`, "Start")] });
+  assert.equal(failure(() => w.call("M36.A09", { funnelId: funnel.id }, billing.id)).code, "PERMISSION");
+  assert.equal(failure(() => w.call("M36.A09", { funnelId: funnel.id }, "us_missing")).code, "PERMISSION");
+  assert.equal(w.call("M36.A02", { funnelId: funnel.id }).status, "draft");
+  assert.equal(w.call("M36.A09", { funnelId: funnel.id }, marketing.id).status, "published");
+});

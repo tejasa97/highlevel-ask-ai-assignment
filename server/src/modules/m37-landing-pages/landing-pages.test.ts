@@ -101,3 +101,17 @@ test("unknown field is INVALID", async () => {
   const page = w.f.landingPage();
   assert.equal(failure(() => w.call("M37.A02", { landingPageId: page.id, madeUp: 1 })).code, "INVALID");
 });
+
+test("M37.A09 publish and M37.A10 unpublish need messaging.send", async () => {
+  const w = await testWorld();
+  const billing = w.f.user({ roles: ["billing"] });
+  const marketing = w.f.user({ roles: ["marketing"] });
+  const page = w.f.landingPage();
+  assert.equal(failure(() => w.call("M37.A09", { landingPageId: page.id }, billing.id)).code, "PERMISSION");
+  assert.equal(failure(() => w.call("M37.A09", { landingPageId: page.id }, "us_missing")).code, "PERMISSION");
+  assert.equal(w.call("M37.A02", { landingPageId: page.id }).status, "draft");
+  assert.equal(w.call("M37.A09", { landingPageId: page.id }, marketing.id).status, "published");
+  assert.equal(failure(() => w.call("M37.A10", { landingPageId: page.id }, billing.id)).code, "PERMISSION");
+  assert.equal(w.call("M37.A02", { landingPageId: page.id }).status, "published");
+  assert.equal(w.call("M37.A10", { landingPageId: page.id }, marketing.id).status, "draft");
+});

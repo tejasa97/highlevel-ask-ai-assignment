@@ -28,11 +28,17 @@ Decisions made without a product owner to ask. Each one is an assumption, so eac
 - `billing.manage` would lock out sales, support and marketing, who are the people most likely to run a site.
 - Roles that can publish a site: admin, manager, sales, support, marketing. Roles that cannot: billing.
 
-### Known inconsistency left in place
+### Extended to the rest of the publishing family
 
-M36.A09, M37.A09 and M38.A09 (publish a funnel, a landing page, a blog post) are also public-facing and are not gated. They are outside the five actions this decision covers. If the M35 rule is right, they should get the same check. Listed under "Gaps for the integrator" in `WAVE1-HARDENING-REPORT.md`.
+The same rule was then applied to the other public-facing publish and unpublish actions, so one site-publishing rule holds across M35 to M38: **M36.A09** publish funnel, **M37.A09** publish landing page, **M37.A10** unpublish landing page, **M38.A09** publish post and **M38.A10** unpublish post. Each has a test with `billing`, an unknown actor and `marketing`.
 
-## A2. Standing assumptions from earlier in the hardening
+Not gated, on purpose: **M38.A08** (schedule a post) only sets a future date and publishes nothing by itself, and **M36.A10** is a read. Whether scheduling should also need the permission is an open question for the product owner.
+
+### A3. No quote email row
+
+M27.A08 (send quote) still stores no `emails` row. Adding a `quote` email kind means changing `EMAIL_KINDS` in M13 and making quote sends obey do-not-disturb and the send queue, which changes behaviour that the M27 description and tests state explicitly. That is a feature decision, not a hardening fix, so it was left alone one day before submission.
+
+## A4. Standing assumptions from earlier in the hardening
 
 - **A default actor is admin.** When a call has no `actorId`, it runs as admin. Tests of a refusal must pass an explicit actor. An actor id that is not a known, active user is refused with `PERMISSION`.
 - **Cash cannot be refunded through a processor.** A cash payment has no processor to send money back through, so M33 refuses the refund with `CONFLICT` at request, approve and execute (report 3.1). The alternative, recording a manual cash refund, was not built.

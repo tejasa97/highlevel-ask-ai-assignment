@@ -7,14 +7,14 @@ Wave 2 and Wave 3 are not started. No LLM calls, no `eval:*`, no `cards`, no `se
 
 ```
 npm run typecheck   -> tsc --noEmit, no errors
-npm test            -> tests 2208, suites 531, pass 2208, fail 0, cancelled 0, skipped 0
+npm test            -> tests 2215, suites 531, pass 2215, fail 0, cancelled 0, skipped 0
 npx tsx .wave1/verify.ts M02 M05 M09 M10 M14 M16 M17 M18 M19 M20 M22 M23 M24 M25 M26 M27 M30 M31 M32 M33 M34 M35 M36 M37 M38 M39 M40 M41 M42 M43 M44 M50
                     -> ... verify: OK
 grep -rn "TODO\|not implemented\|@ts-ignore\|Date.now(\|new Date()" src/modules/m*/index.ts | grep -v clock-local
                     -> no output
 ```
 
-The test count was 1941 at the start of the hardening and is 2208 now. Module test files went from 343 tests / 1467 `assert.` calls to 599 tests / 1535 calls. No assertion was deleted or weakened. Two splits added a few calls where a loop became separate asserts.
+The test count was 1941 at the start of the hardening and is 2215 now. Module test files went from 343 tests / 1467 `assert.` calls to 602 tests / 1553 calls. No assertion was deleted or weakened. Two splits added a few calls where a loop became separate asserts.
 
 ## 3.1 M33 cash refund (`51951eb`)
 
@@ -53,6 +53,8 @@ Every module with fewer than 6 tests was rewritten as one `test("MNN.Axx …")` 
 
 Wall-clock to instant conversion could land on the wrong side of a DST change, and a slot could come out shorter than the meeting. Ambiguous and non-existent local times are now settled explicitly, and slots keep the full meeting length. Tests live in `m22-availability/clock-local.test.ts`.
 
+Follow-up: `store/clock.ts` `atLocal` (used by M21.A04 reschedule-to-a-date) had the same flaw in the spring-forward gap: 02:30 on 2026-03-08 landed at 01:30 New York time instead of 03:30. The conversion (`zonedInstant`, `wallParts`) now lives in `store/clock.ts`, `atLocal` calls it, and `m22-availability/clock-local.ts` re-exports it, so there is one implementation. New tests: `store/clock.test.ts`.
+
 ## 3.5 Permissions (`3371395`)
 
 - `M16.A08` publishing a workflow starts messages going out, so it now needs `messaging.send` (unknown actors are refused too).
@@ -63,6 +65,7 @@ Wall-clock to instant conversion could land on the wrong side of a DST change, a
 Decided on stated assumptions, written down in `WAVE1-ASSUMPTIONS.md` (A1). The rule: a check is added only where it excludes someone, using the existing permissions, since `m48-users` is off limits.
 
 - `M35.A09` publish website and `M35.A10` unpublish website now need `messaging.send`. This excludes the `billing` role. A test covers `billing`, an unknown actor, a refusal leaving the status unchanged, and `marketing` succeeding.
+- The same rule now covers the rest of the publishing family: `M36.A09`, `M37.A09`, `M37.A10`, `M38.A09` and `M38.A10` need `messaging.send`, each with a test. `M38.A08` (schedule a post) is not gated, see `WAVE1-ASSUMPTIONS.md`.
 - `M02.A05` archive company, `M02.A09` merge companies: left ungated. The only fitting permission is `contacts.manage`, which all six roles hold, so a check would protect nothing.
 - `M20.A10` archive calendar: left ungated. No calendar permission exists, and no other M20 or M21 action is gated.
 
@@ -103,13 +106,12 @@ Eleven mutations in ten modules. Two survived at first; both were real gaps and 
 
 ## Gaps for the integrator (files outside this brief's remit)
 
-- `store/clock.ts` `atLocal` is hard-wired to New York and has the same DST weakness M22 had. M22 now uses its own `clock-local.ts`; other callers (for example M21) still use `atLocal`.
-- `ENTITY_TYPES` and `Email.kind` have no entries for the new entities (for example there is no quote email kind), so `M27.A08` stores no `emails` row.
+- `EMAIL_KINDS` (in M13) has no quote kind, so `M27.A08` stores no `emails` row. Left as it is on purpose, see `WAVE1-ASSUMPTIONS.md` A3. (An earlier version of this note also said `ENTITY_TYPES` lacked the new entities; that was wrong, it already lists quote, refund and the rest.)
 - `CommunityMember` has no `membershipId`.
 - The retrieval cards (`cards.json`) were not regenerated after the sibling changes. They are built from the registry at run time, but the checked-in file is stale.
 - `registry/helpers.ts` (`noChange`) and `retrieval/cards.ts` (mutual siblings) were edited here as structural fixes, although the brief lists those folders as off limits. Revert-or-keep is the integrator's call.
 
-- M36.A09, M37.A09 and M38.A09 (publish a funnel, a landing page, a blog post) are public-facing and have no permission check. If the M35 rule (`messaging.send`) is right, they should get it too. A real permission for site and calendar management would be better than reusing `messaging.send`; that needs a change to `m48-users`.
+- A real permission for site and calendar management would be better than reusing `messaging.send` for the publishing family (M35 to M38); that needs a change to `m48-users`.
 
 ## Not committed
 

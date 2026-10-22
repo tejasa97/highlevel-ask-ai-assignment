@@ -75,3 +75,18 @@ test("unknown field is INVALID", async () => {
   const post = w.f.blogPost();
   assert.equal(failure(() => w.call("M38.A02", { postId: post.id, madeUp: 1 })).code, "INVALID");
 });
+
+test("M38.A09 publish and M38.A10 unpublish need messaging.send", async () => {
+  const w = await testWorld();
+  const billing = w.f.user({ roles: ["billing"] });
+  const marketing = w.f.user({ roles: ["marketing"] });
+  const post = w.f.blogPost();
+  w.call("M38.A08", { postId: post.id, publishAt: "2026-12-01T15:00:00.000Z" });
+  assert.equal(failure(() => w.call("M38.A09", { postId: post.id }, billing.id)).code, "PERMISSION");
+  assert.equal(failure(() => w.call("M38.A09", { postId: post.id }, "us_missing")).code, "PERMISSION");
+  assert.equal(w.call("M38.A02", { postId: post.id }).status, "scheduled");
+  assert.equal(w.call("M38.A09", { postId: post.id }, marketing.id).status, "published");
+  assert.equal(failure(() => w.call("M38.A10", { postId: post.id }, billing.id)).code, "PERMISSION");
+  assert.equal(w.call("M38.A02", { postId: post.id }).status, "published");
+  assert.equal(w.call("M38.A10", { postId: post.id }, marketing.id).status, "unpublished");
+});

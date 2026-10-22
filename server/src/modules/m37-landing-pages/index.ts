@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, contains, Limit, listOf, noChange, page, requireState } from "../../registry/helpers.js";
+import { atLeastOne, contains, Limit, listOf, noChange, page, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { Form } from "../m18-forms/schema.js";
@@ -264,7 +264,8 @@ const publishPage = defineAction({
   siblings: ["M18.A08", "M36.A09"],
   entities: { consumes: ["landing_page", "form"] },
   example: (f) => ({ landingPageId: f.landingPage().id }),
-  handler: ({ landingPageId }, { store, clock }) => {
+  handler: ({ landingPageId }, { store, clock, actorId }) => {
+    requirePermission(store, actorId, "messaging.send"); // public-facing, like M35.A09; see WAVE1-ASSUMPTIONS.md
     const p = load(store, landingPageId);
     requireState(`Landing page "${p.title}"`, p.status, ["draft"], "be published");
     if (p.formId) {
@@ -285,7 +286,8 @@ const unpublishPage = defineAction({
   output: LandingPage,
   entities: { consumes: ["landing_page"] },
   example: (f) => ({ landingPageId: f.landingPage({ status: "published", publishedAt: f.now() }).id }),
-  handler: ({ landingPageId }, { store, clock }) => {
+  handler: ({ landingPageId }, { store, clock, actorId }) => {
+    requirePermission(store, actorId, "messaging.send");
     const p = load(store, landingPageId);
     requireState(`Landing page "${p.title}"`, p.status, ["published"], "be unpublished");
     return store.update<LandingPage>("landing_pages", p.id, { status: "draft", publishedAt: null, updatedAt: clock.now().toISOString() });

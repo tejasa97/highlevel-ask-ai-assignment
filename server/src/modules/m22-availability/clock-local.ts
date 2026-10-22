@@ -1,54 +1,11 @@
+import { wallParts } from "../../store/clock.js";
 import { WEEKDAYS } from "./schema.js";
 
-// Wall-clock conversion for an arbitrary IANA zone. `atLocal` in the store only
-// knows America/New_York, and the availability index is not allowed to construct dates.
+// Wall-clock helpers for an arbitrary IANA zone. The instant conversion itself (`zonedInstant`) lives in
+// the store, next to `atLocal`, so both settle daylight-saving changes the same way.
+export { zonedInstant } from "../../store/clock.js";
 
 const SUN_FIRST = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
-
-function parts(ms: number, timeZone: string): { date: string; time: string } {
-  const d = new Date(ms);
-  const date = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
-  const bits = Object.fromEntries(
-    new Intl.DateTimeFormat("en-GB", {
-      timeZone,
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hourCycle: "h23",
-    })
-      .formatToParts(d)
-      .map((p) => [p.type, p.value]),
-  );
-  let hour = bits.hour ?? "00";
-  if (hour === "24") hour = "00";
-  return { date: date.replaceAll("/", "-"), time: `${hour}:${bits.minute ?? "00"}:${bits.second ?? "00"}` };
-}
-
-const DAY_MS = 86_400_000;
-
-/**
- * ISO instant for HH:MM on a calendar date in `timeZone`.
- * A wall time that happens twice (clocks going back) is its first occurrence; one that never happens
- * (clocks going forward) lands the same distance after the gap, as if the old offset still applied.
- */
-export function zonedInstant(date: string, hhmm: string, timeZone: string): string {
-  const hm = hhmm.length === 5 ? `${hhmm}:00` : hhmm;
-  const wall = Date.parse(`${date}T${hm}Z`);
-  const offset = (ms: number) => {
-    const p = parts(ms, timeZone);
-    return Date.parse(`${p.date}T${p.time}Z`) - ms;
-  };
-  // The offsets in force a day before and a day after bracket any single transition.
-  const before = offset(wall - DAY_MS);
-  const after = offset(wall + DAY_MS);
-  const candidates = [wall - before, wall - after].filter((ms) => offset(ms) === wall - ms);
-  return new Date(candidates.length ? Math.min(...candidates) : wall - before).toISOString();
-}
 
 function instantMs(instant: Date | string | number): number {
   if (typeof instant === "number") return instant;
@@ -58,12 +15,12 @@ function instantMs(instant: Date | string | number): number {
 
 /** YYYY-MM-DD of an instant in `timeZone`. */
 export function zonedDate(instant: Date | string | number, timeZone: string): string {
-  return parts(instantMs(instant), timeZone).date;
+  return wallParts(instantMs(instant), timeZone).date;
 }
 
 /** HH:MM of an instant in `timeZone`. */
 export function zonedTime(instant: Date | string | number, timeZone: string): string {
-  return parts(instantMs(instant), timeZone).time.slice(0, 5);
+  return wallParts(instantMs(instant), timeZone).time.slice(0, 5);
 }
 
 /** Weekday of a YYYY-MM-DD civil date. The date itself has no zone. */
