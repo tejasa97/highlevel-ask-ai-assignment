@@ -33,6 +33,7 @@ Fixtures.prototype.membership = function (this: Fixtures, o: Input<Membership> =
     revokedAt: null,
     revokeReason: null,
     grantedBy: "us_1",
+    grantedCommunityMemberIds: [],
     ...o,
   });
 };

@@ -199,20 +199,21 @@ function grantCourse(store: Store, courseId: string, contactId: string, membersh
   });
 }
 
-function grantCommunity(store: Store, communityId: string, contactId: string, now: string): void {
+/** Returns the member row this grant created or brought back. An already-active member is left alone. */
+function grantCommunity(store: Store, communityId: string, contactId: string, now: string): string | null {
   const rows = store.find<CommunityMember>("community_members", (m) => m.communityId === communityId && m.contactId === contactId);
-  if (rows.some((m) => m.leftAt == null)) return;
+  if (rows.some((m) => m.leftAt == null)) return null;
   const prior = rows.at(-1);
   if (prior) {
     store.update<CommunityMember>("community_members", prior.id, { leftAt: null });
-    return;
+    return prior.id;
   }
-  store.insert("community_members", "cmm", { communityId, contactId, role: "member" as const, joinedAt: now, leftAt: null });
+  return store.insert("community_members", "cmm", { communityId, contactId, role: "member" as const, joinedAt: now, leftAt: null }).id;
 }
 
 const grant = defineAction({
   id: "M44.A07",
-  description: "Grant an active contact an active membership and every entitlement on the plan. A course enrolls them with membershipId set (or stamps an existing active or suspended enrollment). A community adds a member or clears leftAt. Unlike M42.A01, this can open several courses and communities at once. A second active membership on the same plan is refused.",
+  description: "Grant an active contact an active membership and every entitlement on the plan. A course enrolls them with membershipId set (or stamps an existing active or suspended enrollment). A community adds a member or clears leftAt, and that row is remembered so revoke can undo it. Someone already in the community is not recorded. Unlike M42.A01, this can open several courses and communities at once. A second active membership on the same plan is refused.",
   risk: "write",
   input: z.strictObject({ planId: PlanId, contactId: ContactId, expiresAt: When.nullable().optional() }),
   output: Membership,
@@ -245,12 +246,17 @@ const grant = defineAction({
       revokedAt: null,
       revokeReason: null,
       grantedBy: actorId ?? "us_1",
+      grantedCommunityMemberIds: [],
     });
+    const grantedCommunityMemberIds: string[] = [];
     for (const e of plan.entitlements) {
       if (e.type === "course") grantCourse(store, e.targetId, who.id, membership.id, now);
-      else grantCommunity(store, e.targetId, who.id, now);
+      else {
+        const memberId = grantCommunity(store, e.targetId, who.id, now);
+        if (memberId) grantedCommunityMemberIds.push(memberId);
+      }
     }
-    return membership;
+    return store.update<Membership>("memberships", membership.id, { grantedCommunityMemberIds });
   },
 });
 
@@ -272,7 +278,7 @@ const setExpiry = defineAction({
 
 const revoke = defineAction({
   id: "M44.A09",
-  description: "Revoke an active membership. Enrollments with this membershipId become revoked, and community members for the plan's communities get leftAt set. Unlike M42.A01 or M43.A05, this removes access a plan granted instead of adding it.",
+  description: "Revoke an active membership. Enrollments with this membershipId become revoked, and community members this grant created or reactivated get leftAt set. A member who was already active is left in the community. Unlike M42.A01 or M43.A05, this removes access a plan granted instead of adding it.",
   risk: "destructive",
   input: z.strictObject({ membershipId: MembershipId, reason: z.string().trim().min(1) }),
   output: Membership,
@@ -282,18 +288,15 @@ const revoke = defineAction({
   handler: (a, { store, clock }) => {
     const m = membershipOf(store, a.membershipId);
     requireState("Membership", m.status, ["active"], "be revoked");
-    const plan = planOf(store, m.planId);
     const now = clock.now().toISOString();
     const reason = a.reason.trim();
     const updated = store.update<Membership>("memberships", m.id, { status: "revoked", revokedAt: now, revokeReason: reason });
     for (const e of store.find<Enrollment>("enrollments", (row) => row.membershipId === m.id && row.status !== "revoked")) {
       store.update<Enrollment>("enrollments", e.id, { status: "revoked", revokedAt: now, revokeReason: reason });
     }
-    for (const ent of plan.entitlements) {
-      if (ent.type !== "community") continue;
-      for (const member of store.find<CommunityMember>("community_members", (row) => row.communityId === ent.targetId && row.contactId === m.contactId && row.leftAt == null)) {
-        store.update<CommunityMember>("community_members", member.id, { leftAt: now });
-      }
+    for (const memberId of m.grantedCommunityMemberIds) {
+      const member = store.get<CommunityMember>("community_members", memberId);
+      if (member && member.leftAt == null) store.update<CommunityMember>("community_members", member.id, { leftAt: now });
     }
     return updated;
   },

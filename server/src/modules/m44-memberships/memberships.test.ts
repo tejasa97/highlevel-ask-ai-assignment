@@ -111,6 +111,20 @@ test("grant stamps an existing enrollment and clears leftAt", async () => {
   const member = w.store.get<CommunityMember>("community_members", left.id);
   assert.equal(member?.leftAt, null);
   assert.equal(w.store.find<CommunityMember>("community_members", (m) => m.communityId === community.id && m.contactId === contact.id).length, 1);
+  w.call("M44.A09", { membershipId: granted.id, reason: "Ended" });
+  assert.ok(w.store.get<CommunityMember>("community_members", left.id)?.leftAt);
+});
+
+test("revoke leaves a community the contact had already joined", async () => {
+  const w = await testWorld();
+  const community = w.f.community();
+  const contact = w.f.contact();
+  const already = w.f.communityMember({ communityId: community.id, contactId: contact.id });
+  const plan = w.f.membershipPlan({ entitlements: [{ type: "community", targetId: community.id }] });
+  const granted = w.call("M44.A07", { planId: plan.id, contactId: contact.id });
+  assert.deepEqual(granted.grantedCommunityMemberIds, []);
+  w.call("M44.A09", { membershipId: granted.id, reason: "Ended" });
+  assert.equal(w.store.get<CommunityMember>("community_members", already.id)?.leftAt, null);
 });
 
 test("check access denies an expired membership", async () => {

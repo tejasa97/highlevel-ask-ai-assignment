@@ -27,5 +27,7 @@ export const Membership = z.object({
   revokedAt: z.string().nullable(),
   revokeReason: z.string().nullable(),
   grantedBy: z.string(),
+  /** Community member rows this grant created or reactivated. Revoke sets leftAt on these only. */
+  grantedCommunityMemberIds: z.array(z.string()),
 });
 export type Membership = z.infer<typeof Membership>;
