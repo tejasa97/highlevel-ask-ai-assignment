@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
+import { contains, Limit, listOf, noChange, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { LandingPage } from "../m37-landing-pages/schema.js";
@@ -14,10 +14,6 @@ export { Funnel } from "./schema.js";
 const FunnelId = z.string().describe("funnel id (fn_…)");
 const Text = z.string().trim().min(1);
 const GoalType = z.enum(["form_submit", "purchase", "booking"]);
-
-function noChange(): never {
-  throw new ActionError("CONFLICT", "The record already has that value");
-}
 
 function load(store: Store, id: string): Funnel {
   return mustGet<Funnel>(store, "funnels", id, "funnel");

@@ -86,6 +86,11 @@ export function requireState<S extends string>(label: string, current: S, allowe
   if (!allowed.includes(current)) throw new ActionError("CONFLICT", `${label} is ${current}; can only ${doing} when ${allowed.join(" or ")}`, { status: current });
 }
 
+/** Throws CONFLICT for an update that would leave the record exactly as it is. */
+export function noChange(): never {
+  throw new ActionError("CONFLICT", "The record already has that value");
+}
+
 /** Rejects dates before today, which almost always means a date was worked out wrong. */
 export function notPast(date: string, today: string, what: string): void {
   if (date < today) throw new ActionError("INVALID", `${what} ${date} is in the past (today is ${today})`);

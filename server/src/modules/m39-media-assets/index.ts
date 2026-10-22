@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, contains, Limit, listOf, page } from "../../registry/helpers.js";
+import { atLeastOne, contains, Limit, listOf, noChange, page } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { BlogPost } from "../m38-blogs/schema.js";
@@ -21,10 +21,6 @@ const Reference = z.object({
   recordId: z.string(),
   label: z.string(),
 });
-
-function noChange(): never {
-  throw new ActionError("CONFLICT", "The record already has that value");
-}
 
 function load(store: Store, id: string): MediaAsset {
   return mustGet<MediaAsset>(store, "media_assets", id, "media asset");

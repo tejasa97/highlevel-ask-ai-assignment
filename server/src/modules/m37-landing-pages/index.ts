@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
+import { atLeastOne, contains, Limit, listOf, noChange, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { Form } from "../m18-forms/schema.js";
@@ -15,10 +15,6 @@ const PageId = z.string().describe("landing page id (lp_…)");
 const Text = z.string().trim().min(1);
 const SeoText = z.string().trim().nullable().optional();
 const SectionType = z.enum(["hero", "text", "image", "cta", "form"]);
-
-function noChange(): never {
-  throw new ActionError("CONFLICT", "The record already has that value");
-}
 
 function load(store: Store, id: string): LandingPage {
   return mustGet<LandingPage>(store, "landing_pages", id, "landing page");

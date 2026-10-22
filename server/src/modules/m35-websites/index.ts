@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
+import { atLeastOne, contains, Limit, listOf, noChange, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { Website, type SitePage } from "./schema.js";
@@ -13,10 +13,6 @@ export { Website } from "./schema.js";
 const WebsiteId = z.string().describe("website id (ws_…)");
 const Text = z.string().trim().min(1);
 const SeoText = z.string().trim().nullable().optional();
-
-function noChange(): never {
-  throw new ActionError("CONFLICT", "The record already has that value");
-}
 
 function load(store: Store, id: string): Website {
   return mustGet<Website>(store, "websites", id, "website");

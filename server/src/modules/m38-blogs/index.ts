@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, atLeastOne, contains, inDateRange, Limit, listOf, page, requireState } from "../../registry/helpers.js";
+import { activeUser, atLeastOne, contains, inDateRange, Limit, listOf, noChange, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { BlogPost, POST_STATUSES } from "./schema.js";
@@ -13,10 +13,6 @@ export { BlogPost } from "./schema.js";
 const PostId = z.string().describe("blog post id (blg_…)");
 const Text = z.string().trim().min(1);
 const SeoText = z.string().trim().nullable().optional();
-
-function noChange(): never {
-  throw new ActionError("CONFLICT", "The record already has that value");
-}
 
 function load(store: Store, id: string): BlogPost {
   return mustGet<BlogPost>(store, "blog_posts", id, "blog post");
