@@ -6,6 +6,7 @@ A natural-language assistant over a simulated CRM: 50 modules × 10 actions, wit
 
 - `docs/ASSIGNMENT.md` (local only, not in the repo): what's being asked, with a requirements checklist
 - [docs/PLAN.md](docs/PLAN.md): architecture, design and the 5-day schedule
+- [BENCHMARK.md](BENCHMARK.md): quality, latency (direct vs complex), tokens and cost per successful task, and the planner against a one-call-per-step baseline agent; regenerate with `npm run report -- --label planner-3x --compare baseline-3x` in `server/`
 - [docs/PROMPT-EXAMPLE.md](docs/PROMPT-EXAMPLE.md): the planner prompt over two turns, with real payloads and token counts
 - [docs/assignment/](docs/assignment/): the original brief and catalog PDFs
 
@@ -24,7 +25,7 @@ The planner never sees all 500 actions. Retrieval picks about 19 per question; s
 
 180 executable actions across 18 modules: Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams. The complete catalog remains 500 actions; unimplemented actions remain searchable but cannot execute.
 
-The new thirty actions use the existing registry, compiler, executor, approval gates, replay ledger, SQLite persistence, audit, traces and UI. [Implementation contract](docs/M45-M47-SCOPE.md) · [Module-building guide](docs/ADDING-A-MODULE.md).
+The new thirty actions use the existing registry, compiler, executor, approval gates, replay ledger, SQLite persistence, audit, traces and UI. [Implementation contract](docs/M45-M47-SCOPE.md) · [Module-building guide](docs/ADDING-A-MODULE.md). Ticket-reply batches now disclose known blocked targets and require approval of the eligible subset before sending; see [subset confirmation](docs/PARTIAL-CONFIRMATION.md). The integrated branch passes 814 deterministic tests; earlier Sol scores below precede this policy change.
 
 - Reviews: draft/send/cancel requests, record/search reviews, draft/publish responses and compute rating summaries. Requests are marketing emails and respect opt-outs/DND.
 - Listings: one profile per business/location/directory; the same business on Google and Yelp is valid and ambiguous by name alone. Changes increment a version; publication syncs that version. Hours use America/New_York, all seven days, one interval per day; no overnight/split shifts.
@@ -58,6 +59,7 @@ npm run trajectory
 The 45 development cases cover all thirty new action IDs. The 12 reporting cases and matching seed IDs were frozen before handlers in commit `080618f`; do not use reporting outcomes for tuning. Development revision 2 corrects one test that counted existing seeded requests and asserts appointment reads through actual calls (which may run in a look); its original bytes/results are archived and its fingerprint changes. Seed and reporting definitions remain unchanged. The old 23-scenario fingerprint is unchanged **but its seeded database has expanded**. Legacy-row hashes check that existing records were not rewritten.
 
 Codex integration is available in this branch: explicitly select `PLANNER=codex-cli` (Claude is otherwise still the inherited default). The 795 deterministic tests pass. Full GPT-6.1 Sol low-reasoning evaluations score 91.9% development, 91.3% original regression and 83.3% reporting, versus Luna's 85.2%, 56.5% and 72.2%. Sol improves overall quality but still misses acceptance. See the [delivery and evaluation report](docs/M45-M47-FINAL-REPORT.md) for counts, test conditions, test-set revisions and remaining planner gaps. Do not substitute adapter tests or retrieval recall for AI task success.
+
 
 ## Use a Codex subscription locally
 

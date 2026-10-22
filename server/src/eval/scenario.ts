@@ -4,6 +4,7 @@ import type { Planner, Tier, Usage } from "../planner/types.js";
 import { sumUsd } from "../planner/usage.js";
 import type { Registry } from "../registry/registry.js";
 import type { Retriever } from "../retrieval/retrieve.js";
+import { BaselineConversation } from "../server/baseline.js";
 import { Conversation } from "../server/conversation.js";
 import type { Fixtures } from "../store/fixtures.js";
 import { world } from "../store/world.js";
@@ -119,6 +120,8 @@ export interface ScenarioRun {
   failures: Failure[];
   turns: TurnTrace[];
   metrics: RunMetrics;
+  /** Models the planner replied with, in order of first use. */
+  models?: string[];
 }
 
 export interface RunDeps {
@@ -126,6 +129,8 @@ export interface RunDeps {
   planner: Planner;
   retriever: Retriever;
   tier?: Tier;
+  /** Which agent answers: the planner (default) or the one-call-per-step baseline (server/baseline.ts). */
+  agent?: "planner" | "baseline";
 }
 
 const MAX_APPROVALS = 5;
@@ -140,12 +145,13 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       make.call(w.f as Fixtures, step.with);
     }
   }
-  const chat = new Conversation(deps, w);
+  const chat = deps.agent === "baseline" ? new BaselineConversation(deps, w) : new Conversation(deps, w);
   const turns: TurnTrace[] = [];
   const subscription = deps.planner.name === "codex-cli";
   const usage: Usage = { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: subscription ? null : 0, billing: subscription ? "subscription" : "none" };
   let plannerMs = 0;
   let changes = 0;
+  const models: string[] = [];
 
   for (const t of s.turns) {
     const trace: TurnTrace = { user: t.user, status: "", reply: "", offered: [], planned: [], calls: [], plannerRounds: 0, compileErrors: [], errors: [], approvals: 0, firstReplyMs: 0, ms: 0 };
@@ -156,6 +162,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       else if (event === "planner.reply") {
         trace.plannerRounds++;
         plannerMs += data.latencyMs;
+        if (data.model && !models.includes(data.model)) models.push(data.model);
         const next: Usage = data.usage;
         for (const k of ["input", "cachedRead", "cacheWrite", "output", "thinking"] as const) usage[k] += next[k];
         usage.costUsd = sumUsd([usage.costUsd, next.costUsd]);
@@ -207,6 +214,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       calls: turns.reduce((a, t) => a + t.calls.length, 0),
       usage,
     },
+    models,
   };
 }
 
