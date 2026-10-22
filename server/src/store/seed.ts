@@ -5,6 +5,7 @@ import type { LineItem } from "../modules/m28-invoices/schema.js";
 import type { Clock } from "./clock.js";
 import type { Store } from "./db.js";
 import { Fixtures } from "./fixtures.js";
+import { appendModuleSeed } from "./module-seed.js";
 
 // The base data set: a small but believable account. Deterministic: same seed + same clock = same rows
 // and ids, every run. Dates are relative to the clock, so "last week" always has data in it.
@@ -289,5 +290,7 @@ export function seed(store: Store, clock: Clock, opts: SeedOptions = {}): void {
     pay({ contactId: late30.contactId, amount: 900, method: "card", status: "failed", failure: { code: "card_declined", message: "The card was declined by the issuing bank" }, unallocated: 0, createdAt: at(4) });
     pay({ contactId: contacts[1]!.id, amount: 300, method: "bank_transfer", createdAt: at(3) });
     f.paymentRequest({ contactId: late5.contactId, invoiceId: late5.id, amount: 450, description: `Payment for invoice ${late5.number}`, createdBy: maya.id, createdAt: at(4) });
+    // The frozen extension assumes the standard legacy seed. Custom-size seeds retain their old behavior.
+    if ((opts.contacts ?? 30) === 30 && (opts.leads ?? 40) === 40) appendModuleSeed(store);
   });
 }

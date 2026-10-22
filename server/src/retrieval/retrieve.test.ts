@@ -24,6 +24,12 @@ const ids = (x: { picks: { id: string }[] }) => x.picks.map((p) => p.id);
 const QUERIES = fileURLToPath(new URL("../../../eval/retrieval/queries.jsonl", import.meta.url));
 
 describe("cards", () => {
+  test("module card metadata describes returned records and implemented capabilities", () => {
+    for (const id of ["M47.A07", "M47.A08"]) assert.equal(cards.find(c=>c.id===id)!.produces,"ticket",`${id} returns a ticket, not a standalone note/email`);
+    for (const [id, unsupported] of [["M45.A02","text review link"],["M46.A07","holiday hours"],["M47.A06","mark ticket pending"],["M47.A10","time to resolve"]]) {
+      assert.ok(!cards.find(c=>c.id===id)!.synonyms.includes(unsupported!));
+    }
+  });
   test("one per catalog action, all with generated metadata", () => {
     assert.equal(cards.length, CATALOG_ACTIONS.size);
     const meta = loadCardMeta();
@@ -59,6 +65,13 @@ describe("cards", () => {
 });
 
 describe("retrieve", () => {
+  test("trace mode follows actual rankings rather than whether an embedder was configured", async () => {
+    assert.equal(r.retrieve({message:"create support ticket"}).mode,"bm25");
+    const good = new Retriever(cards,{}, {rank:async()=>[[{id:"M47.A01",score:1}]]});
+    assert.equal(good.retrieve(await good.prepare({message:"create support ticket"})).mode,"hybrid");
+    const broken = new Retriever(cards,{}, {rank:async()=>{throw Error("test inference failure");}});
+    assert.equal(broken.retrieve(await broken.prepare({message:"create support ticket"})).mode,"bm25");
+  });
   test("finds the obvious action first", () => {
     assert.equal(r.retrieve({ message: "create a contact for Ana Ruiz" }).picks[0]!.id, "M01.A01");
   });

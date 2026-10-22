@@ -8,6 +8,7 @@ import { BaselineConversation } from "../server/baseline.js";
 import { Conversation } from "../server/conversation.js";
 import type { Fixtures } from "../store/fixtures.js";
 import { world } from "../store/world.js";
+import type { Pending } from "../core/execute.js";
 
 // End-to-end scenarios (eval/scenarios/*.json): each one starts from a fresh seeded database, sends its
 // messages through the same Conversation the web app uses, approves what asks for approval, then checks
@@ -27,6 +28,8 @@ const Expect = z.strictObject({
   reply: z.strictObject({ includes: z.array(z.string()).default([]), excludes: z.array(z.string()).default([]) }).optional(),
   /** Nothing in the data changed, over all turns. */
   noChanges: z.boolean().optional(),
+  /** Some actual approval must contain these fields; asking an LLM question is not approval. */
+  confirmation: Match.optional(),
 });
 
 export const ScenarioSchema = z.strictObject({
@@ -91,6 +94,7 @@ export interface TurnTrace {
   compileErrors: string[];
   errors: string[];
   approvals: number;
+  confirmations?: Pending[];
   /** Why the planner couldn't answer, when that was outside the app (quota, timeout, provider down). */
   infra?: string;
   /** From sending the message to the first reply (the approval prompt, when there is one). */
@@ -167,7 +171,10 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       else if (event === "plan") trace.planned.push(...data.steps.flatMap((st: { calls?: { action: string }[] }) => (st.calls ?? []).map((c) => c.action)));
       else if (event === "call") trace.calls.push({ action: data.action, args: data.args, ...(data.error ? { error: `${data.error.code}: ${data.error.message}` } : {}) });
       else if (event === "diff") changes += data.changes.length;
-      else if (event === "confirm") pendingTurn = data.turnId;
+      else if (event === "confirm") {
+        pendingTurn = data.turnId;
+        (trace.confirmations ??= []).push(data.pending);
+      }
       else if (event === "reply") {
         if (!trace.firstReplyMs) trace.firstReplyMs = Math.round(performance.now() - started);
         trace.status = data.status;
@@ -249,6 +256,8 @@ export function check(s: Scenario, turns: TurnTrace[], changes: number, query: (
   for (const re of e.reply?.includes ?? []) if (!new RegExp(re, "i").test(last.reply)) out.push({ kind: "reply", detail: `missing /${re}/` });
   for (const re of e.reply?.excludes ?? []) if (new RegExp(re, "i").test(last.reply)) out.push({ kind: "reply", detail: `says /${re}/` });
   if (e.noChanges && changes > 0) out.push({ kind: "changes", detail: `${changes} records changed` });
+  if (e.confirmation && !turns.flatMap((t) => t.confirmations ?? []).some((p) => matches(p, e.confirmation)))
+    out.push({ kind: "confirmation", detail: `no approval matched ${JSON.stringify(e.confirmation)}` });
   return out;
 }
 

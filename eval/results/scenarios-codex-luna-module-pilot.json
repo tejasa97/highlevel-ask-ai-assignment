@@ -1,0 +1,244 @@
+{
+ "summary": {
+  "label": "codex-luna-module-pilot",
+  "planner": "codex-cli",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "5bc2dc39b1dd",
+  "tier": "strong",
+  "scenarios": 3,
+  "repeat": 1,
+  "runs": 3,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 3,
+  "measured": 3,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 8505,
+   "p95": 10252
+  },
+  "firstReplyMs": {
+   "p50": 8500,
+   "p95": 10252
+  },
+  "plannerRoundsPerRun": 1,
+  "callsPerRun": 1.7,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 27015
+ },
+ "runs": [
+  {
+   "id": "m45-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a review request for Elodie Mercer with subject 'Visit feedback' and body 'How was your visit?'",
+     "status": "done",
+     "reply": "Done: Create review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A02",
+      "M45.A05",
+      "M45.A07",
+      "M45.A04",
+      "M45.A09",
+      "M21.A01",
+      "M29.A01",
+      "M21.A02",
+      "M01.A02",
+      "M01.A03",
+      "M29.A04"
+     ],
+     "planned": [
+      "M45.A01"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "How was your visit?"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 10252,
+     "ms": 10252
+    }
+   ],
+   "metrics": {
+    "ms": 10252,
+    "firstReplyMs": 10252,
+    "plannerMs": 10191,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7494,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 106,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   }
+  },
+  {
+   "id": "partial-ticket-replies",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "partial",
+     "reply": "Done: Reply to ticket requester (Portal export fails), already done earlier.\nCouldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A09",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We received your report."
+       }
+      },
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_4",
+        "body": "We received your report."
+       },
+       "error": "CONFLICT: Owen Hale has no email address"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 8500,
+     "ms": 8505
+    }
+   ],
+   "metrics": {
+    "ms": 8505,
+    "firstReplyMs": 8500,
+    "plannerMs": 8437,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 8004,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 116,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   }
+  },
+  {
+   "id": "ticket-reply-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Elodie Mercer's Portal export fails ticket: 'We are investigating.' Then create a task for Noah Park titled 'Follow up on Elodie export' due tomorrow.",
+     "status": "done",
+     "reply": "Done: Reply to ticket requester (Portal export fails).\nDone: Create task (Follow up on Elodie export).",
+     "offered": [
+      "M47.A08",
+      "M06.A01",
+      "M47.A02",
+      "M06.A03",
+      "M47.A03",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M45.A02",
+      "M45.A09",
+      "M11.A10",
+      "M06.A04",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03",
+      "M07.A01",
+      "M21.A01",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We are investigating."
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up on Elodie export",
+        "assigneeId": "us_6",
+        "dueDate": "2026-10-22"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 8181,
+     "ms": 8185
+    }
+   ],
+   "metrics": {
+    "ms": 8185,
+    "firstReplyMs": 8181,
+    "plannerMs": 8114,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 9495,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 169,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   }
+  }
+ ]
+}

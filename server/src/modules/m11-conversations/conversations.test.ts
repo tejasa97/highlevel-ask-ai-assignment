@@ -1,6 +1,22 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { failure, testWorld } from "../../testkit.js";
+import { Conversation } from "./schema.js";
+
+test("a first outbound message creates a clean conversation with its own cv_ id, not the message id", async () => {
+  for (const channel of ["email", "sms"] as const) {
+    const w = await testWorld(), c = w.f.contact({phone:"+15550123456"});
+    const out = channel === "email"
+      ? w.call("M13.A03",{contactId:c.id,subject:"Private subject",body:"Private body"})
+      : w.call("M12.A03",{contactId:c.id,body:"Private body"});
+    const raw = w.store.get<any>("conversations",out.conversationId);
+    assert.match(raw.id,/^cv_\d+$/);
+    assert.notEqual(raw.id,out.id);
+    assert.doesNotThrow(()=>Conversation.strict().parse(raw));
+    assert.equal(raw.contactId,c.id);
+    for(const key of ["body","subject","to","from","kind","sentAt","conversationId"])assert.equal(key in raw,false,key);
+  }
+});
 
 test("messages in and out keep one conversation per person, across channels", async () => {
   const w = await testWorld();
