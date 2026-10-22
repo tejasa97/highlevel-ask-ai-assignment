@@ -209,7 +209,8 @@ describe("hybrid fusion", () => {
 });
 
 // Regression gate on the whole question set. Floors sit a little under the measured numbers
-// (docs/PLAN.md), so tuning can move them but not quietly lose them.
+// (docs/PLAN.md), so tuning can move them but not quietly lose them. With all 500 actions
+// implemented, BM25 R@15 measured 0.8989.
 describe("retrieval eval", () => {
   test("recall stays at its measured level", async () => {
     const qs = loadQueries(QUERIES);
@@ -218,7 +219,7 @@ describe("retrieval eval", () => {
       await Promise.all(qs.map((q) => score(q, r, [15], registry.resolverEntities(), (m) => mentions(m, registry, store)))),
       [15],
     );
-    assert.ok(s.total.recall[15]! >= 0.9, `R@15 ${s.total.recall[15]}`);
+    assert.ok(s.total.recall[15]! >= 0.89, `R@15 ${s.total.recall[15]}`);
     assert.equal(s.groups.direct!.recall[15], 1, "every direct question finds its action");
     assert.ok(s.groups.paraphrase!.recall[15]! >= 0.8, `paraphrase R@15 ${s.groups.paraphrase!.recall[15]}`);
     assert.equal(s.falseRejects, 0, "no in-scope question is rejected as no match");

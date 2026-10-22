@@ -45,10 +45,20 @@ function scripted(...replies: SubmitPlan[]): Planner & { requests: PlanRequest[]
   };
 }
 
-async function run(message: string, planner: Planner, extra: { answering?: string } = {}, look?: TurnDeps["look"]) {
+async function run(message: string, planner: Planner, extra: { answering?: string } = {}, look?: TurnDeps["look"], reg: Registry = registry) {
   const events: TurnEvent[] = [];
-  const out = await planTurn({ message, tier: "fast", ...extra }, { registry, retriever, planner, clock: frozenClock(), look }, (e) => events.push(e));
+  const out = await planTurn({ message, tier: "fast", ...extra }, { registry: reg, retriever, planner, clock: frozenClock(), look }, (e) => events.push(e));
   return { out, events };
+}
+// Every catalog action is registered. Hiding one handler is how these tests still reach the "not in this version" branch.
+function hiding(id: string): Registry {
+  return new Proxy(registry, {
+    get(target, prop, receiver) {
+      if (prop === "get") return (actionId: string) => (actionId === id ? undefined : target.get(actionId));
+      const value = Reflect.get(target, prop, receiver);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
 }
 const offeredIn = (req: PlanRequest) => [...req.user.matchAll(/\b(M\d\d\.A\d\d)\b/g)].map((m) => m[1]!);
 
@@ -60,7 +70,7 @@ describe("compile against what was offered", () => {
   });
 
   test("rejects a catalog action that isn't built yet, by name", () => {
-    const r = compile(createTask("M02.A03"), registry, new Set(["M02.A03"]));
+    const r = compile(createTask("M02.A03"), hiding("M02.A03"), new Set(["M02.A03"]));
     assert.ok(!r.ok);
     assert.match(r.errors.join("\n"), /M02\.A03 \(.+\) is not available in this version/);
   });
@@ -215,7 +225,7 @@ describe("planTurn", () => {
 
   test("the repair round may answer unsupported, as the error for an unbuilt action asks", async () => {
     const planner = scripted(createTask("M02.A03"), reply({ type: "unsupported", reason: "Companies aren't in this version." }), reply({ type: "unsupported", reason: "Still not." }));
-    const { out } = await run("create a task to call Ana", planner);
+    const { out } = await run("create a task to call Ana", planner, {}, undefined, hiding("M02.A03"));
     assert.ok(out.kind === "reply" && out.status === "unsupported", JSON.stringify(out));
     assert.match(planner.requests[1]!.user, /M02\.A03 \(.+\) is not available in this version/);
   });
@@ -258,12 +268,12 @@ describe("planTurn", () => {
     assert.equal(await picked("create a task to call her"), true);
   });
 
-  test("the prompt names built and unbuilt matches separately", async () => {
+  test("the prompt offers the product and invoice actions for adding a product to an invoice", async () => {
     const planner = scripted(reply({ type: "unsupported", reason: "x" }), reply({ type: "unsupported", reason: "x" }));
     await run("add a product called Gold Plan to Priya's invoice", planner);
     const user = planner.requests[0]!.user;
     assert.match(user, /<actions>[\s\S]*M28\.A04[\s\S]*<\/actions>/);
-    assert.match(user, /<not_available>[\s\S]*product[\s\S]*<\/not_available>/i);
+    assert.match(user, /<actions>[\s\S]*M25\.A01[\s\S]*<\/actions>/);
   });
 });
 
