@@ -230,7 +230,7 @@ turn that went through a look. Reverted; the run is kept in the history, marked 
 replies. Entry 14 goes further: the planner needn't read the time at all.
 
 ## 14. Reschedule to a day, keeping the time; a plan that calls no action is repaired
-`uncommitted` · 2026-10-22 · runs: resolver-fix-3x → reschedule-date-3x
+`d8d4692` · 2026-10-22 · runs: resolver-fix-3x → reschedule-date-3x
 
 **Problem.** "Push Sarah Johnson's Agency plan walkthrough to Monday, same time" still passed 1 of 3. To fill
 reschedule's `startAt` the planner needed the meeting's current time, which a resolve doesn't give; so it had to
