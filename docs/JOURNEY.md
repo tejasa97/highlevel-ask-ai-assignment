@@ -342,7 +342,7 @@ makes one model call per record, where the planner writes one forEach.
 **Side effects.** Every catalog action now executes, so the retrieval pool the planner draws from is all 500 real actions, not 180. Entry 21 measures what that did.
 
 ## 21. Hardening Wave 1, and what it did to the numbers
-`5bbc440` · 2026-10-23 · runs: wave1-hardening-test, wave1-hardening-dev, wave1-hardening-haiku
+`5bbc440` · 2026-10-23 · runs: wave1-hardening-test → wave1-hardening-dev → wave1-hardening-haiku
 
 **Problem.** A review of the 32 new modules found thin tests (one test per module doing five jobs), look-alike actions the planner could confuse, and some real defects behind green tests.
 
