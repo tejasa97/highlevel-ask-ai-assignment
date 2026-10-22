@@ -71,6 +71,7 @@ const createAppointment = defineAction({
       title: a.title ?? `Meeting with ${p.name}`,
       ...personRef(p),
       hostId: host.id,
+      calendarId: null,
       attendees: [{ kind: p.type, id: p.id, name: p.name, noShow: false }] as Attendee[],
       ...t,
       location: a.location ?? null,

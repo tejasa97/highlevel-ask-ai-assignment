@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import { z } from "zod";
 import { call, failure, registry } from "../testkit.js";
@@ -7,11 +8,16 @@ import { world } from "../store/world.js";
 // Every registered action, twice: its example must succeed, and two broken versions of it must fail
 // with the right code (a made-up param → INVALID; an unknown id in a required id field → NOT_FOUND).
 
-const V1_MODULES = ["M01", "M03", "M04", "M06", "M07", "M08", "M11", "M12", "M13", "M15", "M21", "M28", "M29", "M48", "M49"];
 const reg = await registry();
+const catalog = JSON.parse(readFileSync(new URL("./catalog.json", import.meta.url), "utf8")) as { modules: { id: string; actions: { id: string }[] }[] };
 
-test("v1 modules have all 10 actions", () => {
-  for (const m of V1_MODULES) assert.equal(reg.list().filter((a) => a.moduleId === m).length, 10, m);
+// A module is either absent or complete: any registered action means all of its catalog actions are registered.
+test("every module that has handlers has all of its catalog actions, and no others", () => {
+  for (const m of catalog.modules) {
+    const have = reg.list().filter((a) => a.moduleId === m.id).map((a) => a.id).sort();
+    if (have.length === 0) continue;
+    assert.deepEqual(have, m.actions.map((a) => a.id).sort(), m.id);
+  }
 });
 
 for (const action of reg.list()) {

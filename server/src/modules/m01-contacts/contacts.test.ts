@@ -12,6 +12,14 @@ test("create: same email (any case) is DUPLICATE, even if archived; inactive own
   assert.equal(c.lastName, null);
 });
 
+test("update: changing the company name unlinks the company record; other edits keep the link", async () => {
+  const w = await testWorld();
+  const c = w.f.contact({ company: "Acme", companyId: "co_1" });
+  assert.equal(w.call("M01.A04", { contactId: c.id, firstName: "Renamed" }).companyId, "co_1");
+  assert.equal(w.call("M01.A04", { contactId: c.id, company: "Acme" }).companyId, "co_1");
+  assert.equal(w.call("M01.A04", { contactId: c.id, company: "Globex" }).companyId, null);
+});
+
 test("archived contacts are read-only and hidden from default search", async () => {
   const w = await testWorld();
   const old = w.store.find<{ id: string; name: string }>("contacts", (c) => c.name === "Old Customer")[0]!;
@@ -40,13 +48,14 @@ test("merge Sarah Johnson duplicates: fills gaps, unions tags, moves records, ke
   const w = await testWorld();
   const [keep, dup] = w.store.find<{ id: string; name: string }>("contacts", (c) => c.name === "Sarah Johnson");
   w.store.update("contacts", keep!.id, { tags: ["vip"], company: null });
-  w.store.update("contacts", dup!.id, { tags: ["newsletter"], company: "Brightside LLC", preferences: { email: false, sms: true, call: true, dnd: false } });
+  w.store.update("contacts", dup!.id, { tags: ["newsletter"], company: "Brightside LLC", companyId: "co_7", preferences: { email: false, sms: true, call: true, dnd: false } });
   const task = w.f.task({ relatedTo: { type: "contact", id: dup!.id } });
   const opp = w.f.opportunity({ contactId: dup!.id });
   const friend = w.f.contact({ relationships: [{ contactId: dup!.id, type: "colleague" }] });
 
   const r = w.call("M01.A06", { keepId: keep!.id, duplicateId: dup!.id });
   assert.deepEqual(r.filled, ["company"]);
+  assert.equal(r.contact.companyId, "co_7", "the company link comes with the name");
   assert.deepEqual(r.contact.tags, ["vip", "newsletter"]);
   assert.equal(r.contact.preferences.email, false);
   assert.deepEqual(r.moved, { tasks: 1, opportunities: 1, leads: 0 });

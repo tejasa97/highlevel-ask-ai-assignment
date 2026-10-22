@@ -57,6 +57,7 @@ const createContact = defineAction({
       email: a.email?.toLowerCase() ?? null,
       phone: a.phone ?? null,
       company: a.company ?? null,
+      companyId: null,
       ownerId: a.ownerId ?? null,
       tags: [...new Set(a.tags ?? [])],
       preferences: { email: true, sms: true, call: true, dnd: false },
@@ -141,6 +142,8 @@ const updateContact = defineAction({
     return store.update<Contact>("contacts", c.id, {
       ...patch,
       ...(patch.email ? { email: patch.email.toLowerCase() } : {}),
+      // Typing a different company name in means they no longer belong to the linked company record (M02).
+      ...(patch.company !== undefined && patch.company !== c.company ? { companyId: null } : {}),
       firstName,
       lastName,
       name: fullName(firstName, lastName),
@@ -193,6 +196,7 @@ const mergeContacts = defineAction({
       }
     }
     if (patch.lastName) patch.name = fullName(keep.firstName, patch.lastName);
+    if (patch.company) patch.companyId = dup.companyId; // the company record travels with its name
     patch.tags = [...new Set([...keep.tags, ...dup.tags])];
     const rels = new Map(keep.relationships.map((r) => [`${r.contactId}:${r.type}`, r]));
     for (const r of dup.relationships) if (r.contactId !== keepId) rels.set(`${r.contactId}:${r.type}`, r);

@@ -305,6 +305,7 @@ const convertLead = defineAction({
         email: l.email,
         phone: l.phone,
         company: l.company,
+        companyId: null,
         ownerId: l.ownerId,
         tags: l.tags,
         preferences: { email: true, sms: true, call: true, dnd: false },

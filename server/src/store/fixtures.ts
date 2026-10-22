@@ -20,7 +20,7 @@ import type { Store } from "./db.js";
 // so a test asks for exactly the records it needs ("an overdue task for an unavailable rep") and nothing
 // else. Every record is checked against its module's schema, so fixtures can't drift from the handlers.
 
-type Input<T> = Partial<Omit<T, "id">>;
+export type Input<T> = Partial<Omit<T, "id">>;
 
 export class Fixtures {
   constructor(
@@ -42,12 +42,13 @@ export class Fixtures {
     return `${this.day(days)}T${String(hour).padStart(2, "0")}:00:00.000Z`;
   }
 
-  private now(): string {
+  /** The clock's current time as an ISO timestamp. */
+  now(): string {
     return this.clock.now().toISOString();
   }
 
   /** A per-store counter, so default names and emails never collide. */
-  private seq(): number {
+  seq(): number {
     return Number(this.store.nextId("_fixture", "fx").slice(3));
   }
 
@@ -95,6 +96,7 @@ export class Fixtures {
       email: `${firstName}.${lastName ?? ""}${n}@example.com`.toLowerCase(),
       phone: null,
       company: null,
+      companyId: null,
       ownerId: null,
       tags: [],
       preferences: { email: true, sms: true, call: true, dnd: false },
@@ -298,6 +300,7 @@ export class Fixtures {
       contactId: contact?.id ?? null,
       leadId: null,
       hostId: o.hostId ?? this.user().id,
+      calendarId: null,
       attendees: contact ? [{ kind: "contact", id: contact.id, name: contact.name, noShow: false }] : [],
       startAt,
       endAt: new Date(Date.parse(startAt) + 30 * 60_000).toISOString(),
@@ -381,7 +384,8 @@ export class Fixtures {
     this.store.addFault({ action, match: o.match ?? {}, code: o.code, message: o.message ?? `Simulated ${o.code.toLowerCase()} failure`, remaining: o.times ?? null });
   }
 
-  private make<T extends { id: string }>(entity: string, prefix: string, schema: { parse(v: unknown): T }, doc: Omit<T, "id">): T {
+  /** Validates `doc` against `schema` and inserts it. A module's own fixtures.ts builds on this. */
+  make<T extends { id: string }>(entity: string, prefix: string, schema: { parse(v: unknown): T }, doc: Omit<T, "id">): T {
     const full = schema.parse({ ...doc, id: this.store.nextId(entity, prefix) });
     return this.store.put(entity, full);
   }

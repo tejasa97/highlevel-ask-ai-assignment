@@ -33,6 +33,8 @@ export const Contact = z.object({
   email: z.string().nullable(),
   phone: z.string().nullable(),
   company: z.string().nullable(),
+  /** The company record (M02) this contact belongs to; `company` keeps its name in step. */
+  companyId: z.string().nullable(),
   ownerId: z.string().nullable(),
   tags: z.array(z.string()),
   preferences: Preferences,
