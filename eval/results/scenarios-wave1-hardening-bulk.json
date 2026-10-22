@@ -1,0 +1,449 @@
+{
+ "summary": {
+  "label": "wave1-hardening-bulk",
+  "planner": "claude-cli",
+  "scenarioDir": "eval/scenarios",
+  "set": "b73735a21325",
+  "tier": "strong",
+  "scenarios": 1,
+  "repeat": 3,
+  "runs": 3,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 33.3,
+  "allPass": 0,
+  "measured": 1,
+  "flaky": 1,
+  "e2eMs": {
+   "p50": 25489,
+   "p95": 27336
+  },
+  "firstReplyMs": {
+   "p50": 25489,
+   "p95": 27336
+  },
+  "plannerRoundsPerRun": 3,
+  "callsPerRun": 2,
+  "costUsd": {
+   "perRun": 0.115,
+   "total": 0.35
+  },
+  "wallMs": 27415
+ },
+ "runs": [
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "changes",
+     "detail": "1 records changed"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M01.A05",
+      "M02.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A10",
+      "M20.A10",
+      "M49.A10",
+      "M01.A09",
+      "M02.A06",
+      "M10.A10",
+      "M47.A09",
+      "M44.A07",
+      "M25.A05",
+      "M14.A05",
+      "M09.A08",
+      "M05.A05",
+      "M03.A02",
+      "M02.A02",
+      "M47.A02",
+      "M48.A02",
+      "M44.A05",
+      "M09.A01"
+     ],
+     "planned": [
+      "M09.A01",
+      "M09.A08",
+      "M01.A05"
+     ],
+     "calls": [
+      {
+       "action": "M09.A01",
+       "args": {
+        "name": "Contacts at Wayne",
+        "target": "contact",
+        "rules": [
+         {
+          "field": "company",
+          "op": "contains",
+          "value": "Wayne"
+         }
+        ]
+       }
+      },
+      {
+       "action": "M09.A08",
+       "args": {
+        "smartListId": "sl_1",
+        "limit": 500
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 9166,
+     "ms": 9166,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "354a60525e0ad866",
+       "targetsHash": "967cb5799cc70cc5",
+       "reason": "deletes or cancels records",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_21"
+         },
+         "label": "Ana Okafor"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_27"
+         },
+         "label": "Ben Patel"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_20"
+         },
+         "label": "Lena Larsen"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_24"
+         },
+         "label": "Nina Novak"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_26"
+         },
+         "label": "Zoe Costa"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 9166,
+    "firstReplyMs": 9166,
+    "plannerMs": 9118,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 8117,
+     "cachedRead": 7891,
+     "cacheWrite": 224,
+     "output": 707,
+     "thinking": 0,
+     "costUsd": 0.009548199999999998,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-sonnet-5-5"
+   ]
+  },
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M01.A05",
+      "M02.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A10",
+      "M20.A10",
+      "M49.A10",
+      "M01.A09",
+      "M02.A06",
+      "M10.A10",
+      "M47.A09",
+      "M44.A07",
+      "M25.A05",
+      "M14.A05",
+      "M09.A08",
+      "M05.A05",
+      "M03.A02",
+      "M02.A02",
+      "M47.A02",
+      "M48.A02",
+      "M44.A05",
+      "M09.A01",
+      "M02.A10",
+      "M02.A03",
+      "M01.A03",
+      "M02.A07",
+      "M02.A04",
+      "M04.A03",
+      "M45.A06",
+      "M27.A03",
+      "M28.A03",
+      "M46.A03",
+      "M25.A03",
+      "M11.A02",
+      "M30.A03",
+      "M01.A01",
+      "M02.A09",
+      "M08.A08",
+      "M03.A03",
+      "M09.A06",
+      "M48.A03",
+      "M05.A07",
+      "M09.A04"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A05"
+     ],
+     "calls": [
+      {
+       "action": "M02.A03",
+       "args": {
+        "query": "Wayne",
+        "status": "active"
+       }
+      },
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "limit": 200
+       }
+      }
+     ],
+     "plannerRounds": 4,
+     "compileErrors": [
+      "you already looked; plan with the results in <looked>"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 25489,
+     "ms": 25489,
+     "confirmations": [
+      {
+       "stepId": "a1",
+       "planHash": "5239a5daf34c4b2e",
+       "targetsHash": "8afb3e2213c04eab",
+       "reason": "deletes or cancels records",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_20"
+         },
+         "label": "Lena Larsen"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_21"
+         },
+         "label": "Ana Okafor"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_24"
+         },
+         "label": "Nina Novak"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_26"
+         },
+         "label": "Zoe Costa"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_27"
+         },
+         "label": "Ben Patel"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 25489,
+    "firstReplyMs": 25489,
+    "plannerMs": 25428,
+    "plannerRounds": 4,
+    "calls": 2,
+    "usage": {
+     "input": 51554,
+     "cachedRead": 14326,
+     "cacheWrite": 37220,
+     "output": 1752,
+     "thinking": 0,
+     "costUsd": 0.1692812,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-sonnet-5-5"
+   ]
+  },
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "done, wanted cancelled"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M01.A05 not planned (was offered; planned: M02.A03)"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "done",
+     "reply": "No companies found matching query Wayne, status active.",
+     "offered": [
+      "M01.A05",
+      "M02.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A10",
+      "M20.A10",
+      "M49.A10",
+      "M01.A09",
+      "M02.A06",
+      "M10.A10",
+      "M47.A09",
+      "M44.A07",
+      "M25.A05",
+      "M14.A05",
+      "M09.A08",
+      "M05.A05",
+      "M03.A02",
+      "M02.A02",
+      "M47.A02",
+      "M48.A02",
+      "M44.A05",
+      "M09.A01",
+      "M02.A10",
+      "M01.A03",
+      "M02.A03",
+      "M02.A07",
+      "M02.A04",
+      "M46.A03",
+      "M04.A03",
+      "M25.A03",
+      "M08.A08",
+      "M27.A03",
+      "M45.A06",
+      "M28.A03",
+      "M11.A02",
+      "M21.A03",
+      "M46.A04",
+      "M03.A03",
+      "M09.A06",
+      "M48.A03",
+      "M05.A07",
+      "M09.A04"
+     ],
+     "planned": [
+      "M02.A03"
+     ],
+     "calls": [
+      {
+       "action": "M02.A03",
+       "args": {
+        "query": "Wayne",
+        "status": "active"
+       }
+      },
+      {
+       "action": "M02.A03",
+       "args": {
+        "query": "Wayne",
+        "status": "active"
+       }
+      }
+     ],
+     "plannerRounds": 4,
+     "compileErrors": [
+      "you already looked; plan with the results in <looked>"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 27336,
+     "ms": 27336
+    }
+   ],
+   "metrics": {
+    "ms": 27336,
+    "firstReplyMs": 27336,
+    "plannerMs": 27277,
+    "plannerRounds": 4,
+    "calls": 2,
+    "usage": {
+     "input": 50530,
+     "cachedRead": 14326,
+     "cacheWrite": 36196,
+     "output": 1858,
+     "thinking": 0,
+     "costUsd": 0.16624519999999998,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-sonnet-5-5"
+   ]
+  }
+ ]
+}

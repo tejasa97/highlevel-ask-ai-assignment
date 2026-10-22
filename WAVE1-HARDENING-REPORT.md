@@ -109,7 +109,7 @@ Eleven mutations in ten modules. Two survived at first; both were real gaps and 
 - `EMAIL_KINDS` (in M13) has no quote kind, so `M27.A08` stores no `emails` row. Left as it is on purpose, see `WAVE1-ASSUMPTIONS.md` A3. (An earlier version of this note also said `ENTITY_TYPES` lacked the new entities; that was wrong, it already lists quote, refund and the rest.)
 - `CommunityMember` has no `membershipId`.
 - The retrieval cards (`cards.json`) were not regenerated. Siblings are merged from the registry at run time, and no miss touched a module whose description changed, so regenerating would only have risked the reviewed cards (see "Eval after hardening").
-- `eval/scenarios/unsupported.json` `unsupported-card-refund` is out of date: its note says there is no refund action, but M33 now has one. The planner now correctly plans `M29.A06` then `M33.A01` and the run ends `done`. The scenario's expectation should change, not the code. `eval/` is outside this brief, so it was left alone.
+- `unsupported-card-refund` was out of date: it expected "unsupported" when M33 had no refund action. It was replaced by `direct-card-refund-request` in `eval/scenarios/direct.json`, which pins the request and its count and lets the planner stop at the request or go on to approve and execute it. See "After the scenario fix".
 - `registry/helpers.ts` (`noChange`) and `retrieval/cards.ts` (mutual siblings) were edited here as structural fixes, although the brief lists those folders as off limits. Revert-or-keep is the integrator's call.
 
 - A real permission for site and calendar management would be better than reusing `messaging.send` for the publishing family (M35 to M38); that needs a change to `m48-users`.
@@ -144,6 +144,12 @@ The two runs fail on the same two scenarios with the same counts, so hardening c
 ## Merge
 
 `wave1/hardening` is 15 commits ahead of `wave1/modules` and fast-forwards onto it. The merge was not done from this session, because `wave1/modules` is checked out in `/Users/tejas/projects/highlevel-ask-ai-wave1` and this session may only run git in its own worktree. Nothing is pushed.
+
+## After the scenario fix
+
+`unsupported-card-refund` became `direct-card-refund-request` (still 23 scenarios; the set fingerprint in `selection.test.ts` moved from `fcc7ddef4615` to `90b43d538455`, so runs before and after are not on the same set). The first version also forbade approve and execute. The planner sometimes carries on to both, and execution asks for approval, so that was over-specified and was dropped.
+
+Run `wave1-refund-scenario-haiku` (23 × 3, `claude-haiku-5-5`): 97.1%, direct 100%. Two scenarios failed: `multi-bulk-archive-declined` (2 of 3: the planner also ran `M09.A01` before the archive was declined, which left a record) and `multi-email-and-task` (2 of 3: a send step without `emailId`). An earlier run on the intermediate set failed other scenarios (`indirect-noah-helps-sales`), so this is run-to-run planner variance at three repeats, not one structural cause. Nothing was patched.
 
 ## Not committed
 
