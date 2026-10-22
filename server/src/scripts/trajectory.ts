@@ -390,7 +390,8 @@ $("table").innerHTML = "<table><thead><tr>" + cols.map(([c]) => "<th>" + c + "</
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const journey = parseJourney(readFileSync(`${ROOT}docs/JOURNEY.md`, "utf8"));
-  const history = readHistory(ROOT);
+  // The baseline agent's runs (--agent baseline) are a comparison, not a step in the app's history; BENCHMARK.md has them.
+  const history = readHistory(ROOT).filter((h) => !h.config.agent);
   writeFileSync(`${ROOT}docs/trajectory.html`, render(journey, history, new Date().toISOString().slice(0, 10)));
   console.log(`wrote docs/trajectory.html: ${journey.entries.length} changes, ${history.length} eval runs`);
 }

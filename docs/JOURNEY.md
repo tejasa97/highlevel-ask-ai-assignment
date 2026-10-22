@@ -252,3 +252,30 @@ direct-appointment-reschedule 1/3 → 3/3. Planner rounds per run 1.30 → 1.28.
 **Cost.** Cost per run $0.020 → $0.0125, from more prompt-cache hits rather than this change. Latency went the other
 way: end-to-end p50 5.8 s → 7.3 s, p95 11.1 s → 15.9 s, with fewer planner rounds; the reverted run (entry 13) sat
 in between. It looks like `claude -p` timing from run to run, not the change, but one run can't show that.
+
+## 15. A baseline: one call per step, against a whole plan per call
+`pending` · 2026-10-22 · runs: baseline-3x → planner-3x
+
+**Problem.** The planner writes the whole plan in one model call. Nothing showed that this beats the usual design,
+an agent that calls one tool per model call and reads each result before picking the next.
+
+**Change.** A baseline agent (`server/src/server/baseline.ts`) built that usual way: each model call picks one action
+or name lookup, sees its result, and picks the next, up to 15 calls. It gets the same shortlist of actions, name
+matches, context and approval rules as the planner, and goes through the same compile checks and executor; only
+the planning differs. `npm run eval:scenarios -- --agent baseline` runs it, and `npm run report -- --compare`
+puts the two side by side in BENCHMARK.md. Both ran the same 23 scenarios × 3 in the same hour, on the same code.
+
+**Result.** Quality is about even: planner 97.1% (67/69), baseline 95.7% (66/69). The planner failed two runs once
+each (it picked the invoice reminder instead of a payment request; one ambiguous-name follow-up failed). The
+baseline's three failures are one scenario, and mostly the check's fault: its answer was right, but it quoted
+customers' questions, and the check rejects any "?" as the agent asking one. It also showed raw user ids
+("Owner is us_2"), which no check catches. The check is left as it is; changing it after seeing results would
+fit the test to them.
+
+**Cost.** This is where the designs differ. Median model calls per complex task 2 vs 5. Direct first reply p50
+5.3 s vs 15.5 s; complex end-to-end p50 10.6 s vs 32.5 s, p95 24.8 s vs 47.5 s. Cost per successful task
+$0.011 vs $0.070, 6.4× more for the baseline, since every step resends the prompt.
+
+**What it says.** On these tasks a capable model picks the right actions either way; planning the whole task in
+one call is what makes it fast and cheap. The gap grows with the number of records a task touches: the baseline
+makes one model call per record, where the planner writes one forEach.

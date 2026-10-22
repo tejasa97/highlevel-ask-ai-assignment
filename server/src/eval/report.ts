@@ -6,7 +6,7 @@ import type { HistoryEntry } from "./history.js";
 import type { Scenario, ScenarioRun } from "./scenario.js";
 
 export interface ResultFile {
-  summary: { label: string; planner: string; tier: string; scenarios: number; repeat: number; runs: number; infraRuns: number; notRun: number };
+  summary: { label: string; planner: string; tier: string; agent?: string; scenarios: number; repeat: number; runs: number; infraRuns: number; notRun: number };
   runs: ScenarioRun[];
 }
 
@@ -198,6 +198,7 @@ export function renderReport(input: ReportInput): string {
   line(`| | ${cols.join(" | ")} |`);
   line(`|---|${cols.map(() => "---:").join("|")}|`);
   const row = (name: string, f: (m: Measured) => string) => line(`| ${name} | ${input.measured.map(f).join(" | ")} |`);
+  row("Agent", (m) => (m.result.summary.agent === "baseline" ? "baseline: one call per step" : "planner: whole plan per call"));
   row("Planner", (m) => `${m.result.summary.planner} (${m.result.summary.tier})`);
   row("Task success, all runs", (m) => rateCell(stats(m, "all").success));
   row("Action selection", (m) => rateCell(stats(m, "all").actions));
@@ -210,6 +211,10 @@ export function renderReport(input: ReportInput): string {
   row("Cost per run", (m) => usd(stats(m, "all").costUsd.perRun));
   row("Cost per successful task", (m) => usd(stats(m, "all").costUsd.perSuccess));
   line();
+  if (input.measured.some((m) => m.result.summary.agent === "baseline")) {
+    line("The baseline (`server/src/server/baseline.ts`) is the usual tool-calling loop: each model call picks one action or name lookup, sees its result, and picks the next. It gets the same shortlist of actions, name matches, context and approval rules as the planner; only the planning differs.");
+    line();
+  }
   if (others.length) {
     line("Columns are comparable only when they ran the same scenario files; check the set fingerprints under each label in `eval/results/history.jsonl`.");
     line();
@@ -306,7 +311,10 @@ export function renderReport(input: ReportInput): string {
   line("From `server/`:");
   line();
   line("```bash");
-  line(`npm run eval:scenarios -- --repeat ${p.summary.repeat} --label ${p.summary.label}${p.summary.tier === "fast" ? " --fast" : ""}`);
+  for (const m of input.measured) {
+    const r = m.result.summary;
+    line(`npm run eval:scenarios -- --repeat ${r.repeat} --label ${r.label}${r.tier === "fast" ? " --fast" : ""}${r.agent === "baseline" ? " --agent baseline" : ""}`);
+  }
   line(`npm run report -- --label ${p.summary.label}${others.length ? ` --compare ${others.map((m) => m.result.summary.label).join(",")}` : ""}`);
   line("```");
   line();

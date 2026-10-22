@@ -3,7 +3,8 @@
 // serve (quota, timeout, provider down) are "infra": counted apart, never in the pass rate. Hitting the quota stops
 // the run, since every later job would fail the same way. A run with --label is also recorded in
 // eval/results/history.jsonl, unless it's a spot check (--only) or no run reached the app.
-// Run: npm run eval:scenarios -- [--repeat 3] [--concurrency 4] [--only id-or-prefix,...] [--label name] [--fast]
+// --agent baseline runs the one-call-per-step agent (server/baseline.ts) instead of the planner, for comparison.
+// Run: npm run eval:scenarios -- [--repeat 3] [--concurrency 4] [--only id-or-prefix,...] [--label name] [--fast] [--agent baseline]
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { appendHistory, fingerprint, gitState } from "../eval/history.js";
@@ -26,6 +27,7 @@ const concurrency = Number(opt("concurrency") ?? 4);
 const only = opt("only")?.split(",");
 const label = opt("label") ?? "latest";
 const tier = args.includes("--fast") ? "fast" : "strong";
+const agent = opt("agent") === "baseline" ? "baseline" : "planner";
 
 const registry = await loadRegistry();
 const cards = buildCards(registry);
@@ -42,12 +44,12 @@ const runs: ScenarioRun[] = [];
 let next = 0;
 let quotaHit = false;
 const started = performance.now();
-console.log(`${scenarios.length} scenarios × ${repeat} on ${planner.name} (${tier}), ${concurrency} at a time\n`);
+console.log(`${scenarios.length} scenarios × ${repeat} on ${planner.name} (${tier}${agent === "baseline" ? ", baseline agent" : ""}), ${concurrency} at a time\n`);
 await Promise.all(
   Array.from({ length: Math.min(concurrency, jobs.length) }, async () => {
     while (next < jobs.length) {
       const s = jobs[next++]!;
-      const r = await runScenario(s, { registry, planner, retriever, tier });
+      const r = await runScenario(s, { registry, planner, retriever, tier, agent });
       runs.push(r);
       if (r.infra === "rate_limited" && !quotaHit) {
         quotaHit = true;
@@ -99,6 +101,7 @@ const summary = {
   label,
   planner: planner.name,
   tier,
+  ...(agent === "baseline" ? { agent } : {}),
   scenarios: scenarios.length,
   repeat,
   runs: runs.length,
@@ -141,7 +144,7 @@ else {
     label,
     git: gitState(ROOT),
     set: fingerprint(JSON.stringify(scenarios)),
-    config: { planner: planner.name, tier, repeat },
+    config: { planner: planner.name, tier, repeat, ...(agent === "baseline" ? { agent } : {}) },
     metrics: {
       scenarios: scenarios.length,
       runs: summary.runs,

@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Planner, Tier, Usage } from "../planner/types.js";
 import type { Registry } from "../registry/registry.js";
 import type { Retriever } from "../retrieval/retrieve.js";
+import { BaselineConversation } from "../server/baseline.js";
 import { Conversation } from "../server/conversation.js";
 import type { Fixtures } from "../store/fixtures.js";
 import { world } from "../store/world.js";
@@ -123,6 +124,8 @@ export interface RunDeps {
   planner: Planner;
   retriever: Retriever;
   tier?: Tier;
+  /** Which agent answers: the planner (default) or the one-call-per-step baseline (server/baseline.ts). */
+  agent?: "planner" | "baseline";
 }
 
 const MAX_APPROVALS = 5;
@@ -137,7 +140,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       make.call(w.f as Fixtures, step.with);
     }
   }
-  const chat = new Conversation(deps, w);
+  const chat = deps.agent === "baseline" ? new BaselineConversation(deps, w) : new Conversation(deps, w);
   const turns: TurnTrace[] = [];
   const usage: Usage = { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0 };
   let plannerMs = 0;

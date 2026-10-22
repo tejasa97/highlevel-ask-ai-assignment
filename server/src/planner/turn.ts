@@ -228,7 +228,7 @@ export function carryOf(plan: CompiledPlan, registry: Registry): Carry {
 }
 
 /** Runs `fn`, aborting its signal and rejecting if it hasn't settled after `ms`. */
-async function withDeadline<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<T> {
+export async function withDeadline<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<T> {
   const ctl = new AbortController();
   let timer: NodeJS.Timeout | undefined;
   const expired = new Promise<never>((_, reject) => {
