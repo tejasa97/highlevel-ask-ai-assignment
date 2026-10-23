@@ -64,6 +64,14 @@ test("attendees: no duplicates or host; the main contact can't be removed", asyn
   assert.equal(failure(() => w.call("M21.A08", { appointmentId: "ap_1", attendeeId: "us_4" })).code, "NOT_FOUND");
 });
 
+test("handing the appointment to an attendee makes them the host, not both", async () => {
+  const w = await testWorld();
+  w.call("M21.A07", { appointmentId: "ap_1", userId: "us_4" });
+  const moved = w.call("M21.A06", { appointmentId: "ap_1", hostId: "us_4" });
+  assert.equal(moved.hostId, "us_4");
+  assert.equal(moved.attendees.some((t: { id: string }) => t.id === "us_4"), false);
+});
+
 test("no-show and completed only once it has started; no-show flags the main person", async () => {
   const w = await testWorld();
   assert.match(failure(() => w.call("M21.A09", { appointmentId: "ap_1" })).message, /hasn't started/);
