@@ -168,6 +168,7 @@ const leave = defineAction({
 
 const createPost = defineAction({
   id: "M43.A07",
+  destination: { id: "community", label: "CRM community" },
   description: "Start a top-level post in a channel. Pass contactId for a member post, or omit it to post as the acting staff user. Unlike Reply to community post, this is not nested under another post and it can be pinned.",
   risk: "write",
   input: z.strictObject({

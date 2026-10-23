@@ -252,6 +252,7 @@ const setSeo = defineAction({
 
 const publishPage = defineAction({
   id: "M37.A09",
+  destination: { id: "landing_page", label: "Landing page" },
   description:
     "Publish a draft landing page. If a form is attached, that form must already be published (M18.A08); otherwise publish the form first. A funnel (M36.A09) can show this page only after this succeeds.",
   risk: "external",

@@ -307,6 +307,7 @@ const setValidation = defineAction({
 
 const publishForm = defineAction({
   id: "M18.A08",
+  destination: { id: "form", label: "Form" },
   description: "Makes a form live so people can fill it out. Use once the fields and rules are ready; it does not collect responses itself.",
   risk: "external",
   input: z.strictObject({ formId: FormId }),

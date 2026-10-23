@@ -24,6 +24,13 @@ const ids = (x: { picks: { id: string }[] }) => x.picks.map((p) => p.id);
 const QUERIES = fileURLToPath(new URL("../../../eval/retrieval/queries.jsonl", import.meta.url));
 
 describe("cards", () => {
+  test("module-owned paraphrases and dependency metadata are available to both retrieval modes", () => {
+    assert.ok(cards.find((c) => c.id === "M06.A05")!.synonyms.includes("transfer workload"));
+    assert.ok(cards.find((c) => c.id === "M49.A05")!.synonyms.includes("temporary team membership"));
+    assert.deepEqual(cards.find((c) => c.id === "M33.A01")!.consumes, ["payment"]);
+    assert.deepEqual(cards.find((c) => c.id === "M06.A01")!.consumes, []);
+    assert.ok(cards.find((c) => c.id === "M06.A01")!.optionalConsumes!.includes("user"));
+  });
   test("discovery metadata distinguishes read-only lookup from create and ID-only get", () => {
     for (const [id, entity] of [["M50.A03", "report"], ["M20.A03", "calendar"], ["M14.A03", "template"], ["M43.A02", "community"]])
       assert.equal(cards.find((c) => c.id === id)!.lookupFor, entity);

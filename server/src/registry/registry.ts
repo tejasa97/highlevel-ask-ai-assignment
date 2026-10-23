@@ -85,6 +85,18 @@ export class Registry {
   resolverQualifiers(): Record<string, readonly string[]> {
     return Object.fromEntries([...this.resolvers].filter(([, r]) => r.qualifiers?.length).map(([e, r]) => [e, r.qualifiers!]));
   }
+
+  deliverySurfaces(): { id: string; label: string; actions: string[] }[] {
+    const surfaces = new Map<string, { id: string; label: string; actions: string[] }>();
+    for (const action of this.list()) {
+      if (!action.destination) continue;
+      const { id, label } = action.destination;
+      const surface = surfaces.get(id) ?? { id, label, actions: [] };
+      surface.actions.push(action.id);
+      surfaces.set(id, surface);
+    }
+    return [...surfaces.values()];
+  }
 }
 
 /** Builds a registry from every folder in modules/ that has an index file. */

@@ -217,6 +217,7 @@ const categories = defineAction({
 const unreachable = (directory: string) => /down/i.test(directory);
 const publish = defineAction({
   id: "M46.A09",
+  destination: { id: "business_listing", label: "Simulated business directory listing" },
   description:
     "Publish or sync the latest version of a business listing to its simulated directory. This publishes a business profile, not a customer review response. No real directory is contacted. A directory whose name contains \"down\" is simulated as unreachable: the sync is recorded as failed with its reason (status failed in Check listing sync), the published version stays as it was, and publishing again retries.",
   risk: "external",

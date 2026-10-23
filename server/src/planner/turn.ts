@@ -9,12 +9,13 @@ import type { Store } from "../store/db.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
+import { checkIdentity, outcomeErrors, type Outcome } from "./contracts.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
 //   retrieve a shortlist → prompt → plan, with at most one search_tools round (a second retrieval for what the
 //   planner says is missing), at most one look round (read-only steps run now, their results fed back, so a
 //   value can be worked out from a record: "same time, on Monday") and at most one repair round (compile errors
-//   fed back), in any order → a compiled plan or a reply. At most four planner calls. The plan may only use
+//   fed back), plus at most one grounded identity clarification retry → a compiled plan or a reply. At most five calls. The plan may only use
 //   actions the planner was shown.
 
 /** How long one planner call may take before the turn gives up on it. */
@@ -139,8 +140,13 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     });
   };
   let looked: string | undefined;
+  let identityCheck: string | undefined;
+  let outcome: Outcome | undefined;
+  let checkedIdentity = false;
+  let uniqueIdentity: string | undefined;
+  const deliverySurfaces = registry.deliverySurfaces();
   const prompt = () =>
-    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, looked });
+    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, looked, deliverySurfaces, identityCheck, outcome });
   const call = async (user: string, label: string) => {
     emit({ type: "planner.request", data: { label, tier: input.tier, system: SYSTEM, user, actions: offered.map((a) => a.id) } });
     const r = await withDeadline(deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }));
@@ -161,6 +167,33 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     const parsed = SubmitPlan.safeParse(reply.json);
     if (!parsed.success) return failed(`The planner's reply didn't match submit_plan: ${parsed.error.message}`);
     const d = parsed.data;
+    // Freeze the first stated outcome across all subsequent reads, searches and repairs. A search may
+    // initially lack action IDs; fill those once discovered, but never downgrade a change into a read.
+    if (!outcome && d.outcome) outcome = d.outcome;
+    else if (outcome && !outcome.actions.length && d.outcome?.actions.length) outcome = { ...outcome, actions: d.outcome.actions };
+    if (outcome?.destination && !deliverySurfaces.some((s) => s.id === outcome!.destination)) {
+      return { kind: "reply", status: "unsupported", text: `Delivery to ${outcome.destination} isn't supported. Nothing was sent or published. Supported surfaces: ${deliverySurfaces.map((s) => s.label).join(", ")}.` };
+    }
+
+    if (d.type === "clarify" && d.clarification === "identity" && d.lookup && uniqueIdentity === JSON.stringify(d.lookup)) {
+      return failed("The account lookup found one matching record, but the planner still asked which one. Nothing was changed; please try again.");
+    }
+    if (d.type === "clarify" && d.clarification === "identity" && d.lookup && store && !checkedIdentity) {
+      checkedIdentity = true;
+      try {
+        const check = checkIdentity(d.lookup, registry, store);
+        identityCheck = check.digest;
+        if (check.count === 1) uniqueIdentity = JSON.stringify(d.lookup);
+        // Real ambiguity belongs to the user. Unique, absent and inactive matches need a grounded replan.
+        if (check.count > 1) return { kind: "reply", status: "clarify", text: `I found ${check.count} matching ${d.lookup.entity.replaceAll("_", " ")} records. ${check.options ? "Which one do you mean?" : "Please give a more specific name or qualifier."}`, options: check.options };
+      } catch (err) {
+        if (!(err instanceof Error)) throw err;
+        identityCheck = JSON.stringify({ error: err.message });
+      }
+      user = prompt();
+      reply = await call(user, "plan after identity check");
+      continue;
+    }
 
     if (d.type === "search_tools") {
       if (searched) return { kind: "reply", status: "unsupported", text: `I couldn't find an action for that${d.query ? ` (${d.query})` : ""}.` };
@@ -202,7 +235,16 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
 
     // Answering from <looked> would put the planner's prose (and raw ids) where the summary of the reads belongs:
     // the reads were the plan.
-    if (d.type === "answer" && lookPlan) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
+    if (d.type === "answer" && (lookPlan || outcome?.effect === "change")) {
+      const errors = lookPlan ? outcomeErrors(lookPlan, outcome) : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
+      if (!errors.length && lookPlan) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
+      if (repaired) return failed(`The requested outcome is still incomplete:\n${errors.join("\n")}`);
+      repaired = true;
+      emit({ type: "compile.errors", data: { errors } });
+      user = prompt();
+      reply = await call(repairBlock(user, reply.json, errors), "repair incomplete outcome");
+      continue;
+    }
 
     if (d.type !== "plan") {
       const text = [d.question ?? d.reason ?? d.text ?? "", d.alternatives?.length ? `Alternatives: ${d.alternatives.join("; ")}` : ""].filter(Boolean).join("\n");
@@ -226,7 +268,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     const errors = !compiled.ok
       ? compiled.errors
       : compiled.plan.steps.some((s) => callsOf(s).length)
-        ? []
+        ? outcomeErrors(compiled.plan, outcome)
         : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
     if (compiled.ok && !errors.length) return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
     emit({ type: "compile.errors", data: { errors } });

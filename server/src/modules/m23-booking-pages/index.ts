@@ -214,6 +214,7 @@ const setRedirect = defineAction({
 
 const publishPage = defineAction({
   id: "M23.A09",
+  destination: { id: "booking_page", label: "Booking page" },
   description:
     "Publish a draft booking page so visitors can book. The linked calendar must be public and active; a private or archived calendar is refused. M20.A09 only changes the calendar's visibility and does not publish the page.",
   risk: "external",

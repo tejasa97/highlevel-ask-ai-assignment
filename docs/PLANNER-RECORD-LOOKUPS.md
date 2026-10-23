@@ -2,6 +2,8 @@
 
 ## Scope
 
+Follow-on: the seven older-suite improvements, including bounded completion handling, are implemented separately in [Grounded planner outcomes](PLANNER-OUTCOMES.md). The original batch and its recorded validation below remain historical evidence.
+
 This batch implements the first three agreed improvements: consistent named-record lookup, discovery dependencies in retrieval, and a smaller planner-facing representation. It is shared by every `Planner` provider. There is no provider/model-name branch, reasoning-setting change, new executor or embedding-model change. Completion tracking, unrequested prerequisite writes and whole-plan approval policy are separate work.
 
 Base: `64c9e45` (current main `d62d534` plus the other agent's committed 75-case coverage snapshot). Its source/scenarios were not changed to improve scores. The other agent's checkout and the earlier evaluation evidence stay untouched.

@@ -271,6 +271,7 @@ const setBranching = defineAction({
 
 const publishSurvey = defineAction({
   id: "M19.A07",
+  destination: { id: "survey", label: "Survey" },
   description: "Makes a draft survey live so respondents can answer it. Opposite of Close survey, which stops collecting answers. Unlike M18.A08 Publish form, this opens a survey rather than a form.",
   risk: "external",
   input: z.strictObject({ surveyId: SurveyId }),

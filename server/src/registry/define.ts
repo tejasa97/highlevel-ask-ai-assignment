@@ -31,12 +31,16 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   id: string;
   /** User-language description: what it does, and how it differs from look-alikes. */
   description: string;
+  /** General user-language paraphrases; indexed by both lexical and semantic retrieval. */
+  synonyms?: string[];
   risk: Risk;
   /** Use z.strictObject so made-up params are rejected instead of ignored. */
   input: I;
   output: O;
   /** Entity types this action produces and consumes, for dependency expansion in retrieval. */
-  entities?: { produces?: string; consumes?: string[]; lookup?: string };
+  entities?: { produces?: string; consumes?: string[]; optionalConsumes?: string[]; lookup?: string };
+  /** Explicit delivery surface, not an inferred match on words like "post". */
+  destination?: { id: string; label: string };
   /** Look-alike actions in other modules, always retrieved together. */
   siblings?: string[];
   /** Optional side-effect-free eligibility check. Throw an ActionError for a known blocker;

@@ -250,7 +250,11 @@ export class Retriever {
       const resolvable = new Set(input.resolvable ?? []);
       const bulk = BULK.test(input.message);
       for (const p of [...picks]) {
-        for (const need of this.byId.get(p.id)!.consumes) {
+        const c = this.byId.get(p.id)!;
+        // Optional relationships only expand when a typed name actually supplies that relationship.
+        // A plain "create task" must not pull in contact, lead, opportunity and user searches.
+        const optional = (c.optionalConsumes ?? []).filter((e) => input.mentions?.some((m) => m.entity === e));
+        for (const need of new Set([...c.consumes, ...optional])) {
           if (bulk && resolvable.has(need) && p.why !== "sibling") {
             const producer = this.producerFor(need, ranking);
             if (producer) add(producer, "producer", p.id);

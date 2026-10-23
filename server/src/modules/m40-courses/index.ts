@@ -240,6 +240,7 @@ const setPrerequisites = defineAction({
 
 const publishCourse = defineAction({
   id: "M40.A09",
+  destination: { id: "course", label: "Course" },
   description: "Publish a draft course so learners can enroll. Unlike M42.A01 Enroll learner, this does not give anyone access. At least one lesson on the course must already be published (M41.A09). Unlike Archive course, this makes the course available.",
   risk: "external",
   input: z.strictObject({ courseId: CourseId }),

@@ -90,3 +90,27 @@ test("get: shows the payments applied to it", async () => {
   assert.equal(inv.amountPaid, 400);
   assert.equal(inv.daysOverdue, 45);
 });
+
+test("notRemindedSince retains old and null reminders, excludes this week, before pagination", async () => {
+  const w = await testWorld();
+  const args = { minDaysOverdue: 15, notRemindedSince: "2026-10-19" };
+  const listed = w.call("M28.A10", args);
+  assert.deepEqual(listed.items.map((i: { invoiceId: string }) => i.invoiceId), ["inv_6", "inv_5", "inv_9"]);
+  assert.equal(listed.total, 3);
+  const first = w.call("M28.A10", { ...args, limit: 1 });
+  assert.equal(first.items.length, 1);
+  assert.equal(first.total, 3);
+  assert.equal(w.call("M28.A02", { invoiceId: "inv_6" }).reminders.length, 1, "eligibility query never sends");
+  assert.equal(failure(() => w.call("M28.A10", { notRemindedSince: "Monday" })).code, "INVALID");
+});
+
+test("notRemindedSince uses inclusive account-local midnight across the DST change", async () => {
+  const w = await testWorld({ now: "2026-11-03T15:00:00Z" });
+  const before = w.f.invoice({ status: "open", dueDate: "2026-10-01", lastReminderAt: "2026-11-02T04:59:59Z" });
+  const at = w.f.invoice({ status: "open", dueDate: "2026-10-01", lastReminderAt: "2026-11-02T05:00:00Z" });
+  const future = w.f.invoice({ status: "open", dueDate: "2026-10-01", lastReminderAt: "2026-11-03T13:00:00Z" });
+  const ids = w.call("M28.A10", { notRemindedSince: "2026-11-02" }).items.map((i: { invoiceId: string }) => i.invoiceId);
+  assert.ok(ids.includes(before.id));
+  assert.ok(!ids.includes(at.id));
+  assert.ok(!ids.includes(future.id));
+});

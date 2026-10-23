@@ -43,6 +43,7 @@ export interface SearchCard {
   /** Prefer standalone discovery over a related-record listing needing extra input arguments. */
   lookupRequired?: number;
   consumes: string[];
+  optionalConsumes?: string[];
   siblings: string[];
   /** Has a handler in this build. Unavailable actions are still retrieved, so the agent can say so. */
   available: boolean;
@@ -74,11 +75,12 @@ export function buildCards(registry: Registry, meta = loadCardMeta()): SearchCar
         module: m.name,
         moduleDescription: m.description,
         description: impl?.description ?? g?.description ?? "",
-        synonyms: g?.synonyms ?? [],
+        synonyms: [...new Set([...(g?.synonyms ?? []), ...(impl?.synonyms ?? [])])],
         produces: produced,
         lookupFor: impl?.risk === "read" ? impl.entities?.lookup ?? discovery : null,
         lookupRequired: ((impl?.inputSchema.required ?? []) as string[]).length,
-        consumes: impl?.entities?.consumes ?? g?.consumes ?? [],
+        consumes: (impl?.entities?.consumes ?? g?.consumes ?? []).filter((e) => !impl?.entities?.optionalConsumes?.includes(e)),
+        optionalConsumes: impl?.entities?.optionalConsumes ?? [],
         siblings: [...new Set([...(impl?.siblings ?? []), ...(g?.siblings ?? [])])],
         available: impl !== undefined,
       };

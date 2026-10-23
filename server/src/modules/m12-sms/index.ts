@@ -94,6 +94,7 @@ const previewSegments = defineAction({
 
 const sendSms = defineAction({
   id: "M12.A03",
+  destination: { id: "sms", label: "SMS" },
   description:
     "Send a text message now: a saved draft (smsId) or a new message to a contact or lead. Refused if they opted out, are on do-not-disturb, turned off SMS, or have no valid mobile number.",
   risk: "external",
@@ -113,6 +114,7 @@ const sendSms = defineAction({
 
 const scheduleSms = defineAction({
   id: "M12.A04",
+  destination: { id: "sms", label: "SMS" },
   description: "Schedule a text message to go out later: a saved draft (smsId) or a new message to a contact or lead. The same consent rules as sending apply.",
   risk: "external",
   input: z.strictObject({ ...SendArgs, sendAt: z.iso.datetime({ offset: true }).describe("when to send, ISO date-time") }),

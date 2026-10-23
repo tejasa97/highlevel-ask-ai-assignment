@@ -272,6 +272,7 @@ function replyTarget(ticketId: string, ctx: ActionContext) {
 }
 const reply = defineAction({
   id: "M47.A08",
+  destination: { id: "email", label: "Email" },
   description:
     "Reply by email to a support ticket's requester with body. Only this action updates ticket replies and first-response SLA; do not use generic email/SMS/conversation send. Resolved/closed tickets must be reopened; success moves open to in_progress. If the email bounces, the reply is kept on the ticket with its failure reason, but it does not count as a first response and the status does not change. Transactional: marketing opt-outs do not block, but an email address is required.",
   risk: "external",

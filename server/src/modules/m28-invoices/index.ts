@@ -290,9 +290,9 @@ const voidInvoice = defineAction({
 const listOverdue = defineAction({
   id: "M28.A10",
   description:
-    "List unpaid (open) invoices past their due date, most overdue first, with days overdue, amount due and when the last reminder went out. minDaysOverdue: 16 means 'overdue by more than 15 days'.",
+    "List unpaid (open) invoices past their due date, most overdue first. minDaysOverdue: 16 means 'overdue by more than 15 days'. To skip invoices reminded this week, set notRemindedSince to this week's Monday from <now>; older reminders and never-reminded invoices remain eligible. This only reads; M28.A08 sends reminders.",
   risk: "read",
-  input: z.strictObject({ minDaysOverdue: z.number().int().min(1).optional().describe("default 1"), contactId: z.string().optional(), limit: Limit }),
+  input: z.strictObject({ minDaysOverdue: z.number().int().min(1).optional().describe("default 1"), contactId: z.string().optional(), notRemindedSince: z.iso.date().optional().describe("exclude reminders on or after this date, midnight America/New_York; null/older reminders remain eligible"), limit: Limit }),
   output: listOf(
     z.object({
       invoiceId: z.string(),
@@ -314,7 +314,8 @@ const listOverdue = defineAction({
     const today = localDate(clock.now());
     const min = a.minDaysOverdue ?? 1;
     const items = store
-      .find<Invoice>("invoices", (i) => (!a.contactId || i.contactId === a.contactId) && daysOverdue(i, today) >= min)
+      .find<Invoice>("invoices", (i) => (!a.contactId || i.contactId === a.contactId) && daysOverdue(i, today) >= min &&
+        (!a.notRemindedSince || !i.lastReminderAt || localDate(new Date(i.lastReminderAt)) < a.notRemindedSince))
       .map((i) => ({
         invoiceId: i.id,
         number: i.number,
