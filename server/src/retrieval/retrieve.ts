@@ -11,6 +11,9 @@ import type { SearchCard } from "./cards.js";
 //   3. Add what the planner will need next to them: look-alike siblings, a producer for any record type
 //      a picked card needs but nothing picked returns, and the previous turn's actions.
 
+/** Wording that points at many records of one type instead of a named one. */
+const BULK = /\b(every|all|each)\b/i;
+
 export interface RetrieveOptions {
   k: number;
 
@@ -243,9 +246,12 @@ export class Retriever {
     if (o.producers) {
       // A picked card needs an id of some record type that no picked card returns and that can't be
       // resolved by name: add the best-ranked card that produces it (a search or list action, usually).
+      // "Archive every contact at Wayne" names no record, so even a resolvable type needs its search.
       const resolvable = new Set(input.resolvable ?? []);
+      const bulk = BULK.test(input.message);
       for (const p of [...picks]) {
         for (const need of this.byId.get(p.id)!.consumes) {
+          if (bulk && resolvable.has(need) && p.why !== "sibling") for (const id of this.lookupsFor(need).slice(-1)) add(id, "producer", p.id);
           if (resolvable.has(need) || picks.some((q) => this.byId.get(q.id)!.produces === need)) continue;
           const producer = this.producerFor(need, ranking);
           if (producer) add(producer, "producer", p.id);

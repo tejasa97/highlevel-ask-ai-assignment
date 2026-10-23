@@ -93,6 +93,13 @@ describe("retrieve", () => {
     for (const p of sibs) assert.ok(r.card(p.via!)!.siblings.includes(p.id), `${p.id} via ${p.via}`);
   });
 
+  test("a message about every record of a type brings in that type's search even when it resolves by name", () => {
+    const resolvable = registry.resolverEntities();
+    const ids = (message: string) => r.retrieve({ message, resolvable }, { siblings: 0 }).picks.map((p) => p.id);
+    assert.ok(ids("Archive every contact at Wayne").includes("M01.A03"));
+    assert.ok(!ids("Archive Elodie Mercer").includes("M01.A03"));
+  });
+
   test("adds producers only for record types the planner can't resolve by name", () => {
     const msg = "allocate the payment to the invoice";
     const prod = (resolvable: string[]) => r.retrieve({ message: msg, resolvable }, { siblings: 0 }).picks.filter((p) => p.why === "producer");
