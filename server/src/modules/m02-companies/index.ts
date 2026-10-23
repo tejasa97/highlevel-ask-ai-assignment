@@ -21,6 +21,12 @@ const Address = z.strictObject({
 
 const CompanyView = Company.extend({ contactCount: z.number() });
 
+function title(name: string): string {
+  const n = name.trim();
+  if (!n) throw new ActionError("INVALID", "Give the company a name");
+  return n;
+}
+
 function normDomain(raw: string): string {
   const d = raw.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0] ?? "";
   if (!d || /\s/.test(d)) throw new ActionError("INVALID", `Domain "${raw}" should look like acme.example, with no scheme or path`);
@@ -69,7 +75,7 @@ const createCompany = defineAction({
     if (dup) throw new ActionError("DUPLICATE", `${dup.name} already uses the domain ${domain} (${dup.id}); link contacts to that company or merge`, { existingId: dup.id });
     const now = clock.now().toISOString();
     return store.insert("companies", "co", {
-      name: a.name.trim(),
+      name: title(a.name),
       domain,
       industry: a.industry ?? null,
       size: a.size ?? null,
@@ -154,7 +160,7 @@ const updateCompany = defineAction({
     const dup = domainTaken(store, domain, co.id);
     if (dup) throw new ActionError("DUPLICATE", `${dup.name} already uses the domain ${domain} (${dup.id})`, { existingId: dup.id });
     const next = {
-      name: a.name?.trim() ?? co.name,
+      name: a.name === undefined ? co.name : title(a.name),
       domain,
       industry: a.industry === undefined ? co.industry : a.industry,
       size: a.size === undefined ? co.size : a.size,

@@ -50,6 +50,25 @@ test("M10.A09 refuses a retired option, the wrong type, and a repeated value", a
   assert.equal(failure(() => w.call("M10.A09", { fieldId: num.id, recordId: contact.id, value: 12 })).code, "CONFLICT");
 });
 
+test("M10.A09 a date value has to be a real calendar day", async () => {
+  const w = await testWorld();
+  const contact = w.f.contact();
+  const field = w.f.customField({ type: "date", key: "renewal" });
+  for (const bad of ["2026-13-01", "2026-02-30", "2026-1-5"]) {
+    assert.equal(failure(() => w.call("M10.A09", { fieldId: field.id, recordId: contact.id, value: bad })).code, "INVALID");
+  }
+  assert.equal(w.call("M10.A09", { fieldId: field.id, recordId: contact.id, value: "2028-02-29" }).value, "2028-02-29");
+});
+
+test("M10.A10 a field an active smart list filters on can't be archived until the list moves on", async () => {
+  const w = await testWorld();
+  const field = w.f.customField({ type: "text", key: "tier" });
+  const list = w.f.smartList({ target: "contact", rules: [{ field: "cf.tier", op: "eq", value: "gold" }] });
+  assert.match(failure(() => w.call("M10.A10", { fieldId: field.id })).message, /M09\.A05/);
+  w.call("M09.A10", { smartListId: list.id });
+  assert.equal(w.call("M10.A10", { fieldId: field.id }).status, "archived");
+});
+
 test("M10.A10 archiving twice is CONFLICT and blocks a new value", async () => {
   const w = await testWorld();
   const field = w.f.customField();

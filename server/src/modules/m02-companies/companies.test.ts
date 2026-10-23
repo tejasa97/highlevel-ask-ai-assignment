@@ -70,6 +70,13 @@ test("M02.A09 merge moves the duplicate's contacts and marks it merged", async (
   assert.equal(failure(() => w.call("M02.A05", { companyId: dup.id })).code, "CONFLICT");
 });
 
+test("M02.A01/A04 a blank company name is INVALID", async () => {
+  const w = await testWorld();
+  assert.equal(failure(() => w.call("M02.A01", { name: "   " })).code, "INVALID");
+  const co = w.f.company();
+  assert.equal(failure(() => w.call("M02.A04", { companyId: co.id, name: "  " })).code, "INVALID");
+});
+
 test("M02.A05 archive twice is CONFLICT; M02.A10 lists only that company's contacts", async () => {
   const w = await testWorld();
   const co = w.f.company({ name: "Listed" });

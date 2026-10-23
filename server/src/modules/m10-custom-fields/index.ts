@@ -3,6 +3,7 @@ import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { atLeastOne, Limit, listOf, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
+import type { SmartList } from "../m09-smart-lists/schema.js";
 import { CUSTOM_FIELD_MODULES, CUSTOM_FIELD_TABLES, CustomField, CustomFieldValue, FIELD_TYPES } from "./schema.js";
 import "./fixtures.js";
 
@@ -43,6 +44,12 @@ function compile(pattern: string): void {
   }
 }
 
+function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
 function checkValue(field: CustomField, value: string | number | boolean | null): void {
   if (value === null) {
     if (field.validation.required) throw new ActionError("INVALID", `${field.label} is required`);
@@ -63,7 +70,7 @@ function checkValue(field: CustomField, value: string | number | boolean | null)
     return;
   }
   if (field.type === "date") {
-    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new ActionError("INVALID", `${field.label} must be a date (YYYY-MM-DD)`);
+    if (typeof value !== "string" || !isCalendarDate(value)) throw new ActionError("INVALID", `${field.label} must be a real date (YYYY-MM-DD)`);
     return;
   }
   if (field.type === "checkbox") {
@@ -285,6 +292,8 @@ const archiveField = defineAction({
   handler: ({ fieldId }, { store }) => {
     const field = mustGet<CustomField>(store, "custom_fields", fieldId, "custom field");
     live(field, "be archived");
+    const filter = store.find<SmartList>("smart_lists", (s) => s.status === "active" && s.target === field.module && s.rules.some((r) => r.field === `cf.${field.key}`))[0];
+    if (filter) throw new ActionError("CONFLICT", `Smart list "${filter.name}" filters on cf.${field.key}; change its rules (M09.A05) before archiving the field`);
     return store.update<CustomField>("custom_fields", field.id, { status: "archived" });
   },
 });
