@@ -13,6 +13,9 @@ import { Invoice } from "../modules/m28-invoices/schema.js";
 import { Payment, PaymentRequest } from "../modules/m29-payments/schema.js";
 import { User } from "../modules/m48-users/schema.js";
 import { Team } from "../modules/m49-teams/schema.js";
+import { Review, ReviewRequest } from "../modules/m45-reviews/schema.js";
+import { defaultHours, Listing } from "../modules/m46-business-listings/schema.js";
+import { Ticket } from "../modules/m47-support-tickets/schema.js";
 import { addDays, type Clock, localDate } from "./clock.js";
 import type { Store } from "./db.js";
 
@@ -374,6 +377,23 @@ export class Fixtures {
       createdAt: this.at(-1),
       ...o,
     });
+  }
+
+  reviewRequest(o: Input<ReviewRequest> = {}): ReviewRequest {
+    return this.make("review_requests", "rrq", ReviewRequest, { contactId: o.contactId ?? this.contact().id, status: "draft", subject: "Your feedback", body: "How did we do?", emailId: null, createdAt: this.now(), sentAt: null, cancelledAt: null, fulfilledAt: null, reviewId: null, ...o });
+  }
+
+  review(o: Input<Review> = {}): Review {
+    return this.make("reviews", "rv", Review, { contactId: o.contactId ?? this.contact().id, requestId: null, rating: 5, body: "Excellent service", responseDraft: null, publishedResponse: null, publishedAt: null, createdAt: this.now(), ...o });
+  }
+
+  listing(o: Input<Listing> = {}): Listing {
+    return this.make("listings", "bl", Listing, { name: `Listing ${this.seq()}`, directory: "google", address: "1 Test Road", phone: "+15550123456", categories: ["business"], hours: defaultHours(), timezone: "America/New_York", version: 1, publishedVersion: null, publishedAt: null, lastSyncAt: null, failureReason: null, createdAt: this.now(), updatedAt: this.now(), ...o });
+  }
+
+  ticket(o: Input<Ticket> = {}): Ticket {
+    const c = o.contactId ? this.store.get<Contact>("contacts", o.contactId) : o.contactId === null || o.requesterEmail ? undefined : this.contact();
+    return this.make("tickets", "tic", Ticket, { title: `Support issue ${this.seq()}`, body: "Please investigate", contactId: c?.id ?? null, requesterEmail: c?.email ?? null, ownerId: null, priority: "normal", status: "open", notes: [], replies: [], createdAt: this.now(), updatedAt: this.now(), resolvedAt: null, closedAt: null, firstResponseAt: null, firstResponseDueAt: null, history: [], ...o });
   }
 
   /** Make calls to `action` fail with `code`. `match` narrows it to calls whose args contain those values. */

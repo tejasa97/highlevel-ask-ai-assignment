@@ -29,6 +29,10 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
     const p = run.pending;
     const names = [...new Set(p.preview.map((x) => x.label).filter(Boolean))] as string[];
     const actions = [...new Set(p.preview.map((x) => x.name))].join(" + ");
+    if (p.blockedCount) {
+      lines.push(`Cannot proceed for ${p.blockedCount}: ${p.blocked!.map((b) => `${b.label} (${b.error.message})`).join("; ")}${p.blockedCount > p.blocked!.length ? "; …" : ""}.`);
+      lines.push(`Can proceed for ${p.count}: ${actions}${names.length ? ` (${list(names, p.count)})` : ""}. Proceed with only these?`);
+    }
     lines.push(
       `${p.changed ? "The records changed since you looked. " : ""}Waiting for your OK: ${actions}, ${p.reason}` +
         (names.length ? ` (${list(names, p.count)})` : "") +

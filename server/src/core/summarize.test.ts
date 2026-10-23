@@ -39,6 +39,13 @@ describe("summarize: writes", () => {
 });
 
 describe("summarize: a plan that only reads still answers", () => {
+  test("ticket SLA keeps the actual verdict in the bounded user summary", async () => {
+    const { text } = await reply([action("s1", "M47.A10", { ticketId: "tic_1" })]);
+    assert.match(text, /Portal export fails/);
+    assert.match(text, /status breached/);
+    assert.match(text, /policy first_response/);
+  });
+
   test("a search reports the total and names what it found", async () => {
     const { text, ctx } = await reply([action("s1", "M03.A03", {})]);
     const total = ctx.store.all("leads").length;

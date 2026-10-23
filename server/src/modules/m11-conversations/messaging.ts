@@ -27,6 +27,7 @@ export function personOf(store: Store, ref: Ref, doing: string): Person {
 }
 
 export function conversationOf(store: Store, ref: Ref): Conversation | undefined {
+  if (!ref.contactId && !ref.leadId) return undefined;
   return store.find<Conversation>("conversations", (c) => (ref.contactId ? c.contactId === ref.contactId : c.leadId === ref.leadId))[0];
 }
 
@@ -35,7 +36,10 @@ export function touch(store: Store, ref: Ref, channel: Channel, direction: "inbo
   const cur =
     conversationOf(store, ref) ??
     store.insert("conversations", "cv", {
-      ...ref,
+      // Callers may pass an entire email/SMS (structural typing). Never spread its id or payload
+      // into a conversation: doing so overwrites the generated cv_ id and copies private message fields.
+      contactId: ref.contactId,
+      leadId: ref.leadId,
       channels: [] as Channel[],
       status: "open" as const,
       ownerId: ownerOf(store, ref),
@@ -108,9 +112,10 @@ export function deliverSms(store: Store, s: Sms, at: string): Sms {
 /** Sends an email that's already stored, records it in the conversation, and logs invoice reminders on the invoice. */
 export function deliverEmail(store: Store, e: Email, at: string): Email {
   const bounced = e.to.toLowerCase().split("@")[1]?.includes("bounce") ?? false;
-  const conv = touch(store, e, "email", "outbound", e.subject, at);
+  // An unlinked ticket may have only an explicit requester address. Do not attach it to an unrelated contact.
+  const conv = e.contactId || e.leadId ? touch(store, e, "email", "outbound", e.subject, at) : undefined;
   const out = store.update<Email>("emails", e.id, {
-    conversationId: conv.id,
+    conversationId: conv?.id ?? null,
     status: bounced ? "bounced" : "delivered",
     sentAt: at,
     deliveredAt: bounced ? null : at,

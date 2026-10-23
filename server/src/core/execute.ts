@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { z } from "zod";
 import { ActionError, type ActionContext } from "../registry/define.js";
-import { invoke } from "../registry/invoke.js";
+import { DEFAULT_ACTOR, invoke } from "../registry/invoke.js";
 import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
 import { parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
@@ -27,11 +27,16 @@ export interface Approval {
 export interface Pending extends Approval {
   reason: string;
   /** What will happen: one entry per call, with concrete args. */
-  preview: { action: string; name: string; args: Record<string, unknown>; label?: string }[];
+  preview: { action: string; name: string; args: Record<string, unknown>; label?: string; target?: Record<string, unknown> }[];
   count: number;
   /** Set when an earlier approval no longer matches the targets. */
   changed?: boolean;
+  /** Known ineligible targets; never included in the approved send subset. */
+  blocked?: { label: string; error: StepError }[];
+  blockedCount?: number;
 }
+
+type ConcreteCall = { call: Call; args: Record<string, unknown>; label?: string; binding?: Record<string, unknown> };
 
 export interface Clarification {
   stepId: string;
@@ -94,6 +99,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   const outputs = new Map<string, unknown>();
   const results: StepResult[] = [];
   const bad = new Set<string>(); // failed or skipped: dependents are skipped
+  // Consecutive independent preflight-capable sends share one approval, including known exclusions.
+  const checkedActions = new Map<string, { error?: StepError; gate: Pending | null }>();
   const emit = opts.onEvent ?? (() => {});
   const finish = (status: RunStatus, extra: Partial<RunResult> = {}): RunResult => ({
     executionId: opts.executionId,
@@ -184,11 +191,30 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             fail(args.error);
             break;
           }
-          const gate = gateFor(step, [{ call: step.call, args: args.value }], plan.hash, opts.approvals);
+          if (step.call.action.preflight && !checkedActions.has(step.id)) {
+            const group: { step: CStep; calls: ConcreteCall[]; error?: StepError }[] = [];
+            for (const next of plan.steps.slice(plan.steps.indexOf(step))) {
+              if (next.kind !== "action" || !next.call.action.preflight || next.deps.some((d) => !outputs.has(d))) break;
+              const a = concreteArgs(next.call, lookup());
+              const calls: ConcreteCall[] = a.ok ? [{ call: next.call, args: a.value }] : [];
+              const error = a.ok ? checkCalls(calls, ctx) : a.error;
+              group.push({ step: next, calls, error });
+            }
+            const blocked = group.filter((g) => g.error).map((g) => ({ label: `${g.calls[0]?.call.action.name ?? "action"} (${g.calls[0]?.args.ticketId ?? g.step.id})`, error: g.error! }));
+            const eligible = group.filter((g) => !g.error).flatMap((g) => g.calls);
+            const gate = gateFor(step, eligible, plan.hash, opts.approvals, eligible.length, blocked);
+            for (const g of group) checkedActions.set(g.step.id, { error: g.error, gate });
+          }
+          const checked = checkedActions.get(step.id);
+          const gate = checked ? checked.gate : gateFor(step, [{ call: step.call, args: args.value }], plan.hash, opts.approvals);
           if (gate) {
             results.push({ id: step.id, kind: step.kind, status: "awaiting_confirmation" });
             emit({ type: "confirm.required", pending: gate });
             return finish("awaiting_confirmation", { pending: gate });
+          }
+          if (checked?.error) {
+            fail(checked.error);
+            break;
           }
           const r = runItem(ctx, opts.executionId, step.id, "-", [{ call: step.call, args: args.value }]);
           if (r.status === "failed") fail(r.error!);
@@ -204,17 +230,20 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             break;
           }
           // Resolve every item's args first: the preview shows exactly these, and the hash binds them.
-          const prepared: { key: string; label?: string; item: unknown; calls: { call: Call; args: Record<string, unknown> }[]; error?: StepError }[] = [];
+          const prepared: { key: string; label?: string; item: unknown; calls: ConcreteCall[]; error?: StepError }[] = [];
           list.forEach((item, i) => {
             const scope = { item, rr: rr ? rr[i % rr.length] : undefined };
             const key = itemKey(item, i);
-            const calls: { call: Call; args: Record<string, unknown> }[] = [];
+            const calls: ConcreteCall[] = [];
             for (const call of step.calls) {
               const a = concreteArgs(call, lookup(scope));
               if (!a.ok) return prepared.push({ key, label: labelOf(item), item, calls, error: a.error });
               calls.push({ call, args: a.value });
             }
-            prepared.push({ key, label: labelOf(item), item, calls });
+            // Only a single call can be checked against the current state: earlier calls in a
+            // transactional item may create/change prerequisites for later calls.
+            const error = calls.length === 1 ? checkCalls(calls, ctx) : undefined;
+            prepared.push({ key, label: labelOf(item), item, calls, error });
           });
 
           const gate = gateFor(
@@ -222,7 +251,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             prepared.filter((p) => !p.error).flatMap((p) => p.calls.map((c) => ({ ...c, label: p.label }))),
             plan.hash,
             opts.approvals,
-            prepared.length,
+            prepared.filter((p) => !p.error).length,
+            prepared.filter((p) => p.error).map((p) => ({ label: p.label ?? p.key, error: p.error! })),
           );
           if (gate) {
             results.push({ id: step.id, kind: step.kind, status: "awaiting_confirmation" });
@@ -295,12 +325,22 @@ function runItem(ctx: ActionContext, executionId: string, stepId: string, key: s
   }
 }
 
+/** Never invokes handlers, consumes faults, creates records or emits delivery traces. */
+function checkCalls(calls: ConcreteCall[], ctx: ActionContext): StepError | undefined {
+  try {
+    for (const c of calls) if (c.call.action.preflight) c.binding = c.call.action.preflight(c.args, { ...ctx, actorId: ctx.actorId ?? DEFAULT_ACTOR });
+  } catch (e) {
+    return toError(e);
+  }
+}
+
 function gateFor(
   step: CStep,
-  calls: { call: Call; args: Record<string, unknown>; label?: string }[],
+  calls: ConcreteCall[],
   planHash: string,
   approvals: Approval[] = [],
   count = calls.length,
+  blocked: { label: string; error: StepError }[] = [],
 ): Pending | null {
   const risks = new Set(calls.map((c) => c.call.action.risk));
   const writes = calls.filter((c) => c.call.action.risk !== "read");
@@ -310,8 +350,8 @@ function gateFor(
   else if (step.kind === "forEach" && writes.length > 0 && count >= BULK_MIN) reason = `changes ${count} records at once`;
   if (!reason) return null;
 
-  const targets = writes.map((c) => ({ action: c.call.action.id, args: c.args }));
-  const targetsHash = createHash("sha256").update(JSON.stringify(targets)).digest("hex").slice(0, 16);
+  const targets = writes.map((c) => ({ action: c.call.action.id, args: c.args, ...(c.binding ? { binding: c.binding } : {}) }));
+  const targetsHash = createHash("sha256").update(JSON.stringify({ targets, blocked })).digest("hex").slice(0, 16);
   const prior = approvals.find((a) => a.stepId === step.id && a.planHash === planHash);
   if (prior?.targetsHash === targetsHash) return null;
   return {
@@ -322,7 +362,8 @@ function gateFor(
     count,
     preview: writes
       .slice(0, PREVIEW_MAX)
-      .map((c) => ({ action: c.call.action.id, name: c.call.action.name, args: c.args, ...(c.label ? { label: c.label } : {}) })),
+      .map((c) => ({ action: c.call.action.id, name: c.call.action.name, args: c.args, ...(c.label ? { label: c.label } : {}), ...(c.binding ? { target: c.binding } : {}) })),
+    ...(blocked.length ? { blocked: blocked.slice(0, PREVIEW_MAX), blockedCount: blocked.length } : {}),
     ...(prior ? { changed: true } : {}),
   };
 }

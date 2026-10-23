@@ -39,6 +39,10 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   entities?: { produces?: string; consumes?: string[] };
   /** Look-alike actions in other modules, always retrieved together. */
   siblings?: string[];
+  /** Optional side-effect-free eligibility check. Throw an ActionError for a known blocker;
+   * return recipient/target details that must be bound to approval. Never deliver, audit or consume faults.
+   * The handler must still repeat its checks at execution time. */
+  preflight?: (args: z.output<I>, ctx: ActionContext) => Record<string, unknown>;
   /** Synchronous: every call runs inside a transaction. Throw ActionError for expected failures. */
   handler: (args: z.output<I>, ctx: ActionContext) => z.input<O>;
   /**

@@ -1,0 +1,294 @@
+{
+ "summary": {
+  "label": "m45-m47-dev-first",
+  "planner": "claude-cli",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "7a1234db3fab",
+  "tier": "strong",
+  "scenarios": 45,
+  "repeat": 1,
+  "runs": 4,
+  "infraRuns": 4,
+  "notRun": 41,
+  "passRate": 0,
+  "allPass": 0,
+  "measured": 0,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 0,
+   "p95": 0
+  },
+  "firstReplyMs": {
+   "p50": 0,
+   "p95": 0
+  },
+  "plannerRoundsPerRun": 0,
+  "callsPerRun": 0,
+  "costUsd": {
+   "perRun": 0,
+   "total": 0
+  },
+  "wallMs": 3465
+ },
+ "runs": [
+  {
+   "id": "m45-01",
+   "category": "direct",
+   "pass": false,
+   "infra": "rate_limited",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M45.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.subject')='Visit feedback' AND json_extract(data,'$.contactId')='ct_35' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Create a review request for Elodie Mercer with subject 'Visit feedback' and body 'How was your visit?'",
+     "status": "failed",
+     "reply": "The planner failed: You've hit your session limit · resets 3:10pm (Asia/Calcutta)",
+     "offered": [
+      "M45.A01",
+      "M45.A02",
+      "M45.A05",
+      "M45.A07",
+      "M45.A04",
+      "M45.A09",
+      "M21.A01",
+      "M29.A01",
+      "M21.A02",
+      "M01.A02",
+      "M01.A03",
+      "M29.A04"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3395,
+     "ms": 3395,
+     "infra": "rate_limited"
+    }
+   ],
+   "metrics": {
+    "ms": 3395,
+    "firstReplyMs": 3395,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": 0
+    }
+   }
+  },
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": false,
+   "infra": "rate_limited",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M45.A02 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.contactId')='ct_36' AND json_extract(data,'$.subject')='Your feedback' AND json_extract(data,'$.status')='sent' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "failed",
+     "reply": "The planner failed: You've hit your session limit · resets 3:10pm (Asia/Calcutta)",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A09",
+      "M45.A04",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M21.A02",
+      "M45.A08",
+      "M45.A06",
+      "M45.A03",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3176,
+     "ms": 3176,
+     "infra": "rate_limited"
+    }
+   ],
+   "metrics": {
+    "ms": 3176,
+    "firstReplyMs": 3176,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": 0
+    }
+   }
+  },
+  {
+   "id": "m45-03",
+   "category": "direct",
+   "pass": false,
+   "infra": "rate_limited",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M45.A03 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM review_requests WHERE id='rrq_1' → \"draft\", wanted \"cancelled\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Cancel Elodie Mercer's unsent review request rrq_1",
+     "status": "failed",
+     "reply": "The planner failed: You've hit your session limit · resets 3:10pm (Asia/Calcutta)",
+     "offered": [
+      "M45.A03",
+      "M29.A03",
+      "M45.A02",
+      "M45.A05",
+      "M45.A01",
+      "M45.A04",
+      "M13.A05",
+      "M12.A05",
+      "M06.A10",
+      "M29.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3082,
+     "ms": 3082,
+     "infra": "rate_limited"
+    }
+   ],
+   "metrics": {
+    "ms": 3082,
+    "firstReplyMs": 3082,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": 0
+    }
+   }
+  },
+  {
+   "id": "m45-04",
+   "category": "direct",
+   "pass": false,
+   "infra": "rate_limited",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M45.A04 not planned (was offered; planned: nothing)"
+    }
+   ],
+   "turns": [
+    {
+     "user": "List the draft review requests",
+     "status": "failed",
+     "reply": "The planner failed: You've hit your session limit · resets 3:10pm (Asia/Calcutta)",
+     "offered": [
+      "M45.A04",
+      "M45.A02",
+      "M45.A01",
+      "M45.A03",
+      "M45.A08",
+      "M45.A07",
+      "M13.A02",
+      "M28.A05",
+      "M28.A01",
+      "M46.A01",
+      "M46.A09",
+      "M15.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3206,
+     "ms": 3206,
+     "infra": "rate_limited"
+    }
+   ],
+   "metrics": {
+    "ms": 3206,
+    "firstReplyMs": 3206,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": 0
+    }
+   }
+  }
+ ]
+}

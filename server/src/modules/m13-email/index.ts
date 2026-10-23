@@ -9,6 +9,7 @@ import { OptOut } from "../m11-conversations/schema.js";
 import { daysOverdue, reminderBlocker } from "../m28-invoices/billing.js";
 import type { Invoice } from "../m28-invoices/schema.js";
 import { Email, EMAIL_KINDS, EMAIL_STATUSES } from "./schema.js";
+import { ownedEmailBlocker } from "./owned.js";
 
 export { Email } from "./schema.js";
 
@@ -16,13 +17,15 @@ export { Email } from "./schema.js";
 // Invoice reminders are emails of kind invoice_reminder; sending one is logged on the invoice.
 
 const EmailId = z.string().describe("email id (em_…)");
-const TRANSACTIONAL = new Set<string>(["invoice", "invoice_reminder"]);
+const TRANSACTIONAL = new Set<string>(["invoice", "invoice_reminder", "ticket_reply"]);
 
 /** Why this stored email can't be sent now (consent, state, reminder spacing), or an empty list. */
 function blockers(store: Store, e: Email, now: Date): string[] {
   const out: string[] = [];
+  const route = ownedEmailBlocker(e.kind);
+  if (route) out.push(route);
   if (e.status !== "draft" && e.status !== "scheduled") out.push(`The email is ${e.status}`);
-  const why = blocked(store, personOf(store, e, "be emailed"), "email", TRANSACTIONAL.has(e.kind));
+  const why = e.contactId || e.leadId ? blocked(store, personOf(store, e, "be emailed"), "email", TRANSACTIONAL.has(e.kind)) : (!e.to || !z.email().safeParse(e.to).success ? "No valid requester email address" : null);
   if (why) out.push(why);
   if (e.kind === "invoice_reminder" && e.invoiceId) {
     const inv = store.get<Invoice>("invoices", e.invoiceId);
@@ -35,6 +38,13 @@ function blockers(store: Store, e: Email, now: Date): string[] {
 function requireSendable(store: Store, e: Email, now: Date): void {
   const b = blockers(store, e, now);
   if (b.length) throw new ActionError("CONFLICT", b.join("; "), { blockers: b });
+}
+
+function requireGenericRoute(store: Store, emailId?: string): void {
+  if (!emailId) return;
+  const e = mustGet<Email>(store, "emails", emailId, "email");
+  const route = ownedEmailBlocker(e.kind);
+  if (route) throw new ActionError("CONFLICT", route);
 }
 
 type NewEmail = { contactId?: string; leadId?: string; subject?: string; body?: string; invoiceId?: string };
@@ -131,6 +141,7 @@ const sendEmail = defineAction({
   entities: { produces: "email", consumes: ["contact", "lead", "email"] },
   example: () => ({ contactId: "ct_31", subject: "Great talking today", body: "Thanks for your time, Sarah. Next steps below." }),
   handler: (a, { store, clock, actorId }) => {
+    requireGenericRoute(store, a.emailId);
     requirePermission(store, actorId, "messaging.send");
     const e = outgoing(store, a, actorId, clock.now());
     requireSendable(store, e, clock.now());
@@ -148,6 +159,7 @@ const scheduleEmail = defineAction({
   entities: { produces: "email", consumes: ["contact", "lead", "email"] },
   example: (f) => ({ contactId: "ct_31", subject: "Checking in", body: "Hi Sarah, any questions on the proposal?", sendAt: f.at(2, 14) }),
   handler: ({ sendAt, ...a }, { store, clock, actorId }) => {
+    requireGenericRoute(store, a.emailId);
     requirePermission(store, actorId, "messaging.send");
     if (new Date(sendAt) <= clock.now()) throw new ActionError("INVALID", `sendAt ${sendAt} isn't in the future (now is ${clock.now().toISOString()})`);
     const e = outgoing(store, a, actorId, clock.now());

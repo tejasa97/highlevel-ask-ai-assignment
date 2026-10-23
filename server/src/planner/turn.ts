@@ -68,6 +68,7 @@ export type TurnOutcome =
 export type InfraKind = Exclude<PlannerError["kind"], "bad_json">;
 
 export interface RetrievalTrace {
+  mode: Retrieval["mode"];
   label: string;
   query: string;
   clauses: string[];
@@ -123,6 +124,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         noMatch: r.noMatch,
         mentions: linked,
         topScore: r.topScore,
+        mode: r.mode,
         ms: r.ms,
         embedMs,
         picks: r.picks.map((p) => {

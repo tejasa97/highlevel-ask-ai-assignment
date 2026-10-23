@@ -52,10 +52,11 @@ const stepLine = (s) =>
     </div>
 
     <template v-if="turn.retrieval.length">
-      <h3>{{ num("retrieval") }} · Retrieval <span class="muted small">(BM25 over all 500 catalog actions, no model)</span></h3>
+      <h3>{{ num("retrieval") }} · Retrieval <span class="muted small">(over all 500 catalog actions)</span></h3>
       <div v-for="(r, i) in turn.retrieval" :key="i" class="card">
         <div class="card-head">
           <span class="tag">{{ r.label }}</span>
+          <span class="tag">{{ r.mode === "hybrid" ? "BM25 + local embeddings" : r.mode === "bm25" ? "BM25 only" : "mode not recorded" }}</span>
           <span class="small"><b>{{ r.picks.filter((p) => p.available).length }}</b> cards sent · {{ r.picks.filter((p) => !p.available).length }} not in v1</span>
           <span class="muted small">cards {{ r.promptChars.sent.toLocaleString() }} of {{ r.promptChars.allImplemented.toLocaleString() }} chars ({{ share(r.promptChars) }}) · top score {{ r.topScore }} · {{ r.ms }} ms<template v-if="r.embedMs !== undefined"> + embedding {{ r.embedMs }} ms</template></span>
           <span v-if="r.noMatch" class="tag bad">no match</span>
