@@ -2,6 +2,8 @@
 
 2026-10-24 · branch `codex/planner-record-lookups` · final source `abe136b`
 
+This records the original measurement branch and checkpoints. The same commits and evidence are now retained on `codex/planner-outcomes-and-retrieval`; the documentation/branch change did not rerun these evaluations. See [what changed and why](PLANNER-CHANGES.md) for the rationale and current reading guide.
+
 ## Scope and checkpoints
 
 All seven agreed improvements are implemented through shared code and metadata, not a Luna-specific adapter. See [implementation notes](PLANNER-OUTCOMES.md). Starting point: `f0870a6` and its documented 14/23 older-suite result. Seed records, scenario files/assertions, retrieval questions and frozen reporting data are unchanged. These are inspected regression/development sets, not an untouched holdout.
