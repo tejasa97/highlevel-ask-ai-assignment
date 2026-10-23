@@ -4,9 +4,16 @@ export function addInterval(iso: string, interval: "day" | "week" | "month" | "y
   const d = new Date(iso);
   if (interval === "day") d.setUTCDate(d.getUTCDate() + count);
   else if (interval === "week") d.setUTCDate(d.getUTCDate() + count * 7);
-  else if (interval === "month") d.setUTCMonth(d.getUTCMonth() + count);
-  else d.setUTCFullYear(d.getUTCFullYear() + count);
+  else clampedMonths(d, interval === "month" ? count : count * 12);
   return d.toISOString();
+}
+
+/** Adds whole months, stopping at the target month's last day instead of spilling into the next month (31 Jan + 1 month is 28 Feb). */
+function clampedMonths(d: Date, months: number): void {
+  const day = d.getUTCDate();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() + months);
+  d.setUTCDate(Math.min(day, new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate()));
 }
 
 /** Move an instant forward by how long the subscription was paused (now − pausedAt). */

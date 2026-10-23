@@ -334,7 +334,7 @@ const link = defineAction({
       );
     return store.update<Ticket>("tickets", t.id, {
       contactId,
-      requesterEmail: p.email,
+      requesterEmail: p.email ?? t.requesterEmail,
       updatedAt: clock.now().toISOString(),
     });
   },

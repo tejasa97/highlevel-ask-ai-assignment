@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { Price } from "../m26-prices/schema.js";
 import { Product } from "../m25-products/schema.js";
 import { failure, testWorld, type TestWorld } from "../../testkit.js";
+import { addInterval } from "./clock-local.js";
 
 function catalog(w: TestWorld, over: Partial<Omit<Price, "id" | "productId">> = {}) {
   const now = w.f.now();
@@ -220,4 +221,11 @@ test("M30.A03 list still finds a canceled subscription", async () => {
   assert.equal(listed.total, 1);
   assert.equal(listed.items[0]?.id, sub.id);
   assert.equal(w.call("M30.A02", { subscriptionId: sub.id }).status, "canceled");
+});
+
+test("a monthly or yearly period that starts on a day the next month lacks ends on that month's last day", () => {
+  assert.equal(addInterval("2026-01-31T10:00:00.000Z", "month", 1), "2026-02-28T10:00:00.000Z");
+  assert.equal(addInterval("2026-08-31T10:00:00.000Z", "month", 1), "2026-09-30T10:00:00.000Z");
+  assert.equal(addInterval("2028-02-29T10:00:00.000Z", "year", 1), "2029-02-28T10:00:00.000Z");
+  assert.equal(addInterval("2026-01-15T10:00:00.000Z", "month", 1), "2026-02-15T10:00:00.000Z");
 });

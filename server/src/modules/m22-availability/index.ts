@@ -166,7 +166,8 @@ function openings(store: Store, calendar: Calendar, av: Availability, from: stri
   if (calendar.durationMinutes < 1) return [];
   const today = zonedDate(now, calendar.timezone);
   const horizon = addDays(today, av.maxHorizonDays);
-  const startDate = from ?? today;
+  // Nothing before today survives the notice filter, so don't walk those days.
+  const startDate = from === undefined || from < today ? today : from;
   const endDate = to === undefined || to > horizon ? horizon : to;
   if (startDate > endDate) return [];
   const booked = spans(store, calendar);

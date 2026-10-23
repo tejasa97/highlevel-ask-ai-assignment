@@ -11,6 +11,7 @@ import type { Price } from "../m26-prices/schema.js";
 import type { Product } from "../m25-products/schema.js";
 import { nextInvoiceNumber } from "../m28-invoices/billing.js";
 import { Invoice, type LineItem } from "../m28-invoices/schema.js";
+import { discountAmount } from "../m31-coupons/index.js";
 import { Discount } from "../m31-coupons/schema.js";
 import { Quote, type QuoteLine } from "./schema.js";
 
@@ -23,19 +24,13 @@ import "./fixtures.js";
 const QuoteId = z.string().describe("quote id (qt_…)");
 const When = z.iso.datetime({ offset: true });
 
-function discountOff(subtotal: number, discount: Discount | null): number {
-  if (!discount || subtotal <= 0) return 0;
-  const raw = discount.type === "percent" ? cents(subtotal * discount.value / 100) : cents(Math.min(discount.value, subtotal));
-  return Math.min(subtotal, raw);
-}
-
 function checkDiscount(d: Discount): void {
   if (d.type === "percent" && d.value > 100) throw new ActionError("INVALID", "A percent discount can't be more than 100");
 }
 
 function totals(lines: QuoteLine[], discount: Discount | null): { subtotal: number; total: number } {
   const subtotal = cents(lines.reduce((sum, line) => sum + line.amount, 0));
-  return { subtotal, total: cents(subtotal - discountOff(subtotal, discount)) };
+  return { subtotal, total: cents(subtotal - (discount ? discountAmount(subtotal, discount) : 0)) };
 }
 
 function sameDiscount(a: Discount | null, b: Discount | null): boolean {

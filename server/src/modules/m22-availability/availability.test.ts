@@ -152,3 +152,13 @@ test("the first write creates availability; later writes refuse no-ops and dupli
   assert.equal(failure(() => w.call("M22.A08", { calendarId: cal.id, maxHorizonDays: 14 })).code, "CONFLICT");
   assert.equal(failure(() => w.call("M22.A09", { calendarId: cal.id, madeUp: 1 })).code, "INVALID");
 });
+
+test("a search that starts long before today costs no more than one that starts today", async () => {
+  const w = await testWorld();
+  const cal = w.f.calendar({ timezone: "America/Chicago", durationMinutes: 30, bufferMinutes: 0, hostIds: [] });
+  w.f.availability({ calendarId: cal.id, weekly: { mon: [{ start: "09:00", end: "17:00" }], wed: [{ start: "09:00", end: "17:00" }] }, minNoticeMinutes: 0, maxHorizonDays: 7 });
+  const began = Date.now();
+  const early = w.call("M22.A09", { calendarId: cal.id, from: "1900-01-01", limit: 100 });
+  assert.ok(Date.now() - began < 1000, `took ${Date.now() - began} ms`);
+  assert.deepEqual(early.items, w.call("M22.A09", { calendarId: cal.id, limit: 100 }).items);
+});

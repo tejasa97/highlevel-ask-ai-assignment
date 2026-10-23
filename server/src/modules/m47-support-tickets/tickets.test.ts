@@ -204,6 +204,13 @@ test("contact linking changes requester address, refuses inactive contacts and n
     "CONFLICT",
   );
 });
+test("linking a contact with no email keeps the ticket's requester address", async () => {
+  const w = await testWorld(),
+    t = w.f.ticket(),
+    c = w.f.contact({ email: null });
+  assert.ok(t.requesterEmail);
+  assert.equal(w.call("M47.A09", { ticketId: t.id, contactId: c.id }).requesterEmail, t.requesterEmail);
+});
 test("SLA is elapsed first response, before/at/after deadlines for every priority", async () => {
   const w = await testWorld(),
     reg = await registry();
