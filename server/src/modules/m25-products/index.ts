@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
+import { atLeastOne, contains, Limit, listOf, Name, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { Product, type ProductVariant } from "./schema.js";
@@ -44,7 +44,7 @@ const createProduct = defineAction({
   description: "Create a product (name, optional SKU, description and tax category) that can be priced and sold. This records the item itself; M26.A01 Create product price is what sets the amount and currency.",
   risk: "write",
   input: z.strictObject({
-    name: z.string().min(1),
+    name: Name,
     description: z.string().optional(),
     sku: z.string().min(1).optional(),
     taxCategory: z.string().min(1).optional().describe("matches a tax rule's product category"),
@@ -116,7 +116,7 @@ const updateProduct = defineAction({
   risk: "write",
   input: z.strictObject({
     productId: ProductId,
-    name: z.string().min(1).optional(),
+    name: Name.optional(),
     description: z.string().nullable().optional().describe("null clears it"),
     taxCategory: z.string().min(1).nullable().optional().describe("null clears it; matched by tax rules"),
   }),
@@ -159,7 +159,7 @@ const addVariant = defineAction({
   risk: "write",
   input: z.strictObject({
     productId: ProductId,
-    name: z.string().min(1),
+    name: Name,
     sku: z.string().min(1).optional(),
     inventory: z.number().int().min(0).nullable().optional().describe("units on hand; omitted on the first variant copies the product count"),
   }),
@@ -187,7 +187,7 @@ const updateVariant = defineAction({
   input: z.strictObject({
     productId: ProductId,
     variantId: z.string().describe("variant id"),
-    name: z.string().min(1).optional(),
+    name: Name.optional(),
     sku: z.string().min(1).nullable().optional().describe("null clears it"),
     inventory: z.number().int().min(0).nullable().optional().describe("null stops tracking"),
   }),

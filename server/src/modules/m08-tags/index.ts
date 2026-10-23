@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { candidates, contains, Limit, listOf, page } from "../../registry/helpers.js";
+import { candidates, contains, Limit, listOf, Name, page } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Campaign } from "../m15-campaigns/schema.js";
@@ -59,7 +59,7 @@ const createTag = defineAction({
   id: "M08.A01",
   description: "Add a new tag to the account's tag list, with an optional color and description. To put a tag on a record, use M08.A06 Apply tag.",
   risk: "write",
-  input: z.strictObject({ name: z.string().min(1).max(40), color: z.enum(TAG_COLORS).optional().describe("default gray"), description: z.string().optional() }),
+  input: z.strictObject({ name: Name.max(40), color: z.enum(TAG_COLORS).optional().describe("default gray"), description: z.string().optional() }),
   output: Tag,
   entities: { produces: "tag" },
   example: () => ({ name: "Hot prospect", color: "red" }),
@@ -89,7 +89,7 @@ const renameTag = defineAction({
   id: "M08.A03",
   description: "Rename a tag. Every contact and lead that has it gets the new name.",
   risk: "write",
-  input: z.strictObject({ tagId: TagId, name: z.string().min(1).max(40) }),
+  input: z.strictObject({ tagId: TagId, name: Name.max(40) }),
   output: Tag.extend({ recordsUpdated: z.number() }),
   entities: { consumes: ["tag"] },
   example: () => ({ tagId: "tg_2", name: "Newsletter subscriber" }),

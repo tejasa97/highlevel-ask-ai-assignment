@@ -169,6 +169,9 @@ export function freshId(store: Store, prefix: string, used: readonly string[]): 
   return id;
 }
 
+/** A required name: trimmed, and rejected when empty or only spaces. */
+export const Name = z.string().trim().min(1);
+
 /** Trims a string, and turns an empty or whitespace-only one into null. */
 export function blankToNull(value: string | null): string | null {
   if (value === null) return null;

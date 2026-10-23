@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, candidates, contains, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { activeUser, candidates, contains, Limit, listOf, Name, page, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import { localDate } from "../../store/clock.js";
 import type { Store } from "../../store/db.js";
@@ -31,7 +31,7 @@ const createTeam = defineAction({
   description: "Create a team of staff users (e.g. 'EMEA Sales'), optionally with members, a manager and how work is spread across them.",
   risk: "write",
   input: z.strictObject({
-    name: z.string().min(1),
+    name: Name,
     description: z.string().optional(),
     memberIds: z.array(UserId).optional(),
     managerId: UserId.optional().describe("added as a member too"),
@@ -109,7 +109,7 @@ const renameTeam = defineAction({
   id: "M49.A04",
   description: "Rename a team, and optionally change its description.",
   risk: "write",
-  input: z.strictObject({ teamId: TeamId, name: z.string().min(1), description: z.string().optional() }),
+  input: z.strictObject({ teamId: TeamId, name: Name, description: z.string().optional() }),
   output: Team,
   entities: { consumes: ["team"] },
   example: () => ({ teamId: "tm_3", name: "Growth Marketing" }),

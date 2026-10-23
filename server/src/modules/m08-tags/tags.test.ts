@@ -83,6 +83,22 @@ test("M08.A03/A09 rename and merge keep a campaign's audience tag in step until 
   assert.deepEqual(w.call("M01.A02", { contactId: c.id }).tags, ["vip"]);
 });
 
+test("a name of only spaces is refused where tags, teams, deals, campaigns and products are named", async () => {
+  const w = await testWorld();
+  const c = w.f.contact();
+  const t = w.f.tag();
+  const team = w.f.team();
+  for (const [id, args] of [
+    ["M08.A01", { name: "   " }],
+    ["M08.A03", { tagId: t.id, name: "  " }],
+    ["M49.A01", { name: " " }],
+    ["M49.A04", { teamId: team.id, name: " " }],
+    ["M04.A01", { name: "  ", contactId: c.id }],
+    ["M15.A01", { name: " ", channel: "email" }],
+    ["M25.A01", { name: "   " }],
+  ] as const) assert.equal(failure(() => w.call(id, args)).code, "INVALID", id);
+});
+
 test("M08.A03 rename refuses the same name", async () => {
   const w = await testWorld();
   const t = w.f.tag({ name: "hot" });

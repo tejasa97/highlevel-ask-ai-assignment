@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, candidates, contains, Limit, listOf, notPast, page, requireState } from "../../registry/helpers.js";
+import { activeUser, candidates, contains, Limit, listOf, Name, notPast, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import { localDate } from "../../store/clock.js";
 import type { Store } from "../../store/db.js";
@@ -54,7 +54,7 @@ const createOpportunity = defineAction({
     "Open a new deal for a contact in a pipeline, with its value in USD. Starts at the pipeline's first stage unless a stage is given. To turn a qualified lead into a deal, use M03.A10 Convert lead.",
   risk: "write",
   input: z.strictObject({
-    name: z.string().min(1),
+    name: Name,
     contactId: z.string().describe("contact id (ct_…)"),
     value: z.number().min(0).optional().describe("USD, default 0"),
     pipelineId: z.string().optional().describe("default: the first active pipeline"),
