@@ -1,4 +1,5 @@
 import { compile, type CompiledPlan } from "../core/compile.js";
+import { lowerLookups } from "../core/lookups.js";
 import { card } from "../registry/card.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
 import { type Mention, mentions } from "../retrieval/mentions.js";
@@ -189,7 +190,9 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         continue;
       }
       lookPlan = compiled.plan;
-      lookSteps = d.steps ?? [];
+      // <looked> contains compiler-generated resolve IDs too. Preserve those exact read steps so
+      // the next plan can reference them just like any explicit look step.
+      lookSteps = lowerLookups(d.steps ?? [], registry).steps;
       looked = JSON.stringify(await deps.look!(compiled.plan));
       if (looked.length > LOOKED_MAX) looked = `${looked.slice(0, LOOKED_MAX)}…(cut)`;
       user = prompt();

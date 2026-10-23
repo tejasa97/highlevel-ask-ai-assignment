@@ -40,6 +40,8 @@ export interface SearchCard {
   produces: string | null;
   /** Read-only discovery of existing records; unlike produces, never a create or an ID-only get. */
   lookupFor?: string | null;
+  /** Prefer standalone discovery over a related-record listing needing extra input arguments. */
+  lookupRequired?: number;
   consumes: string[];
   siblings: string[];
   /** Has a handler in this build. Unavailable actions are still retrieved, so the agent can say so. */
@@ -75,6 +77,7 @@ export function buildCards(registry: Registry, meta = loadCardMeta()): SearchCar
         synonyms: g?.synonyms ?? [],
         produces: produced,
         lookupFor: impl?.risk === "read" ? impl.entities?.lookup ?? discovery : null,
+        lookupRequired: ((impl?.inputSchema.required ?? []) as string[]).length,
         consumes: impl?.entities?.consumes ?? g?.consumes ?? [],
         siblings: [...new Set([...(impl?.siblings ?? []), ...(g?.siblings ?? [])])],
         available: impl !== undefined,

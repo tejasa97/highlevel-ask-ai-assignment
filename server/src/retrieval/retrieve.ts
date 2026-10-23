@@ -285,14 +285,17 @@ export class Retriever {
   /** The get and search actions for a record type. */
   private lookupsFor(type: string): string[] {
     const getters = this.cards.filter((c) => c.produces === type && c.available && /^get\b/i.test(c.name));
-    const discovery = this.cards.filter((c) => c.lookupFor === type && c.available);
-    return [...new Set([...getters, ...discovery].map((c) => c.id))];
+    // One generic discovery helper, not every cross-module list returning the same record type.
+    const discovery = this.producerFor(type, []);
+    return [...new Set([...(getters[0] ? [getters[0].id] : []), ...(discovery ? [discovery] : [])])];
   }
 
   /** Prefer a producer the query already ranked; otherwise the module's search/list action for that type. */
   private producerFor(type: string, ranking: { id: string }[]): string | undefined {
-    const producers = this.cards.filter((c) => c.lookupFor === type && c.available);
-    if (!producers.length) return undefined;
+    const candidates = this.cards.filter((c) => c.lookupFor === type && c.available);
+    if (!candidates.length) return undefined;
+    const required = Math.min(...candidates.map((c) => c.lookupRequired ?? 0));
+    const producers = candidates.filter((c) => (c.lookupRequired ?? 0) === required);
     const ranked = ranking.find((r) => producers.some((p) => p.id === r.id));
     if (ranked) return ranked.id;
     return producers[0]!.id;

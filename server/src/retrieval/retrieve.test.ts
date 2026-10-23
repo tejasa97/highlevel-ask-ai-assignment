@@ -78,6 +78,14 @@ describe("retrieve", () => {
     assert.ok(result.picks.some((p) => p.id === "M50.A03" && p.why === "producer" && p.via === "M50.A07"));
     assert.ok(result.picks.filter((p) => p.why === "producer").every((p) => registry.get(p.id)!.risk === "read"));
   });
+  test("named-record helpers use a standalone search, not every related list of that entity", () => {
+    const retriever = new Retriever(cards, { k: 0, siblings: 0 });
+    const result = retriever.retrieve({ message: "Sarah Johnson", mentions: [{ entity: "contact" }], resolvable: registry.resolverEntities() });
+    assert.ok(ids(result).includes("M01.A02"));
+    assert.ok(ids(result).includes("M01.A03"));
+    assert.ok(!ids(result).includes("M02.A10"), "listing a company's contacts first needs a company ID");
+    assert.ok(!ids(result).includes("M08.A08"), "finding contacts by tag first needs a tag ID");
+  });
   test("trace mode follows actual rankings rather than whether an embedder was configured", async () => {
     assert.equal(r.retrieve({message:"create support ticket"}).mode,"bm25");
     const good = new Retriever(cards,{}, {rank:async()=>[[{id:"M47.A01",score:1}]]});

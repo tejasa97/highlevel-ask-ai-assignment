@@ -131,6 +131,20 @@ describe("planTurn", () => {
   });
 
   describe("look", () => {
+    test("an automatically generated lookup ID survives look/replan without repair", async () => {
+      const inspect = reply({ type: "look", steps: [{ id: "inspect", kind: "action", action: "M36.A02", argsJson: JSON.stringify({ funnelId: { $lookup: { entity: "funnel", name: "Webinar Signup" } } }) }] });
+      const metrics = reply({ steps: [{ id: "metrics", kind: "action", action: "M36.A10", argsJson: JSON.stringify({ funnelId: "$lookup_1.id" }) }] });
+      const planner = scripted(inspect, metrics);
+      const { out, events } = await run("How is the Webinar Signup funnel converting?", planner, {}, async (p) => {
+        assert.deepEqual(p.steps.map((s) => s.id), ["lookup_1", "inspect"]);
+        return [{ id: "lookup_1", output: { id: "fn_1", name: "Webinar Signup" } }, { id: "inspect", output: { id: "fn_1", steps: [] } }];
+      });
+      assert.ok(out.kind === "plan");
+      assert.deepEqual(out.plan.steps.map((s) => s.id), ["lookup_1", "metrics"]);
+      assert.equal(planner.requests.length, 2);
+      assert.equal(events.filter((e) => e.type === "compile.errors").length, 0);
+    });
+
     const listTasks = reply({ type: "look", steps: [{ id: "s1", kind: "action", action: "M06.A03", argsJson: JSON.stringify({ query: "Ana" }) }] });
 
     test("runs the reads, then plans again with their results in <looked>", async () => {
