@@ -36,3 +36,11 @@ test("weekday dates follow the account's local date, not UTC or client timezone"
   assert.deepEqual(weekdayDates(frozenClock("2026-11-01T06:30:00Z")).Monday, { upcoming: "2026-11-02", next: "2026-11-02" });
   assert.match(nowBlock(frozenClock()), /Friday.*2026-10-23/);
 });
+
+test("nowBlock snapshots one instant so a midnight rollover cannot disagree with its weekday table", () => {
+  let calls = 0;
+  const block = nowBlock({ now: () => new Date(calls++ ? "2026-10-24T04:00:00Z" : "2026-10-24T03:59:59Z") });
+  assert.equal(calls, 1);
+  assert.match(block, /today = 2026-10-23/);
+  assert.match(block, /Friday.*upcoming.*2026-10-23/);
+});

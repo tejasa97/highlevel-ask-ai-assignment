@@ -151,6 +151,26 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(planner.requests.length, 2);
     assert.equal(w.store.get<{ name: string }>("tags", "tg_4")!.name, "partner");
   });
+
+  test("an invalid selector cannot turn into an unchecked identity question after the one retry", async () => {
+    const question = reply({ type: "clarify", clarification: "identity", question: "Which Sarah?", lookup: { entity: "contact", name: "Sarah Johnson", whereJson: '{"invented":"value"}' } });
+    const planner = scripted(question, question);
+    const w = world();
+    const out = await planTurn({ message: "Email Sarah Johnson", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "reply" && out.status === "failed");
+    assert.equal(planner.requests.length, 2);
+  });
+
+  test("a corrected selector is checked again without spending another model retry", async () => {
+    const question = reply({ type: "clarify", clarification: "identity", question: "Which Sarah?", lookup: { entity: "contact", name: "Sarah Johnson", whereJson: '{"invented":"value"}' } });
+    const planner = scripted(question, { ...question, lookup: { entity: "contact", name: "Sarah Johnson", whereJson: null }, options: ["Invented person"] });
+    const w = world();
+    const out = await planTurn({ message: "Email Sarah Johnson", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "reply" && out.status === "clarify");
+    assert.equal(out.options?.length, 2);
+    assert.ok(!out.options?.includes("Invented person"));
+    assert.equal(planner.requests.length, 2);
+  });
 });
 
 describe("compile against what was offered", () => {
