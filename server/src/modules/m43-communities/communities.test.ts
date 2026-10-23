@@ -63,6 +63,14 @@ test("M43.A10 a post with no reports is CONFLICT", async () => {
   assert.equal(failure(() => w.call("M43.A10", { postId: post.id })).code, "CONFLICT");
 });
 
+test("M43.A10 removing a pinned post unpins it", async () => {
+  const w = await testWorld();
+  const post = w.f.communityPost({ reports: [{ by: "us_1", reason: "spam", at: w.f.now() }] });
+  assert.equal(w.call("M43.A09", { postId: post.id }).pinned, true);
+  const removed = w.call("M43.A10", { postId: post.id });
+  assert.deepEqual([removed.status, removed.pinned], ["removed", false]);
+});
+
 test("unknown field is INVALID", async () => {
   const w = await testWorld();
   assert.equal(failure(() => w.call("M43.A02", { communityId: w.f.community().id, madeUp: 1 })).code, "INVALID");

@@ -258,7 +258,7 @@ const removePost = defineAction({
     requireState("Post", post.status, ["visible"], "be removed");
     if (post.reports.length === 0) throw new ActionError("CONFLICT", "This post hasn't been reported");
     const now = clock.now().toISOString();
-    return store.update<CommunityPost>("community_posts", post.id, { status: "removed", removedAt: now, removedBy: actorId ?? "us_1" });
+    return store.update<CommunityPost>("community_posts", post.id, { status: "removed", pinned: false, removedAt: now, removedBy: actorId ?? "us_1" });
   },
 });
 
