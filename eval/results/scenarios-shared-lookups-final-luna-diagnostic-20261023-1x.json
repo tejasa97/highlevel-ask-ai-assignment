@@ -1,0 +1,453 @@
+{
+ "summary": {
+  "label": "shared-lookups-final-luna-diagnostic-20261023-1x",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/module-scenarios/coverage",
+  "set": "0d92d6ebdfb0",
+  "tier": "strong",
+  "scenarios": 4,
+  "repeat": 1,
+  "runs": 4,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 25,
+  "allPass": 1,
+  "measured": 4,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 26807,
+   "p95": 28497
+  },
+  "firstReplyMs": {
+   "p50": 9356,
+   "p95": 28497
+  },
+  "plannerRoundsPerRun": 2,
+  "callsPerRun": 1.8,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 37834
+ },
+ "runs": [
+  {
+   "id": "cov-calendar-configure",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "On the Sales Calls calendar, add Raj Iyer as a host, put 15 minutes between bookings and make it public",
+     "status": "done",
+     "reply": "Done: Assign calendar host (Sales Calls).\nDone: Set booking buffer (Sales Calls).\nDone: Set calendar visibility (Sales Calls).",
+     "offered": [
+      "M05.A01",
+      "M20.A06",
+      "M20.A08",
+      "M20.A03",
+      "M21.A06",
+      "M23.A09",
+      "M20.A09",
+      "M21.A01",
+      "M20.A01",
+      "M23.A01",
+      "M23.A05",
+      "M24.A01",
+      "M22.A07",
+      "M22.A08",
+      "M21.A07",
+      "M20.A02",
+      "M48.A02",
+      "M48.A03",
+      "M04.A01",
+      "M36.A01"
+     ],
+     "planned": [
+      "M20.A06",
+      "M20.A08",
+      "M20.A09"
+     ],
+     "calls": [
+      {
+       "action": "M20.A06",
+       "args": {
+        "calendarId": "cal_1",
+        "userId": "us_2"
+       }
+      },
+      {
+       "action": "M20.A08",
+       "args": {
+        "calendarId": "cal_1",
+        "bufferMinutes": 15
+       }
+      },
+      {
+       "action": "M20.A09",
+       "args": {
+        "calendarId": "cal_1",
+        "visibility": "public"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9264,
+     "ms": 9264
+    }
+   ],
+   "metrics": {
+    "ms": 9264,
+    "firstReplyMs": 9264,
+    "plannerMs": 9210,
+    "plannerRounds": 1,
+    "calls": 3,
+    "usage": {
+     "input": 9274,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 197,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-community-post-and-pin",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "unsupported, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M43.A05 not planned (was offered; planned: M43.A01, M43.A04)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M43.A07 not planned (was offered; planned: M43.A01, M43.A04)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M43.A09 not planned (was offered; planned: M43.A01, M43.A04)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.pinned') FROM community_posts WHERE json_extract(data,'$.body') LIKE '%Welcome to the hub%' → \"SQL error: no such table: community_posts\", wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Create a community called Customer Hub with a channel called Announcements",
+     "status": "done",
+     "reply": "Done: Create community (Customer Hub).\nDone: Create discussion channel (Customer Hub).",
+     "offered": [
+      "M43.A04",
+      "M43.A01",
+      "M43.A07",
+      "M43.A03",
+      "M43.A02",
+      "M43.A09",
+      "M05.A01",
+      "M15.A01",
+      "M44.A01",
+      "M03.A01",
+      "M11.A08",
+      "M44.A07",
+      "M01.A08",
+      "M10.A01",
+      "M07.A01",
+      "M38.A01",
+      "M11.A02"
+     ],
+     "planned": [
+      "M43.A01",
+      "M43.A04"
+     ],
+     "calls": [
+      {
+       "action": "M43.A01",
+       "args": {
+        "name": "Customer Hub"
+       }
+      },
+      {
+       "action": "M43.A04",
+       "args": {
+        "communityId": "com_1",
+        "name": "Announcements"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8970,
+     "ms": 8970
+    },
+    {
+     "user": "Add Elodie Mercer, then post 'Welcome to the hub, say hi!' as her in Announcements and pin it",
+     "status": "unsupported",
+     "reply": "This version has no action to search community members or channels, so I can't identify the Announcements channel to post in and pin the post.\nAlternatives: I can add Elodie Mercer to Customer Hub if you provide the channel ID for Announcements.",
+     "offered": [
+      "M49.A05",
+      "M43.A10",
+      "M43.A09",
+      "M19.A04",
+      "M07.A08",
+      "M43.A07",
+      "M43.A08",
+      "M43.A04",
+      "M08.A01",
+      "M08.A06",
+      "M21.A07",
+      "M11.A08",
+      "M02.A01",
+      "M03.A01",
+      "M48.A01",
+      "M43.A01",
+      "M01.A02",
+      "M01.A03",
+      "M07.A05",
+      "M07.A03",
+      "M11.A02",
+      "M43.A05",
+      "M38.A09",
+      "M39.A10",
+      "M44.A07",
+      "M38.A03",
+      "M38.A02",
+      "M38.A01",
+      "M38.A05",
+      "M01.A01",
+      "M43.A06",
+      "M38.A07",
+      "M07.A01",
+      "M07.A09",
+      "M07.A02",
+      "M47.A07",
+      "M44.A09",
+      "M37.A09",
+      "M35.A09",
+      "M40.A09",
+      "M37.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 17837,
+     "ms": 17837
+    }
+   ],
+   "metrics": {
+    "ms": 26807,
+    "firstReplyMs": 8970,
+    "plannerMs": 26531,
+    "plannerRounds": 3,
+    "calls": 2,
+    "usage": {
+     "input": 44836,
+     "cachedRead": 18048,
+     "cacheWrite": 0,
+     "output": 306,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-form-simulated-submit",
+   "category": "direct",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM form_submissions WHERE json_extract(data,'$.formId')='fm_1' → \"SQL error: no such table: form_submissions\", wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Submit a test response to the Contact Us form with the email test.user@example.com",
+     "status": "failed",
+     "reply": "Couldn't submit simulated form response: Unknown field email.",
+     "offered": [
+      "M18.A09",
+      "M48.A03",
+      "M19.A09",
+      "M14.A09",
+      "M13.A09",
+      "M13.A02",
+      "M18.A10",
+      "M13.A04",
+      "M13.A03",
+      "M13.A10",
+      "M27.A08",
+      "M13.A01",
+      "M47.A08",
+      "M48.A01",
+      "M48.A04",
+      "M18.A02",
+      "M18.A03",
+      "M01.A03",
+      "M49.A03",
+      "M13.A07",
+      "M27.A03"
+     ],
+     "planned": [
+      "M18.A09"
+     ],
+     "calls": [
+      {
+       "action": "M18.A09",
+       "args": {
+        "formId": "fm_1",
+        "values": {
+         "email": "test.user@example.com"
+        }
+       },
+       "error": "INVALID: Unknown field email"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9356,
+     "ms": 9356
+    }
+   ],
+   "metrics": {
+    "ms": 9356,
+    "firstReplyMs": 9356,
+    "plannerMs": 9247,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10190,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 106,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-funnel-reorder-and-remove",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M36.A06 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M36.A05 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(data,'$.steps') FROM funnels WHERE json_extract(data,'$.name')='Webinar Signup' → 3, wanted 2"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.steps[0].name') FROM funnels WHERE json_extract(data,'$.name')='Webinar Signup' → \"Landing\", wanted \"Thank You\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "In the Webinar Signup funnel, remove the Landing step and then put Thank You before Registration",
+     "status": "failed",
+     "reply": "The plan was still invalid after one repair:\nstep s1: $s1 is not an earlier step (refs can only point back)",
+     "offered": [
+      "M36.A03",
+      "M16.A06",
+      "M24.A08",
+      "M36.A09",
+      "M36.A07",
+      "M24.A07",
+      "M36.A05",
+      "M37.A09",
+      "M36.A06",
+      "M36.A04",
+      "M37.A10",
+      "M37.A07",
+      "M37.A01",
+      "M24.A09",
+      "M35.A09",
+      "M36.A02",
+      "M05.A03",
+      "M35.A03"
+     ],
+     "planned": [],
+     "calls": [
+      {
+       "action": "M36.A02",
+       "args": {
+        "funnelId": "fn_1"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step s1: $s2 is not an earlier step (refs can only point back)",
+      "step s1: $s1 is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 28497,
+     "ms": 28497
+    }
+   ],
+   "metrics": {
+    "ms": 28497,
+    "firstReplyMs": 28497,
+    "plannerMs": 28429,
+    "plannerRounds": 3,
+    "calls": 1,
+    "usage": {
+     "input": 36689,
+     "cachedRead": 24832,
+     "cacheWrite": 0,
+     "output": 371,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

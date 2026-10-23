@@ -1,0 +1,480 @@
+{
+  "summary": {
+    "label": "shared-lookups-final-luna-old-system-ablation-20261023",
+    "sourceCommit": "26e7a36",
+    "systemSourceCommit": "64c9e45",
+    "model": "gpt-6-luna",
+    "reasoning": "low",
+    "concurrency": 2,
+    "scenarios": 5,
+    "repeat": 1,
+    "passed": 2,
+    "selectedAfterFailures": true,
+    "note": "Diagnostic only: current code/retrieval, previous system instructions. Not a representative score, a same-prompt comparison or a replacement for a full run."
+  },
+  "runs": [
+    {
+      "id": "direct-tag-rename",
+      "category": "direct",
+      "pass": false,
+      "failures": [
+        {
+          "kind": "status",
+          "detail": "clarify, wanted done"
+        },
+        {
+          "kind": "action-missing",
+          "detail": "M08.A03 not planned (was offered; planned: nothing)"
+        },
+        {
+          "kind": "state",
+          "detail": "SELECT json_extract(data,'$.name') FROM tags WHERE id='tg_4' → \"partner\", wanted \"referral-partner\""
+        }
+      ],
+      "turns": [
+        {
+          "user": "Rename the partner tag to referral-partner",
+          "status": "clarify",
+          "reply": "Which existing tag named “partner” should I rename?",
+          "offered": [
+            "M08.A03",
+            "M08.A09",
+            "M08.A01",
+            "M08.A06",
+            "M09.A04",
+            "M05.A04",
+            "M08.A08",
+            "M05.A07",
+            "M08.A05",
+            "M10.A04",
+            "M49.A04",
+            "M35.A04",
+            "M01.A09",
+            "M02.A04",
+            "M39.A04",
+            "M01.A06"
+          ],
+          "planned": [],
+          "calls": [],
+          "plannerRounds": 1,
+          "compileErrors": [],
+          "errors": [],
+          "approvals": 0,
+          "firstReplyMs": 8277,
+          "ms": 8277
+        }
+      ],
+      "metrics": {
+        "ms": 8277,
+        "firstReplyMs": 8277,
+        "plannerMs": 8240,
+        "plannerRounds": 1,
+        "calls": 0,
+        "usage": {
+          "input": 8120,
+          "cachedRead": 3072,
+          "cacheWrite": 0,
+          "output": 55,
+          "thinking": 0,
+          "costUsd": null,
+          "billing": "subscription"
+        }
+      },
+      "models": [
+        "gpt-6-luna"
+      ]
+    },
+    {
+      "id": "failure-email-provider-down",
+      "category": "failure",
+      "pass": true,
+      "failures": [],
+      "turns": [
+        {
+          "user": "Email Rosa Ito to thank her for renewing",
+          "status": "failed",
+          "reply": "Couldn't send email: The email provider is not responding.",
+          "offered": [
+            "M13.A03",
+            "M13.A01",
+            "M13.A10",
+            "M13.A04",
+            "M47.A08",
+            "M28.A08",
+            "M30.A09",
+            "M47.A09",
+            "M48.A01",
+            "M44.A07",
+            "M30.A01",
+            "M48.A08",
+            "M13.A02",
+            "M13.A05",
+            "M30.A08",
+            "M01.A02",
+            "M01.A03",
+            "M12.A03",
+            "M27.A08",
+            "M12.A01",
+            "M14.A01",
+            "M12.A10",
+            "M01.A08",
+            "M13.A07",
+            "M30.A03",
+            "M12.A07",
+            "M27.A03"
+          ],
+          "planned": [
+            "M13.A03"
+          ],
+          "calls": [
+            {
+              "action": "M13.A03",
+              "args": {
+                "contactId": "ct_1",
+                "subject": "Thank you for renewing",
+                "body": "Hi Rosa,\n\nThank you for renewing! We really appreciate your continued support.\n\nBest,\n"
+              },
+              "error": "UNAVAILABLE: The email provider is not responding"
+            }
+          ],
+          "plannerRounds": 1,
+          "compileErrors": [],
+          "errors": [],
+          "approvals": 1,
+          "firstReplyMs": 9725,
+          "ms": 9728,
+          "confirmations": [
+            {
+              "stepId": "s2",
+              "planHash": "f386ff2f71f25a1b",
+              "targetsHash": "97155aa771c8b0fd",
+              "reason": "sends something outside the account",
+              "count": 1,
+              "preview": [
+                {
+                  "action": "M13.A03",
+                  "name": "Send email",
+                  "args": {
+                    "contactId": "ct_1",
+                    "subject": "Thank you for renewing",
+                    "body": "Hi Rosa,\n\nThank you for renewing! We really appreciate your continued support.\n\nBest,\n"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "metrics": {
+        "ms": 9728,
+        "firstReplyMs": 9725,
+        "plannerMs": 9687,
+        "plannerRounds": 1,
+        "calls": 1,
+        "usage": {
+          "input": 11628,
+          "cachedRead": 3072,
+          "cacheWrite": 0,
+          "output": 135,
+          "thinking": 0,
+          "costUsd": null,
+          "billing": "subscription"
+        }
+      },
+      "models": [
+        "gpt-6-luna"
+      ]
+    },
+    {
+      "id": "failure-deactivated-assignee",
+      "category": "failure",
+      "pass": false,
+      "failures": [
+        {
+          "kind": "reply",
+          "detail": "missing /deactivat|inactive|no longer|not active/"
+        }
+      ],
+      "turns": [
+        {
+          "user": "Create a task for Dan Ortiz to prepare the Q4 forecast",
+          "status": "clarify",
+          "reply": "There are no task creation or user lookup actions available in this version, so I can’t create the task or resolve Dan Ortiz to an assignee. Would you like me to find another way to handle this?",
+          "offered": [
+            "M06.A01",
+            "M06.A03",
+            "M27.A01",
+            "M07.A01",
+            "M06.A06",
+            "M06.A09",
+            "M06.A07",
+            "M04.A01",
+            "M04.A07",
+            "M34.A01",
+            "M28.A01",
+            "M05.A01",
+            "M03.A01",
+            "M15.A01",
+            "M45.A01",
+            "M21.A01",
+            "M47.A01",
+            "M07.A03",
+            "M21.A03",
+            "M47.A03",
+            "M32.A01"
+          ],
+          "planned": [],
+          "calls": [],
+          "plannerRounds": 1,
+          "compileErrors": [],
+          "errors": [],
+          "approvals": 0,
+          "firstReplyMs": 8945,
+          "ms": 8945
+        }
+      ],
+      "metrics": {
+        "ms": 8945,
+        "firstReplyMs": 8945,
+        "plannerMs": 8867,
+        "plannerRounds": 1,
+        "calls": 0,
+        "usage": {
+          "input": 10081,
+          "cachedRead": 3072,
+          "cacheWrite": 0,
+          "output": 86,
+          "thinking": 0,
+          "costUsd": null,
+          "billing": "subscription"
+        }
+      },
+      "models": [
+        "gpt-6-luna"
+      ]
+    },
+    {
+      "id": "followup-task-amend",
+      "category": "followup",
+      "pass": true,
+      "failures": [],
+      "turns": [
+        {
+          "user": "Create a task to send the proposal to Marco Patel, due Friday",
+          "status": "done",
+          "reply": "Done: Create task (Send the proposal to Marco Patel).",
+          "offered": [
+            "M06.A01",
+            "M28.A06",
+            "M27.A08",
+            "M06.A06",
+            "M06.A03",
+            "M28.A01",
+            "M29.A01",
+            "M28.A07",
+            "M45.A02",
+            "M27.A01",
+            "M07.A01",
+            "M06.A02",
+            "M45.A01",
+            "M06.A07",
+            "M15.A01",
+            "M01.A02",
+            "M01.A03",
+            "M21.A01",
+            "M47.A01",
+            "M13.A03",
+            "M32.A08",
+            "M27.A03",
+            "M45.A04",
+            "M13.A07",
+            "M32.A03"
+          ],
+          "planned": [
+            "M06.A01"
+          ],
+          "calls": [
+            {
+              "action": "M06.A01",
+              "args": {
+                "title": "Send the proposal to Marco Patel",
+                "dueDate": "2026-10-23",
+                "relatedTo": {
+                  "type": "contact",
+                  "id": "ct_4"
+                }
+              }
+            }
+          ],
+          "plannerRounds": 1,
+          "compileErrors": [],
+          "errors": [],
+          "approvals": 0,
+          "firstReplyMs": 9393,
+          "ms": 9393
+        },
+        {
+          "user": "Actually give it to Aisha and make it high priority",
+          "status": "done",
+          "reply": "Done: Assign task owner (Send the proposal to Marco Patel).\nDone: Set task priority (Send the proposal to Marco Patel).",
+          "offered": [
+            "M06.A05",
+            "M06.A07",
+            "M47.A05",
+            "M47.A01",
+            "M06.A03",
+            "M11.A03",
+            "M45.A05",
+            "M06.A01",
+            "M06.A02",
+            "M06.A06",
+            "M24.A09",
+            "M45.A02",
+            "M47.A03",
+            "M21.A06",
+            "M14.A09",
+            "M48.A02",
+            "M48.A03",
+            "M03.A05",
+            "M04.A06",
+            "M47.A04",
+            "M11.A02",
+            "M45.A04"
+          ],
+          "planned": [
+            "M06.A05",
+            "M06.A07"
+          ],
+          "calls": [
+            {
+              "action": "M06.A05",
+              "args": {
+                "taskId": "tk_20",
+                "assigneeId": "us_5"
+              }
+            },
+            {
+              "action": "M06.A07",
+              "args": {
+                "taskId": "tk_20",
+                "priority": "high"
+              }
+            }
+          ],
+          "plannerRounds": 1,
+          "compileErrors": [],
+          "errors": [],
+          "approvals": 0,
+          "firstReplyMs": 9691,
+          "ms": 9691
+        }
+      ],
+      "metrics": {
+        "ms": 19084,
+        "firstReplyMs": 9393,
+        "plannerMs": 18986,
+        "plannerRounds": 2,
+        "calls": 3,
+        "usage": {
+          "input": 21138,
+          "cachedRead": 6144,
+          "cacheWrite": 0,
+          "output": 289,
+          "thinking": 0,
+          "costUsd": null,
+          "billing": "subscription"
+        }
+      },
+      "models": [
+        "gpt-6-luna"
+      ]
+    },
+    {
+      "id": "unsupported-linkedin-post",
+      "category": "unsupported",
+      "pass": false,
+      "failures": [
+        {
+          "kind": "status",
+          "detail": "clarify, wanted unsupported"
+        }
+      ],
+      "turns": [
+        {
+          "user": "Post our fall webinar announcement on LinkedIn",
+          "status": "clarify",
+          "reply": "Which LinkedIn post text should I publish for the fall webinar announcement?",
+          "offered": [
+            "M43.A07",
+            "M38.A09",
+            "M43.A09",
+            "M43.A10",
+            "M42.A01",
+            "M38.A02",
+            "M40.A09",
+            "M46.A09",
+            "M43.A08",
+            "M23.A09",
+            "M38.A10",
+            "M04.A05",
+            "M38.A03",
+            "M04.A01",
+            "M15.A05",
+            "M38.A01",
+            "M37.A09",
+            "M35.A09",
+            "M07.A08",
+            "M07.A03",
+            "M38.A08",
+            "M41.A09",
+            "M36.A09",
+            "M36.A01",
+            "M40.A01",
+            "M40.A05",
+            "M16.A08",
+            "M38.A04",
+            "M38.A06",
+            "M38.A05",
+            "M39.A10",
+            "M38.A07",
+            "M45.A09",
+            "M24.A01",
+            "M37.A01",
+            "M42.A08",
+            "M42.A10",
+            "M37.A07",
+            "M45.A06",
+            "M42.A03"
+          ],
+          "planned": [],
+          "calls": [],
+          "plannerRounds": 2,
+          "compileErrors": [],
+          "errors": [],
+          "approvals": 0,
+          "firstReplyMs": 20955,
+          "ms": 20955
+        }
+      ],
+      "metrics": {
+        "ms": 20955,
+        "firstReplyMs": 20955,
+        "plannerMs": 20892,
+        "plannerRounds": 2,
+        "calls": 0,
+        "usage": {
+          "input": 21478,
+          "cachedRead": 6144,
+          "cacheWrite": 0,
+          "output": 116,
+          "thinking": 0,
+          "costUsd": null,
+          "billing": "subscription"
+        }
+      },
+      "models": [
+        "gpt-6-luna"
+      ]
+    }
+  ]
+}

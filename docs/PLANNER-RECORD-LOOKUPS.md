@@ -37,7 +37,7 @@ The prompt lists supported types and qualifier keys from the registry. A qualifi
 
 Retrieval distinguishes `produces` (including create/write actions) from `lookupFor` (read-only discovery of existing records). Discovery is derived from implemented typed list outputs, with explicit `entities.lookup` for cases such as exact-name community get. ID-only gets and writes are not discovery tools.
 
-A selected create action therefore cannot satisfy a missing discovery dependency. For resolvable named types, built-in resolve is the single-record lookup; bulk requests still receive a list/search. Dependency additions remain identifiable as `producer` in existing traces. No broad sibling links or extra model calls are introduced.
+A selected create action therefore cannot satisfy a missing discovery dependency. For resolvable named types, built-in resolve is the single-record lookup; bulk requests still receive discovery helpers where the catalog supports them. A name-only get cannot enumerate every record of a type. Dependency additions remain identifiable as `producer` in existing traces. No broad sibling links or extra model calls are introduced.
 
 Name mentions add one get plus one standalone discovery helper, not every cross-module list returning the entity. Discovery prefers the fewest required inputs before semantic rank; for example, searching contacts does not first require a company or tag ID. Naturally named configuration/content objects require their full label for automatic mention linking; explicit typed lookup can still use the existing partial-name matching tiers.
 
