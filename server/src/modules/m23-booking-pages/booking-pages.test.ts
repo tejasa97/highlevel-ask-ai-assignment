@@ -62,6 +62,7 @@ test("M23.A01 create refuses a duplicate slug", async () => {
   const w = await testWorld();
   w.call("M23.A01", { title: "Intro", slug: "intro" });
   assert.equal(failure(() => w.call("M23.A01", { title: "Other", slug: "intro" })).code, "DUPLICATE");
+  assert.equal(failure(() => w.call("M23.A01", { title: "Other", slug: "Intro" })).code, "DUPLICATE", "slugs compare case-insensitively, as on blogs and landing pages");
 });
 
 test("M23.A04 update refuses a no-op and an unknown field", async () => {

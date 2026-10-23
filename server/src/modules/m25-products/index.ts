@@ -18,13 +18,14 @@ function editable(p: Product): void {
 }
 
 function skuOwner(store: Store, sku: string, except?: { productId: string; variantId?: string }): string | undefined {
-  const key = sku.trim();
+  const key = sku.trim().toLowerCase();
+  const same = (other: string | null) => other?.toLowerCase() === key;
   for (const p of store.all<Product>("products")) {
     const skipProduct = except && except.productId === p.id && !except.variantId;
-    if (p.sku === key && !skipProduct) return `product ${p.name} (${p.id})`;
+    if (same(p.sku) && !skipProduct) return `product ${p.name} (${p.id})`;
     for (const v of p.variants) {
       const skipVariant = except && except.productId === p.id && except.variantId === v.id;
-      if (v.sku === key && !skipVariant) return `variant ${v.name} on ${p.name} (${v.id})`;
+      if (same(v.sku) && !skipVariant) return `variant ${v.name} on ${p.name} (${v.id})`;
     }
   }
   return undefined;

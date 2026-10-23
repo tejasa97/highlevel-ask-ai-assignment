@@ -27,7 +27,7 @@ function publicActive(cal: Calendar): void {
 }
 
 function uniqueSlug(store: Store, slug: string, except?: string): void {
-  const taken = store.find<BookingPage>("booking_pages", (p) => p.slug === slug && p.id !== except);
+  const taken = store.find<BookingPage>("booking_pages", (p) => p.slug.toLowerCase() === slug.toLowerCase() && p.id !== except);
   if (taken.length) throw new ActionError("DUPLICATE", `A booking page with slug "${slug}" already exists`);
 }
 

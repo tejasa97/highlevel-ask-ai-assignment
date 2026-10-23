@@ -15,6 +15,7 @@ test("M25.A01 create refuses a duplicate SKU", async () => {
   const w = await testWorld();
   w.f.product({ sku: "SKU-1" });
   assert.equal(failure(() => w.call("M25.A01", { name: "Other", sku: "SKU-1" })).code, "DUPLICATE");
+  assert.equal(failure(() => w.call("M25.A01", { name: "Other", sku: "sku-1" })).code, "DUPLICATE", "SKUs compare case-insensitively");
 });
 
 test("M25.A01 unknown input field is INVALID", async () => {
