@@ -1,0 +1,250 @@
+{
+ "summary": {
+  "label": "shared-lookups-luna-policy-20261023-1x",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/policy-scenarios/partial-confirmation",
+  "set": "d6f559cccec2",
+  "tier": "strong",
+  "scenarios": 2,
+  "repeat": 1,
+  "runs": 2,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 2,
+  "measured": 2,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 19382,
+   "p95": 19382
+  },
+  "firstReplyMs": {
+   "p50": 19375,
+   "p95": 19375
+  },
+  "plannerRoundsPerRun": 1,
+  "callsPerRun": 0.5,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 33652
+ },
+ "runs": [
+  {
+   "id": "subset-replies-approved-v1",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "partial",
+     "reply": "Done: Reply to ticket requester (Portal export fails).\nCouldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M50.A07",
+      "M47.A02",
+      "M50.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A09",
+      "M43.A08",
+      "M50.A08",
+      "M50.A10",
+      "M50.A03",
+      "M50.A09",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M45.A09",
+      "M09.A06",
+      "M36.A10",
+      "M06.A02",
+      "M01.A02",
+      "M46.A02",
+      "M13.A07",
+      "M45.A06"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We received your report."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 19375,
+     "ms": 19382,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c201d215b4922fea",
+       "targetsHash": "a988d0cb30a77f27",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "Reply to ticket requester (tic_4)",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 19382,
+    "firstReplyMs": 19375,
+    "plannerMs": 19305,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10739,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 116,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "subset-replies-declined-v1",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M47.A08",
+      "M50.A07",
+      "M47.A02",
+      "M50.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A09",
+      "M43.A08",
+      "M50.A08",
+      "M50.A10",
+      "M50.A03",
+      "M50.A09",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M45.A09",
+      "M09.A06",
+      "M36.A10",
+      "M06.A02",
+      "M01.A02",
+      "M46.A02",
+      "M13.A07",
+      "M45.A06"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 14183,
+     "ms": 14183,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c201d215b4922fea",
+       "targetsHash": "a988d0cb30a77f27",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "Reply to ticket requester (tic_4)",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 14183,
+    "firstReplyMs": 14183,
+    "plannerMs": 14087,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 10741,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 116,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}
