@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -291,5 +292,8 @@ const archiveCourse = defineAction({
 });
 
 export default {
+  resolvers: {
+    course: tableResolver("courses", "title"),
+  },
   actions: [createCourse, getCourse, searchCourses, updateCourse, addSection, reorderSections, assignInstructor, setPrerequisites, publishCourse, archiveCourse],
 } satisfies ModuleExports;

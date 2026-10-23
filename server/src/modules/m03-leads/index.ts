@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { namedResolver } from "../../registry/lookup.js";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, atLeastOne, candidates, cents, contains, fullName, inDateRange, Limit, listOf, Name, page, requireState, sameEmail } from "../../registry/helpers.js";
+import { activeUser, atLeastOne, cents, contains, fullName, inDateRange, Limit, listOf, Name, page, requireState, sameEmail } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Contact } from "../m01-contacts/schema.js";
@@ -338,6 +339,10 @@ const convertLead = defineAction({
 export default {
   actions: [createLead, getLead, searchLeads, updateLead, assignLeadOwner, setSource, recordQualification, updateScore, disqualify, convertLead],
   resolvers: {
-    lead: (store, name) => candidates(store.find<Lead>("leads", () => true), name, (l) => l.name, (l) => [l.email, l.status].filter(Boolean).join(", ")),
+    lead: namedResolver<Lead>({
+      records: (store) => store.all<Lead>("leads"), name: (l) => l.name,
+      detail: (l) => [l.email, l.status].filter(Boolean).join(", "),
+      qualifiers: { email: (l) => l.email, company: (l) => l.company },
+    }),
   },
 } satisfies ModuleExports;

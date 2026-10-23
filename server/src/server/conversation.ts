@@ -11,6 +11,7 @@ import type { Retriever } from "../retrieval/retrieve.js";
 import type { Clock } from "../store/clock.js";
 import type { Store } from "../store/db.js";
 import { diff, snapshot } from "./diff.js";
+import { rememberRecords, type WorkingRecord } from "./records.js";
 
 const HISTORY_TURNS = 4;
 
@@ -38,6 +39,7 @@ export class Conversation {
   private carry: Carry | undefined;
   /** The messages the last reply asked a question about, if it did (kept across a chain of questions). */
   private answering: string | undefined;
+  private records: WorkingRecord[] = [];
 
   constructor(
     private readonly deps: ConversationDeps,
@@ -50,6 +52,7 @@ export class Conversation {
     this.carry = this.answering = undefined;
     this.turns.clear();
     this.history.length = 0;
+    this.records = [];
   }
 
   async ask(message: string, tier: Tier, actorId: string, emit: Emit): Promise<void> {
@@ -66,7 +69,7 @@ export class Conversation {
       return c ? [...steps, { id: c.stepId, error: `more than one ${c.entity} matches "${c.name}": ${c.candidates.map((x) => x.name).join(", ")}` }] : steps;
     };
     const outcome = await planTurn(
-      { message, tier, context, carry: this.carry, answering: this.answering },
+      { message, tier, context, carry: this.carry, answering: this.answering, records: this.records },
       { registry, retriever, planner, clock: this.world.clock, store: this.world.store, look },
       (e) => emit(e.type, e.data),
     );
@@ -106,6 +109,7 @@ export class Conversation {
       { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e) },
     );
     emit("run", { status: result.status, ms: Math.round(performance.now() - t), steps: result.steps });
+    this.records = rememberRecords(this.records, turn.plan, result);
     const audit = store.audit();
     emit("diff", { changes: diff(before, store), audit: audit.slice(0, audit.length - auditBefore) });
 
@@ -134,7 +138,7 @@ function describeStep(s: CStep) {
     case "action":
       return { ...base, calls: [call(s.call)] };
     case "resolve":
-      return { ...base, entity: s.entity, name: s.name };
+      return { ...base, entity: s.entity, name: s.name, ...(s.where ? { where: s.where } : {}) };
     case "filter":
       return { ...base, in: s.in, where: s.where };
     case "exclude":

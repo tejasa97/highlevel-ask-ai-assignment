@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { atLeastOne, Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -299,5 +300,8 @@ const archiveField = defineAction({
 });
 
 export default {
+  resolvers: {
+    custom_field: tableResolver("custom_fields", "label", {"module":"module","key":"key"}),
+  },
   actions: [createField, getField, listFields, renameLabel, updateHelp, setValidation, addOption, retireOption, setValue, archiveField],
 } satisfies ModuleExports;

@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -79,7 +80,7 @@ const getCommunity = defineAction({
   risk: "read",
   input: z.strictObject({ communityId: CommunityId.optional(), name: Name.optional() }),
   output: Community,
-  entities: { produces: "community", consumes: ["community"] },
+  entities: { produces: "community", consumes: ["community"], lookup: "community" },
   example: (f) => ({ communityId: f.community().id }),
   handler: ({ communityId, name }, { store }) => {
     if (!communityId === !name) throw new ActionError("INVALID", "Give exactly one of communityId or name");
@@ -269,5 +270,8 @@ const removePost = defineAction({
 });
 
 export default {
+  resolvers: {
+    community: tableResolver("communities"),
+  },
   actions: [createCommunity, getCommunity, updateGuidelines, createChannel, join, leave, createPost, reply, pin, removePost],
 } satisfies ModuleExports;

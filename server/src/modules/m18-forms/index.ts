@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { contains, freshId, fullName, inDateRange, Limit, listOf, page, requireState, sameEmail } from "../../registry/helpers.js";
@@ -459,5 +460,8 @@ const listSubmissions = defineAction({
 });
 
 export default {
+  resolvers: {
+    form: tableResolver("forms"),
+  },
   actions: [createForm, getForm, listForms, addField, updateField, reorderFields, setValidation, publishForm, submitForm, listSubmissions],
 } satisfies ModuleExports;

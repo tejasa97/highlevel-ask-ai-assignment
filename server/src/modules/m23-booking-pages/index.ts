@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { atLeastOne, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -251,5 +252,8 @@ const unpublishPage = defineAction({
 });
 
 export default {
+  resolvers: {
+    booking_page: tableResolver("booking_pages", "title", {"slug":"slug","calendarId":"calendarId"}),
+  },
   actions: [createPage, getPage, listPages, updateContent, linkCalendar, setIntake, setConfirmation, setRedirect, publishPage, unpublishPage],
 } satisfies ModuleExports;

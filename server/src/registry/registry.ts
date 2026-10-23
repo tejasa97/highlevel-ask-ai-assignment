@@ -19,7 +19,11 @@ export interface Candidate {
 }
 
 /** Turns a name ("Sales", "Jo Park") into matching records of one entity type. */
-export type Resolver = (store: Store, name: string) => Candidate[];
+export type LookupWhere = Record<string, string>;
+export type Resolver = ((store: Store, name: string, where?: LookupWhere) => Candidate[]) & {
+  /** Exact-match qualifiers understood by this resolver (never silently ignored). */
+  qualifiers?: readonly string[];
+};
 
 export interface ModuleExports {
   actions: ActionDef[];
@@ -74,6 +78,10 @@ export class Registry {
 
   resolverEntities(): string[] {
     return [...this.resolvers.keys()].sort();
+  }
+
+  resolverQualifiers(): Record<string, readonly string[]> {
+    return Object.fromEntries([...this.resolvers].filter(([, r]) => r.qualifiers?.length).map(([e, r]) => [e, r.qualifiers!]));
   }
 }
 

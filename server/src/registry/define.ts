@@ -36,7 +36,7 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   input: I;
   output: O;
   /** Entity types this action produces and consumes, for dependency expansion in retrieval. */
-  entities?: { produces?: string; consumes?: string[] };
+  entities?: { produces?: string; consumes?: string[]; lookup?: string };
   /** Look-alike actions in other modules, always retrieved together. */
   siblings?: string[];
   /** Optional side-effect-free eligibility check. Throw an ActionError for a known blocker;

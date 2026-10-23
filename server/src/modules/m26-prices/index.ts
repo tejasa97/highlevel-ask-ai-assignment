@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { cents, Limit, listOf, Name, page, requireState } from "../../registry/helpers.js";
@@ -254,5 +255,8 @@ const archivePrice = defineAction({
 });
 
 export default {
+  resolvers: {
+    price: tableResolver("prices", "label", {"productId":"productId","currency":"currency","interval":"interval"}),
+  },
   actions: [createPrice, getPrice, listPrices, updateLabel, setAmount, setCurrency, setInterval, setTrial, setDefault, archivePrice],
 } satisfies ModuleExports;

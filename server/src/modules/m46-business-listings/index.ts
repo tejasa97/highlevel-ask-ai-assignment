@@ -1,8 +1,8 @@
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
+import { namedResolver } from "../../registry/lookup.js";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import {
-  candidates,
   contains,
   Limit,
   listOf,
@@ -299,12 +299,10 @@ export default {
     sync,
   ],
   resolvers: {
-    listing: (store, name) =>
-      candidates(
-        store.all<Listing>("listings"),
-        name,
-        (l) => `${l.name} ${l.directory}`,
-        (l) => l.address,
-      ),
+    listing: namedResolver<Listing>({
+      records: (store) => store.all<Listing>("listings"),
+      name: (l) => `${l.name} ${l.directory}`, detail: (l) => l.address,
+      qualifiers: { directory: (l) => l.directory },
+    }),
   },
 } satisfies ModuleExports;

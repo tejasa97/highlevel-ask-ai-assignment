@@ -41,6 +41,8 @@ export interface TurnInput {
   carry?: Carry;
   /** Set when the last reply was a question: the message it asked about, so retrieval sees both. */
   answering?: string;
+  /** Compact typed identities only, not previous records or their mutable contents. */
+  records?: { entity: string; id: string; name: string }[];
 }
 
 export interface Carry {
@@ -137,7 +139,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   };
   let looked: string | undefined;
   const prompt = () =>
-    userBlock({ clock, actions: offered, notAvailable, resolvable, mentions: named, message: input.message, context: input.context, looked });
+    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, looked });
   const call = async (user: string, label: string) => {
     emit({ type: "planner.request", data: { label, tier: input.tier, system: SYSTEM, user, actions: offered.map((a) => a.id) } });
     const r = await withDeadline(deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }));
