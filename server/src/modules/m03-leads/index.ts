@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, atLeastOne, candidates, contains, fullName, inDateRange, Limit, listOf, Name, page, requireState, sameEmail } from "../../registry/helpers.js";
+import { activeUser, atLeastOne, candidates, cents, contains, fullName, inDateRange, Limit, listOf, Name, page, requireState, sameEmail } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Contact } from "../m01-contacts/schema.js";
@@ -273,7 +273,7 @@ const convertLead = defineAction({
   risk: "write",
   input: z.strictObject({
     leadId: LeadId,
-    opportunityName: z.string().min(1).optional().describe("default: '<company or name> deal'"),
+    opportunityName: Name.optional().describe("default: '<company or name> deal'"),
     value: z.number().min(0).optional().describe("deal value in USD (default 0)"),
     pipelineId: z.string().optional().describe("default: the first active pipeline"),
     expectedCloseDate: z.iso.date().optional(),
@@ -321,7 +321,7 @@ const convertLead = defineAction({
       leadId: l.id,
       pipelineId: pipeline.id,
       stageId: pipeline.stages[0]!.id,
-      value: a.value ?? 0,
+      value: cents(a.value ?? 0),
       currency: "USD" as const,
       ownerId: l.ownerId,
       status: "open" as const,
