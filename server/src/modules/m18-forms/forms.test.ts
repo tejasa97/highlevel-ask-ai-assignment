@@ -142,3 +142,13 @@ test("M18.A09 submit to a draft form conflicts even when the values are valid", 
   const { w, form } = await guardedForm();
   assert.equal(failure(() => w.call("M18.A09", { formId: form.id, values: { field_name: "Ada" } })).code, "CONFLICT");
 });
+
+test("M18.A04/A05 a contact mapping must name a contact field and be used by one field", async () => {
+  const { w, form } = await guardedForm();
+  assert.equal(failure(() => w.call("M18.A04", { formId: form.id, label: "Mail", type: "email", mapsTo: "e-mail" })).code, "INVALID");
+  const added = w.call("M18.A04", { formId: form.id, label: "Mail", type: "email", mapsTo: "email" }) as Form;
+  assert.equal(failure(() => w.call("M18.A04", { formId: form.id, label: "Backup", type: "email", mapsTo: "email" })).code, "CONFLICT");
+  assert.equal(failure(() => w.call("M18.A05", { formId: form.id, fieldId: "field_name", mapsTo: "email" })).code, "CONFLICT");
+  assert.equal((w.call("M18.A05", { formId: form.id, fieldId: added.fields[1]!.id, mapsTo: "company" }) as Form).fields[1]!.mapsTo, "company");
+  assert.equal((w.call("M18.A05", { formId: form.id, fieldId: "field_name", mapsTo: "email" }) as Form).fields[0]!.mapsTo, "email");
+});

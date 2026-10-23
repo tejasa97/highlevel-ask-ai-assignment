@@ -16,7 +16,13 @@ const FormId = z.string().describe("form id (fm_…)");
 const FieldId = z.string().describe("field id");
 const emptyRules = { minLength: null, maxLength: null, pattern: null };
 const TEXT_TYPES = new Set(["text", "email", "phone", "textarea"]);
-const CONTACT_FIELDS = new Set(["email", "phone", "firstName", "lastName", "company"]);
+const MapsTo = z.enum(["email", "phone", "firstName", "lastName", "company"]).describe("contact field this fills");
+
+// A mapping the submit step would silently ignore (a typo) or fill twice (the last field wins) is refused when it is set.
+function checkMapping(form: Form, fieldId: string | null, mapsTo: string | null): void {
+  const clash = mapsTo && form.fields.find((field) => field.id !== fieldId && field.mapsTo === mapsTo);
+  if (clash) throw new ActionError("CONFLICT", `Field "${clash.label}" already fills the contact's ${mapsTo}`);
+}
 
 const iso = (clock: Clock) => clock.now().toISOString();
 
@@ -140,7 +146,7 @@ const addField = defineAction({
     type: z.enum(FORM_FIELD_TYPES),
     required: z.boolean().optional(),
     options: z.array(z.string().min(1)).optional(),
-    mapsTo: z.string().min(1).nullable().optional().describe("contact field this fills, such as email or firstName"),
+    mapsTo: MapsTo.nullable().optional(),
   }),
   output: Form,
   entities: { consumes: ["form"] },
@@ -156,6 +162,7 @@ const addField = defineAction({
     const options = a.options ?? [];
     if (a.type === "dropdown" && options.length === 0) throw new ActionError("INVALID", "Dropdown fields need at least one option");
     if (a.type !== "dropdown" && options.length > 0) throw new ActionError("INVALID", "Only dropdown fields have options");
+    checkMapping(form, null, a.mapsTo ?? null);
     const field: FormField = {
       id: freshId(store, "fd", form.fields.map((item) => item.id)),
       label,
@@ -180,7 +187,7 @@ const updateField = defineAction({
     type: z.enum(FORM_FIELD_TYPES).optional(),
     required: z.boolean().optional(),
     options: z.array(z.string().min(1)).optional(),
-    mapsTo: z.string().min(1).nullable().optional(),
+    mapsTo: MapsTo.nullable().optional(),
   }),
   output: Form,
   entities: { consumes: ["form"] },
@@ -208,7 +215,10 @@ const updateField = defineAction({
     }
     if (a.type !== undefined) next.type = a.type;
     if (a.required !== undefined) next.required = a.required;
-    if (a.mapsTo !== undefined) next.mapsTo = a.mapsTo;
+    if (a.mapsTo !== undefined) {
+      checkMapping(form, current.id, a.mapsTo);
+      next.mapsTo = a.mapsTo;
+    }
     if (a.options !== undefined) next.options = a.options;
     else if (next.type !== "dropdown") next.options = [];
     if (next.type === "dropdown" && next.options.length === 0) throw new ActionError("INVALID", "Dropdown fields need at least one option");
@@ -381,7 +391,7 @@ function checkAnswer(field: FormField, value: string | number | boolean | undefi
 function linkContact(store: Store, form: Form, values: Record<string, string | number | boolean>, now: string): string | null {
   const mapped: Record<string, string> = {};
   for (const field of form.fields) {
-    if (!field.mapsTo || !CONTACT_FIELDS.has(field.mapsTo)) continue;
+    if (!field.mapsTo) continue;
     const raw = values[field.id];
     if (typeof raw !== "string" || !raw.trim()) continue;
     mapped[field.mapsTo] = field.mapsTo === "email" ? raw.trim().toLowerCase() : raw.trim();
