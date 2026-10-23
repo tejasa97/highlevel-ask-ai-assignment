@@ -1,0 +1,187 @@
+[
+  {
+    "id": "cov-company-create",
+    "category": "direct",
+    "modules": ["M02"],
+    "turns": [{ "user": "Add a company called Northwind Traders with the domain northwind.example in the logistics industry" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M02.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM companies WHERE json_extract(data,'$.name')='Northwind Traders' AND json_extract(data,'$.domain')='northwind.example'", "equals": 1 },
+        { "sql": "SELECT lower(json_extract(data,'$.industry')) FROM companies WHERE json_extract(data,'$.name')='Northwind Traders'", "equals": "logistics" }
+      ]
+    }
+  },
+  {
+    "id": "cov-company-link-and-assign",
+    "category": "multi",
+    "modules": ["M02", "M01"],
+    "note": "Kofi Brown is ct_14 and Raj Iyer is us_2. Northwind Traders is co_1.",
+    "setup": [{ "fixture": "company", "with": { "name": "Northwind Traders", "domain": "northwind.example" } }],
+    "turns": [{ "user": "Link Kofi Brown to Northwind Traders and make Raj Iyer the account manager for that company" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M02.A06", "M02.A08"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.companyId') FROM contacts WHERE id='ct_14'", "equals": "co_1" },
+        { "sql": "SELECT json_extract(data,'$.accountManagerId') FROM companies WHERE id='co_1'", "equals": "us_2" }
+      ]
+    }
+  },
+  {
+    "id": "cov-company-who-works-there",
+    "category": "indirect",
+    "modules": ["M02"],
+    "setup": [
+      { "fixture": "company", "with": { "name": "Northwind Traders", "domain": "northwind.example" } },
+      { "fixture": "contact", "with": { "name": "Priya Nair", "email": "priya@northwind.example", "company": "Northwind Traders", "companyId": "co_1" } },
+      { "fixture": "contact", "with": { "name": "Tomas Ruiz", "email": "tomas@northwind.example", "company": "Northwind Traders", "companyId": "co_1" } }
+    ],
+    "turns": [{ "user": "Who do we know at Northwind Traders?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M02.A10"] },
+      "reply": { "includes": ["Priya Nair", "Tomas Ruiz"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-company-duplicate-domain",
+    "category": "failure",
+    "modules": ["M02"],
+    "note": "northwind.example is already taken by Northwind Traders, so a second company cannot use it.",
+    "setup": [{ "fixture": "company", "with": { "name": "Northwind Traders", "domain": "northwind.example" } }],
+    "turns": [{ "user": "Create a company called Northwind Logistics with the domain northwind.example" }],
+    "expect": {
+      "state": [{ "sql": "SELECT count(*) FROM companies", "equals": 1 }]
+    }
+  },
+  {
+    "id": "cov-company-merge-duplicates",
+    "category": "direct",
+    "modules": ["M02"],
+    "setup": [
+      { "fixture": "company", "with": { "name": "Acme Holdings", "domain": "acmeholdings.example" } },
+      { "fixture": "company", "with": { "name": "Acme Holdings Inc", "domain": "acmeholdings-inc.example" } }
+    ],
+    "turns": [{ "user": "Acme Holdings and Acme Holdings Inc are the same company. Merge Acme Holdings Inc into Acme Holdings." }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M02.A09"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM companies WHERE json_extract(data,'$.name')='Acme Holdings Inc'", "equals": "merged" },
+        { "sql": "SELECT json_extract(data,'$.status') FROM companies WHERE json_extract(data,'$.name')='Acme Holdings'", "equals": "active" }
+      ]
+    }
+  },
+  {
+    "id": "cov-pipeline-create",
+    "category": "direct",
+    "modules": ["M05"],
+    "turns": [{ "user": "Create a pipeline called Partner Deals with the stages Intro, Review and Signed" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M05.A01"] },
+      "state": [
+        { "sql": "SELECT json_array_length(data,'$.stages') FROM pipelines WHERE json_extract(data,'$.name')='Partner Deals'", "equals": 3 },
+        { "sql": "SELECT json_extract(data,'$.stages[2].name') FROM pipelines WHERE json_extract(data,'$.name')='Partner Deals'", "equals": "Signed" }
+      ]
+    }
+  },
+  {
+    "id": "cov-pipeline-add-and-rename-stage",
+    "category": "multi",
+    "modules": ["M05"],
+    "note": "The Sales Pipeline has New, Qualified, Proposal and Negotiation.",
+    "turns": [{ "user": "In the Sales Pipeline add a stage called Contract at 90% and rename the Qualified stage to Discovery" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M05.A06", "M05.A07"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM pipelines p, json_each(p.data,'$.stages') s WHERE json_extract(p.data,'$.name')='Sales Pipeline' AND json_extract(s.value,'$.name')='Contract'", "equals": 1 },
+        { "sql": "SELECT count(*) FROM pipelines p, json_each(p.data,'$.stages') s WHERE json_extract(p.data,'$.name')='Sales Pipeline' AND json_extract(s.value,'$.name')='Discovery'", "equals": 1 },
+        { "sql": "SELECT count(*) FROM pipelines p, json_each(p.data,'$.stages') s WHERE json_extract(p.data,'$.name')='Sales Pipeline' AND json_extract(s.value,'$.name')='Qualified'", "equals": 0 }
+      ]
+    }
+  },
+  {
+    "id": "cov-pipeline-remove-stage-with-deals",
+    "category": "failure",
+    "modules": ["M05", "M04"],
+    "note": "Every stage of the seeded Sales Pipeline has deals in it, so Proposal cannot be removed.",
+    "turns": [{ "user": "Remove the Proposal stage from the Sales Pipeline" }],
+    "expect": {
+      "state": [{ "sql": "SELECT json_array_length(data,'$.stages') FROM pipelines WHERE json_extract(data,'$.name')='Sales Pipeline'", "equals": 4 }],
+      "reply": { "includes": ["deal"] }
+    }
+  },
+  {
+    "id": "cov-pipeline-win-probability",
+    "category": "direct",
+    "modules": ["M05"],
+    "turns": [{ "user": "Set the win probability of the Proposal stage in the Sales Pipeline to 60%" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M05.A10"] },
+      "state": [
+        { "sql": "SELECT json_extract(s.value,'$.probability') FROM pipelines p, json_each(p.data,'$.stages') s WHERE json_extract(p.data,'$.name')='Sales Pipeline' AND json_extract(s.value,'$.name')='Proposal'", "equals": 60 }
+      ]
+    }
+  },
+  {
+    "id": "cov-pipeline-describe-stages",
+    "category": "indirect",
+    "modules": ["M05"],
+    "turns": [{ "user": "What stages does our sales process go through, and how likely is a deal to close at each one?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M05.A02"] },
+      "reply": { "includes": ["Negotiation", "75"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-smartlist-create",
+    "category": "direct",
+    "modules": ["M09"],
+    "turns": [{ "user": "Make a smart list called Umbrella contacts of every contact whose company is Umbrella" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M09.A01"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.target') FROM smart_lists WHERE json_extract(data,'$.name')='Umbrella contacts'", "equals": "contact" },
+        { "sql": "SELECT json_array_length(data,'$.rules') FROM smart_lists WHERE json_extract(data,'$.name')='Umbrella contacts'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "cov-smartlist-count",
+    "category": "direct",
+    "modules": ["M09"],
+    "note": "Three seeded contacts work at Umbrella.",
+    "setup": [{ "fixture": "smartList", "with": { "name": "Umbrella contacts", "target": "contact", "rules": [{ "field": "company", "op": "eq", "value": "Umbrella" }] } }],
+    "turns": [{ "user": "How many contacts are on the Umbrella contacts smart list?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M09.A07"] },
+      "reply": { "includes": ["\\b3\\b"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-smartlist-duplicate-and-delete",
+    "category": "multi",
+    "modules": ["M09"],
+    "setup": [{ "fixture": "smartList", "with": { "name": "Hot leads", "target": "lead", "rules": [{ "field": "source", "op": "eq", "value": "facebook_ads" }] } }],
+    "turns": [{ "user": "Duplicate the Hot leads smart list as Hot leads copy, then delete the original Hot leads list" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M09.A09", "M09.A10"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM smart_lists WHERE json_extract(data,'$.name')='Hot leads'", "equals": "deleted" },
+        { "sql": "SELECT json_extract(data,'$.status') FROM smart_lists WHERE json_extract(data,'$.name')='Hot leads copy'", "equals": "active" }
+      ]
+    }
+  }
+]

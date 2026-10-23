@@ -32,6 +32,13 @@ test("default regression, development and reporting sets stay isolated and indep
     3,
   );
 });
+test("comma-separated folders load as one set and a repeated folder is a duplicate id", () => {
+  const both = selectScenarios(root, "eval/module-scenarios/m45-m47/development, eval/module-scenarios/m45-m47/reporting");
+  assert.equal(both.scenarios.length, 57);
+  assert.equal(both.scenarioDir, "eval/module-scenarios/m45-m47/development,eval/module-scenarios/m45-m47/reporting");
+  assert.throws(() => selectScenarios(root, "eval/scenarios,eval/scenarios"), /Duplicate scenario id/);
+  assert.throws(() => selectScenarios(root, "eval/scenarios,"));
+});
 test("missing, empty and malformed directory selections fail without falling back to the regression set", () => {
   assert.throws(() => selectScenarios(root, "missing-folder"));
   assert.throws(() => selectScenarios(root, "docs"), /No scenarios/);

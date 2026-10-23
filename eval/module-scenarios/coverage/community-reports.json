@@ -1,0 +1,162 @@
+[
+  {
+    "id": "cov-community-create-with-channel",
+    "category": "multi",
+    "modules": ["M43"],
+    "turns": [{ "user": "Create a community called Customer Hub and add a discussion channel called Announcements" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M43.A01", "M43.A04"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM communities c, json_each(c.data,'$.channels') ch WHERE json_extract(c.data,'$.name')='Customer Hub' AND json_extract(ch.value,'$.name')='Announcements'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "cov-community-join",
+    "category": "followup",
+    "modules": ["M43", "M01"],
+    "note": "Elodie Mercer is ct_35. Communities can't be looked up by name (M43 has no search), so the community is created in the same conversation.",
+    "turns": [
+      { "user": "Create a community called Customer Hub", "status": ["done"] },
+      { "user": "Add Elodie Mercer to it" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M43.A05"] },
+      "state": [{ "sql": "SELECT count(*) FROM community_members WHERE json_extract(data,'$.contactId')='ct_35' AND json_extract(data,'$.leftAt') IS NULL", "equals": 1 }]
+    }
+  },
+  {
+    "id": "cov-community-post-and-pin",
+    "category": "multi",
+    "modules": ["M43"],
+    "note": "Communities can't be looked up by name (M43 has no search), so the community is created in the same conversation.",
+    "turns": [
+      { "user": "Create a community called Customer Hub with a channel called Announcements", "status": ["done"] },
+      { "user": "Add Elodie Mercer, then post 'Welcome to the hub, say hi!' as her in Announcements and pin it" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M43.A05", "M43.A07", "M43.A09"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.pinned') FROM community_posts WHERE json_extract(data,'$.body') LIKE '%Welcome to the hub%'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "cov-community-remove-reported-post",
+    "category": "direct",
+    "modules": ["M43"],
+    "setup": [
+      { "fixture": "community", "with": { "name": "Customer Hub" } },
+      { "fixture": "communityMember", "with": { "communityId": "com_1", "contactId": "ct_35" } },
+      {
+        "fixture": "communityPost",
+        "with": {
+          "communityId": "com_1",
+          "authorId": "ct_35",
+          "body": "Buy cheap watches here",
+          "reports": [{ "by": "ct_33", "reason": "spam", "at": "2026-10-20T10:00:00.000Z" }]
+        }
+      }
+    ],
+    "note": "Posts can't be searched by text (M43 has no search), so the report names the post id.",
+    "turns": [{ "user": "Post cmp_1 in the Customer Hub community (com_1) was reported as spam, take it down" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M43.A10"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM community_posts WHERE json_extract(data,'$.body')='Buy cheap watches here'", "equals": "removed" }]
+    }
+  },
+  {
+    "id": "cov-community-pin-reply",
+    "category": "failure",
+    "modules": ["M43"],
+    "note": "Only top-level posts can be pinned; 'Agreed!' is a reply to the first post.",
+    "setup": [
+      { "fixture": "community", "with": { "name": "Customer Hub" } },
+      { "fixture": "communityPost", "with": { "communityId": "com_1", "authorId": "ct_35", "body": "Any tips for onboarding?" } },
+      { "fixture": "communityPost", "with": { "communityId": "com_1", "authorId": "ct_33", "body": "Agreed!", "parentId": "cmp_1" } }
+    ],
+    "turns": [{ "user": "Pin post cmp_2 (the 'Agreed!' reply) in the Customer Hub community" }],
+    "expect": {
+      "state": [{ "sql": "SELECT json_extract(data,'$.pinned') FROM community_posts WHERE json_extract(data,'$.body')='Agreed!'", "equals": 0 }],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-report-create",
+    "category": "direct",
+    "modules": ["M50"],
+    "turns": [{ "user": "Create a saved report called Weekly New Leads that counts new leads over the last 7 days, grouped by source" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M50.A01"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.metric') FROM saved_reports WHERE json_extract(data,'$.name')='Weekly New Leads'", "equals": "new_leads" },
+        { "sql": "SELECT json_extract(data,'$.groupBy') FROM saved_reports WHERE json_extract(data,'$.name')='Weekly New Leads'", "equals": "source" }
+      ]
+    }
+  },
+  {
+    "id": "cov-report-run",
+    "category": "direct",
+    "modules": ["M50"],
+    "setup": [{ "fixture": "savedReport", "with": { "name": "Monthly Revenue", "metric": "revenue" } }],
+    "turns": [{ "user": "Run the Monthly Revenue report" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M50.A07"] }
+    }
+  },
+  {
+    "id": "cov-report-schedule",
+    "category": "direct",
+    "modules": ["M50"],
+    "setup": [{ "fixture": "savedReport", "with": { "name": "Monthly Revenue", "metric": "revenue" } }],
+    "turns": [{ "user": "Send the Monthly Revenue report every week to maya@example.com" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M50.A10"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.schedule.frequency') FROM saved_reports WHERE json_extract(data,'$.name')='Monthly Revenue'", "equals": "weekly" },
+        { "sql": "SELECT json_extract(data,'$.schedule.recipients[0]') FROM saved_reports WHERE json_extract(data,'$.name')='Monthly Revenue'", "equals": "maya@example.com" }
+      ]
+    }
+  },
+  {
+    "id": "cov-report-compare-periods",
+    "category": "direct",
+    "modules": ["M50"],
+    "setup": [{ "fixture": "savedReport", "with": { "name": "New Contacts", "metric": "new_contacts" } }],
+    "turns": [{ "user": "Compare the New Contacts report for the last 30 days against the 30 days before that" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M50.A08"] }
+    }
+  },
+  {
+    "id": "cov-report-top-rep",
+    "category": "indirect",
+    "modules": ["M50"],
+    "setup": [{ "fixture": "savedReport", "with": { "name": "Won Deals by Rep", "metric": "won_deals", "groupBy": "owner", "dateRange": { "from": "2026-07-01", "to": "2026-10-21" } } }],
+    "turns": [{ "user": "Show me the Won Deals by Rep report" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M50.A07"] }
+    }
+  },
+  {
+    "id": "cov-unsupported-ab-test-funnel",
+    "category": "unsupported",
+    "modules": ["M36"],
+    "note": "Funnels have no A/B split testing.",
+    "setup": [{ "fixture": "funnel", "with": { "name": "Webinar Signup" } }],
+    "turns": [{ "user": "Run an A/B test on the first step of the Webinar Signup funnel and tell me which version wins" }],
+    "expect": {
+      "status": ["unsupported"],
+      "noChanges": true
+    }
+  }
+]

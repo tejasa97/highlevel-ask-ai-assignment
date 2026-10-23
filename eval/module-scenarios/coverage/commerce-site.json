@@ -1,0 +1,276 @@
+[
+  {
+    "id": "cov-tax-rule-create",
+    "category": "direct",
+    "modules": ["M34"],
+    "turns": [{ "user": "Create a tax rule called CA Sales Tax at 7.25% for California" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M34.A01"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.rate') FROM tax_rules WHERE json_extract(data,'$.name')='CA Sales Tax'", "equals": 7.25 },
+        { "sql": "SELECT json_extract(data,'$.region') LIKE '%CA%' FROM tax_rules WHERE json_extract(data,'$.name')='CA Sales Tax'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "cov-tax-exemption",
+    "category": "direct",
+    "modules": ["M34", "M01"],
+    "note": "Marcus Lee is ct_33.",
+    "setup": [{ "fixture": "taxRule", "with": { "name": "CA Sales Tax", "rate": 7.25, "region": "US-CA" } }],
+    "turns": [{ "user": "Record a tax exemption for Marcus Lee for California, certificate number EX-4471" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M34.A08"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.contactId') FROM tax_exemptions WHERE json_extract(data,'$.certificateNumber')='EX-4471'", "equals": "ct_33" }]
+    }
+  },
+  {
+    "id": "cov-tax-calculate",
+    "category": "indirect",
+    "modules": ["M34"],
+    "note": "10% on a $200 order is $20. Elodie Mercer has no exemption.",
+    "setup": [
+      { "fixture": "taxRule", "with": { "name": "CA Sales Tax", "rate": 10, "region": "US-CA" } },
+      { "fixture": "product", "with": { "name": "Pro plan" } }
+    ],
+    "turns": [{ "user": "How much tax would Elodie Mercer pay on a $200 order of the Pro plan shipped to California?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M34.A09"] },
+      "reply": { "includes": ["\\b20\\b"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-tax-rule-deactivate",
+    "category": "direct",
+    "modules": ["M34"],
+    "setup": [{ "fixture": "taxRule", "with": { "name": "CA Sales Tax", "rate": 7.25, "region": "US-CA" } }],
+    "turns": [{ "user": "Turn off the CA Sales Tax rule, we no longer collect it" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M34.A10"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM tax_rules WHERE json_extract(data,'$.name')='CA Sales Tax'", "equals": "inactive" }]
+    }
+  },
+  {
+    "id": "cov-website-build",
+    "category": "multi",
+    "modules": ["M35"],
+    "turns": [{ "user": "Create a website called Acme Landing with two pages, Home and Pricing, and make Home the home page" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M35.A01", "M35.A05", "M35.A06"] },
+      "state": [
+        { "sql": "SELECT json_array_length(data,'$.pages') FROM websites WHERE json_extract(data,'$.name')='Acme Landing'", "equals": 2 },
+        { "sql": "SELECT json_extract(data,'$.homePageId') IS NOT NULL FROM websites WHERE json_extract(data,'$.name')='Acme Landing'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "cov-website-publish-without-home",
+    "category": "failure",
+    "modules": ["M35"],
+    "note": "Acme Landing has a page but no home page, so it cannot be published.",
+    "setup": [{ "fixture": "website", "with": { "name": "Acme Landing", "pages": [{ "id": "pg_1", "title": "Pricing", "slug": "pricing", "landingPageId": null }] } }],
+    "turns": [{ "user": "Publish the Acme Landing website" }],
+    "expect": {
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM websites WHERE json_extract(data,'$.name')='Acme Landing'", "equals": "draft" }],
+      "reply": { "includes": ["home"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-website-seo-defaults",
+    "category": "direct",
+    "modules": ["M35"],
+    "setup": [{ "fixture": "website", "with": { "name": "Acme Landing" } }],
+    "turns": [{ "user": "Set the default SEO title for Acme Landing to Acme | Home of better widgets" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M35.A08"] },
+      "state": [{ "sql": "SELECT count(*) FROM websites WHERE json_extract(data,'$.name')='Acme Landing' AND json_extract(data,'$.seoDefaults.title') LIKE '%better widgets%'", "equals": 1 }]
+    }
+  },
+  {
+    "id": "cov-website-unpublish",
+    "category": "direct",
+    "modules": ["M35"],
+    "setup": [
+      {
+        "fixture": "website",
+        "with": {
+          "name": "Acme Landing",
+          "status": "published",
+          "publishedAt": "2026-10-15T10:00:00.000Z",
+          "pages": [{ "id": "pg_1", "title": "Home", "slug": "home", "landingPageId": null }],
+          "homePageId": "pg_1"
+        }
+      }
+    ],
+    "turns": [{ "user": "Take the Acme Landing website offline" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M35.A10"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM websites WHERE json_extract(data,'$.name')='Acme Landing'", "equals": "draft" }]
+    }
+  },
+  {
+    "id": "cov-funnel-create-with-steps",
+    "category": "multi",
+    "modules": ["M36"],
+    "turns": [{ "user": "Create a funnel called Webinar Signup with three steps: Landing, Registration and Thank You" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M36.A01"] },
+      "state": [
+        { "sql": "SELECT json_array_length(data,'$.steps') FROM funnels WHERE json_extract(data,'$.name')='Webinar Signup'", "equals": 3 },
+        { "sql": "SELECT json_extract(data,'$.steps[2].name') FROM funnels WHERE json_extract(data,'$.name')='Webinar Signup'", "equals": "Thank You" }
+      ]
+    }
+  },
+  {
+    "id": "cov-funnel-conversion-metrics",
+    "category": "indirect",
+    "modules": ["M36"],
+    "note": "200 visits at the top, 40 finishing: 20% overall.",
+    "setup": [
+      {
+        "fixture": "funnel",
+        "with": {
+          "name": "Webinar Signup",
+          "status": "published",
+          "publishedAt": "2026-10-10T10:00:00.000Z",
+          "steps": [
+            { "id": "fs_1", "name": "Landing", "landingPageId": null, "visits": 200, "advanced": 80 },
+            { "id": "fs_2", "name": "Registration", "landingPageId": null, "visits": 80, "advanced": 40 },
+            { "id": "fs_3", "name": "Thank You", "landingPageId": null, "visits": 40, "advanced": 40 }
+          ]
+        }
+      }
+    ],
+    "turns": [{ "user": "How is the Webinar Signup funnel converting?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M36.A10"] },
+      "reply": { "includes": ["0\\.2|20 ?%"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-funnel-reorder-and-remove",
+    "category": "multi",
+    "modules": ["M36"],
+    "setup": [
+      {
+        "fixture": "funnel",
+        "with": {
+          "name": "Webinar Signup",
+          "steps": [
+            { "id": "fs_1", "name": "Landing", "landingPageId": null, "visits": 0, "advanced": 0 },
+            { "id": "fs_2", "name": "Registration", "landingPageId": null, "visits": 0, "advanced": 0 },
+            { "id": "fs_3", "name": "Thank You", "landingPageId": null, "visits": 0, "advanced": 0 }
+          ]
+        }
+      }
+    ],
+    "turns": [{ "user": "In the Webinar Signup funnel, remove the Landing step and then put Thank You before Registration" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M36.A06", "M36.A05"] },
+      "state": [
+        { "sql": "SELECT json_array_length(data,'$.steps') FROM funnels WHERE json_extract(data,'$.name')='Webinar Signup'", "equals": 2 },
+        { "sql": "SELECT json_extract(data,'$.steps[0].name') FROM funnels WHERE json_extract(data,'$.name')='Webinar Signup'", "equals": "Thank You" }
+      ]
+    }
+  },
+  {
+    "id": "cov-funnel-ambiguous-name",
+    "category": "ambiguous",
+    "modules": ["M36"],
+    "note": "Two draft funnels are both called Spring Funnel; the assistant should ask which one.",
+    "setup": [
+      { "fixture": "funnel", "with": { "name": "Spring Funnel" } },
+      { "fixture": "funnel", "with": { "name": "Spring Funnel" } }
+    ],
+    "turns": [{ "user": "Add a step called Upsell to the Spring Funnel" }],
+    "expect": {
+      "status": ["clarify", "needs_clarification"],
+      "state": [{ "sql": "SELECT sum(json_array_length(data,'$.steps')) FROM funnels", "equals": 0 }],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-media-upload",
+    "category": "direct",
+    "modules": ["M39"],
+    "turns": [{ "user": "Upload a PNG called company-logo.png, about 20 KB, into the brand folder" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M39.A01"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.folder') FROM media_assets WHERE json_extract(data,'$.name')='company-logo.png'", "equals": "brand" },
+        { "sql": "SELECT json_extract(data,'$.mimeType') FROM media_assets WHERE json_extract(data,'$.name')='company-logo.png'", "equals": "image/png" }
+      ]
+    }
+  },
+  {
+    "id": "cov-media-alt-text",
+    "category": "direct",
+    "modules": ["M39"],
+    "setup": [{ "fixture": "mediaAsset", "with": { "name": "hero.jpg", "mimeType": "image/jpeg" } }],
+    "turns": [{ "user": "Set the alt text of hero.jpg to Our team at the 2026 offsite" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M39.A05"] },
+      "state": [{ "sql": "SELECT count(*) FROM media_assets WHERE json_extract(data,'$.name')='hero.jpg' AND json_extract(data,'$.altText') LIKE '%offsite%'", "equals": 1 }]
+    }
+  },
+  {
+    "id": "cov-media-delete-in-use",
+    "category": "failure",
+    "modules": ["M39", "M37"],
+    "note": "hero.jpg (md_1) is used on the Launch page (lp_1), so it cannot be deleted.",
+    "setup": [
+      { "fixture": "mediaAsset", "with": { "name": "hero.jpg", "mimeType": "image/jpeg" } },
+      { "fixture": "landingPage", "with": { "title": "Launch page", "slug": "launch", "mediaIds": ["md_1"] } }
+    ],
+    "turns": [{ "user": "Delete hero.jpg" }],
+    "expect": {
+      "state": [{ "sql": "SELECT count(*) FROM media_assets WHERE json_extract(data,'$.name')='hero.jpg'", "equals": 1 }],
+      "reply": { "includes": ["used|referenc|page"] }
+    }
+  },
+  {
+    "id": "cov-media-delete-unused",
+    "category": "direct",
+    "modules": ["M39"],
+    "setup": [
+      { "fixture": "mediaAsset", "with": { "name": "old-banner.png" } },
+      { "fixture": "mediaAsset", "with": { "name": "hero.jpg", "mimeType": "image/jpeg" } }
+    ],
+    "turns": [{ "user": "Delete old-banner.png, nothing uses it any more" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M39.A10"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM media_assets WHERE json_extract(data,'$.name')='old-banner.png'", "equals": 0 },
+        { "sql": "SELECT count(*) FROM media_assets WHERE json_extract(data,'$.name')='hero.jpg'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "cov-media-share-link",
+    "category": "direct",
+    "modules": ["M39"],
+    "setup": [{ "fixture": "mediaAsset", "with": { "name": "hero.jpg", "mimeType": "image/jpeg" } }],
+    "turns": [{ "user": "Give me a share link for hero.jpg that expires on 2026-11-30 at 17:00 UTC" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M39.A09"] },
+      "state": [{ "sql": "SELECT json_array_length(data,'$.accessLinks') FROM media_assets WHERE json_extract(data,'$.name')='hero.jpg'", "equals": 1 }]
+    }
+  }
+]
