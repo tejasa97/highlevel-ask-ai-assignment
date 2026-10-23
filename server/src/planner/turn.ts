@@ -143,7 +143,6 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let identityCheck: string | undefined;
   let outcome: Outcome | undefined;
   let checkedIdentity = false;
-  let uniqueIdentity: string | undefined;
   const deliverySurfaces = registry.deliverySurfaces();
   const prompt = () =>
     userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, looked, deliverySurfaces, identityCheck, outcome });
@@ -175,21 +174,23 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       return { kind: "reply", status: "unsupported", text: `Delivery to ${outcome.destination} isn't supported. Nothing was sent or published. Supported surfaces: ${deliverySurfaces.map((s) => s.label).join(", ")}.` };
     }
 
-    if (d.type === "clarify" && d.clarification === "identity" && d.lookup && uniqueIdentity === JSON.stringify(d.lookup)) {
-      return failed("The account lookup found one matching record, but the planner still asked which one. Nothing was changed; please try again.");
-    }
-    if (d.type === "clarify" && d.clarification === "identity" && d.lookup && store && !checkedIdentity) {
-      checkedIdentity = true;
+    if (d.type === "clarify" && d.clarification === "identity" && store) {
       try {
+        if (!d.lookup) throw new Error("Identity clarification requires a typed lookup selector");
         const check = checkIdentity(d.lookup, registry, store);
         identityCheck = check.digest;
-        if (check.count === 1) uniqueIdentity = JSON.stringify(d.lookup);
         // Real ambiguity belongs to the user. Unique, absent and inactive matches need a grounded replan.
         if (check.count > 1) return { kind: "reply", status: "clarify", text: `I found ${check.count} matching ${d.lookup.entity.replaceAll("_", " ")} records. ${check.options ? "Which one do you mean?" : "Please give a more specific name or qualifier."}`, options: check.options };
+        if (checkedIdentity) {
+          if (!check.count) return { kind: "reply", status: "clarify", text: `I couldn't find a matching ${d.lookup.entity.replaceAll("_", " ")}. Please give a fuller name or qualifier.` };
+          return failed("The account lookup found one matching record, but the planner still asked which one. Nothing was changed; please try again.");
+        }
       } catch (err) {
         if (!(err instanceof Error)) throw err;
+        if (checkedIdentity) return failed(`The planner couldn't form a valid identity lookup: ${err.message}. Nothing was changed.`);
         identityCheck = JSON.stringify({ error: err.message });
       }
+      checkedIdentity = true;
       user = prompt();
       reply = await call(user, "plan after identity check");
       continue;
