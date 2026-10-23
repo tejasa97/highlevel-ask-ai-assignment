@@ -4,6 +4,7 @@ import { contains, freshId, Limit, listOf, page, requirePermission, requireState
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Clock } from "../../store/clock.js";
+import type { EventTrigger } from "../m17-event-triggers/schema.js";
 import { Workflow, WorkflowRun, WorkflowStep } from "./schema.js";
 
 import "./fixtures.js";
@@ -47,6 +48,17 @@ function stepOf(wf: Workflow, stepId: string): WorkflowStep {
 
 function blankStep(id: string, kind: WorkflowStep["kind"], name: string): WorkflowStep {
   return { id, kind, name, actionId: null, args: {}, waitMinutes: null, condition: null };
+}
+
+const OWN_FIELDS: Record<WorkflowStep["kind"], string[]> = { action: ["actionId", "args"], wait: ["waitMinutes"], condition: ["condition"] };
+
+/** A step only carries the settings of its own kind; anything else was a mistake, not something to drop quietly. */
+function refuseForeignFields(kind: WorkflowStep["kind"], given: Record<string, unknown>): void {
+  for (const key of ["actionId", "args", "waitMinutes", "condition"]) {
+    if (given[key] !== undefined && !OWN_FIELDS[kind].includes(key)) {
+      throw new ActionError("INVALID", `A${kind === "action" ? "n" : ""} ${kind} step has no ${key}; it only has ${OWN_FIELDS[kind].join(" and ")}`);
+    }
+  }
 }
 
 const createWorkflow = defineAction({
@@ -137,6 +149,7 @@ const addStep = defineAction({
     editable(wf);
     const name = a.name.trim();
     if (!name) throw new ActionError("INVALID", "Name can't be blank");
+    refuseForeignFields(a.kind, a);
     const step = blankStep(freshId(store, "st", wf.steps.map((s) => s.id)), a.kind, name);
     if (a.kind === "action") {
       step.actionId = a.actionId ?? null;
@@ -182,17 +195,11 @@ const updateStep = defineAction({
       if (!name) throw new ActionError("INVALID", "Name can't be blank");
       next.name = name;
     }
-    if (current.kind === "action") {
-      if (a.waitMinutes !== undefined || a.condition !== undefined) throw new ActionError("INVALID", "An action step has no wait or condition");
-      if (a.actionId !== undefined) next.actionId = a.actionId;
-      if (a.args !== undefined) next.args = a.args;
-    } else if (current.kind === "wait") {
-      if (a.actionId !== undefined || a.args !== undefined || a.condition !== undefined) throw new ActionError("INVALID", "A wait step only has waitMinutes");
-      if (a.waitMinutes !== undefined) next.waitMinutes = a.waitMinutes;
-    } else {
-      if (a.actionId !== undefined || a.args !== undefined || a.waitMinutes !== undefined) throw new ActionError("INVALID", "A condition step only has a condition");
-      if (a.condition !== undefined) next.condition = a.condition;
-    }
+    refuseForeignFields(current.kind, a);
+    if (a.actionId !== undefined) next.actionId = a.actionId;
+    if (a.args !== undefined) next.args = a.args;
+    if (a.waitMinutes !== undefined) next.waitMinutes = a.waitMinutes;
+    if (a.condition !== undefined) next.condition = a.condition;
     if (JSON.stringify(next) === JSON.stringify(current)) throw new ActionError("CONFLICT", "The record already has that value");
     return store.update<Workflow>("workflows", wf.id, {
       steps: wf.steps.map((s) => (s.id === current.id ? next : s)),
@@ -289,6 +296,8 @@ const pauseWorkflow = defineAction({
   handler: ({ workflowId }, { store, clock }) => {
     const wf = mustGet<Workflow>(store, "workflows", workflowId, "workflow");
     requireState(`Workflow "${wf.name}"`, wf.status, ["published"], "be paused");
+    const live = store.find<EventTrigger>("event_triggers", (t) => t.enabled && t.workflowId === wf.id)[0];
+    if (live) throw new ActionError("CONFLICT", `Trigger "${live.name}" is enabled and starts this workflow; disable it (M17.A08) before pausing`);
     return store.update<Workflow>("workflows", wf.id, { status: "paused", updatedAt: iso(clock) });
   },
 });

@@ -150,6 +150,25 @@ test("M16.A09 pause refuses a workflow that is already paused", async () => {
   assert.equal(failure(() => w.call("M16.A09", { workflowId: wf.id }) && w.call("M16.A09", { workflowId: wf.id })).code, "CONFLICT");
 });
 
+test("M16.A09 a workflow an enabled trigger starts can't be paused until the trigger is off", async () => {
+  const w = await testWorld();
+  const wf = liveWorkflow(w);
+  const trigger = w.f.eventTrigger({ workflowId: wf.id, enabled: true });
+  assert.match(failure(() => w.call("M16.A09", { workflowId: wf.id })).message, /disable it/);
+  w.call("M17.A08", { triggerId: trigger.id });
+  assert.equal((w.call("M16.A09", { workflowId: wf.id }) as Workflow).status, "paused");
+});
+
+test("M16.A04 add step refuses settings that belong to another kind, as edit does", async () => {
+  const w = await testWorld();
+  const wf = w.call("M16.A01", { name: "Welcome" }) as Workflow;
+  const err = failure(() => w.call("M16.A04", { workflowId: wf.id, kind: "wait", name: "Wait", waitMinutes: 5, actionId: "M01.A04" }));
+  assert.equal(err.code, "INVALID");
+  assert.match(err.message, /wait step has no actionId/);
+  assert.equal(failure(() => w.call("M16.A04", { workflowId: wf.id, kind: "action", name: "Tag", actionId: "M01.A04", waitMinutes: 5 })).code, "INVALID");
+  assert.equal((w.call("M16.A02", { workflowId: wf.id }) as Workflow).steps.length, 0);
+});
+
 test("M16.A05 a no-op step edit conflicts", async () => {
   const w = await testWorld();
   const wf = w.f.workflow({ name: "Zebra", steps: [actionStep("step_a")] });
