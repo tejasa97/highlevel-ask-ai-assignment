@@ -61,11 +61,14 @@ function surveyErrors(survey: Survey): string[] {
   return errors;
 }
 
-function checkBranch(question: SurveyQuestion, branch: { ifAnswer: string | number; goTo: string }, ids: Set<string>): void {
-  if (branch.goTo !== "end" && !ids.has(branch.goTo)) {
-    throw new ActionError("NOT_FOUND", `No question with id ${branch.goTo} on this survey`, { id: branch.goTo });
+// Branches only skip ahead, so a response can never come back to a question it has already answered.
+function checkBranch(survey: Survey, question: SurveyQuestion, branch: { ifAnswer: string | number; goTo: string }): void {
+  if (branch.goTo !== "end") {
+    const target = survey.questions.findIndex((item) => item.id === branch.goTo);
+    if (target < 0) throw new ActionError("NOT_FOUND", `No question with id ${branch.goTo} on this survey`, { id: branch.goTo });
+    if (branch.goTo === question.id) throw new ActionError("CONFLICT", "A question can't branch to itself");
+    if (target < survey.questions.findIndex((item) => item.id === question.id)) throw new ActionError("CONFLICT", `Branches only skip ahead, and ${branch.goTo} comes before "${question.text}"`);
   }
-  if (branch.goTo === question.id) throw new ActionError("CONFLICT", "A question can't branch to itself");
   if (question.type === "yes_no") {
     if (typeof branch.ifAnswer !== "string" || !["yes", "no"].includes(branch.ifAnswer.trim().toLowerCase())) {
       throw new ActionError("INVALID", `Yes/no questions branch on yes or no, not ${JSON.stringify(branch.ifAnswer)}`);
@@ -216,6 +219,14 @@ const updateQuestion = defineAction({
     if (a.required !== undefined) next.required = a.required;
     if (a.options !== undefined) next.options = a.options;
     choiceNeedsOptions(next.type, next.options, next.text);
+    for (const branch of next.branching) {
+      try {
+        checkBranch(survey, next, branch);
+      } catch (error) {
+        if (error instanceof ActionError) throw new ActionError("CONFLICT", `${error.message}; clear its branching first (M19.A06)`);
+        throw error;
+      }
+    }
     if (JSON.stringify(next) === JSON.stringify(current)) throw new ActionError("CONFLICT", "The record already has that value");
     return store.update<Survey>("surveys", survey.id, {
       questions: survey.questions.map((question) => (question.id === current.id ? next : question)),
@@ -244,10 +255,9 @@ const setBranching = defineAction({
     const survey = mustGet<Survey>(store, "surveys", surveyId, "survey");
     const current = questionOf(survey, questionId);
     draftOnly(survey);
-    const ids = new Set(survey.questions.map((question) => question.id));
     const seen = new Set<string>();
     for (const branch of branching) {
-      checkBranch(current, branch, ids);
+      checkBranch(survey, current, branch);
       const key = JSON.stringify(branch.ifAnswer);
       if (seen.has(key)) throw new ActionError("CONFLICT", "Two branches use the same answer");
       seen.add(key);
@@ -372,6 +382,8 @@ function normalize(question: SurveyQuestion, value: AnswerValue): AnswerValue {
 
 function walk(survey: Survey, raw: Record<string, AnswerValue>): Record<string, AnswerValue> {
   const index = new Map(survey.questions.map((question, position) => [question.id, position]));
+  const stray = Object.keys(raw).find((id) => !index.has(id));
+  if (stray) throw new ActionError("INVALID", `Survey ${survey.id} has no question ${stray}`);
   const answers: Record<string, AnswerValue> = {};
   const seen = new Set<string>();
   let cursor = 0;

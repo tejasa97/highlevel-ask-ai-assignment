@@ -145,6 +145,40 @@ test("M19.A09 a branch jumps over the questions in between", async () => {
   assert.equal(skipped.answers[after.id], "landed");
 });
 
+test("M19.A06 branches only skip ahead", async () => {
+  const w = await testWorld();
+  const created = w.call("M19.A01", { name: "Order" }) as Survey;
+  let survey = w.call("M19.A04", { surveyId: created.id, text: "First", type: "yes_no" }) as Survey;
+  survey = w.call("M19.A04", { surveyId: survey.id, text: "Second", type: "yes_no" });
+  const [first, second] = survey.questions;
+  const err = failure(() => w.call("M19.A06", { surveyId: survey.id, questionId: second!.id, branching: [{ ifAnswer: "yes", goTo: first!.id }] }));
+  assert.equal(err.code, "CONFLICT");
+  assert.match(err.message, /skip ahead/);
+  assert.equal((w.call("M19.A06", { surveyId: survey.id, questionId: first!.id, branching: [{ ifAnswer: "yes", goTo: second!.id }] }) as Survey).questions[0]!.branching.length, 1);
+});
+
+test("M19.A05 changing a question can't leave its branching invalid", async () => {
+  const w = await testWorld();
+  const created = w.call("M19.A01", { name: "Retype" }) as Survey;
+  let survey = w.call("M19.A04", { surveyId: created.id, text: "Pick", type: "single_choice", options: ["A", "B"] }) as Survey;
+  survey = w.call("M19.A04", { surveyId: survey.id, text: "After", type: "text" });
+  const [pick, after] = survey.questions;
+  w.call("M19.A06", { surveyId: survey.id, questionId: pick!.id, branching: [{ ifAnswer: "A", goTo: after!.id }] });
+  const dropped = failure(() => w.call("M19.A05", { surveyId: survey.id, questionId: pick!.id, options: ["B", "C"] }));
+  assert.equal(dropped.code, "CONFLICT");
+  assert.match(dropped.message, /clear its branching first/);
+  assert.equal(failure(() => w.call("M19.A05", { surveyId: survey.id, questionId: pick!.id, type: "yes_no" })).code, "CONFLICT");
+  w.call("M19.A06", { surveyId: survey.id, questionId: pick!.id, branching: [] });
+  assert.deepEqual((w.call("M19.A05", { surveyId: survey.id, questionId: pick!.id, options: ["B", "C"] }) as Survey).questions[0]!.options, ["B", "C"]);
+});
+
+test("M19.A09 answers for questions the survey doesn't have are refused", async () => {
+  const { w, paths, path } = await pathsSurvey();
+  const err = failure(() => w.call("M19.A09", { surveyId: paths.id, answers: { [path.id]: "B", qu_typo: "x" } }));
+  assert.equal(err.code, "INVALID");
+  assert.match(err.message, /qu_typo/);
+});
+
 test("M19.A08 close stops responses, and closing twice conflicts", async () => {
   const { w, paths, path, onlyB } = await pathsSurvey();
   const closed = w.call("M19.A08", { surveyId: paths.id }) as Survey;
