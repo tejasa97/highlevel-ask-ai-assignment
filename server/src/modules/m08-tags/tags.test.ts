@@ -67,6 +67,22 @@ test("M08.A03 rename rewrites every tagged record", async () => {
   assert.deepEqual(w.call("M01.A02", { contactId: b.id }).tags, ["Hot lead"]);
 });
 
+test("M08.A03/A09 rename and merge keep a campaign's audience tag in step until it launches", async () => {
+  const w = await testWorld();
+  const t = w.f.tag({ name: "hot" });
+  const c = w.f.contact({ tags: ["hot"] });
+  const draft = w.f.campaign({ audience: { tag: "HOT", contactIds: [] } });
+  const live = w.f.campaign({ name: "Live", status: "active", launchedAt: w.f.at(-1), audience: { tag: "hot", contactIds: [] } });
+  assert.equal(w.call("M15.A02", { campaignId: draft.id }).audienceSize, 1);
+  w.call("M08.A03", { tagId: t.id, name: "Hot lead" });
+  assert.equal(w.call("M15.A02", { campaignId: draft.id }).audience.tag, "Hot lead");
+  assert.equal(w.call("M15.A02", { campaignId: draft.id }).audienceSize, 1);
+  assert.equal(w.call("M15.A02", { campaignId: live.id }).audience.tag, "hot");
+  w.call("M08.A09", { sourceTagId: t.id, targetTagId: "tg_1" });
+  assert.equal(w.call("M15.A02", { campaignId: draft.id }).audience.tag, "vip");
+  assert.deepEqual(w.call("M01.A02", { contactId: c.id }).tags, ["vip"]);
+});
+
 test("M08.A03 rename refuses the same name", async () => {
   const w = await testWorld();
   const t = w.f.tag({ name: "hot" });

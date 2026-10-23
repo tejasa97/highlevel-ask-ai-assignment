@@ -21,7 +21,7 @@ const CampaignId = z.string().describe("campaign id (cp_…)");
 
 function audience(store: Store, c: Campaign): Contact[] {
   const ids = new Set(c.audience.contactIds);
-  return store.find<Contact>("contacts", (x) => x.status === "active" && (ids.has(x.id) || (!!c.audience.tag && x.tags.includes(c.audience.tag))));
+  return store.find<Contact>("contacts", (x) => x.status === "active" && (ids.has(x.id) || (!!c.audience.tag && x.tags.some((t) => t.toLowerCase() === c.audience.tag!.toLowerCase()))));
 }
 
 function editable(store: Store, id: string): Campaign {

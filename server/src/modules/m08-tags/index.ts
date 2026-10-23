@@ -3,6 +3,7 @@ import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { candidates, contains, Limit, listOf, page } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
+import type { Campaign } from "../m15-campaigns/schema.js";
 import { Tag, TAG_COLORS, TAGGED_TABLES, TAGGED_TYPES } from "./schema.js";
 
 export { Tag } from "./schema.js";
@@ -31,8 +32,13 @@ function usage(store: Store, name: string): { contacts: number; leads: number; t
   return { contacts, leads, total: contacts + leads };
 }
 
-/** Replaces tag `from` with `to` on every record (dropping it when `to` is null), without duplicates. */
+/**
+ * Replaces tag `from` with `to` on every record (dropping it when `to` is null), without duplicates, and on the
+ * audience of every campaign that hasn't launched. Returns how many records changed.
+ */
 function retag(store: Store, from: string, to: string | null): number {
+  for (const c of store.find<Campaign>("campaigns", (c) => (c.status === "draft" || c.status === "scheduled") && !!c.audience.tag && lower(c.audience.tag) === lower(from)))
+    store.update("campaigns", c.id, { audience: { ...c.audience, tag: to } });
   let n = 0;
   for (const type of TAGGED_TYPES) {
     for (const r of taggedWith(store, type, from)) {
