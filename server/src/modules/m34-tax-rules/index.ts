@@ -101,8 +101,9 @@ export function calculateTax(input: {
   const taxTotal = cents(lines.reduce((sum, line) => sum + line.tax, 0));
   const exclusiveTax = cents(lines.reduce((sum, line) => sum + (line.inclusive ? 0 : line.tax), 0));
   const lineSum = cents(lines.reduce((sum, line) => sum + line.amount, 0));
-  const subtotal = input.subtotal ?? lineSum;
   const discountTotal = input.discountTotal ?? 0;
+  // Line amounts are already after discount, so the pre-discount subtotal adds the discount back.
+  const subtotal = input.subtotal ?? cents(lineSum + discountTotal);
   return { exempt, lines, taxTotal, exclusiveTax, subtotal, discountTotal, total: cents(subtotal - discountTotal + exclusiveTax) };
 }
 
@@ -333,7 +334,7 @@ const calculate = defineAction({
       productId: z.string(),
       amount: z.number().min(0).describe("USD, after discount"),
     })),
-    subtotal: z.number().min(0).optional().describe("before discount; defaults to the sum of line amounts"),
+    subtotal: z.number().min(0).optional().describe("before discount; defaults to the line amounts plus discountTotal"),
     discountTotal: z.number().min(0).optional().describe("defaults to 0"),
   }),
   output: TaxOut,

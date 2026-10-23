@@ -150,6 +150,12 @@ test("M34.A09 inclusive tax is carved out, the order total adds exclusive tax on
   assert.deepEqual([out.taxTotal, out.exclusiveTax, out.total], [20, 10, 200]);
 });
 
+test("M34.A09 without a subtotal, the discount is added back to the after-discount lines instead of subtracted twice", async () => {
+  const { w, contact, plain } = await regionalRules();
+  const out = w.call("M34.A09", { contactId: contact.id, country: "DE", lines: [{ productId: plain.id, amount: 90 }], discountTotal: 10 });
+  assert.deepEqual([out.subtotal, out.discountTotal, out.total], [100, 10, 90]);
+});
+
 test("M34.A09 an unknown contact is NOT_FOUND", async () => {
   const w = await testWorld();
   assert.equal(failure(() => w.call("M34.A09", { contactId: "ct_99999", country: "US", lines: [] })).code, "NOT_FOUND");
