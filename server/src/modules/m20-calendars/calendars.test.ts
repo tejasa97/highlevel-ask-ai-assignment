@@ -30,6 +30,19 @@ test("M20.A10 archive ignores past, cancelled, completed and other calendars' ap
   assert.equal(failure(() => w.call("M20.A10", { calendarId: done.id })).code, "CONFLICT");
 });
 
+test("M20.A09/A10 a calendar on a published booking page can't go private or be archived", async () => {
+  const w = await testWorld();
+  const cal = w.f.calendar({ visibility: "public", status: "active" });
+  const page = w.f.bookingPage();
+  w.call("M23.A05", { bookingPageId: page.id, calendarId: cal.id });
+  w.call("M23.A09", { bookingPageId: page.id });
+  assert.match(failure(() => w.call("M20.A09", { calendarId: cal.id, visibility: "private" })).message, /published booking page/);
+  assert.equal(failure(() => w.call("M20.A10", { calendarId: cal.id })).code, "CONFLICT");
+  w.call("M23.A10", { bookingPageId: page.id });
+  assert.equal(w.call("M20.A09", { calendarId: cal.id, visibility: "private" }).visibility, "private");
+  assert.equal(w.call("M20.A10", { calendarId: cal.id }).status, "archived");
+});
+
 test("M20.A01 create refuses an unknown time zone", async () => {
   const w = await testWorld();
   assert.equal(failure(() => w.call("M20.A01", { name: "Nope", timezone: "Not/AZone" })).code, "INVALID");

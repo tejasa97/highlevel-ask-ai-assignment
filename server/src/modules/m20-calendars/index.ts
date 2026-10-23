@@ -4,6 +4,7 @@ import { activeUser, atLeastOne, contains, Limit, listOf, page, requireState } f
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Appointment } from "../m21-appointments/schema.js";
+import type { BookingPage } from "../m23-booking-pages/schema.js";
 import { Calendar } from "./schema.js";
 import "./fixtures.js";
 
@@ -23,6 +24,12 @@ function live(store: Store, id: string, doing: string): Calendar {
   const cal = mustGet<Calendar>(store, "calendars", id, "calendar");
   requireState(`Calendar "${cal.name}"`, cal.status, ["active"], doing);
   return cal;
+}
+
+// A published booking page is live to visitors, so its calendar must stay public and active.
+function requireNoPublishedPage(store: Store, cal: Calendar, doing: string): void {
+  const pages = store.find<BookingPage>("booking_pages", (p) => p.calendarId === cal.id && p.status === "published");
+  if (pages.length) throw new ActionError("CONFLICT", `Calendar "${cal.name}" is on published booking page ${pages[0]!.id}; unpublish it (M23.A10) before ${doing}`);
 }
 
 function hosts(store: Store, ids: string[]): string[] {
@@ -213,6 +220,7 @@ const setVisibility = defineAction({
   handler: ({ calendarId, visibility }, { store, clock }) => {
     const cal = live(store, calendarId, "change visibility");
     if (cal.visibility === visibility) throw new ActionError("CONFLICT", "The calendar already has that visibility");
+    if (visibility === "private") requireNoPublishedPage(store, cal, "making it private");
     return store.update<Calendar>("calendars", cal.id, { visibility, updatedAt: clock.now().toISOString() });
   },
 });
@@ -229,6 +237,7 @@ const archiveCalendar = defineAction({
   handler: ({ calendarId }, { store, clock }) => {
     const cal = mustGet<Calendar>(store, "calendars", calendarId, "calendar");
     requireState(`Calendar "${cal.name}"`, cal.status, ["active"], "be archived");
+    requireNoPublishedPage(store, cal, "archiving it");
     const now = clock.now().getTime();
     const upcoming = store.find<Appointment>(
       "appointments",
