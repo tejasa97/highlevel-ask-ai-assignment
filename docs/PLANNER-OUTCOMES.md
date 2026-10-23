@@ -1,6 +1,6 @@
 # Grounded planner outcomes
 
-Implemented on `codex/planner-record-lookups`, after the record-lookup batch (`f0870a6`). Shared by every provider: no model-name branching, embedding-model replacement or second executor.
+Originally implemented on `codex/planner-record-lookups`, after the record-lookup batch (`f0870a6`); the complete work is now carried on `codex/planner-outcomes-and-retrieval`. Shared by every provider: no model-name branching, embedding-model replacement or second executor. Start with [what changed and why](PLANNER-CHANGES.md) for the rationale behind these mechanics.
 
 ## Seven changes
 
@@ -22,4 +22,4 @@ Round-robin references use the actual list item schema: a User has `$rr.id`; som
 
 At most one extra identity-check replan, one tool search, one read/replan and one repair are allowed per turn (five planner calls maximum). No retry loop automatically sends or writes. Genuine business choices remain with the user. No automatic team-removal schedule is invented from “for a while”.
 
-Seed data, scenario assertions, frozen reporting data and retrieval questions are unchanged. Regression/development runs are reported separately; already inspected scenarios are not a new holdout. Initial development evidence is preserved even when a later source checkpoint improves. See the accompanying validation report for measured results and remaining failures.
+Seed data, scenario assertions, frozen reporting data and retrieval questions are unchanged. Regression/development runs are reported separately; already inspected scenarios are not a new holdout. Initial development evidence is preserved even when a later source checkpoint improves. See the [validation report](PLANNER-OUTCOMES-VALIDATION.md) for measured results and remaining failures.
