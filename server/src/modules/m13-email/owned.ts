@@ -53,10 +53,7 @@ export function sendOwnedEmail(
     createdBy: ctx.actorId ?? "us_1",
     createdAt: at,
   }) as Email;
-  const out = deliverEmail(ctx.store, e, at);
-  if (out.status !== "delivered")
-    throw new ActionError("UNAVAILABLE", out.failureReason ?? "The email was not delivered");
-  return out;
+  return deliverEmail(ctx.store, e, at);
 }
 
 /** Same eligibility rules as delivery, without creating records or attempting a send. */
