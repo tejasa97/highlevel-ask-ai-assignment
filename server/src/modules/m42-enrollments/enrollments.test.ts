@@ -17,6 +17,14 @@ test("M42.A04 same expiry is CONFLICT", async () => {
   assert.equal(failure(() => w.call("M42.A04", { enrollmentId: e.id, expiresAt: e.expiresAt })).code, "CONFLICT");
 });
 
+test("M42.A01 refuses an enrollment that has already expired", async () => {
+  const w = await testWorld();
+  const course = w.f.course({ status: "published" });
+  const contact = w.f.contact();
+  assert.equal(failure(() => w.call("M42.A01", { courseId: course.id, contactId: contact.id, expiresAt: w.f.at(-1) })).code, "INVALID");
+  assert.equal(w.call("M42.A01", { courseId: course.id, contactId: contact.id, expiresAt: w.f.at(30) }).status, "active");
+});
+
 test("M42.A05 suspending twice is CONFLICT", async () => {
   const w = await testWorld();
   const e = w.f.enrollment();

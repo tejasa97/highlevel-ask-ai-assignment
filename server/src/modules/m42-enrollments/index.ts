@@ -20,7 +20,7 @@ const ContactId = z.string().describe("contact id (ct_…)");
 const LessonId = z.string().describe("lesson id (lsn_…)");
 const When = z.string().refine((s) => !Number.isNaN(Date.parse(s.length === 10 ? `${s}T00:00:00.000Z` : s)), "expected an ISO date or timestamp");
 
-const enrollmentOf = (store: Store, id: string) => mustGet<Enrollment>(store, "enrollments", id, "enrollment");
+const enrollmentOf =(store: Store, id: string) => mustGet<Enrollment>(store, "enrollments", id, "enrollment");
 
 function openEnrollment(store: Store, courseId: string, contactId: string): Enrollment | undefined {
   return store.find<Enrollment>(
@@ -49,6 +49,7 @@ const enroll = defineAction({
   handler: (a, { store, clock }) => {
     const c = mustGet<Course>(store, "courses", a.courseId, "course");
     requireState(`Course "${c.title}"`, c.status, ["published"], "accept learners");
+    if (a.expiresAt && !stillOpen(a.expiresAt, clock.now().toISOString())) throw new ActionError("INVALID", `Expiry ${a.expiresAt} is already in the past`);
     const who = person(store, { contactId: a.contactId }, "enroll");
     const dup = openEnrollment(store, c.id, who.id);
     if (dup) throw new ActionError("DUPLICATE", `${who.name} is already enrolled in ${c.title} (${dup.id}, ${dup.status})`, { existingId: dup.id });
