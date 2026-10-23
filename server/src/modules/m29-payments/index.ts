@@ -137,6 +137,7 @@ const recordPayment = defineAction({
     }
     const invoiceId = a.invoiceId ?? req?.invoiceId ?? undefined;
     const failed = a.outcome === "failed";
+    if (req && !failed && a.amount !== req.amount) throw new ActionError("CONFLICT", `Payment request ${req.id} is for $${req.amount}; a payment of $${a.amount} can't settle it`, { amount: req.amount });
     if (!failed && a.failureCode) throw new ActionError("INVALID", "failureCode only applies when outcome is failed");
     const inv = invoiceId && !failed ? openInvoice(store, invoiceId, a.contactId) : undefined;
     if (inv && a.amount > inv.amountDue) throw new ActionError("CONFLICT", `Invoice ${inv.number} only has $${inv.amountDue} due; record the payment without invoiceId and allocate part of it`);
