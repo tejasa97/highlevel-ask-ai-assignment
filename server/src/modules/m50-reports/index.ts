@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { cents, contains, inDateRange, Limit, listOf, page, requirePermission } from "../../registry/helpers.js";
+import { cents, contains, inDateRange, Limit, listOf, Name, page, requirePermission } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Contact } from "../m01-contacts/schema.js";
@@ -19,7 +19,6 @@ export { SavedReport } from "./schema.js";
 // pipeline_value ignores the date range and sums open opportunity value.
 
 const ReportId = z.string().describe("saved report id (rpt_…)");
-const Name = z.string().trim().min(1);
 const Filters = z.strictObject({
   ownerId: z.string().trim().min(1).optional(),
   source: z.string().trim().min(1).optional(),
