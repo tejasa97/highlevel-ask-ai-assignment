@@ -29,10 +29,12 @@ test("read-only requests remain valid; a write cannot be smuggled into a read ou
 });
 
 test("read outcomes may run queries with bookkeeping without lowering execution risk", () => {
-  const plan = compiled("M50.A07", { reportId: "rpt_1" });
-  assert.deepEqual(outcomeErrors(plan, { effect: "read", actions: ["M50.A07"], destination: null }), []);
-  assert.equal(registry.get("M50.A07")!.risk, "write");
-  assert.equal(registry.get("M50.A07")!.query, true);
+  for (const [id, args] of [["M50.A07", { reportId: "rpt_1" }], ["M17.A09", { triggerId: "trg_1", payload: {} }]] as const) {
+    const plan = compiled(id, args);
+    assert.deepEqual(outcomeErrors(plan, { effect: "read", actions: [id], destination: null }), []);
+    assert.equal(registry.get(id)!.risk, "write");
+    assert.equal(registry.get(id)!.query, true);
+  }
 });
 
 test("query metadata cannot disguise an external or destructive action", () => {
