@@ -14,6 +14,8 @@ Implemented on `codex/planner-record-lookups`, after the record-lookup batch (`f
 
 ## Additional interface correction
 
+A query that only persists internal bookkeeping can declare `query: true` (currently report execution). It may satisfy a read outcome even though its existing execution risk is `write`. This does not change confirmation, permission or handler behavior. Registry validation forbids marking external/destructive actions as queries. The broader development run caught and motivated this correction: the initial quality guard incorrectly rejected report execution. Report discovery also explicitly directs metric/ranking questions to actual computation rather than stopping at saved definitions.
+
 Round-robin references use the actual list item schema: a User has `$rr.id`; some team summaries have `$rr.userId`. The old prompt's universal `$rr.userId` example was incorrect. `item` and `rr` are reserved bindings, not step IDs.
 
 ## Boundaries and verification

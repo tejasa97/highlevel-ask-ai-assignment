@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { before, test } from "node:test";
 import { compile } from "../core/compile.js";
-import { loadRegistry, type Registry } from "../registry/registry.js";
+import { loadRegistry, Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { checkIdentity, outcomeErrors } from "./contracts.js";
 import type { SubmitPlan } from "./submit-plan.js";
@@ -26,6 +26,21 @@ test("read-only requests remain valid; a write cannot be smuggled into a read ou
   const outcome = { effect: "read" as const, actions: ["M06.A03"], destination: null };
   assert.deepEqual(outcomeErrors(compiled("M06.A03", {}), outcome), []);
   assert.match(outcomeErrors(compiled("M06.A01", { title: "Unexpected" }), outcome).join("\n"), /read-only/);
+});
+
+test("read outcomes may run queries with bookkeeping without lowering execution risk", () => {
+  const plan = compiled("M50.A07", { reportId: "rpt_1" });
+  assert.deepEqual(outcomeErrors(plan, { effect: "read", actions: ["M50.A07"], destination: null }), []);
+  assert.equal(registry.get("M50.A07")!.risk, "write");
+  assert.equal(registry.get("M50.A07")!.query, true);
+});
+
+test("query metadata cannot disguise an external or destructive action", () => {
+  for (const id of ["M13.A03", "M01.A05"]) {
+    const action = registry.get(id)!;
+    assert.ok(["external", "destructive"].includes(action.risk));
+    assert.throws(() => new Registry().register({ actions: [{ ...action, query: true }] }), /cannot hide/);
+  }
 });
 
 test("delivery metadata distinguishes similarly named posting actions", () => {

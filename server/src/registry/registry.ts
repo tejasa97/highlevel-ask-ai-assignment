@@ -48,6 +48,7 @@ export class Registry {
 
   register(mod: ModuleExports): void {
     for (const def of mod.actions) {
+      if (def.query && (def.risk === "external" || def.risk === "destructive")) throw new Error(`${def.id}: query metadata cannot hide external or destructive effects`);
       const entry = CATALOG_ACTIONS.get(def.id);
       if (!entry) throw new Error(`${def.id} is not in the catalog`);
       if (this.actions.has(def.id)) throw new Error(`${def.id} is registered twice`);
