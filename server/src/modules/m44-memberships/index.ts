@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -382,5 +383,8 @@ const checkAccess = defineAction({
 });
 
 export default {
+  resolvers: {
+    membership_plan: tableResolver("membership_plans"),
+  },
   actions: [createPlan, getPlan, listPlans, updateDescription, addEntitlement, removeEntitlement, grant, setExpiry, revoke, checkAccess],
 } satisfies ModuleExports;

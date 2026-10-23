@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { cents, contains, Limit, listOf, notPast, page, requireState } from "../../registry/helpers.js";
@@ -380,5 +381,8 @@ const deactivateRule = defineAction({
 });
 
 export default {
+  resolvers: {
+    tax_rule: tableResolver("tax_rules", "name", {"region":"region"}),
+  },
   actions: [createRule, getRule, listRules, setRate, setRegion, setCategory, setInclusive, recordExemption, calculate, deactivateRule],
 } satisfies ModuleExports;

@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -255,5 +256,8 @@ const unpublishWebsite = defineAction({
 });
 
 export default {
+  resolvers: {
+    website: tableResolver("websites"),
+  },
   actions: [createWebsite, getWebsite, listWebsites, renameWebsite, addPage, setHome, updateNav, setSeo, publishWebsite, unpublishWebsite],
 } satisfies ModuleExports;

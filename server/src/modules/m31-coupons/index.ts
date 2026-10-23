@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { atLeastOne, cents, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -363,5 +364,8 @@ const deactivateCoupon = defineAction({
 });
 
 export default {
+  resolvers: {
+    coupon: tableResolver("coupons", "code"),
+  },
   actions: [createCoupon, getCoupon, searchCoupons, updateDescription, setDiscount, setWindow, setLimit, restrictProducts, validateCoupon, deactivateCoupon],
 } satisfies ModuleExports;

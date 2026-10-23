@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { activeUser, atLeastOne, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -249,5 +250,8 @@ const archiveCalendar = defineAction({
 });
 
 export default {
+  resolvers: {
+    calendar: tableResolver("calendars"),
+  },
   actions: [createCalendar, getCalendar, listCalendars, updateCalendar, setTimezone, assignHost, setDuration, setBuffer, setVisibility, archiveCalendar],
 } satisfies ModuleExports;

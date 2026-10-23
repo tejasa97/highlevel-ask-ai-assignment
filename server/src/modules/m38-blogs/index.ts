@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -269,5 +270,8 @@ const unpublishPost = defineAction({
 });
 
 export default {
+  resolvers: {
+    blog_post: tableResolver("blog_posts", "title", {"slug":"slug"}),
+  },
   actions: [createPost, getPost, searchPosts, updatePost, assignAuthor, setCategories, setSeo, schedulePost, publishPost, unpublishPost],
 } satisfies ModuleExports;

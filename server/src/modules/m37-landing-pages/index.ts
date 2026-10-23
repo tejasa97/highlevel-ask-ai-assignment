@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -292,5 +293,8 @@ const unpublishPage = defineAction({
 });
 
 export default {
+  resolvers: {
+    landing_page: tableResolver("landing_pages", "title", {"slug":"slug"}),
+  },
   actions: [createPage, getPage, searchPages, updateContent, addSection, reorderSections, attachForm, setSeo, publishPage, unpublishPage],
 } satisfies ModuleExports;

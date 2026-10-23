@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { activeUser, atLeastOne, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -302,5 +303,8 @@ const listContacts = defineAction({
 });
 
 export default {
+  resolvers: {
+    company: tableResolver("companies", "name", {"domain":"domain"}),
+  },
   actions: [createCompany, getCompany, searchCompanies, updateCompany, archiveCompany, linkContact, unlinkContact, assignManager, mergeCompanies, listContacts],
 } satisfies ModuleExports;

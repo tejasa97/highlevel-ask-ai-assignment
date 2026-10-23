@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -315,5 +316,8 @@ const metrics = defineAction({
 });
 
 export default {
+  resolvers: {
+    funnel: tableResolver("funnels"),
+  },
   actions: [createFunnel, getFunnel, listFunnels, addStep, reorderSteps, removeStep, linkPage, setGoal, publishFunnel, metrics],
 } satisfies ModuleExports;

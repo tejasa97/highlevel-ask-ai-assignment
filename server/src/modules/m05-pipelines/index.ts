@@ -1,3 +1,4 @@
+import { namedResolver, tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -231,5 +232,13 @@ const setProbability = defineAction({
 });
 
 export default {
+  resolvers: {
+    pipeline: tableResolver("pipelines"),
+    stage: namedResolver({
+      records: (store) => store.all<Pipeline>("pipelines").flatMap((p) => p.stages.map((s) => ({ ...s, pipelineId: p.id, pipeline: p.name }))),
+      name: (s) => s.name, detail: (s) => s.pipeline,
+      qualifiers: { pipelineId: (s) => s.pipelineId, pipeline: (s) => s.pipeline },
+    }),
+  },
   actions: [createPipeline, getPipeline, listPipelines, renamePipeline, archivePipeline, addStage, renameStage, reorderStages, removeStage, setProbability],
 } satisfies ModuleExports;

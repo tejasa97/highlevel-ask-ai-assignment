@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { atLeastOne, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -344,5 +345,8 @@ const restoreVersion = defineAction({
 });
 
 export default {
+  resolvers: {
+    template: tableResolver("message_templates", "name", {"channel":"channel"}),
+  },
   actions: [createTemplate, getTemplate, searchTemplates, updateContent, archiveTemplate, duplicateTemplate, defineVariables, validateVariables, renderTemplate, restoreVersion],
 } satisfies ModuleExports;

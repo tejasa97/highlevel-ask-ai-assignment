@@ -38,6 +38,8 @@ export interface SearchCard {
   description: string;
   synonyms: string[];
   produces: string | null;
+  /** Read-only discovery of existing records; unlike produces, never a create or an ID-only get. */
+  lookupFor?: string | null;
   consumes: string[];
   siblings: string[];
   /** Has a handler in this build. Unavailable actions are still retrieved, so the agent can say so. */
@@ -59,6 +61,10 @@ export function buildCards(registry: Registry, meta = loadCardMeta()): SearchCar
     m.actions.map((a) => {
       const g = meta[a.id];
       const impl = registry.get(a.id);
+      const produced = impl?.entities?.produces ?? g?.produces ?? null;
+      const props = impl?.outputSchema.properties as Record<string, unknown> | undefined;
+      const list = props?.items as { type?: string; items?: { properties?: Record<string, unknown> } } | undefined;
+      const discovery = impl?.risk === "read" && list?.type === "array" && list.items?.properties?.id ? produced : null;
       return {
         id: a.id,
         name: a.name,
@@ -67,7 +73,8 @@ export function buildCards(registry: Registry, meta = loadCardMeta()): SearchCar
         moduleDescription: m.description,
         description: impl?.description ?? g?.description ?? "",
         synonyms: g?.synonyms ?? [],
-        produces: impl?.entities?.produces ?? g?.produces ?? null,
+        produces: produced,
+        lookupFor: impl?.risk === "read" ? impl.entities?.lookup ?? discovery : null,
         consumes: impl?.entities?.consumes ?? g?.consumes ?? [],
         siblings: [...new Set([...(impl?.siblings ?? []), ...(g?.siblings ?? [])])],
         available: impl !== undefined,

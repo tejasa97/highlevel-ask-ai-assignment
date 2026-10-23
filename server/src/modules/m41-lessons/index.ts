@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -316,5 +317,8 @@ const unpublishLesson = defineAction({
 });
 
 export default {
+  resolvers: {
+    lesson: tableResolver("lessons", "title", {"courseId":"courseId","sectionId":"sectionId"}),
+  },
   actions: [createLesson, getLesson, searchLessons, updateLesson, attachMedia, moveLesson, setRelease, setCompletion, publishLesson, unpublishLesson],
 } satisfies ModuleExports;

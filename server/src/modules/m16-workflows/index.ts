@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { contains, freshId, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
@@ -323,5 +324,8 @@ const history = defineAction({
 });
 
 export default {
+  resolvers: {
+    workflow: tableResolver("workflows"),
+  },
   actions: [createWorkflow, getWorkflow, listWorkflows, addStep, updateStep, removeStep, validateWorkflow, publishWorkflow, pauseWorkflow, history],
 } satisfies ModuleExports;

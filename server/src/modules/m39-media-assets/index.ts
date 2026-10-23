@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -288,5 +289,8 @@ const deleteAsset = defineAction({
 });
 
 export default {
+  resolvers: {
+    media_asset: tableResolver("media_assets", "name", {"folder":"folder"}),
+  },
   actions: [upload, getAsset, searchAssets, rename, setAlt, move, replaceFile, listReferences, accessLink, deleteAsset],
 } satisfies ModuleExports;

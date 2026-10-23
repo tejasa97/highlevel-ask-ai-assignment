@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -342,5 +343,8 @@ const schedule = defineAction({
 });
 
 export default {
+  resolvers: {
+    report: tableResolver("saved_reports", "name", {"metric":"metric"}),
+  },
   actions: [createReport, getReport, listReports, updateFilters, setRange, setGrouping, runReport, compare, exportReport, schedule],
 } satisfies ModuleExports;

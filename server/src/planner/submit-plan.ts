@@ -30,12 +30,13 @@ const step = {
     {
       type: "object",
       additionalProperties: false,
-      required: ["id", "kind", "entity", "name"],
+      required: ["id", "kind", "entity", "name", "whereJson"],
       properties: {
         id: { type: "string" },
         kind: { enum: ["resolve"] },
         entity: { type: "string", description: "contact | lead | user | team | ..." },
         name: { type: "string" },
+        whereJson: { ...nullable("string"), description: "Exact lookup qualifiers as a JSON object, e.g. {\"company\":\"Brightside\"}; null if none" },
       },
     },
     {
@@ -77,7 +78,7 @@ export const SUBMIT_PLAN_SCHEMA = {
 const ActionCall = z.object({ action: z.string(), argsJson: z.string() });
 const Step = z.discriminatedUnion("kind", [
   z.object({ id: z.string(), kind: z.literal("action"), ...ActionCall.shape }),
-  z.object({ id: z.string(), kind: z.literal("resolve"), entity: z.string(), name: z.string() }),
+  z.object({ id: z.string(), kind: z.literal("resolve"), entity: z.string(), name: z.string(), whereJson: z.string().nullable().optional() }),
   z.object({
     id: z.string(),
     kind: z.literal("op"),

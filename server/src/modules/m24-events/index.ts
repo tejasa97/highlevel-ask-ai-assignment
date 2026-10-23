@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { atLeastOne, contains, inDateRange, Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -371,5 +372,8 @@ const checkIn = defineAction({
 });
 
 export default {
+  resolvers: {
+    event: tableResolver("events", "title"),
+  },
   actions: [createEvent, getEvent, searchEvents, updateEvent, setCapacity, registerAttendee, cancelRegistration, addToWaitlist, promoteWaitlist, checkIn],
 } satisfies ModuleExports;

@@ -4,6 +4,7 @@ import type { SubmitPlan } from "../planner/submit-plan.js";
 import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import type { JsonSchema, RegisteredAction, Registry } from "../registry/registry.js";
 import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, parseRef, RESERVED_ROOTS, type Ref, typeAt, unwrap } from "./refs.js";
+import { lowerLookups } from "./lookups.js";
 
 // Stage 1 of validation: everything that can be checked before anything runs.
 // - structure: unique step ids, known actions that were offered to the planner this turn, JSON in argsJson/whereJson
@@ -19,7 +20,7 @@ export interface Call {
 
 export type CStep = { id: string; deps: string[]; type: JsonSchema } & (
   | { kind: "action"; call: Call }
-  | { kind: "resolve"; entity: string; name: string }
+  | { kind: "resolve"; entity: string; name: string; where?: Record<string, string> }
   | { kind: "filter"; in: string; where: Record<string, unknown> }
   | { kind: "exclude"; in: string; by: string; set: string }
   | { kind: "forEach"; in: string; roundRobin: string | null; calls: Call[] }
@@ -47,7 +48,9 @@ const RESOLVED: JsonSchema = {
 export function compile(plan: SubmitPlan, registry: Registry, offered?: ReadonlySet<string>): CompileResult {
   const errors: string[] = [];
   if (plan.type !== "plan") return { ok: false, errors: [`expected type "plan", got "${plan.type}"`] };
-  const raw = plan.steps ?? [];
+  const lowered = lowerLookups(plan.steps ?? [], registry);
+  errors.push(...lowered.errors);
+  const raw = lowered.steps;
   if (raw.length === 0) return { ok: false, errors: ["plan has no steps"] };
 
   const types = new Map<string, JsonSchema>(); // step id → output type, filled in order
@@ -80,7 +83,19 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
           err(`can't resolve entity "${s.entity}"; resolvable: ${registry.resolverEntities().join(", ")}`);
           continue;
         }
-        steps.push({ id: s.id, kind: "resolve", entity: s.entity, name: s.name, deps: [], type: RESOLVED });
+        const where = s.whereJson == null ? {} : parseObject(s.whereJson, "whereJson", err);
+        if (!s.name.trim()) err("resolve requires a non-empty name");
+        if (!where) continue;
+        const allowed = registry.resolver(s.entity)!.qualifiers ?? [];
+        for (const [key, value] of Object.entries(where)) {
+          if (!allowed.includes(key)) err(`unknown ${s.entity} qualifier ${key}; allowed: ${allowed.join(", ") || "none"}`);
+          if (typeof value !== "string" || !value.trim()) err(`qualifier ${key} must be a non-empty string`);
+          else if (value.startsWith("$")) {
+            const type = refType(value, scope, err);
+            if (type && unwrap(type).type !== "string") err(`qualifier ${key} requires a single string`);
+          }
+        }
+        steps.push({ id: s.id, kind: "resolve", entity: s.entity, name: s.name, ...(Object.keys(where).length ? { where: where as Record<string, string> } : {}), deps: [...deps], type: RESOLVED });
         types.set(s.id, RESOLVED);
       } else {
         const inType = listRef(s.in, scope, `"in"`, err);
