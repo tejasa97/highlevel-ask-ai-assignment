@@ -115,4 +115,18 @@ describe("model-independent named arguments", () => {
     assert.equal(new Set(one.steps.map((s) => s.id)).size, one.steps.length);
     assert.notEqual(one.hash, two.hash);
   });
+
+  test("qualifier interpolation is dependency checked, including forward and array references", () => {
+    for (const company of ["prefix {{$future.id}}", "$future.id", "{{$find.items[*].company}}"])
+      assert.equal(compile(plan([
+        action("find", "M01.A03", {}),
+        action("get", "M01.A02", { contactId: lookup("contact", "Sarah Johnson", { company }) }),
+      ]), registry).ok, false, company);
+    const c = compiled(plan([
+      action("find", "M01.A02", { contactId: "ct_31" }),
+      action("get", "M01.A02", { contactId: lookup("contact", "Sarah Johnson", { company: "{{$find.company}}" }) }),
+    ]));
+    const resolved = c.steps.find((s) => s.kind === "resolve")!;
+    assert.ok(resolved.deps.includes("find"));
+  });
 });

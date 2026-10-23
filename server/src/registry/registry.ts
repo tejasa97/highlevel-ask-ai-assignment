@@ -23,6 +23,8 @@ export type LookupWhere = Record<string, string>;
 export type Resolver = ((store: Store, name: string, where?: LookupWhere) => Candidate[]) & {
   /** Exact-match qualifiers understood by this resolver (never silently ignored). */
   qualifiers?: readonly string[];
+  /** Titles/configuration labels should only be linked when the full label was mentioned. */
+  exactMention?: boolean;
 };
 
 export interface ModuleExports {

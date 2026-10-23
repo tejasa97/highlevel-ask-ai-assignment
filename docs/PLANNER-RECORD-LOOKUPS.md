@@ -39,6 +39,8 @@ Retrieval distinguishes `produces` (including create/write actions) from `lookup
 
 A selected create action therefore cannot satisfy a missing discovery dependency. For resolvable named types, built-in resolve is the single-record lookup; bulk requests still receive a list/search. Dependency additions remain identifiable as `producer` in existing traces. No broad sibling links or extra model calls are introduced.
 
+Name mentions add one get plus one standalone discovery helper, not every cross-module list returning the entity. Discovery prefers the fewest required inputs before semantic rank; for example, searching contacts does not first require a company or tag ID. Naturally named configuration/content objects require their full label for automatic mention linking; explicit typed lookup can still use the existing partial-name matching tiers.
+
 ## Follow-up identities
 
 The session carries at most 12 `{entity,id,name}` identities actually observed in successful execution steps. It does not carry raw records, mutable fields or planned-but-unexecuted IDs. These appear in the rebuilt per-turn `<recent_records>` block and reset with the chat. They are identity hints, not authoritative current state; handlers still recheck the actual record. The model must clarify when a follow-up has several plausible targets.
@@ -49,5 +51,7 @@ The session carries at most 12 `{entity,id,name}` identities actually observed i
 - All 2,293 automated tests pass at the initial implementation checkpoint, including 42 new tests. Existing HTTP, confirmation/cancellation, replay, permission, cross-module and retrieval regression tests pass.
 - Added tests cover actual fixtures for every new table resolver, zero/duplicate matches, company/directory/parent qualifiers, ID/entity validation, generated step-ID collisions, permission denial, changed-target approvals and typed session reset.
 - Live planner measurements are recorded separately; do not infer a model-independent success-rate increase from deterministic tests alone.
+
+After live validation exposed a look/replan integration edge case, generated resolve IDs are retained with the actual read plan. Qualifier interpolation is now checked with the same dependency/type rules as ordinary references. The final hardening checkpoint passes **2,298 tests with the real embedding model loaded**, including the existing shortlist-size gate (unchanged). Initial pre-hardening measurements are preserved under their original labels, not relabelled as final-source results.
 
 The original scenario files, seeds, expected actions and historical results are unchanged. Strict action-path assertions remain strict: a newly simplified resolve-plus-action route can still fail a scenario expecting a particular intermediate action, so inspect outcome assertions as well as raw pass rate. These already-inspected scenarios are development/regression evidence, not an untouched holdout.

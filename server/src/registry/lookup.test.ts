@@ -3,11 +3,19 @@ import { before, describe, test } from "node:test";
 import { world } from "../store/world.js";
 import { loadRegistry, type Registry } from "./registry.js";
 import { tableResolver } from "./lookup.js";
+import { mentions } from "../retrieval/mentions.js";
 
 let registry: Registry;
 before(async () => { registry = await loadRegistry(); });
 
 describe("named record lookup", () => {
+  test("partial title words do not become noisy record mentions, but full labels still link", () => {
+    const ctx = world({ base: false });
+    ctx.f.product({ name: "Agency Plan" });
+    assert.ok(!mentions("Tell me about Agency", registry, ctx.store).some((m) => m.entity === "product"));
+    assert.ok(mentions("Tell me about Agency Plan", registry, ctx.store).some((m) => m.entity === "product"));
+    assert.equal(registry.resolver("product")!(ctx.store, "Agency").length, 1, "an explicit typed lookup can still use a partial name");
+  });
   const fixtures: [string, string, string?][] = [
     ["company", "company"], ["pipeline", "pipeline"], ["smart_list", "smartList"], ["custom_field", "customField", "label"],
     ["template", "messageTemplate"], ["workflow", "workflow"], ["trigger", "eventTrigger"], ["form", "form"], ["survey", "survey"],

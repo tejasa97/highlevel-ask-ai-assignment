@@ -12,6 +12,7 @@ export function namedResolver<T extends { id: string }>(options: {
   detail?: (row: T) => string;
   inactive?: (row: T) => string | undefined;
   qualifiers?: Record<string, (row: T) => string | null | undefined>;
+  exactMention?: boolean;
 }): Resolver {
   const qualifiers = options.qualifiers ?? {};
   return Object.assign((store: Store, name: string, where: LookupWhere = {}): Candidate[] => {
@@ -24,12 +25,13 @@ export function namedResolver<T extends { id: string }>(options: {
       return typeof actual === "string" && exact(actual) === exact(value);
     }));
     return candidates(rows, name, options.name, options.detail, options.inactive);
-  }, { qualifiers: Object.keys(qualifiers) });
+  }, { qualifiers: Object.keys(qualifiers), exactMention: options.exactMention ?? false });
 }
 
 /** Most named catalog objects only need a table, a label, and optional exact qualifier fields. */
 export function tableResolver(table: string, label = "name", fields: Record<string, string> = {}): Resolver {
   return namedResolver<Doc>({
+    exactMention: true,
     records: (store) => store.all(table),
     name: (row) => typeof row[label] === "string" ? row[label] as string : "",
     detail: (row) => Object.values(fields).map((key) => row[key]).filter((v) => typeof v === "string").join(", "),

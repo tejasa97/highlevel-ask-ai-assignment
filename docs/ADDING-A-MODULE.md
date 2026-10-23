@@ -49,7 +49,7 @@ Registry descriptions/entities are authoritative for implemented actions; genera
 `npm run eval:scenarios -- --scenario-dir eval/module-scenarios/<batch>/development --repeat 3 --label <label>` selects one folder relative to repo root. Keep reporting in a sibling folder; default `eval/scenarios` remains the regression set. Record the folder and scenario fingerprint in reports/history. Trajectory groups each folder separately and keeps `eval/scenarios` as its headline; do not change scoring/cost formulas in a module batch.
 
 Update README scope/examples, domain policy, JOURNEY, result links and this checklist if conventions change. Rebuild trajectory. A module is complete only when handlers, persistence, retrieval, UI, deterministic checks and repeated AI evaluations are accounted for. If a gate is blocked or misses its target, say so explicitly. Keep reviewable commits and never push without authorization.
-# Shared named-record lookup
+
+## Shared named-record lookup
 
 For a naturally named entity, register a module-owned `tableResolver` (or `namedResolver` for nested records). See [the lookup contract](PLANNER-RECORD-LOOKUPS.md). Declare supported qualifier keys explicitly; filter them before name matching. Do not invent names for anonymous records, pick the first ambiguous match, or use a create action as an existing-record lookup. Discovery actions should return typed `{items, total}` records and identify the produced entity; unusual read-only discovery can declare `entities.lookup` explicitly.
-

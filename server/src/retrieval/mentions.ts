@@ -22,8 +22,10 @@ export function mentions(message: string, registry: Registry, store: Store): Men
     let found = false;
     for (const entity of registry.resolverEntities()) {
       if (SKIP.has(entity)) continue;
-      const hits = registry.resolver(entity)!(store, name).filter((c) => {
+      const resolver = registry.resolver(entity)!;
+      const hits = resolver(store, name).filter((c) => {
         if (c.inactive) return false;
+        if (resolver.exactMention) return norm(c.name) === norm(name);
         const have = norm(c.name).split(" ");
         return words.every((w) => have.includes(w));
       });

@@ -90,10 +90,10 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
         for (const [key, value] of Object.entries(where)) {
           if (!allowed.includes(key)) err(`unknown ${s.entity} qualifier ${key}; allowed: ${allowed.join(", ") || "none"}`);
           if (typeof value !== "string" || !value.trim()) err(`qualifier ${key} must be a non-empty string`);
-          else if (value.startsWith("$")) {
-            const type = refType(value, scope, err);
-            if (type && unwrap(type).type !== "string") err(`qualifier ${key} requires a single string`);
-          }
+        }
+        for (const ref of collectRefs(where)) {
+          const type = refType(ref.ref, scope, err);
+          if (type && unwrap(type).type !== "string") err(`lookup qualifiers require a single string`);
         }
         steps.push({ id: s.id, kind: "resolve", entity: s.entity, name: s.name, ...(Object.keys(where).length ? { where: where as Record<string, string> } : {}), deps: [...deps], type: RESOLVED });
         types.set(s.id, RESOLVED);
