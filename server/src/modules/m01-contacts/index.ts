@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, atLeastOne, candidates, contains, fullName, inDateRange, Limit, listOf, page, requireState, sameEmail } from "../../registry/helpers.js";
+import { activeUser, atLeastOne, candidates, contains, fullName, inDateRange, Limit, listOf, Name, page, requireState, sameEmail } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Lead } from "../m03-leads/schema.js";
@@ -31,8 +31,8 @@ const createContact = defineAction({
   description: "Add a person to contacts (an existing customer or person you deal with). For a new prospect, use M03.A01 Create lead.",
   risk: "write",
   input: z.strictObject({
-    firstName: z.string().min(1),
-    lastName: z.string().min(1).optional(),
+    firstName: Name,
+    lastName: Name.optional(),
     email: z.email().optional(),
     phone: z.string().min(5).optional(),
     company: z.string().optional(),
@@ -121,8 +121,8 @@ const updateContact = defineAction({
   risk: "write",
   input: z.strictObject({
     contactId: ContactId,
-    firstName: z.string().min(1).optional(),
-    lastName: z.string().min(1).optional(),
+    firstName: Name.optional(),
+    lastName: Name.optional(),
     email: z.email().optional(),
     phone: z.string().min(5).optional(),
     company: z.string().optional(),

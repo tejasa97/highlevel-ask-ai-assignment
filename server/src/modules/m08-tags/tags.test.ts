@@ -83,7 +83,7 @@ test("M08.A03/A09 rename and merge keep a campaign's audience tag in step until 
   assert.deepEqual(w.call("M01.A02", { contactId: c.id }).tags, ["vip"]);
 });
 
-test("a name of only spaces is refused where tags, teams, deals, campaigns, products and prices are named", async () => {
+test("a name of only spaces is refused where tags, teams, deals, campaigns, products, prices and people are named", async () => {
   const w = await testWorld();
   const c = w.f.contact();
   const t = w.f.tag();
@@ -97,6 +97,9 @@ test("a name of only spaces is refused where tags, teams, deals, campaigns, prod
     ["M15.A01", { name: " ", channel: "email" }],
     ["M25.A01", { name: "   " }],
     ["M26.A01", { productId: w.f.product().id, label: " ", amount: 5 }],
+    ["M01.A01", { firstName: " " }],
+    ["M01.A01", { firstName: "Ada", lastName: " " }],
+    ["M03.A01", { firstName: " " }],
   ] as const) assert.equal(failure(() => w.call(id, args)).code, "INVALID", id);
 });
 
