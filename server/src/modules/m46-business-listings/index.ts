@@ -19,6 +19,7 @@ const Text = z.string().trim().min(1);
 const ListingId = Text.describe("business listing id (bl_…)");
 const Phone = Text.regex(/^\+\d{10,15}$/, "use + and 10–15 digits");
 const Categories = z.array(Text).min(1).max(20);
+const tidy = (xs: string[]) => [...new Set(xs.map((x) => x.toLowerCase()))];
 const get = (s: Store, id: string) =>
   mustGet<Listing>(s, "listings", id, "business listing");
 function unique(
@@ -96,7 +97,7 @@ const create = defineAction({
     return store.insert("listings", "bl", {
       ...a,
       directory: a.directory.toLowerCase(),
-      categories: [...new Set(a.categories ?? ["business"])],
+      categories: tidy(a.categories ?? ["business"]),
       hours: a.hours ?? defaultHours(),
       timezone: "America/New_York" as const,
       version: 1,
@@ -210,9 +211,7 @@ const categories = defineAction({
   entities: { consumes: ["listing"] },
   example: (f) => ({ listingId: f.listing().id, categories: ["dentist"] }),
   handler: ({ listingId, categories }, ctx) =>
-    change(ctx, listingId, {
-      categories: [...new Set(categories.map((x) => x.toLowerCase()))],
-    }),
+    change(ctx, listingId, { categories: tidy(categories) }),
 });
 const publish = defineAction({
   id: "M46.A09",
