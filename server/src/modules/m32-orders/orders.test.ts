@@ -215,15 +215,28 @@ test("discount rounding lands on the last eligible line, and a coupon that misse
   w.call("M32.A04", { orderId: other.id, productId: b.id, priceId: pb.id, quantity: 1 });
   const missed = failure(() => w.call("M32.A07", { orderId: other.id, couponId: off.id }));
   assert.equal(missed.code, "CONFLICT");
-  assert.match(missed.message, /does not apply/);
+  assert.match(missed.message, /doesn't apply/);
   const inactive = coupon(w, { status: "inactive" });
   assert.match(failure(() => w.call("M32.A07", { orderId: other.id, couponId: inactive.id })).message, /inactive/);
   const early = coupon(w, { validFrom: w.f.at(2) });
-  assert.match(failure(() => w.call("M32.A07", { orderId: other.id, couponId: early.id })).message, /not valid yet/);
+  assert.match(failure(() => w.call("M32.A07", { orderId: other.id, couponId: early.id })).message, /isn't valid until/);
   const old = coupon(w, { validUntil: w.f.at(-1) });
-  assert.match(failure(() => w.call("M32.A07", { orderId: other.id, couponId: old.id })).message, /expired/);
+  assert.match(failure(() => w.call("M32.A07", { orderId: other.id, couponId: old.id })).message, /expired at/);
   const maxed = coupon(w, { maxRedemptions: 1, redemptions: 1 });
-  assert.match(failure(() => w.call("M32.A07", { orderId: other.id, couponId: maxed.id })).message, /redemption limit/);
+  assert.match(failure(() => w.call("M32.A07", { orderId: other.id, couponId: maxed.id })).message, /limit 1/);
+});
+
+test("a coupon window written with a UTC offset is compared as a time, not as text", async () => {
+  const w = await testWorld();
+  const item = product(w, { name: "A" });
+  const each = price(w, item.id, { amount: 10 });
+  const order = w.call("M32.A01", { contactId: w.f.contact().id });
+  w.call("M32.A04", { orderId: order.id, productId: item.id, priceId: each.id, quantity: 1 });
+  // One hour ago, written in +14:00: the digits read 13 hours ahead of now, but the moment has passed.
+  const local = new Date(Date.parse(w.f.now()) + 13 * 3_600_000).toISOString().replace("Z", "+14:00");
+  const open = coupon(w, { validFrom: local });
+  assert.equal(w.call("M31.A09", { couponId: open.id }).valid, true);
+  assert.equal(w.call("M32.A07", { orderId: order.id, couponId: open.id }).couponId, open.id);
 });
 
 test("inventory shortfall and a non-USD price are CONFLICT and leave no partial writes", async () => {

@@ -160,3 +160,27 @@ export function personName(store: Store, ref: { contactId: string | null; leadId
 
 /** Money rounded to cents, so sums of line items don't drift. */
 export const cents = (n: number): number => Math.round(n * 100) / 100;
+
+/** An id for a record nested inside another one, skipping any already in `used`. */
+export function freshId(store: Store, prefix: string, used: readonly string[]): string {
+  const taken = new Set(used);
+  let id = store.nextId("_nested", prefix);
+  while (taken.has(id)) id = store.nextId("_nested", prefix);
+  return id;
+}
+
+/** Trims a string, and turns an empty or whitespace-only one into null. */
+export function blankToNull(value: string | null): string | null {
+  if (value === null) return null;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/** Throws INVALID unless `iso` is a valid timestamp strictly after `nowIso`. */
+export function requireFuture(iso: string, nowIso: string, label: string): void {
+  const when = Date.parse(iso);
+  const now = Date.parse(nowIso);
+  if (Number.isNaN(when)) throw new ActionError("INVALID", `${label} is not a valid timestamp`);
+  if (when < now) throw new ActionError("INVALID", `${label} ${iso} is in the past (now is ${nowIso})`);
+  if (when === now) throw new ActionError("INVALID", `${label} ${iso} is not in the future (now is ${nowIso})`);
+}

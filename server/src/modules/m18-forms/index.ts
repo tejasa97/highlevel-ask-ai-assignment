@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { contains, fullName, inDateRange, Limit, listOf, page, requireState, sameEmail } from "../../registry/helpers.js";
+import { contains, freshId, fullName, inDateRange, Limit, listOf, page, requireState, sameEmail } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Clock } from "../../store/clock.js";
 import type { Store } from "../../store/db.js";
@@ -19,13 +19,6 @@ const TEXT_TYPES = new Set(["text", "email", "phone", "textarea"]);
 const CONTACT_FIELDS = new Set(["email", "phone", "firstName", "lastName", "company"]);
 
 const iso = (clock: Clock) => clock.now().toISOString();
-
-function freshId(store: Store, prefix: string, used: readonly string[]): string {
-  const taken = new Set(used);
-  let id = store.nextId("_nested", prefix);
-  while (taken.has(id)) id = store.nextId("_nested", prefix);
-  return id;
-}
 
 function byName(store: Store, name: string): Form | undefined {
   const key = name.trim().toLowerCase();

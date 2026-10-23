@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, contains, Limit, listOf, noChange, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { atLeastOne, blankToNull, contains, Limit, listOf, noChange, page, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { Website, type SitePage } from "./schema.js";
@@ -26,12 +26,6 @@ function nameTaken(store: Store, name: string, exceptId?: string): boolean {
 function domainTaken(store: Store, domain: string, exceptId?: string): boolean {
   const key = domain.trim().toLowerCase();
   return store.find<Website>("websites", (w) => w.id !== exceptId && !!w.domain && w.domain.trim().toLowerCase() === key).length > 0;
-}
-
-function blankToNull(value: string | null): string | null {
-  if (value === null) return null;
-  const trimmed = value.trim();
-  return trimmed === "" ? null : trimmed;
 }
 
 const createWebsite = defineAction({

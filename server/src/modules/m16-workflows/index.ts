@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { contains, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { contains, freshId, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Clock } from "../../store/clock.js";
@@ -17,13 +17,6 @@ const ConditionInput = z.strictObject({ field: z.string().min(1), equals: z.unkn
 const StepKind = z.enum(["action", "wait", "condition"]);
 
 const iso = (clock: Clock) => clock.now().toISOString();
-
-function freshId(store: Store, prefix: string, used: readonly string[]): string {
-  const taken = new Set(used);
-  let id = store.nextId("_nested", prefix);
-  while (taken.has(id)) id = store.nextId("_nested", prefix);
-  return id;
-}
 
 function byName(store: Store, name: string): Workflow | undefined {
   const key = name.trim().toLowerCase();

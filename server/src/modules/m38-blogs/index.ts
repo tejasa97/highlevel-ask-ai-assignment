@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, atLeastOne, contains, inDateRange, Limit, listOf, noChange, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { activeUser, atLeastOne, blankToNull, contains, inDateRange, Limit, listOf, noChange, page, requireFuture, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { BlogPost, POST_STATUSES } from "./schema.js";
@@ -21,20 +21,6 @@ function load(store: Store, id: string): BlogPost {
 function slugTaken(store: Store, slug: string, exceptId?: string): boolean {
   const key = slug.trim().toLowerCase();
   return store.find<BlogPost>("blog_posts", (p) => p.id !== exceptId && p.slug.toLowerCase() === key).length > 0;
-}
-
-function blankToNull(value: string | null): string | null {
-  if (value === null) return null;
-  const trimmed = value.trim();
-  return trimmed === "" ? null : trimmed;
-}
-
-function requireFuture(iso: string, nowIso: string, label: string): void {
-  const when = Date.parse(iso);
-  const now = Date.parse(nowIso);
-  if (Number.isNaN(when)) throw new ActionError("INVALID", `${label} is not a valid timestamp`);
-  if (when < now) throw new ActionError("INVALID", `${label} ${iso} is in the past (now is ${nowIso})`);
-  if (when === now) throw new ActionError("INVALID", `${label} ${iso} is not in the future (now is ${nowIso})`);
 }
 
 function mediaIdsOf(store: Store, ids: string[]): string[] {

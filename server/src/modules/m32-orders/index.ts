@@ -10,6 +10,7 @@ import { Product } from "../m25-products/schema.js";
 import { Price } from "../m26-prices/schema.js";
 import { line, nextInvoiceNumber } from "../m28-invoices/billing.js";
 import type { Invoice } from "../m28-invoices/schema.js";
+import { couponBlocker, couponShares } from "../m31-coupons/index.js";
 import { Coupon } from "../m31-coupons/schema.js";
 import type { TaxExemption, TaxRule } from "../m34-tax-rules/schema.js";
 import { Address, ORDER_STATUSES, Order, type OrderLine } from "./schema.js";
@@ -44,38 +45,14 @@ function regionKeys(address: Address | null): { country: string | null; specific
   return { country: address.country, specific: address.region ? `${address.country}-${address.region}` : null };
 }
 
-function couponProblem(coupon: Coupon, nowIso: string, lines: { productId: string }[]): string | null {
-  if (coupon.status !== "active") return "Coupon is inactive";
-  if (coupon.validFrom && nowIso < coupon.validFrom) return "Coupon is not valid yet";
-  if (coupon.validUntil && nowIso > coupon.validUntil) return "Coupon has expired";
-  if (coupon.maxRedemptions !== null && coupon.redemptions >= coupon.maxRedemptions) return "Coupon has reached its redemption limit";
-  if (coupon.productIds.length > 0 && !lines.some((l) => coupon.productIds.includes(l.productId))) return "Coupon does not apply to any product on the order";
-  return null;
-}
-
-/** Percent or amount off, spread across eligible lines. The last eligible line absorbs rounding. */
+/** Percent or amount off, spread across the lines the coupon covers, by M31's rules so both modules agree. */
 function discountFor(lines: OrderLine[], coupon: Coupon | null): { discountTotal: number; net: number[] } {
-  const net = lines.map((l) => l.amount);
-  if (!coupon) return { discountTotal: 0, net };
-  const eligible: number[] = [];
-  lines.forEach((l, i) => {
-    if (coupon.productIds.length === 0 || coupon.productIds.includes(l.productId)) eligible.push(i);
-  });
-  if (coupon.productIds.length > 0 && eligible.length === 0) throw new ActionError("CONFLICT", "Coupon does not apply to any product on the order");
-  const base = cents(eligible.reduce((n, i) => n + (lines[i]?.amount ?? 0), 0));
-  const discountTotal = coupon.discount.type === "percent" ? cents((base * coupon.discount.value) / 100) : cents(Math.min(coupon.discount.value, base));
-  if (discountTotal <= 0 || base <= 0) return { discountTotal: 0, net };
-  let used = 0;
-  for (let n = 0; n < eligible.length; n++) {
-    const idx = eligible[n]!;
-    const row = lines[idx];
-    if (!row) continue;
-    const last = n === eligible.length - 1;
-    const share = last ? cents(discountTotal - used) : cents((discountTotal * row.amount) / base);
-    if (!last) used = cents(used + share);
-    net[idx] = cents(row.amount - share);
+  if (!coupon) return { discountTotal: 0, net: lines.map((l) => l.amount) };
+  if (coupon.productIds.length > 0 && !lines.some((l) => coupon.productIds.includes(l.productId))) {
+    throw new ActionError("CONFLICT", "This coupon doesn't apply to any of these products");
   }
-  return { discountTotal, net };
+  const { amount, shares } = couponShares(coupon, lines);
+  return { discountTotal: amount, net: lines.map((l, i) => cents(l.amount - (shares[i] ?? 0))) };
 }
 
 function pickRule(rules: TaxRule[], address: Address | null, taxCategory: string | null): TaxRule | null {
@@ -431,7 +408,7 @@ const applyCoupon = defineAction({
     const order = draft(store, orderId, "change its coupon");
     if (order.couponId === couponId) throw new ActionError("CONFLICT", `Order ${order.number} already has that value`);
     const coupon = mustGet<Coupon>(store, "coupons", couponId, "coupon");
-    const problem = couponProblem(coupon, clock.now().toISOString(), order.lines);
+    const problem = couponBlocker(coupon, order.lines, clock.now().getTime());
     if (problem) throw new ActionError("CONFLICT", problem);
     return store.update<Order>("orders", order.id, { couponId: coupon.id, ...draftPatch(order.lines, coupon), updatedAt: clock.now().toISOString() });
   },
@@ -473,7 +450,7 @@ const submitOrder = defineAction({
     const now = clock.now().toISOString();
     const coupon = order.couponId ? mustGet<Coupon>(store, "coupons", order.couponId, "coupon") : null;
     if (coupon) {
-      const problem = couponProblem(coupon, now, order.lines);
+      const problem = couponBlocker(coupon, order.lines, clock.now().getTime());
       if (problem) throw new ActionError("CONFLICT", problem);
     }
     const money = moneyOf(store, order, coupon, localDate(clock.now()));

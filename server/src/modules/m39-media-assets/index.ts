@@ -1,7 +1,7 @@
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, contains, Limit, listOf, noChange, page } from "../../registry/helpers.js";
+import { atLeastOne, contains, Limit, listOf, noChange, page, requireFuture } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { BlogPost } from "../m38-blogs/schema.js";
@@ -42,14 +42,6 @@ function nameTaken(store: Store, folder: string, name: string, exceptId?: string
     "media_assets",
     (a) => a.id !== exceptId && a.folder.toLowerCase() === folderKey && a.name.trim().toLowerCase() === nameKey,
   ).length > 0;
-}
-
-function requireFuture(iso: string, nowIso: string, label: string): void {
-  const when = Date.parse(iso);
-  const now = Date.parse(nowIso);
-  if (Number.isNaN(when)) throw new ActionError("INVALID", `${label} is not a valid timestamp`);
-  if (when < now) throw new ActionError("INVALID", `${label} ${iso} is in the past (now is ${nowIso})`);
-  if (when === now) throw new ActionError("INVALID", `${label} ${iso} is not in the future (now is ${nowIso})`);
 }
 
 function references(store: Store, assetId: string): { recordType: "landing_page" | "blog_post" | "lesson"; recordId: string; label: string }[] {

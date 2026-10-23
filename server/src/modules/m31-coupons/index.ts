@@ -95,16 +95,21 @@ export function couponBlocker(coupon: Coupon, lines: OrderLine[] | undefined, no
   return null;
 }
 
+/** What the coupon takes off `lines`, in total and per line. Says nothing about whether the coupon may be used. */
+export function couponShares(coupon: Coupon, lines: OrderLine[]): { amount: number; shares: number[] } {
+  const allowed = new Set(coupon.productIds);
+  const matching = lines.map((line) => coupon.productIds.length === 0 || allowed.has(line.productId));
+  const base = cents(lines.reduce((sum, line, i) => sum + (matching[i] ? line.amount : 0), 0));
+  const amount = discountAmount(base, coupon.discount);
+  return { amount, shares: spreadDiscount(lines.map((line) => line.amount), matching, amount) };
+}
+
 /** Read-only coupon check. `lines` omitted means the discount amount isn't computed (unless a product restriction then fails). */
 export function assessCoupon(coupon: Coupon, lines: OrderLine[] | undefined, nowMs: number): Assessment {
   const reason = couponBlocker(coupon, lines, nowMs);
   if (reason) return { valid: false, reason, discount: null, amount: null, lines: null };
   if (!lines) return { valid: true, reason: null, discount: coupon.discount, amount: null, lines: null };
-  const allowed = new Set(coupon.productIds);
-  const matching = lines.map((line) => coupon.productIds.length === 0 || allowed.has(line.productId));
-  const base = cents(lines.reduce((sum, line, i) => sum + (matching[i] ? line.amount : 0), 0));
-  const amount = discountAmount(base, coupon.discount);
-  const shares = spreadDiscount(lines.map((line) => line.amount), matching, amount);
+  const { amount, shares } = couponShares(coupon, lines);
   return {
     valid: true,
     reason: null,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
+import { contains, freshId, Limit, listOf, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Clock } from "../../store/clock.js";
 import type { Store } from "../../store/db.js";
@@ -23,13 +23,6 @@ const BranchInput = z.strictObject({
 type AnswerValue = string | number | string[];
 
 const iso = (clock: Clock) => clock.now().toISOString();
-
-function freshId(store: Store, prefix: string, used: readonly string[]): string {
-  const taken = new Set(used);
-  let id = store.nextId("_nested", prefix);
-  while (taken.has(id)) id = store.nextId("_nested", prefix);
-  return id;
-}
 
 function byName(store: Store, name: string): Survey | undefined {
   const key = name.trim().toLowerCase();
