@@ -216,6 +216,7 @@ const testTrigger = defineAction({
   id: "M17.A09",
   description: "Runs a trigger against a made-up sample event to check whether its conditions match and the workflow would start. Nothing real is affected.",
   risk: "write",
+  query: true, // Persists only a test firing, never a workflow run or real event.
   input: z.strictObject({
     triggerId: TriggerId,
     payload: z.record(z.string(), z.unknown()),
