@@ -363,7 +363,7 @@ makes one model call per record, where the planner writes one forEach.
 **Open.** The scenario above and the wider candidate pool are the next measured work; WAVE1-HARDENING-REPORT.md has the full list, including the places this work stopped (no quote email kind, no `CommunityMember.membershipId`, no dedicated site permission).
 
 ## 22. Measuring the other 32 modules, and the final benchmark
-`503e8ac` · 2026-10-23 · runs: wave1-modules-haiku-dev → wave1-modules-haiku-fix1 → wave1-modules-haiku-fix2 → final-planner-3x → final-planner-3x-fix
+`503e8ac` · 2026-10-23 · runs: wave1-modules-haiku-dev → wave1-modules-haiku-fix1 → wave1-modules-haiku-fix2 → final-planner-3x → final-planner-3x-fix → haiku-final-planner-3x
 
 **Problem.** The 32 Wave 1 modules had tests and retrieval coverage but no planner scenarios, so nobody knew whether a real request reached the right action.
 
@@ -373,10 +373,10 @@ makes one model call per record, where the planner writes one forEach.
 - M41.A01 needed a section id on a course with none; it now makes a default section.
 - Retrieval: "Archive every contact at Wayne" named no record, and contacts resolve by name, so no search was offered and the planner improvised with a saved smart list (a write nobody asked for). A request that says every, all or each now brings in the search for the type being acted on.
 
-**Result.** Wave 1 scenarios (Haiku, 3 repeats): 66.7% → 92% → 96% of clean runs, 24 of 25 passing every run. Retrieval after the bulk rule (357 questions, 6 added for it): R@15 97.2% → 97.5%, all@15 95.8% → 96.6%, test split 97.0% → 97.4%, mean shortlist 20.7 → 20.9. Final 23 × 3 benchmark (Sonnet 5.5, `BENCHMARK.md`): task success 95.7% → 98.6%, `multi-bulk-archive-declined` 0/3 → 3/3, against the one-call-per-step baseline at 95.7% from 22 Oct. Tests 2215 → 2222.
+**Result.** Wave 1 scenarios (Haiku, 3 repeats): 66.7% → 92% → 96% of clean runs, 24 of 25 passing every run. Retrieval after the bulk rule (357 questions, 6 added for it): R@15 97.2% → 97.5%, all@15 95.8% → 96.6%, test split 97.0% → 97.4%, mean shortlist 20.7 → 20.9. Final 23 × 3 benchmark on Haiku 5.5 (`BENCHMARK.md`): the whole-plan planner passed 98.6% (68/69) of runs against 91.3% (63/69) for the one-call-per-step baseline, with action selection at 100% against 93.8% and 2 model calls per complex task against 4. A Sonnet 5.5 run of the same planner earlier the same day went 95.7% → 98.6% (`multi-bulk-archive-declined` 0/3 → 3/3). Tests 2215 → 2222.
 
-**Targets.** Committed 2026-10-23 before the final run: 5 of 8 met. The three misses are latency (direct first reply 4.5 s against 1.5 s, p95 10.5 s against 3 s, complex end-to-end p50 8.9 s against 6 s). They were written for a direct API call; the only planner here is `claude -p`, which starts a process per call. Not relaxed.
+**Targets.** Committed 2026-10-23 before the final run: 4 of 8 met on Haiku (5 of 8 on the Sonnet run). The four misses are latency: direct first reply p50 8.1 s against 1.5 s and p95 23.9 s against 3 s, complex end-to-end p50 12.1 s against 6 s and p95 16.2 s against 12 s. They were written for a direct API call; the only planner here is `claude -p`, which starts a process per call (about 1.5 s of each). Not relaxed.
 
 **Still failing.** `w1-subscription-change-plan` is 0/3 on Haiku: "Move X from Starter to Pro" reads as an opportunity stage change. `direct-payment-request` is 2/3: in one run the planner found the invoice and stopped before creating the request. Neither was patched.
 
-**Caveat.** The baseline is the 22 Oct run, not a rerun. A rerun on 23 Oct stopped on the Claude usage limit (rate_limited) and was cancelled; its partial record is `final-baseline-3x`, which the report ignores as it is not a clean run. The Wave 1 scenario runs used Haiku and the final benchmark Sonnet, so those two numbers are not comparable.
+**Caveat.** Both benchmark columns ran on Haiku 5.5 on 23 Oct, after the Claude usage limit stopped an earlier baseline rerun on Sonnet (its record, `final-baseline-3x`, is not a clean run and the report ignores it). The Sonnet planner run was compared against the 22 Oct Sonnet baseline, not a rerun. The Wave 1 scenario set is a separate set (Haiku, 3 repeats) and is not part of the 23-scenario benchmark. The Haiku planner's one failure was `ambiguous-zoe-then-answer` (assigned the contact to the wrong user after the clarifying answer), 2/3.
