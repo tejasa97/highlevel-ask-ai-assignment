@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { cents, Limit, listOf, page, requireState } from "../../registry/helpers.js";
+import { cents, Limit, listOf, Name, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Product } from "../m25-products/schema.js";
@@ -40,7 +40,7 @@ const createPrice = defineAction({
   risk: "write",
   input: z.strictObject({
     productId: ProductId,
-    label: z.string().min(1),
+    label: Name,
     amount: z.number().min(0).describe("in the price's currency"),
     currency: z.enum(CURRENCIES).optional().describe("default USD; quotes and orders still only accept USD"),
     interval: z.enum(BILLING_INTERVALS).optional().describe("default one_time"),
@@ -64,7 +64,7 @@ const createPrice = defineAction({
     const hasDefault = store.find<Price>("prices", (p) => p.productId === product.id && p.status === "active" && p.isDefault).length > 0;
     const row = store.insert("prices", "prc", {
       productId: product.id,
-      label: a.label.trim(),
+      label: a.label,
       amount: cents(a.amount),
       currency: a.currency ?? "USD",
       interval,
@@ -119,16 +119,14 @@ const updateLabel = defineAction({
   id: "M26.A04",
   description: "Rename a price's label. The amount, currency and billing interval stay as they are; those have their own actions.",
   risk: "write",
-  input: z.strictObject({ priceId: PriceId, label: z.string().min(1) }),
+  input: z.strictObject({ priceId: PriceId, label: Name }),
   output: Price,
   entities: { consumes: ["price"] },
   example: (f) => ({ priceId: f.price({ label: "Monthly" }).id, label: "Annual" }),
   handler: ({ priceId, label }, { store, clock }) => {
     const price = activePrice(store, priceId, "be renamed");
-    const next = label.trim();
-    if (!next) throw new ActionError("INVALID", "Label can't be blank");
-    if (price.label === next) throw new ActionError("CONFLICT", `The price is already called "${price.label}"`);
-    return store.update<Price>("prices", price.id, { label: next, updatedAt: clock.now().toISOString() });
+    if (price.label === label) throw new ActionError("CONFLICT", `The price is already called "${price.label}"`);
+    return store.update<Price>("prices", price.id, { label, updatedAt: clock.now().toISOString() });
   },
 });
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
+import { contains, Limit, listOf, Name, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Clock } from "../../store/clock.js";
 import type { Fixtures } from "../../store/fixtures.js";
@@ -67,14 +67,13 @@ const createTrigger = defineAction({
   id: "M17.A01",
   description: "Creates a new event trigger that listens for a chosen kind of event and starts automation. Use it to set up a trigger from scratch, not to change an existing one.",
   risk: "write",
-  input: z.strictObject({ name: z.string().min(1), eventType: z.enum(EVENT_TYPES) }),
+  input: z.strictObject({ name: Name, eventType: z.enum(EVENT_TYPES) }),
   output: EventTrigger,
   siblings: ["M16.A01"],
   entities: { produces: "trigger" },
   example: () => ({ name: "Contact created", eventType: "contact.created" }),
   handler: (a, { store, clock, actorId }) => {
-    const name = a.name.trim();
-    if (!name) throw new ActionError("INVALID", "Name can't be blank");
+    const name = a.name;
     const existing = byName(store, name);
     if (existing) throw new ActionError("DUPLICATE", `A trigger named "${name}" already exists (${existing.id})`, { existingId: existing.id });
     const now = iso(clock);
