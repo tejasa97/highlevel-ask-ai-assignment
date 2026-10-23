@@ -34,6 +34,8 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   /** General user-language paraphrases; indexed by both lexical and semantic retrieval. */
   synonyms?: string[];
   risk: Risk;
+  /** Query with only internal bookkeeping writes (e.g. report lastRunAt). Does not lower execution risk. */
+  query?: boolean;
   /** Use z.strictObject so made-up params are rejected instead of ignored. */
   input: I;
   output: O;

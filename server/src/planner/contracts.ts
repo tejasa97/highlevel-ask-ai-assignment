@@ -13,7 +13,7 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome): string[] {
   const errors = outcome.actions.filter((id) => !ids.has(id)).map((id) => `requested operation ${id} is missing; prerequisite reads do not complete it`);
   if (outcome.effect === "change" && !calls.some((a) => a.risk !== "read")) errors.push("the requested outcome changes records, but this plan only reads; use look for prerequisites, then plan the final change");
   if (outcome.effect === "change" && !outcome.actions.length) errors.push("identify the final requested action(s), using search_tools if needed, before returning a plan");
-  if (outcome.effect === "read" && calls.some((a) => a.risk !== "read")) errors.push("the requested outcome is read-only; do not introduce a change");
+  if (outcome.effect === "read" && calls.some((a) => a.risk !== "read" && !a.query)) errors.push("the requested outcome is read-only; do not introduce a change");
   if (outcome.destination) for (const a of calls) {
     if (a.destination && a.destination.id !== outcome.destination) errors.push(`${a.id} delivers to ${a.destination.label}, not the requested destination ${outcome.destination}`);
   }
