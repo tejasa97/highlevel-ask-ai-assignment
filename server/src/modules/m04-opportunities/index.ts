@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, candidates, contains, Limit, listOf, Name, notPast, page, requireState } from "../../registry/helpers.js";
+import { activeUser, candidates, cents, contains, Limit, listOf, Name, notPast, page, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import { localDate } from "../../store/clock.js";
 import type { Store } from "../../store/db.js";
@@ -86,7 +86,7 @@ const createOpportunity = defineAction({
       leadId: null,
       pipelineId: pipeline.id,
       stageId: stage.id,
-      value: a.value ?? 0,
+      value: cents(a.value ?? 0),
       currency: "USD" as const,
       ownerId: a.ownerId ?? null,
       status: "open" as const,
@@ -167,8 +167,8 @@ const updateValue = defineAction({
   example: () => ({ opportunityId: "op_1", value: 15000 }),
   handler: ({ opportunityId, value }, { store }) => {
     const o = openDeal(store, opportunityId, "change its value");
-    if (o.value === value) throw new ActionError("CONFLICT", `Deal "${o.name}" is already worth $${value}`);
-    return store.update<Opportunity>("opportunities", o.id, { value });
+    if (o.value === cents(value)) throw new ActionError("CONFLICT", `Deal "${o.name}" is already worth $${value}`);
+    return store.update<Opportunity>("opportunities", o.id, { value: cents(value) });
   },
 });
 
@@ -232,7 +232,7 @@ const markWon = defineAction({
   example: () => ({ opportunityId: "op_1" }),
   handler: ({ opportunityId, value }, { store, clock }) => {
     const o = openDeal(store, opportunityId, "mark it won");
-    return store.update<Opportunity>("opportunities", o.id, { status: "won", closedAt: clock.now().toISOString(), ...(value !== undefined ? { value } : {}) });
+    return store.update<Opportunity>("opportunities", o.id, { status: "won", closedAt: clock.now().toISOString(), ...(value !== undefined ? { value: cents(value) } : {}) });
   },
 });
 
@@ -240,7 +240,7 @@ const markLost = defineAction({
   id: "M04.A09",
   description: "Close an open deal as lost, with the reason (e.g. went with a competitor, no budget). It can be reopened later with M04.A10.",
   risk: "write",
-  input: z.strictObject({ opportunityId: OpportunityId, reason: z.string().min(1) }),
+  input: z.strictObject({ opportunityId: OpportunityId, reason: Name }),
   output: Opportunity,
   entities: { consumes: ["opportunity"] },
   example: () => ({ opportunityId: "op_1", reason: "Chose a competitor" }),

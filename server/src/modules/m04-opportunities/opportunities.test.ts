@@ -9,6 +9,15 @@ async function wonOpportunity() {
   return { w, o, won };
 }
 
+test("M04 deal values round to cents and a blank lost reason is refused", async () => {
+  const w = await testWorld();
+  const deal = w.call("M04.A01", { name: "Odd price", contactId: w.f.contact().id, value: 10.005 });
+  assert.equal(deal.value, 10.01);
+  assert.equal(w.call("M04.A04", { opportunityId: deal.id, value: 20.126 }).value, 20.13);
+  assert.equal(failure(() => w.call("M04.A09", { opportunityId: deal.id, reason: "  " })).code, "INVALID");
+  assert.equal(w.call("M04.A08", { opportunityId: deal.id, value: 30.999 }).value, 31);
+});
+
 test("M04.A01 create lands on the first stage of the first active pipeline", async () => {
   const w = await testWorld();
   const c = w.f.contact();
