@@ -25,7 +25,7 @@ function blockers(store: Store, e: Email, now: Date): string[] {
   const route = ownedEmailBlocker(e.kind);
   if (route) out.push(route);
   if (e.status !== "draft" && e.status !== "scheduled") out.push(`The email is ${e.status}`);
-  const why = e.contactId || e.leadId ? blocked(store, personOf(store, e, "be emailed"), "email", TRANSACTIONAL.has(e.kind)) : (!e.to || !z.email().safeParse(e.to).success ? "No valid requester email address" : null);
+  const why = e.contactId || e.leadId ? blocked(store, { ...personOf(store, e, "be emailed"), email: e.to }, "email", TRANSACTIONAL.has(e.kind)) : (!e.to || !z.email().safeParse(e.to).success ? "No valid requester email address" : null);
   if (why) out.push(why);
   if (e.kind === "invoice_reminder" && e.invoiceId) {
     const inv = store.get<Invoice>("invoices", e.invoiceId);
