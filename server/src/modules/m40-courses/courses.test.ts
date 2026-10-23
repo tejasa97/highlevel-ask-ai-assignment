@@ -41,6 +41,17 @@ test("M40.A08 same prerequisites is CONFLICT", async () => {
   assert.equal(failure(() => w.call("M40.A08", { courseId: c.id, prerequisiteCourseIds: [prior.id] })).code, "CONFLICT");
 });
 
+test("M40.A08 refuses a prerequisite loop, direct or through a chain", async () => {
+  const w = await testWorld();
+  const a = w.f.course();
+  const b = w.f.course({ prerequisiteCourseIds: [a.id] });
+  const c = w.f.course({ prerequisiteCourseIds: [b.id] });
+  assert.equal(failure(() => w.call("M40.A08", { courseId: a.id, prerequisiteCourseIds: [b.id] })).code, "CONFLICT");
+  assert.match(failure(() => w.call("M40.A08", { courseId: a.id, prerequisiteCourseIds: [c.id] })).message, /already requires/);
+  const d = w.f.course();
+  assert.deepEqual(w.call("M40.A08", { courseId: d.id, prerequisiteCourseIds: [c.id] }).prerequisiteCourseIds, [c.id]);
+});
+
 test("M40.A09 publish with no published lesson is CONFLICT", async () => {
   const w = await testWorld();
   const c = w.f.course();

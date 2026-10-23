@@ -43,8 +43,16 @@ function prerequisites(store: Store, ids: string[], selfId?: string): string[] {
     if (selfId && id === selfId) throw new ActionError("CONFLICT", "A course can't be a prerequisite of itself");
     const other = course(store, id);
     if (other.status === "archived") throw new ActionError("CONFLICT", `${other.title} is archived; pick a draft or published course`);
+    if (selfId && requires(store, other, selfId)) throw new ActionError("CONFLICT", `${other.title} already requires this course, so it can't also be a prerequisite of it`);
   }
   return ids;
+}
+
+/** Whether `from` needs `targetId` finished, directly or through other prerequisites. */
+function requires(store: Store, from: Course, targetId: string, seen = new Set<string>()): boolean {
+  if (seen.has(from.id)) return false;
+  seen.add(from.id);
+  return from.prerequisiteCourseIds.some((id) => id === targetId || requires(store, course(store, id), targetId, seen));
 }
 
 const createCourse = defineAction({
