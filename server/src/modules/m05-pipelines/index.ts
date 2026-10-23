@@ -145,6 +145,7 @@ const addStage = defineAction({
 
 const renameStage = defineAction({
   id: "M05.A07",
+  argumentLookups: { stageId: { entity: "stage", scope: { pipelineId: "pipelineId" } } },
   description: "Rename one stage of an active pipeline. Deals that sit in it are unchanged. This is not M04.A05 Move opportunity to stage.",
   risk: "write",
   input: z.strictObject({ pipelineId: PipelineId, stageId: z.string().describe("stage id"), name: StageName }),
@@ -167,6 +168,7 @@ const renameStage = defineAction({
 
 const reorderStages = defineAction({
   id: "M05.A08",
+  argumentLookups: { "stageIds[]": { entity: "stage", scope: { pipelineId: "pipelineId" } } },
   description: "Put an active pipeline's stages into a new order. Pass every stage id once. Deals stay in the same stage.",
   risk: "write",
   input: z.strictObject({ pipelineId: PipelineId, stageIds: z.array(z.string()).min(1) }),
@@ -189,6 +191,7 @@ const reorderStages = defineAction({
 
 const removeStage = defineAction({
   id: "M05.A09",
+  argumentLookups: { stageId: { entity: "stage", scope: { pipelineId: "pipelineId" } } },
   description: "Remove a stage that no deal sits in. If any opportunity is still in it, move those deals first (M04.A05). A pipeline can't lose its last stage.",
   risk: "destructive",
   input: z.strictObject({ pipelineId: PipelineId, stageId: z.string().describe("stage id") }),
@@ -213,6 +216,7 @@ const removeStage = defineAction({
 
 const setProbability = defineAction({
   id: "M05.A10",
+  argumentLookups: { stageId: { entity: "stage", scope: { pipelineId: "pipelineId" } } },
   description: "Set the win probability (0–100) of one stage. This configures the stage; it does not move a deal (that's M04.A05).",
   risk: "write",
   input: z.strictObject({ pipelineId: PipelineId, stageId: z.string().describe("stage id"), probability: Probability }),

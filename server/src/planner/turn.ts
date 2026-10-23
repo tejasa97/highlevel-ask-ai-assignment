@@ -9,7 +9,8 @@ import type { Store } from "../store/db.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
-import { checkIdentity, outcomeErrors, type Outcome } from "./contracts.js";
+import { outcomeErrors, type Outcome } from "./contracts.js";
+import { assessClarification } from "./clarification.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
 //   retrieve a shortlist → prompt → plan, with at most one search_tools round (a second retrieval for what the
@@ -174,21 +175,32 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       return { kind: "reply", status: "unsupported", text: `Delivery to ${outcome.destination} isn't supported. Nothing was sent or published. Supported surfaces: ${deliverySurfaces.map((s) => s.label).join(", ")}.` };
     }
 
-    if (d.type === "clarify" && d.clarification === "identity" && store) {
+    if (d.type === "clarify") {
+      let assessed;
       try {
-        if (!d.lookup) throw new Error("Identity clarification requires a typed lookup selector");
-        const check = checkIdentity(d.lookup, registry, store);
-        identityCheck = check.digest;
-        // Real ambiguity belongs to the user. Unique, absent and inactive matches need a grounded replan.
-        if (check.count > 1) return { kind: "reply", status: "clarify", text: `I found ${check.count} matching ${d.lookup.entity.replaceAll("_", " ")} records. ${check.options ? "Which one do you mean?" : "Please give a more specific name or qualifier."}`, options: check.options };
-        if (checkedIdentity) {
-          if (!check.count) return { kind: "reply", status: "clarify", text: `I couldn't find a matching ${d.lookup.entity.replaceAll("_", " ")}. Please give a fuller name or qualifier.` };
-          return failed("The account lookup found one matching record, but the planner still asked which one. Nothing was changed; please try again.");
-        }
+        assessed = assessClarification(d, registry, new Set(offered.map((a) => a.id)), input.message, store);
       } catch (err) {
         if (!(err instanceof Error)) throw err;
-        if (checkedIdentity) return failed(`The planner couldn't form a valid identity lookup: ${err.message}. Nothing was changed.`);
-        identityCheck = JSON.stringify({ error: err.message });
+        const errors = [err.message];
+        emit({ type: "compile.errors", data: { errors } });
+        if (repaired) return failed(`The clarification was still invalid after one repair: ${err.message}. Nothing was changed.`);
+        repaired = true;
+        user = prompt();
+        reply = await call(repairBlock(user, reply.json, errors), "repair clarification binding");
+        continue;
+      }
+      if (assessed.kind === "question") return { kind: "reply", status: "clarify", text: d.question ?? "Please supply the missing input.", options: d.options ?? undefined };
+      if (assessed.kind === "identity") {
+        const { check, lookup } = assessed;
+        identityCheck = check.digest;
+        if (check.count > 1) return { kind: "reply", status: "clarify", text: `I found ${check.count} matching ${lookup.entity.replaceAll("_", " ")} records. ${check.options ? "Which one do you mean?" : "Please give a more specific name or qualifier."}`, options: check.options };
+        if (checkedIdentity) {
+          if (!check.count) return { kind: "reply", status: "clarify", text: `I couldn't find a matching ${lookup.entity.replaceAll("_", " ")}. Please give a fuller name or qualifier.` };
+          return failed("The account lookup found one matching record, but the planner still asked which one. Nothing was changed; please try again.");
+        }
+      } else {
+        identityCheck = assessed.digest;
+        if (checkedIdentity) return failed("Matching account records were already supplied, but the planner still asked for that identity. Nothing was changed; please try again.");
       }
       checkedIdentity = true;
       user = prompt();

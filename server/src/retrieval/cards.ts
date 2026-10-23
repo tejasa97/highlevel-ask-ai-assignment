@@ -13,7 +13,7 @@ export const ENTITY_TYPES = [
   "quote", "invoice", "payment", "payment_request", "subscription", "coupon", "order", "refund", "tax_rule",
   "website", "funnel", "landing_page", "blog_post", "media_asset", "course", "lesson", "enrollment",
   "community", "community_post", "membership_plan", "review", "review_request", "listing", "ticket", "user",
-  "team", "report",
+  "team", "report", "form_field", "community_channel",
 ] as const;
 
 export interface CardMeta {

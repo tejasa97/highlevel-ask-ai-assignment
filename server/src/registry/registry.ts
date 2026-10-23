@@ -25,6 +25,8 @@ export type Resolver = ((store: Store, name: string, where?: LookupWhere) => Can
   qualifiers?: readonly string[];
   /** Titles/configuration labels should only be linked when the full label was mentioned. */
   exactMention?: boolean;
+  /** At least one of these parent qualifiers must be supplied for child lookup. */
+  parentQualifiers?: readonly string[];
 };
 
 export interface ModuleExports {

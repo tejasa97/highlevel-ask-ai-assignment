@@ -301,7 +301,7 @@ describe("POST /api/ask", () => {
   });
 
   test("a clarifying question comes back as a reply with its options and changes nothing", async () => {
-    const app = await start(scripted(reply({ type: "clarify", question: "What should the task say?", options: ["Call Ana", "Email Ana"] })));
+    const app = await start(scripted(reply({ type: "clarify", missing: { action: "M06.A01", argument: "title", argsJson: "{}" }, question: "What should the task say?", options: ["Call Ana", "Email Ana"] })));
     const audit = app.world().store.audit().length;
     const evs = await app.ask("create a task");
     assert.deepEqual(last(evs, "reply"), { status: "clarify", text: "What should the task say?", options: ["Call Ana", "Email Ana"] });
@@ -309,8 +309,18 @@ describe("POST /api/ask", () => {
     assert.equal(app.world().store.audit().length, audit);
   });
 
+  test("a choice-labelled identity question is grounded before replying over HTTP", async () => {
+    const planner = scripted(reply({ type: "clarify", clarification: "choice", question: "Which sales team?", missing: { action: "M49.A05", argument: "teamId", argsJson: '{"userId":"us_6"}' } }), action("M49.A05", { teamId: "tm_1", userId: "us_6" }));
+    const app = await start(planner);
+    const evs = await app.ask("Noah will help the sales team");
+    assert.equal(last(evs, "reply").status, "done");
+    assert.equal(planner.requests.length, 2);
+    assert.match(planner.requests[1]!.user, /identity_check.*tm_1/);
+    assert.ok(app.world().store.get<{ memberIds: string[] }>("teams", "tm_1")!.memberIds.includes("us_6"));
+  });
+
   test("the next message is planned together with the question it answers, and with the chat so far", async () => {
-    const planner = scripted(reply({ type: "clarify", question: "What should the task say?" }), action("M06.A01", { title: "Call Ana" }));
+    const planner = scripted(reply({ type: "clarify", missing: { action: "M06.A01", argument: "title", argsJson: "{}" }, question: "What should the task say?" }), action("M06.A01", { title: "Call Ana" }));
     const app = await start(planner);
     await app.ask("create a task");
     await app.ask("Call Ana");
@@ -395,7 +405,7 @@ describe("confirmation", () => {
 
 describe("POST /api/reset", () => {
   test("reopens the database and forgets the conversation", async () => {
-    const planner = scripted(reply({ type: "clarify", question: "What should the task say?" }), reply({ type: "clarify", question: "?" }));
+    const planner = scripted(reply({ type: "clarify", missing: { action: "M06.A01", argument: "title", argsJson: "{}" }, question: "What should the task say?" }), reply({ type: "answer", text: "Hello" }));
     const app = await start(planner);
     await app.ask("create a task");
     const old = app.world();
