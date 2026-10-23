@@ -158,7 +158,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             // The planner sometimes guesses the wrong record type for a name; say where the name does exist.
             const elsewhere = Object.keys(where).length ? [] : registry
               .resolverEntities()
-              .filter((e) => e !== step.entity && registry.resolver(e)!(ctx.store, step.name).some((c) => !c.inactive));
+              .filter((e) => e !== step.entity && !registry.resolver(e)!.parentQualifiers?.length && registry.resolver(e)!(ctx.store, step.name).some((c) => !c.inactive));
             const hint = elsewhere.length ? ` (but a ${elsewhere.join(" and a ")} does)` : "";
             fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"${hint}` });
           } else if (found.length > 1) {

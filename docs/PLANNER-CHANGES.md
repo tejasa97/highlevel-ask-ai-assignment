@@ -1,6 +1,8 @@
 # Shared planner changes: what changed and why
 
-Branch: `codex/planner-outcomes-and-retrieval`. This branch was created at `d583fb3`, retaining the existing lookup, retrieval, outcome-handling and validation commits. Creating the branch did not rebase onto main, squash history, change providers or rerun benchmarks. Nothing has been pushed or merged.
+Branch: `codex/planner-outcomes-and-retrieval`. This branch was created at `d583fb3`, retaining the existing lookup, retrieval, outcome-handling and validation commits. Creating the branch did not rebase onto main, squash history, change providers or rerun benchmarks. The original batch through `57a6d59` was subsequently pushed on request.
+
+The follow-on [scoped child lookup and argument-bound clarification batch](SCOPED-LOOKUPS-AND-CLARIFICATIONS.md) extends the historical foundation and section 1 below. Those original measurements and limitations remain checkpoint-specific; the follow-on has separate validation.
 
 This is the rationale and reading guide. [Lookup implementation](PLANNER-RECORD-LOOKUPS.md) and [outcome implementation](PLANNER-OUTCOMES.md) describe the mechanics; their separate validation reports record the measurements and limitations.
 

@@ -1,5 +1,5 @@
 import type { CompiledPlan } from "../core/compile.js";
-import type { Registry } from "../registry/registry.js";
+import type { Candidate, Registry } from "../registry/registry.js";
 import type { Store } from "../store/db.js";
 import type { SubmitPlan } from "./submit-plan.js";
 
@@ -21,7 +21,7 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome): string[] {
 }
 
 /** Bounded, read-only identity check. Qualifiers are validated, never silently dropped. */
-export function checkIdentity(lookup: NonNullable<SubmitPlan["lookup"]>, registry: Registry, store: Store): { count: number; digest: string; options?: string[] } {
+export function checkIdentity(lookup: NonNullable<SubmitPlan["lookup"]>, registry: Registry, store: Store): { count: number; digest: string; options?: string[]; match?: Candidate } {
   if (!lookup.name.trim()) throw new Error("Give a nonempty name for identity lookup");
   const resolver = registry.resolver(lookup.entity);
   if (!resolver) throw new Error(`No resolver for ${lookup.entity}; use read-only discovery instead`);
@@ -32,6 +32,7 @@ export function checkIdentity(lookup: NonNullable<SubmitPlan["lookup"]>, registr
   const labels = candidates.map((c) => `${c.name}${c.detail ? ` — ${c.detail}` : ""}`);
   return {
     count: candidates.length,
+    match: candidates.length === 1 ? candidates[0] : undefined,
     digest: JSON.stringify({ entity: lookup.entity, name: lookup.name, where, count: candidates.length, candidates: candidates.slice(0, 8), truncated: candidates.length > 8 }),
     options: candidates.length <= 8 ? labels.map((label, n) => labels.filter((l) => l === label).length > 1 ? `${label} (${candidates[n]!.id})` : label) : undefined,
   };

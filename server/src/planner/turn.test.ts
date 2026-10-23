@@ -29,6 +29,7 @@ const reply = (fields: Partial<SubmitPlan>): SubmitPlan => ({
   ...fields,
 });
 const createTask = (action = "M06.A01") => reply({ steps: [{ id: "s1", kind: "action", action, argsJson: JSON.stringify({ title: "Call Ana" }) }] });
+const missing = (action: string, argument: string, args = {}) => ({ action, argument, argsJson: JSON.stringify(args) });
 
 /** Answers with the scripted replies in order and keeps every request it was sent. */
 function scripted(...replies: SubmitPlan[]): Planner & { requests: PlanRequest[] } {
@@ -65,6 +66,40 @@ const offeredIn = (req: PlanRequest) => [...req.user.matchAll(/\b(M\d\d\.A\d\d)\
 describe("grounded outcomes and clarifications", () => {
   const change = { effect: "change" as const, actions: ["M06.A01"], destination: null };
   const tasks = (type: "look" | "plan") => reply({ type, steps: [{ id: "read", kind: "action", action: "M06.A03", argsJson: "{}" }], outcome: change });
+
+  test("a choice-labelled team question with no selector is grounded from its required argument", async () => {
+    const planner = scripted(reply({ type: "clarify", clarification: "choice", question: "Which sales team?", missing: missing("M49.A05", "teamId", { userId: "us_6" }) }), reply({ steps: [{ id: "join", kind: "action", action: "M49.A05", argsJson: '{"teamId":"tm_1","userId":"us_6"}' }] }));
+    const w = world();
+    const before = w.store.get("teams", "tm_1");
+    const out = await planTurn({ message: "Noah will help the sales team", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "plan");
+    assert.equal(planner.requests.length, 2);
+    assert.match(planner.requests[1]!.user, /identity_check.*tm_1/);
+    assert.deepEqual(w.store.get("teams", "tm_1"), before, "grounding never executes the membership change");
+  });
+
+  test("an unbound or optional-input clarification gets one repair, not an unnecessary user question", async () => {
+    for (const q of [reply({ type: "clarify", question: "Which Friday?" }), reply({ type: "clarify", question: "Which due date?", missing: missing("M06.A01", "dueDate", { title: "Call Ana" }) })]) {
+      const planner = scripted(q, createTask());
+      const { out } = await run("Create a task to call Ana", planner);
+      assert.ok(out.kind === "plan");
+      assert.equal(planner.requests.length, 2);
+      assert.match(planner.requests[1]!.user, /<errors>/);
+    }
+  });
+
+  test("nested field lookup IDs survive the look/replan loop", async () => {
+    const form = { $lookup: { entity: "form", name: "Contact Us" } };
+    const inspect = reply({ type: "look", steps: [{ id: "inspect", kind: "action", action: "M18.A02", argsJson: JSON.stringify({ formId: form }) }] });
+    const submit = reply({ steps: [{ id: "submit", kind: "action", action: "M18.A09", argsJson: JSON.stringify({ formId: "$lookup_1.id", answers: [{ fieldId: { $lookup: { entity: "form_field", name: "Email" } }, value: "a@example.com" }] }) }] });
+    const planner = scripted(inspect, submit);
+    const out = await planTurn({ message: "Submit Contact Us with email a@example.com", tier: "fast", carry: { prev: ["M18.A02", "M18.A09"], entities: ["form"] } }, {
+      registry, retriever, planner, clock: frozenClock(), look: async () => [{ id: "lookup_1", output: { id: "fm_1", name: "Contact Us" } }],
+    });
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(new Set(out.plan.steps.map((s) => s.id)).size, out.plan.steps.length);
+    assert.equal(planner.requests.length, 2);
+  });
 
   test("a prerequisite-only plan is repaired rather than returned as completed", async () => {
     const planner = scripted(tasks("plan"), { ...createTask(), outcome: change });
@@ -107,7 +142,7 @@ describe("grounded outcomes and clarifications", () => {
   });
 
   test("checks a unique identity before passing a speculative question to the user", async () => {
-    const planner = scripted(reply({ type: "clarify", clarification: "identity", question: "Which partner tag?", lookup: { entity: "tag", name: "partner", whereJson: null } }), reply({ steps: [{ id: "rename", kind: "action", action: "M08.A03", argsJson: JSON.stringify({ tagId: { $lookup: { entity: "tag", name: "partner" } }, name: "referral-partner" }) }] }));
+    const planner = scripted(reply({ type: "clarify", missing: missing("M08.A03", "tagId", { name: "referral-partner" }), clarification: "identity", question: "Which partner tag?", lookup: { entity: "tag", name: "partner", whereJson: null } }), reply({ steps: [{ id: "rename", kind: "action", action: "M08.A03", argsJson: JSON.stringify({ tagId: { $lookup: { entity: "tag", name: "partner" } }, name: "referral-partner" }) }] }));
     const w = world();
     const out = await planTurn({ message: "Rename partner tag to referral-partner", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
     assert.ok(out.kind === "plan");
@@ -117,7 +152,7 @@ describe("grounded outcomes and clarifications", () => {
   });
 
   test("real duplicate identities still ask the user, without selecting the first", async () => {
-    const planner = scripted(reply({ type: "clarify", clarification: "identity", question: "Which Sarah?", options: ["Brightside", "Acme"], lookup: { entity: "contact", name: "Sarah Johnson", whereJson: null } }));
+    const planner = scripted(reply({ type: "clarify", missing: missing("M13.A03", "contactId", { subject: "Hello", body: "Hi" }), clarification: "identity", question: "Which Sarah?", options: ["Brightside", "Acme"], lookup: { entity: "contact", name: "Sarah Johnson", whereJson: null } }));
     const w = world();
     const out = await planTurn({ message: "Email Sarah Johnson", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
     assert.ok(out.kind === "reply" && out.status === "clarify");
@@ -137,13 +172,13 @@ describe("grounded outcomes and clarifications", () => {
     const planner = scripted(reply({ type: "clarify", clarification: "content", question: "What should it say?", outcome: { effect: "change", actions: [], destination: "unconnected_network" } }));
     const { out } = await run("Post to an unconnected network", planner);
     assert.ok(out.kind === "reply" && out.status === "unsupported");
-    const supported = scripted(reply({ type: "clarify", clarification: "content", question: "What is the article about?", outcome: { effect: "change", actions: [], destination: "blog" } }));
+    const supported = scripted(reply({ type: "clarify", missing: missing("M38.A01", "title", { slug: "article", body: "Article" }), clarification: "content", question: "What is the article about?", outcome: { effect: "change", actions: [], destination: "blog" } }));
     const result = await run("Write a blog post", supported);
     assert.ok(result.out.kind === "reply" && result.out.status === "clarify");
   });
 
   test("repeating an identity question after a unique lookup fails safely instead of asking the user again", async () => {
-    const question = reply({ type: "clarify", clarification: "identity", question: "Which partner?", lookup: { entity: "tag", name: "partner", whereJson: null } });
+    const question = reply({ type: "clarify", missing: missing("M08.A03", "tagId"), clarification: "identity", question: "Which partner?", lookup: { entity: "tag", name: "partner", whereJson: null } });
     const planner = scripted(question, question);
     const w = world();
     const out = await planTurn({ message: "Rename partner tag", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
@@ -153,7 +188,7 @@ describe("grounded outcomes and clarifications", () => {
   });
 
   test("an invalid selector cannot turn into an unchecked identity question after the one retry", async () => {
-    const question = reply({ type: "clarify", clarification: "identity", question: "Which Sarah?", lookup: { entity: "contact", name: "Sarah Johnson", whereJson: '{"invented":"value"}' } });
+    const question = reply({ type: "clarify", missing: missing("M13.A03", "contactId"), clarification: "identity", question: "Which Sarah?", lookup: { entity: "contact", name: "Sarah Johnson", whereJson: '{"invented":"value"}' } });
     const planner = scripted(question, question);
     const w = world();
     const out = await planTurn({ message: "Email Sarah Johnson", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
@@ -162,7 +197,7 @@ describe("grounded outcomes and clarifications", () => {
   });
 
   test("a corrected selector is checked again without spending another model retry", async () => {
-    const question = reply({ type: "clarify", clarification: "identity", question: "Which Sarah?", lookup: { entity: "contact", name: "Sarah Johnson", whereJson: '{"invented":"value"}' } });
+    const question = reply({ type: "clarify", missing: missing("M13.A03", "contactId"), clarification: "identity", question: "Which Sarah?", lookup: { entity: "contact", name: "Sarah Johnson", whereJson: '{"invented":"value"}' } });
     const planner = scripted(question, { ...question, lookup: { entity: "contact", name: "Sarah Johnson", whereJson: null }, options: ["Invented person"] });
     const w = world();
     const out = await planTurn({ message: "Email Sarah Johnson", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
@@ -371,7 +406,7 @@ describe("planTurn", () => {
   });
 
   test("clarify and unsupported pass through with their options and alternatives", async () => {
-    const q = await run("create a task", scripted(reply({ type: "clarify", question: "What should the task say?", options: ["Call Ana", "Email Ana"] })));
+    const q = await run("create a task", scripted(reply({ type: "clarify", missing: missing("M06.A01", "title"), question: "What should the task say?", options: ["Call Ana", "Email Ana"] })));
     assert.deepEqual(q.out, { kind: "reply", status: "clarify", text: "What should the task say?", options: ["Call Ana", "Email Ana"] });
     const u = await run("send Priya an invoice reminder", scripted(reply({ type: "unsupported", reason: "Invoices aren't in this version." }), reply({ type: "unsupported", reason: "Invoices aren't in this version.", alternatives: ["Create a task to follow up"] })));
     assert.ok(u.out.kind === "reply" && u.out.status === "unsupported");
@@ -385,7 +420,7 @@ describe("planTurn", () => {
 
   test("an answer to a question is retrieved together with the question", async () => {
     const picked = async (answering?: string) => {
-      const { events } = await run("Ana Ruiz", scripted(reply({ type: "clarify", question: "?" })), { answering });
+      const { events } = await run("Ana Ruiz", scripted(reply({ type: "answer", text: "?" })), { answering });
       const t = events.find((e) => e.type === "retrieval")!;
       return t.type === "retrieval" && t.data.picks.some((p) => p.id === "M06.A01");
     };
@@ -445,7 +480,7 @@ describe("names in the message", () => {
   test("are linked to their record type in the prompt, and their lookups are offered", async () => {
     const ctx = world();
     ctx.f.lead({ firstName: "Quinn", lastName: "Leadonly" });
-    const planner = scripted(reply({ type: "clarify", question: "?" }));
+    const planner = scripted(reply({ type: "answer", text: "?" }));
     await planTurn({ message: "Create a task to call Quinn Leadonly tomorrow", tier: "fast" }, { registry, retriever, planner, clock: frozenClock(), store: ctx.store });
     const user = planner.requests[0]!.user;
     assert.match(user, /<mentions>Quinn Leadonly: lead<\/mentions>/);
@@ -453,7 +488,7 @@ describe("names in the message", () => {
   });
 
   test("without a store nothing is linked", async () => {
-    const planner = scripted(reply({ type: "clarify", question: "?" }));
+    const planner = scripted(reply({ type: "answer", text: "?" }));
     await run("What is Sarah Johnson's status?", planner);
     assert.doesNotMatch(planner.requests[0]!.user, /<mentions>/);
   });

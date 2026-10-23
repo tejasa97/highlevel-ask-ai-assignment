@@ -23,6 +23,15 @@ const lookup = {
   required: ["entity", "name", "whereJson"],
   properties: { entity: { type: "string" }, name: { type: "string" }, whereJson: nullable("string") },
 };
+const missing = {
+  type: ["object", "null"], additionalProperties: false,
+  required: ["action", "argument", "argsJson"],
+  properties: {
+    action: { type: "string", description: "Offered action whose input is missing or ambiguous" },
+    argument: { type: "string", description: "Concrete input path, e.g. title, teamId, answers[0].fieldId" },
+    argsJson: { type: "string", description: "Known arguments as a JSON object. Preserve given names as $lookup values, including the ambiguous argument." },
+  },
+};
 
 const actionCall = {
   type: "object",
@@ -76,7 +85,7 @@ const step = {
 export const SUBMIT_PLAN_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["type", "steps", "question", "options", "reason", "alternatives", "query", "text", "outcome", "clarification", "lookup"],
+  required: ["type", "steps", "question", "options", "reason", "alternatives", "query", "text", "outcome", "clarification", "lookup", "missing"],
   properties: {
     type: { enum: ["plan", "look", "clarify", "unsupported", "answer", "search_tools"] },
     steps: { type: ["array", "null"], items: step },
@@ -89,6 +98,7 @@ export const SUBMIT_PLAN_SCHEMA = {
     outcome,
     clarification: { enum: ["identity", "content", "choice", null] },
     lookup,
+    missing,
   },
 } as const;
 
@@ -123,6 +133,7 @@ export const SubmitPlan = z.object({
   outcome: z.object({ effect: z.enum(["read", "change"]), actions: z.array(z.string()), destination: z.string().nullable() }).nullable().optional(),
   clarification: z.enum(["identity", "content", "choice"]).nullable().optional(),
   lookup: z.object({ entity: z.string(), name: z.string(), whereJson: z.string().nullable() }).nullable().optional(),
+  missing: z.object({ action: z.string(), argument: z.string(), argsJson: z.string() }).nullable().optional(),
 });
 export type SubmitPlan = z.infer<typeof SubmitPlan>;
 export type Step = z.infer<typeof Step>;

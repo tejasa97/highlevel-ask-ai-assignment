@@ -1,21 +1,29 @@
 import type { Step } from "../planner/submit-plan.js";
-import type { Registry } from "../registry/registry.js";
-import { unwrap } from "./refs.js";
+import type { JsonSchema, Registry } from "../registry/registry.js";
+import { argumentAt, argumentEntities, scopedWhere } from "../registry/arguments.js";
+import { collectRefs, parseRef, unwrap } from "./refs.js";
 
 // A provider-independent shorthand, lowered to ordinary resolve steps BEFORE normal compilation.
 // No reads or writes here, and no picking [0] from a list. The normal executor handles 0/1/many matches.
 // { reportId: { $lookup: { entity: "report", name: "Monthly Revenue" } } }
 
-const ALIASES: Record<string, string[]> = {
-  ownerId: ["user"], assigneeId: ["user"], accountManagerId: ["user"], authorId: ["user"], instructorId: ["user"],
-  fieldId: ["custom_field"], assetId: ["media_asset"], planId: ["membership_plan"],
-  postId: ["blog_post", "community_post"], pageId: ["landing_page"],
-};
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
 export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; errors: string[] } {
   const steps: Step[] = [], errors: string[] = [];
   const ids = new Set(raw.map((s) => s.id));
+  // Generated identities must not shadow a reference to a missing/earlier read step either.
+  for (const step of raw) {
+    const encoded = step.kind === "action" ? [step.argsJson] : step.kind === "resolve" ? [step.whereJson] : [step.whereJson, ...(step.do ?? []).map((c) => c.argsJson)];
+    const values: unknown[] = [step];
+    for (const json of encoded) if (json) {
+      try { values.push(JSON.parse(json)); } catch { /* The ordinary compiler reports malformed JSON. */ }
+    }
+    for (const value of values) for (const { ref } of collectRefs(value)) {
+      const root = parseRef(ref)?.root;
+      if (root) ids.add(root);
+    }
+  }
   let seq = 0;
   const nextId = () => { let id: string; do { id = `lookup_${++seq}`; } while (ids.has(id)); ids.add(id); return id; };
   const lowerCall = (action: string, argsJson: string, at: string): string => {
@@ -23,22 +31,46 @@ export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; 
     try { args = JSON.parse(argsJson); } catch { return argsJson; }
     if (!object(args)) return argsJson;
     const def = registry.get(action);
-    const fields = (def?.inputSchema.properties ?? {}) as Record<string, Record<string, unknown>>;
-    for (const [key, value] of Object.entries(args)) {
-      if (!object(value) || !Object.hasOwn(value, "$lookup")) continue;
-      const lookup = value.$lookup;
-      const expected = ALIASES[key] ?? [key.replace(/Id$/, "").replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)];
-      if (Object.keys(value).length !== 1 || !object(lookup) || Object.keys(lookup).some((k) => !["entity", "name", "where"].includes(k)) ||
-          typeof lookup.entity !== "string" || typeof lookup.name !== "string" || !lookup.name.trim() ||
-          (lookup.where !== undefined && (!object(lookup.where) || Object.values(lookup.where).some((v) => typeof v !== "string" || !v.trim()))) ||
-          !key.endsWith("Id") || !fields[key] || unwrap(fields[key]!).type !== "string" || !expected.includes(lookup.entity)) {
-        errors.push(`${at} arg ${key}: invalid $lookup; use a matching entity and name for an ID field, with optional string-valued where qualifiers`);
-        continue;
+    if (!def) return argsJson;
+    const parsedArgs = args;
+    const walk = (value: unknown, schema: JsonSchema, path: string, children: boolean): unknown => {
+      schema = unwrap(schema);
+      const rule = def.argumentLookups?.[path.replace(/\[\d+\]/g, "[]")];
+      if (object(value) && Object.hasOwn(value, "$lookup") && schema.type === "string" && argumentEntities(def, path).length) {
+        if (!!rule !== children) return value;
+        const lookup = value.$lookup;
+        if (Object.keys(value).length !== 1 || !object(lookup) || Object.keys(lookup).some((k) => !["entity", "name", "where"].includes(k)) ||
+            typeof lookup.entity !== "string" || typeof lookup.name !== "string" || !lookup.name.trim() ||
+            !argumentEntities(def, path).includes(lookup.entity) ||
+            (lookup.where !== undefined && (!object(lookup.where) || Object.values(lookup.where).some((v) => typeof v !== "string" || !v.trim())))) {
+          errors.push(`${at} arg ${path}: invalid $lookup; use a matching entity and name for an ID field, with optional string-valued where qualifiers`);
+          return value;
+        }
+        try {
+          const where = scopedWhere(rule, (lookup.where ?? {}) as Record<string, string>, (parent) => {
+            const v = argumentAt(def, parsedArgs, parent).value;
+            if (typeof v !== "string" || !v.trim()) throw new Error(`Parent argument ${parent} must be an ID, a backward reference, or a named parent lookup`);
+            if (/\$(item|rr)\b/.test(v)) throw new Error("Per-item child lookups cannot be hoisted outside forEach; resolve within a fixed parent instead");
+            return v;
+          });
+          const id = nextId();
+          steps.push({ id, kind: "resolve", entity: lookup.entity, name: lookup.name, whereJson: Object.keys(where).length ? JSON.stringify(where) : null });
+          return `$${id}.id`;
+        } catch (err) {
+          errors.push(`${at} arg ${path}: ${(err as Error).message}`);
+          return value;
+        }
       }
-      const id = nextId();
-      steps.push({ id, kind: "resolve", entity: lookup.entity, name: lookup.name, whereJson: lookup.where ? JSON.stringify(lookup.where) : null });
-      args[key] = `$${id}.id`;
-    }
+      if (Array.isArray(value) && schema.type === "array") return value.map((v, i) => walk(v, schema.items as JsonSchema, `${path}[${i}]`, children));
+      if (object(value) && schema.type === "object") {
+        const props = (schema.properties ?? {}) as Record<string, JsonSchema>;
+        for (const key of Object.keys(value)) if (Object.hasOwn(props, key)) value[key] = walk(value[key], props[key]!, path ? `${path}.${key}` : key, children);
+      }
+      return value;
+    };
+    // Parents lower first regardless of JSON key order; children bind to those exact parent results.
+    walk(parsedArgs, def.inputSchema, "", false);
+    walk(parsedArgs, def.inputSchema, "", true);
     return JSON.stringify(args);
   };
   for (const step of raw) {

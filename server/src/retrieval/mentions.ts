@@ -23,6 +23,7 @@ export function mentions(message: string, registry: Registry, store: Store): Men
     for (const entity of registry.resolverEntities()) {
       if (SKIP.has(entity)) continue;
       const resolver = registry.resolver(entity)!;
+      if (resolver.parentQualifiers?.length) continue; // A child label alone cannot identify its parent.
       const hits = resolver(store, name).filter((c) => {
         if (c.inactive) return false;
         if (resolver.exactMention) return norm(c.name) === norm(name);

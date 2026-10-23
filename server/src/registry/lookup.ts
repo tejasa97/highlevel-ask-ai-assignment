@@ -13,6 +13,7 @@ export function namedResolver<T extends { id: string }>(options: {
   inactive?: (row: T) => string | undefined;
   qualifiers?: Record<string, (row: T) => string | null | undefined>;
   exactMention?: boolean;
+  parentQualifiers?: string[];
 }): Resolver {
   const qualifiers = options.qualifiers ?? {};
   return Object.assign((store: Store, name: string, where: LookupWhere = {}): Candidate[] => {
@@ -20,12 +21,14 @@ export function namedResolver<T extends { id: string }>(options: {
       if (!Object.hasOwn(qualifiers, key) || typeof value !== "string" || !value.trim())
         throw new ActionError("INVALID", `Unsupported or empty lookup qualifier ${key}; allowed: ${Object.keys(qualifiers).join(", ") || "none"}`);
     }
+    if (options.parentQualifiers?.length && !options.parentQualifiers.some((key) => where[key]))
+      throw new ActionError("INVALID", `Child lookup requires a parent qualifier: ${options.parentQualifiers.join(" or ")}`);
     const rows = options.records(store).filter((row) => Object.entries(where).every(([key, value]) => {
       const actual = qualifiers[key]!(row);
       return typeof actual === "string" && exact(actual) === exact(value);
     }));
     return candidates(rows, name, options.name, options.detail, options.inactive);
-  }, { qualifiers: Object.keys(qualifiers), exactMention: options.exactMention ?? false });
+  }, { qualifiers: Object.keys(qualifiers), exactMention: options.exactMention ?? false, parentQualifiers: options.parentQualifiers });
 }
 
 /** Most named catalog objects only need a table, a label, and optional exact qualifier fields. */

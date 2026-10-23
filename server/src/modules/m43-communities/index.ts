@@ -1,4 +1,4 @@
-import { tableResolver } from "../../registry/lookup.js";
+import { namedResolver, tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -168,6 +168,7 @@ const leave = defineAction({
 
 const createPost = defineAction({
   id: "M43.A07",
+  argumentLookups: { channelId: { entity: "community_channel", scope: { communityId: "communityId" } } },
   destination: { id: "community", label: "CRM community" },
   description: "Start a top-level post in a channel. Pass contactId for a member post, or omit it to post as the acting staff user. Unlike Reply to community post, this is not nested under another post and it can be pinned.",
   risk: "write",
@@ -273,6 +274,11 @@ const removePost = defineAction({
 export default {
   resolvers: {
     community: tableResolver("communities"),
+    community_channel: namedResolver({
+      records: (store) => store.all<Community>("communities").flatMap((c) => c.channels.map((channel) => ({ ...channel, communityId: c.id, community: c.name }))),
+      name: (c) => c.name, detail: (c) => c.community,
+      qualifiers: { communityId: (c) => c.communityId, community: (c) => c.community }, parentQualifiers: ["communityId", "community"],
+    }),
   },
   actions: [createCommunity, getCommunity, updateGuidelines, createChannel, join, leave, createPost, reply, pin, removePost],
 } satisfies ModuleExports;

@@ -1,5 +1,7 @@
 # Grounded planner outcomes
 
+Follow-on: [scoped child lookups and argument-bound clarifications](SCOPED-LOOKUPS-AND-CLARIFICATIONS.md) replace category-gated clarification routing with required-input checks. This page records the preceding seven-change batch; its validation is checkpoint-specific.
+
 Originally implemented on `codex/planner-record-lookups`, after the record-lookup batch (`f0870a6`); the complete work is now carried on `codex/planner-outcomes-and-retrieval`. Shared by every provider: no model-name branching, embedding-model replacement or second executor. Start with [what changed and why](PLANNER-CHANGES.md) for the rationale behind these mechanics.
 
 ## Seven changes

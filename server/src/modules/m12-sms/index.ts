@@ -72,6 +72,7 @@ function outgoing(store: Store, a: { smsId?: string; contactId?: string; leadId?
 
 const draftSms = defineAction({
   id: "M12.A01",
+  inputAlternatives: [["contactId", "body"], ["leadId", "body"]],
   description: "Write a text message to a contact or lead and save it as a draft, without sending. Send it later with M12.A03.",
   risk: "write",
   input: z.strictObject({ ...PersonArgs, body: z.string().min(1).max(1600) }),
@@ -94,6 +95,7 @@ const previewSegments = defineAction({
 
 const sendSms = defineAction({
   id: "M12.A03",
+  inputAlternatives: [["smsId"], ["contactId", "body"], ["leadId", "body"]],
   destination: { id: "sms", label: "SMS" },
   description:
     "Send a text message now: a saved draft (smsId) or a new message to a contact or lead. Refused if they opted out, are on do-not-disturb, turned off SMS, or have no valid mobile number.",
@@ -114,6 +116,7 @@ const sendSms = defineAction({
 
 const scheduleSms = defineAction({
   id: "M12.A04",
+  inputAlternatives: [["smsId", "sendAt"], ["contactId", "body", "sendAt"], ["leadId", "body", "sendAt"]],
   destination: { id: "sms", label: "SMS" },
   description: "Schedule a text message to go out later: a saved draft (smsId) or a new message to a contact or lead. The same consent rules as sending apply.",
   risk: "external",

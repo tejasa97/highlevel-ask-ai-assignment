@@ -87,6 +87,8 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
         if (!s.name.trim()) err("resolve requires a non-empty name");
         if (!where) continue;
         const allowed = registry.resolver(s.entity)!.qualifiers ?? [];
+        const parents = registry.resolver(s.entity)!.parentQualifiers;
+        if (parents?.length && !parents.some((key) => where[key])) err(`child lookup ${s.entity} requires a parent qualifier: ${parents.join(" or ")}`);
         for (const [key, value] of Object.entries(where)) {
           if (!allowed.includes(key)) err(`unknown ${s.entity} qualifier ${key}; allowed: ${allowed.join(", ") || "none"}`);
           if (typeof value !== "string" || !value.trim()) err(`qualifier ${key} must be a non-empty string`);

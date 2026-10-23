@@ -43,11 +43,11 @@ describe("runScenario", () => {
       { id: "s2", kind: "action", action: "M47.A08", argsJson: JSON.stringify({ ticketId: "tic_4", body: "Update" }) },
     ] });
     assert.equal((await run(s, mixed)).pass, true);
-    const failed = await run(s, reply({ type: "clarify", question: "Proceed with tic_1 only?" }));
+    const failed = await run(s, reply({ type: "clarify", missing: { action: "M47.A08", argument: "body", argsJson: '{"ticketId":"tic_1"}' }, question: "Proceed with tic_1 only?" }));
     assert.ok(failed.failures.some((f) => f.kind === "confirmation"));
   });
   test("subscription usage stays unknown while numeric tokens accumulate across turns", async () => {
-    const base = scripted(reply({ type: "clarify", question: "What should the task say?" }), action("M06.A01", { title: "Call Ana" }));
+    const base = scripted(reply({ type: "clarify", missing: { action: "M06.A01", argument: "title", argsJson: "{}" }, question: "What should the task say?" }), action("M06.A01", { title: "Call Ana" }));
     const planner: Planner = { name: "codex-cli", async plan(req) {
       const result = await base.plan(req);
       return { ...result, usage: { ...result.usage, costUsd: null, billing: "subscription" } };

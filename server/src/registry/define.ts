@@ -8,6 +8,9 @@ import type { Fixtures } from "../store/fixtures.js";
 
 export type Risk = "read" | "write" | "destructive" | "external";
 
+/** Schema paths use [] for array items. Scope maps child qualifier -> parent argument path. */
+export interface ArgumentLookup { entity: string; scope?: Record<string, string> }
+
 export interface ActionContext {
   store: Store;
   clock: Clock;
@@ -41,6 +44,9 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   output: O;
   /** Entity types this action produces and consumes, for dependency expansion in retrieval. */
   entities?: { produces?: string; consumes?: string[]; optionalConsumes?: string[]; lookup?: string };
+  argumentLookups?: Record<string, ArgumentLookup>;
+  /** Alternative input groups for actions whose required inputs are conditional. */
+  inputAlternatives?: string[][];
   /** Explicit delivery surface, not an inferred match on words like "post". */
   destination?: { id: string; label: string };
   /** Look-alike actions in other modules, always retrieved together. */
