@@ -215,6 +215,7 @@ const categories = defineAction({
 });
 const publish = defineAction({
   id: "M46.A09",
+  destination: { id: "business_listing", label: "Simulated business directory listing" },
   description:
     "Publish or sync the latest version of a business listing to its simulated directory. This publishes a business profile, not a customer review response. No real directory is contacted.",
   risk: "external",

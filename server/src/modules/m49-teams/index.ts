@@ -124,7 +124,8 @@ const renameTeam = defineAction({
 
 const addMember = defineAction({
   id: "M49.A05",
-  description: "Add a staff user to a team.",
+  description: "Join an existing team as a member, including temporary help. Does not create a team or change its manager. No end date is required and automatic removal is not scheduled.",
+  synonyms: ["help a team", "join existing team", "temporary team membership", "lend a team a hand"],
   risk: "write",
   input: z.strictObject({ teamId: TeamId, userId: UserId }),
   output: Team,

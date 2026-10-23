@@ -62,6 +62,97 @@ function hiding(id: string): Registry {
 }
 const offeredIn = (req: PlanRequest) => [...req.user.matchAll(/\b(M\d\d\.A\d\d)\b/g)].map((m) => m[1]!);
 
+describe("grounded outcomes and clarifications", () => {
+  const change = { effect: "change" as const, actions: ["M06.A01"], destination: null };
+  const tasks = (type: "look" | "plan") => reply({ type, steps: [{ id: "read", kind: "action", action: "M06.A03", argsJson: "{}" }], outcome: change });
+
+  test("a prerequisite-only plan is repaired rather than returned as completed", async () => {
+    const planner = scripted(tasks("plan"), { ...createTask(), outcome: change });
+    const { out } = await run("Create a task like my other tasks", planner);
+    assert.ok(out.kind === "plan");
+    assert.equal(planner.requests.length, 2);
+    assert.match(planner.requests[1]!.user, /only reads/);
+  });
+
+  test("look then answer cannot drop the requested change, even if the next reply declares a read", async () => {
+    const planner = scripted(tasks("look"), reply({ type: "answer", text: "Found tasks", outcome: { effect: "read", actions: ["M06.A03"], destination: null } }), createTask());
+    const { out } = await run("Create a task like my other tasks", planner, {}, async () => []);
+    assert.ok(out.kind === "plan");
+    assert.equal(planner.requests.length, 3);
+    assert.match(planner.requests[2]!.user, /requested_outcome.*M06.A01/);
+    assert.match(planner.requests[2]!.user, /only reads/);
+  });
+
+  test("a change cannot end with a prose-only answer, and retries are bounded", async () => {
+    const answer = reply({ type: "answer", text: "Done", outcome: change });
+    const planner = scripted(answer, answer);
+    const { out } = await run("Create a task", planner);
+    assert.ok(out.kind === "reply" && out.status === "failed");
+    assert.equal(planner.requests.length, 2);
+  });
+
+  test("a genuine read-only look may still end with an answer", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("look"), outcome: read }, reply({ type: "answer", text: "Found tasks", outcome: read }));
+    const { out } = await run("Show my tasks", planner, {}, async () => []);
+    assert.ok(out.kind === "plan");
+    assert.equal(planner.requests.length, 2);
+  });
+
+  test("a search can discover final operation IDs without losing its original effect", async () => {
+    const planner = scripted(reply({ type: "search_tools", query: "create task", outcome: { ...change, actions: [] } }), { ...createTask(), outcome: change });
+    const { out } = await run("Remind me to call", planner);
+    assert.ok(out.kind === "plan");
+    assert.match(planner.requests[1]!.user, /requested_outcome.*change/);
+  });
+
+  test("checks a unique identity before passing a speculative question to the user", async () => {
+    const planner = scripted(reply({ type: "clarify", clarification: "identity", question: "Which partner tag?", lookup: { entity: "tag", name: "partner", whereJson: null } }), reply({ steps: [{ id: "rename", kind: "action", action: "M08.A03", argsJson: JSON.stringify({ tagId: { $lookup: { entity: "tag", name: "partner" } }, name: "referral-partner" }) }] }));
+    const w = world();
+    const out = await planTurn({ message: "Rename partner tag to referral-partner", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "plan");
+    assert.equal(planner.requests.length, 2);
+    assert.match(planner.requests[1]!.user, /identity_check.*tg_4/);
+    assert.equal(w.store.get<{ name: string }>("tags", "tg_4")!.name, "partner", "lookup never executes the rename");
+  });
+
+  test("real duplicate identities still ask the user, without selecting the first", async () => {
+    const planner = scripted(reply({ type: "clarify", clarification: "identity", question: "Which Sarah?", options: ["Brightside", "Acme"], lookup: { entity: "contact", name: "Sarah Johnson", whereJson: null } }));
+    const w = world();
+    const out = await planTurn({ message: "Email Sarah Johnson", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "reply" && out.status === "clarify");
+    assert.equal(planner.requests.length, 1);
+  });
+
+  test("unsupported destination is reported before asking for content or executing look", async () => {
+    const planner = scripted(reply({ type: "clarify", clarification: "content", question: "What should the post say?", outcome: { effect: "change", actions: [], destination: "linkedin" } }));
+    const { out } = await run("Publish a LinkedIn post", planner);
+    assert.ok(out.kind === "reply" && out.status === "unsupported");
+    assert.match(out.text, /linkedin isn't supported/);
+    assert.doesNotMatch(out.text, /What should/);
+    assert.equal(planner.requests.length, 1);
+  });
+
+  test("destination validation uses capabilities, not a platform-specific blacklist", async () => {
+    const planner = scripted(reply({ type: "clarify", clarification: "content", question: "What should it say?", outcome: { effect: "change", actions: [], destination: "unconnected_network" } }));
+    const { out } = await run("Post to an unconnected network", planner);
+    assert.ok(out.kind === "reply" && out.status === "unsupported");
+    const supported = scripted(reply({ type: "clarify", clarification: "content", question: "What is the article about?", outcome: { effect: "change", actions: [], destination: "blog" } }));
+    const result = await run("Write a blog post", supported);
+    assert.ok(result.out.kind === "reply" && result.out.status === "clarify");
+  });
+
+  test("repeating an identity question after a unique lookup fails safely instead of asking the user again", async () => {
+    const question = reply({ type: "clarify", clarification: "identity", question: "Which partner?", lookup: { entity: "tag", name: "partner", whereJson: null } });
+    const planner = scripted(question, question);
+    const w = world();
+    const out = await planTurn({ message: "Rename partner tag", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "reply" && out.status === "failed");
+    assert.equal(planner.requests.length, 2);
+    assert.equal(w.store.get<{ name: string }>("tags", "tg_4")!.name, "partner");
+  });
+});
+
 describe("compile against what was offered", () => {
   test("rejects an implemented action the planner wasn't shown", () => {
     const r = compile(createTask(), registry, new Set(["M01.A01"]));

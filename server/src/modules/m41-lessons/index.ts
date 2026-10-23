@@ -281,6 +281,7 @@ const setCompletion = defineAction({
 
 const publishLesson = defineAction({
   id: "M41.A09",
+  destination: { id: "lesson", label: "Lesson" },
   description: "Publish a draft lesson so learners can complete it and the course can be published. Unlike M40.A09 Publish course, this publishes one lesson, not the program. Unlike M42.A08, this does not record that a learner finished it.",
   risk: "external",
   input: z.strictObject({ lessonId: LessonId }),

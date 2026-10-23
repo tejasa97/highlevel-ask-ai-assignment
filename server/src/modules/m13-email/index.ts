@@ -132,6 +132,7 @@ const previewEmail = defineAction({
 
 const sendEmail = defineAction({
   id: "M13.A03",
+  destination: { id: "email", label: "Email" },
   description:
     "Send an email now: a saved draft (emailId) or a new email to a contact or lead. Refused if they unsubscribed, are on do-not-disturb or turned off email (invoice emails are exempt from marketing preferences).",
   risk: "external",
@@ -151,6 +152,7 @@ const sendEmail = defineAction({
 
 const scheduleEmail = defineAction({
   id: "M13.A04",
+  destination: { id: "email", label: "Email" },
   description: "Schedule an email to go out later: a saved draft (emailId) or a new email to a contact or lead. The same consent rules as sending apply.",
   risk: "external",
   input: z.strictObject({ ...SendArgs, sendAt: z.iso.datetime({ offset: true }).describe("when to send, ISO date-time") }),

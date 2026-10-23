@@ -236,6 +236,7 @@ const schedulePost = defineAction({
 
 const publishPost = defineAction({
   id: "M38.A09",
+  destination: { id: "blog", label: "Blog" },
   description:
     "Publish a scheduled or unpublished post now. A draft must be scheduled first (M38.A08); this does not wait for publishAt. Taking it offline again is M38.A10 Unpublish post.",
   risk: "external",

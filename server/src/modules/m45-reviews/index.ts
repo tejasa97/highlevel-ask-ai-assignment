@@ -62,6 +62,7 @@ const create = defineAction({
 });
 const send = defineAction({
   id: "M45.A02",
+  destination: { id: "email", label: "Email" },
   description:
     "Send an existing draft review request by email. Requires requestId from Create/list review requests. Marketing preferences and do-not-disturb apply. This is the only send path for review requests.",
   risk: "external",
@@ -262,6 +263,7 @@ const draft = defineAction({
 });
 const publish = defineAction({
   id: "M45.A09",
+  destination: { id: "review", label: "Customer review response" },
   description:
     "Publish a customer review response: give reviewId and optional body, or publish its saved response draft. This responds to a review, not a business listing.",
   risk: "external",
