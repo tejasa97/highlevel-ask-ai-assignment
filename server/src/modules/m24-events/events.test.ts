@@ -108,6 +108,15 @@ test("M24.A01 create refuses an event that ends before it starts", async () => {
   assert.equal(failure(() => w.call("M24.A01", { title: "Backwards", startsAt: "2026-10-22T15:00:00.000Z", endsAt: "2026-10-22T14:00:00.000Z" })).code, "INVALID");
 });
 
+test("an event written with a UTC offset is stored and searched by its UTC day", async () => {
+  const w = await testWorld();
+  // 22:00 at -05:00 is 03:00 UTC the next day.
+  const event = w.call("M24.A01", { title: "Late night", startsAt: "2030-10-30T22:00:00-05:00", endsAt: "2030-10-30T23:30:00-05:00" });
+  assert.equal(event.startsAt, "2030-10-31T03:00:00.000Z");
+  assert.equal(w.call("M24.A03", { from: "2030-10-31", to: "2030-10-31" }).total, 1);
+  assert.equal(w.call("M24.A03", { from: "2030-10-30", to: "2030-10-30" }).total, 0);
+});
+
 test("M24.A04 update refuses a no-op", async () => {
   const w = await testWorld();
   const event = w.f.event({ title: "Night", capacity: 4 });

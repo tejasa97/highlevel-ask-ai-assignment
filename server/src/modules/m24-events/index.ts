@@ -105,6 +105,9 @@ function renumber(store: Store, eventId: string): void {
   });
 }
 
+/** Stored times are always UTC, so day filters and string comparisons agree with the instant. */
+const utc = (iso: string): string => new Date(iso).toISOString();
+
 function times(startsAt: string, endsAt: string): void {
   if (!(Date.parse(endsAt) > Date.parse(startsAt))) throw new ActionError("INVALID", "endsAt must be after startsAt");
 }
@@ -132,8 +135,8 @@ const createEvent = defineAction({
     return store.insert("events", "ev", {
       title: a.title,
       description: a.description ?? null,
-      startsAt: a.startsAt,
-      endsAt: a.endsAt,
+      startsAt: utc(a.startsAt),
+      endsAt: utc(a.endsAt),
       location: a.location ?? null,
       capacity: a.capacity ?? 10,
       status: "scheduled" as const,
@@ -202,8 +205,8 @@ const updateEvent = defineAction({
   handler: (a, { store, clock }) => {
     const ev = scheduled(store, a.eventId, "be edited");
     atLeastOne(a, ["title", "description", "location", "startsAt", "endsAt"]);
-    const startsAt = a.startsAt ?? ev.startsAt;
-    const endsAt = a.endsAt ?? ev.endsAt;
+    const startsAt = a.startsAt ? utc(a.startsAt) : ev.startsAt;
+    const endsAt = a.endsAt ? utc(a.endsAt) : ev.endsAt;
     times(startsAt, endsAt);
     const patch: Partial<Event> = {};
     if (a.title !== undefined && a.title !== ev.title) patch.title = a.title;
