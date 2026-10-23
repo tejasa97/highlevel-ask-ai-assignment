@@ -9,6 +9,21 @@ test("M07.A01 create attaches to the record and the actor is the author", async 
   assert.deepEqual([n.authorId, n.attachedTo, n.pinned], ["us_4", [{ type: "contact", id: c.id }], false]);
 });
 
+test("M07.A10 moving a note between records doesn't change when its text was written", async () => {
+  const w = await testWorld();
+  const a = w.f.contact();
+  const b = w.f.contact();
+  const written = w.clock.now().toISOString();
+  const n = w.call("M07.A01", { body: "First", attachTo: { type: "contact", id: a.id } });
+  w.clock.now = () => new Date("2026-10-25T09:00:00.000Z");
+  w.call("M07.A06", { noteId: n.id, record: { type: "contact", id: b.id } });
+  w.call("M07.A07", { noteId: n.id, record: { type: "contact", id: a.id } });
+  assert.equal(w.call("M07.A10", { noteId: n.id }).items[0].at, written);
+  w.call("M07.A04", { noteId: n.id, body: "Second" });
+  const items = w.call("M07.A10", { noteId: n.id }).items;
+  assert.deepEqual([items[0].at, items[1].at], [written, "2026-10-25T09:00:00.000Z"]);
+});
+
 test("M07.A01 create refuses a record that does not exist", async () => {
   const w = await testWorld();
   assert.equal(failure(() => w.call("M07.A01", { body: "x", attachTo: { type: "invoice", id: "inv_999" } })).code, "NOT_FOUND");

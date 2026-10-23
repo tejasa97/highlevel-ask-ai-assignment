@@ -125,11 +125,12 @@ const attachNote = defineAction({
   output: Note,
   entities: { consumes: ["note"] },
   example: () => ({ noteId: "nt_1", record: { type: "opportunity", id: "op_1" } }),
-  handler: ({ noteId, record }, { store, clock }) => {
+  // updatedAt is when the text was last written (M07.A10 history reads it), so moving a note between records leaves it.
+  handler: ({ noteId, record }, { store }) => {
     const n = mustGet<Note>(store, "notes", noteId, "note");
     target(store, record);
     if (n.attachedTo.some((t) => same(t, record))) throw new ActionError("CONFLICT", `The note is already on ${record.type} ${record.id}`);
-    return store.update<Note>("notes", n.id, { attachedTo: [...n.attachedTo, record], updatedAt: clock.now().toISOString() });
+    return store.update<Note>("notes", n.id, { attachedTo: [...n.attachedTo, record] });
   },
 });
 
@@ -141,12 +142,12 @@ const detachNote = defineAction({
   output: Note,
   entities: { consumes: ["note"] },
   example: () => ({ noteId: "nt_1", record: { type: "contact", id: "ct_1" } }),
-  handler: ({ noteId, record }, { store, clock }) => {
+  handler: ({ noteId, record }, { store }) => {
     const n = mustGet<Note>(store, "notes", noteId, "note");
     if (!n.attachedTo.some((t) => same(t, record))) {
       throw new ActionError("CONFLICT", `The note isn't on ${record.type} ${record.id}; it's on ${n.attachedTo.map((t) => `${t.type} ${t.id}`).join(", ") || "nothing"}`);
     }
-    return store.update<Note>("notes", n.id, { attachedTo: n.attachedTo.filter((t) => !same(t, record)), updatedAt: clock.now().toISOString() });
+    return store.update<Note>("notes", n.id, { attachedTo: n.attachedTo.filter((t) => !same(t, record)) });
   },
 });
 
