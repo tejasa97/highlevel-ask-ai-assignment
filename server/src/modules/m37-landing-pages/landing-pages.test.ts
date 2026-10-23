@@ -88,6 +88,16 @@ test("SEO no-op conflicts, and unpublish is only for a live page", async () => {
   assert.equal(w.call("M37.A10", { landingPageId: live.id }).status, "draft");
 });
 
+test("M37.A10 a page shown by a published funnel can't be unpublished until the step moves", async () => {
+  const w = await testWorld();
+  const page = w.f.landingPage({ status: "published", publishedAt: w.f.now() });
+  const other = w.f.landingPage({ status: "published", publishedAt: w.f.now() });
+  const funnel = w.f.funnel({ status: "published", publishedAt: w.f.now(), steps: [{ id: "st_9", name: "Offer", landingPageId: page.id, visits: 0, advanced: 0 }] });
+  assert.match(failure(() => w.call("M37.A10", { landingPageId: page.id })).message, /Published funnel/);
+  w.call("M36.A07", { funnelId: funnel.id, stepId: "st_9", landingPageId: other.id });
+  assert.equal(w.call("M37.A10", { landingPageId: page.id }).status, "draft");
+});
+
 test("search is sorted by title then id", async () => {
   const w = await testWorld();
   w.f.landingPage({ title: "Beta", slug: "beta-page" });

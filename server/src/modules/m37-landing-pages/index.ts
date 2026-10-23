@@ -5,6 +5,7 @@ import { atLeastOne, blankToNull, contains, Limit, listOf, noChange, page, requi
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { Form } from "../m18-forms/schema.js";
+import type { Funnel } from "../m36-funnels/schema.js";
 import { LandingPage, type PageSection } from "./schema.js";
 
 export { LandingPage } from "./schema.js";
@@ -284,6 +285,8 @@ const unpublishPage = defineAction({
     requirePermission(store, actorId, "messaging.send");
     const p = load(store, landingPageId);
     requireState(`Landing page "${p.title}"`, p.status, ["published"], "be unpublished");
+    const live = store.find<Funnel>("funnels", (f) => f.status === "published" && f.steps.some((s) => s.landingPageId === p.id));
+    if (live.length) throw new ActionError("CONFLICT", `Published funnel "${live[0]!.name}" shows this page; point its step at another published page (M36.A07) first`);
     return store.update<LandingPage>("landing_pages", p.id, { status: "draft", publishedAt: null, updatedAt: clock.now().toISOString() });
   },
 });
