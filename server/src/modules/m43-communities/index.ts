@@ -75,13 +75,19 @@ const createCommunity = defineAction({
 
 const getCommunity = defineAction({
   id: "M43.A02",
-  description: "Get one community: its guidelines, channels and status. Unlike Create community, this only reads a community that already exists.",
+  description: "Get one community by id or by exact name: its id, guidelines, channels and status. Use this to find a community's id from its name. Unlike Create community, this only reads a community that already exists.",
   risk: "read",
-  input: z.strictObject({ communityId: CommunityId }),
+  input: z.strictObject({ communityId: CommunityId.optional(), name: Name.optional() }),
   output: Community,
-  entities: { consumes: ["community"] },
+  entities: { produces: "community", consumes: ["community"] },
   example: (f) => ({ communityId: f.community().id }),
-  handler: ({ communityId }, { store }) => communityOf(store, communityId),
+  handler: ({ communityId, name }, { store }) => {
+    if (!communityId === !name) throw new ActionError("INVALID", "Give exactly one of communityId or name");
+    if (communityId) return communityOf(store, communityId);
+    const found = nameTaken(store, name!);
+    if (!found) throw new ActionError("NOT_FOUND", `No community called "${name}"`);
+    return found;
+  },
 });
 
 const updateGuidelines = defineAction({

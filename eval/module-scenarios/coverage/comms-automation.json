@@ -1,0 +1,407 @@
+[
+  {
+    "id": "cov-template-create",
+    "category": "direct",
+    "modules": ["M14"],
+    "turns": [{ "user": "Create an email template called Welcome Email with the subject Welcome aboard and the body: Hi {{firstName}}, thanks for joining us." }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M14.A01"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.channel') FROM message_templates WHERE json_extract(data,'$.name')='Welcome Email'", "equals": "email" },
+        { "sql": "SELECT json_extract(data,'$.subject') FROM message_templates WHERE json_extract(data,'$.name')='Welcome Email'", "equals": "Welcome aboard" }
+      ]
+    }
+  },
+  {
+    "id": "cov-template-preview",
+    "category": "direct",
+    "modules": ["M14"],
+    "setup": [
+      {
+        "fixture": "messageTemplate",
+        "with": {
+          "name": "Appointment Reminder",
+          "body": "Hi {{firstName}}, see you at {{time}}.",
+          "variables": [
+            { "name": "firstName", "required": true, "sample": "Ada" },
+            { "name": "time", "required": true, "sample": "noon" }
+          ]
+        }
+      }
+    ],
+    "turns": [{ "user": "Show me the Appointment Reminder template filled in with firstName Grace and time 3pm" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M14.A09"] },
+      "reply": { "includes": ["Grace", "3pm"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-template-undeclared-variable",
+    "category": "failure",
+    "modules": ["M14"],
+    "note": "The body uses {{company}} but only firstName is declared, so the check must flag company.",
+    "setup": [{ "fixture": "messageTemplate", "with": { "name": "Intro Email", "body": "Hi {{firstName}} from {{company}}", "variables": [{ "name": "firstName", "required": true, "sample": "Ada" }] } }],
+    "turns": [{ "user": "Check whether the Intro Email template uses any variables that haven't been declared" }],
+    "expect": {
+      "actions": { "includes": ["M14.A08"] },
+      "reply": { "includes": ["company"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-template-restore-version",
+    "category": "direct",
+    "modules": ["M14"],
+    "note": "Version 2 is current; version 1 had the friendlier wording.",
+    "setup": [
+      {
+        "fixture": "messageTemplate",
+        "with": {
+          "name": "Follow-up Email",
+          "subject": "Checking in",
+          "body": "Hi {{firstName}}, buy now.",
+          "version": 2,
+          "versions": [{ "version": 1, "subject": "Checking in", "body": "Hi {{firstName}}, just checking in.", "at": "2026-10-10T10:00:00.000Z", "by": "us_1" }]
+        }
+      }
+    ],
+    "turns": [{ "user": "Go back to the first version of the Follow-up Email template" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M14.A10"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.body') LIKE '%just checking in%' FROM message_templates WHERE json_extract(data,'$.name')='Follow-up Email'", "equals": 1 }]
+    }
+  },
+  {
+    "id": "cov-workflow-create-with-wait",
+    "category": "multi",
+    "modules": ["M16"],
+    "turns": [{ "user": "Create a workflow called New Lead Follow-up and give it a wait step of 60 minutes" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M16.A01", "M16.A04"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM workflows w, json_each(w.data,'$.steps') s WHERE json_extract(w.data,'$.name')='New Lead Follow-up' AND json_extract(s.value,'$.kind')='wait'", "equals": 1 },
+        { "sql": "SELECT json_extract(data,'$.status') FROM workflows WHERE json_extract(data,'$.name')='New Lead Follow-up'", "equals": "draft" }
+      ]
+    }
+  },
+  {
+    "id": "cov-workflow-publish-empty",
+    "category": "failure",
+    "modules": ["M16"],
+    "note": "A workflow with no steps cannot go live.",
+    "setup": [{ "fixture": "workflow", "with": { "name": "Empty Flow" } }],
+    "turns": [{ "user": "Publish the Empty Flow workflow" }],
+    "expect": {
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM workflows WHERE json_extract(data,'$.name')='Empty Flow'", "equals": "draft" }],
+      "reply": { "includes": ["step"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-workflow-pause",
+    "category": "direct",
+    "modules": ["M16"],
+    "setup": [
+      {
+        "fixture": "workflow",
+        "with": {
+          "name": "Welcome Series",
+          "status": "published",
+          "publishedAt": "2026-10-15T10:00:00.000Z",
+          "steps": [{ "id": "step_1", "kind": "wait", "name": "Wait a day", "actionId": null, "args": {}, "waitMinutes": 1440, "condition": null }]
+        }
+      }
+    ],
+    "turns": [{ "user": "Pause the Welcome Series workflow" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M16.A09"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM workflows WHERE json_extract(data,'$.name')='Welcome Series'", "equals": "paused" }]
+    }
+  },
+  {
+    "id": "cov-workflow-run-history",
+    "category": "indirect",
+    "modules": ["M16"],
+    "setup": [
+      {
+        "fixture": "workflow",
+        "with": {
+          "name": "Welcome Series",
+          "status": "published",
+          "publishedAt": "2026-10-15T10:00:00.000Z",
+          "steps": [{ "id": "step_1", "kind": "wait", "name": "Wait a day", "actionId": null, "args": {}, "waitMinutes": 1440, "condition": null }]
+        }
+      },
+      { "fixture": "workflowRun", "with": { "workflowId": "wf_1", "status": "completed" } },
+      { "fixture": "workflowRun", "with": { "workflowId": "wf_1", "status": "completed" } }
+    ],
+    "turns": [{ "user": "Has the Welcome Series workflow actually run for anyone yet?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M16.A10"] },
+      "reply": { "includes": ["completed"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-trigger-create",
+    "category": "direct",
+    "modules": ["M17"],
+    "turns": [{ "user": "Create an event trigger called New form lead that fires when a form is submitted" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M17.A01"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.eventType') FROM event_triggers WHERE json_extract(data,'$.name')='New form lead'", "equals": "form.submitted" },
+        { "sql": "SELECT json_extract(data,'$.enabled') FROM event_triggers WHERE json_extract(data,'$.name')='New form lead'", "equals": 0 }
+      ]
+    }
+  },
+  {
+    "id": "cov-trigger-bind-and-enable",
+    "category": "multi",
+    "modules": ["M17", "M16"],
+    "setup": [
+      {
+        "fixture": "workflow",
+        "with": {
+          "name": "Welcome Series",
+          "status": "published",
+          "publishedAt": "2026-10-15T10:00:00.000Z",
+          "steps": [{ "id": "step_1", "kind": "wait", "name": "Wait a day", "actionId": null, "args": {}, "waitMinutes": 1440, "condition": null }]
+        }
+      },
+      { "fixture": "eventTrigger", "with": { "name": "Signup trigger", "eventType": "form.submitted" } }
+    ],
+    "turns": [{ "user": "Connect the Signup trigger to the Welcome Series workflow and switch it on" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M17.A06", "M17.A07"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.workflowId') FROM event_triggers WHERE json_extract(data,'$.name')='Signup trigger'", "equals": "wf_1" },
+        { "sql": "SELECT json_extract(data,'$.enabled') FROM event_triggers WHERE json_extract(data,'$.name')='Signup trigger'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "cov-trigger-bind-draft-workflow",
+    "category": "failure",
+    "modules": ["M17", "M16"],
+    "note": "Only a published workflow can be bound to a trigger; Draft Flow is still a draft.",
+    "setup": [
+      { "fixture": "workflow", "with": { "name": "Draft Flow" } },
+      { "fixture": "eventTrigger", "with": { "name": "Signup trigger", "eventType": "form.submitted" } }
+    ],
+    "turns": [{ "user": "Connect the Signup trigger to the Draft Flow workflow" }],
+    "expect": {
+      "state": [{ "sql": "SELECT json_extract(data,'$.workflowId') IS NULL FROM event_triggers WHERE json_extract(data,'$.name')='Signup trigger'", "equals": 1 }],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-trigger-test-event",
+    "category": "direct",
+    "modules": ["M17"],
+    "setup": [
+      {
+        "fixture": "eventTrigger",
+        "with": { "name": "Signup trigger", "eventType": "form.submitted", "conditions": [{ "field": "source", "op": "eq", "value": "facebook_ads" }] }
+      }
+    ],
+    "turns": [{ "user": "Test the Signup trigger with a sample form submission where the source is facebook_ads. Does it match?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M17.A09"] },
+      "state": [{ "sql": "SELECT count(*) FROM trigger_firings WHERE json_extract(data,'$.test')=1", "equals": 1 }]
+    }
+  },
+  {
+    "id": "cov-trigger-firing-history",
+    "category": "indirect",
+    "modules": ["M17"],
+    "setup": [
+      { "fixture": "eventTrigger", "with": { "name": "Signup trigger", "eventType": "form.submitted" } },
+      { "fixture": "triggerFiring", "with": { "triggerId": "trg_1", "eventType": "form.submitted", "matched": true } },
+      { "fixture": "triggerFiring", "with": { "triggerId": "trg_1", "eventType": "form.submitted", "matched": false } }
+    ],
+    "turns": [{ "user": "Has the Signup trigger fired recently?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M17.A10"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-form-create-with-fields",
+    "category": "multi",
+    "modules": ["M18"],
+    "turns": [{ "user": "Create a form called Contact Us with a required email field and an optional message textarea" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M18.A01"] },
+      "state": [
+        { "sql": "SELECT json_array_length(data,'$.fields') FROM forms WHERE json_extract(data,'$.name')='Contact Us'", "equals": 2 },
+        { "sql": "SELECT count(*) FROM forms f, json_each(f.data,'$.fields') s WHERE json_extract(f.data,'$.name')='Contact Us' AND json_extract(s.value,'$.type')='email'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "cov-form-publish",
+    "category": "direct",
+    "modules": ["M18"],
+    "setup": [
+      {
+        "fixture": "form",
+        "with": {
+          "name": "Contact Us",
+          "fields": [{ "id": "fld_email", "label": "Email", "type": "email", "required": true, "options": [], "validation": { "minLength": null, "maxLength": null, "pattern": null }, "mapsTo": "email" }]
+        }
+      }
+    ],
+    "turns": [{ "user": "Publish the Contact Us form" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M18.A08"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM forms WHERE json_extract(data,'$.name')='Contact Us'", "equals": "published" }]
+    }
+  },
+  {
+    "id": "cov-form-submission-count",
+    "category": "indirect",
+    "modules": ["M18"],
+    "setup": [
+      {
+        "fixture": "form",
+        "with": {
+          "name": "Contact Us",
+          "status": "published",
+          "publishedAt": "2026-10-15T10:00:00.000Z",
+          "fields": [{ "id": "fld_email", "label": "Email", "type": "email", "required": true, "options": [], "validation": { "minLength": null, "maxLength": null, "pattern": null }, "mapsTo": "email" }]
+        }
+      },
+      { "fixture": "formSubmission", "with": { "formId": "fm_1", "values": { "fld_email": "a@example.com" } } },
+      { "fixture": "formSubmission", "with": { "formId": "fm_1", "values": { "fld_email": "b@example.com" } } },
+      { "fixture": "formSubmission", "with": { "formId": "fm_1", "values": { "fld_email": "c@example.com" } } }
+    ],
+    "turns": [{ "user": "How many people have filled in the Contact Us form?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M18.A10"] },
+      "reply": { "includes": ["\\b3\\b"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-form-simulated-submit",
+    "category": "direct",
+    "modules": ["M18"],
+    "setup": [
+      {
+        "fixture": "form",
+        "with": {
+          "name": "Contact Us",
+          "status": "published",
+          "publishedAt": "2026-10-15T10:00:00.000Z",
+          "fields": [{ "id": "fld_email", "label": "Email", "type": "email", "required": true, "options": [], "validation": { "minLength": null, "maxLength": null, "pattern": null }, "mapsTo": "email" }]
+        }
+      }
+    ],
+    "turns": [{ "user": "Submit a test response to the Contact Us form with the email test.user@example.com" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M18.A09"] },
+      "state": [{ "sql": "SELECT count(*) FROM form_submissions WHERE json_extract(data,'$.formId')='fm_1'", "equals": 1 }]
+    }
+  },
+  {
+    "id": "cov-survey-create-with-rating",
+    "category": "multi",
+    "modules": ["M19"],
+    "turns": [{ "user": "Create a survey called Customer Satisfaction with a 1 to 5 rating question: How satisfied are you with our service?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M19.A01", "M19.A04"] },
+      "state": [
+        { "sql": "SELECT json_array_length(data,'$.questions') FROM surveys WHERE json_extract(data,'$.name')='Customer Satisfaction'", "equals": 1 },
+        { "sql": "SELECT json_extract(data,'$.questions[0].type') FROM surveys WHERE json_extract(data,'$.name')='Customer Satisfaction'", "equals": "rating" }
+      ]
+    }
+  },
+  {
+    "id": "cov-survey-publish-then-close",
+    "category": "followup",
+    "modules": ["M19"],
+    "setup": [
+      {
+        "fixture": "survey",
+        "with": { "name": "Customer Satisfaction", "questions": [{ "id": "q_1", "text": "How satisfied are you?", "type": "rating", "options": [], "required": true, "branching": [] }] }
+      }
+    ],
+    "turns": [
+      { "user": "Publish the Customer Satisfaction survey", "status": ["done"] },
+      { "user": "Actually we have enough answers, close it" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M19.A07", "M19.A08"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM surveys WHERE json_extract(data,'$.name')='Customer Satisfaction'", "equals": "closed" }]
+    }
+  },
+  {
+    "id": "cov-survey-closed-rejects-response",
+    "category": "failure",
+    "modules": ["M19"],
+    "note": "Customer Satisfaction (sv_1) is closed; the response for sv_2 only makes sure the responses table exists.",
+    "setup": [
+      {
+        "fixture": "survey",
+        "with": {
+          "name": "Customer Satisfaction",
+          "status": "closed",
+          "publishedAt": "2026-10-10T10:00:00.000Z",
+          "closedAt": "2026-10-18T10:00:00.000Z",
+          "questions": [{ "id": "q_1", "text": "How satisfied are you?", "type": "rating", "options": [], "required": true, "branching": [] }]
+        }
+      },
+      { "fixture": "survey", "with": { "name": "Event Feedback" } },
+      { "fixture": "surveyResponse", "with": { "surveyId": "sv_2" } }
+    ],
+    "turns": [{ "user": "Submit a test response to the Customer Satisfaction survey with a rating of 5" }],
+    "expect": {
+      "state": [{ "sql": "SELECT count(*) FROM survey_responses WHERE json_extract(data,'$.surveyId')='sv_1'", "equals": 0 }],
+      "reply": { "includes": ["closed"] }
+    }
+  },
+  {
+    "id": "cov-survey-response-summary",
+    "category": "indirect",
+    "modules": ["M19"],
+    "setup": [
+      {
+        "fixture": "survey",
+        "with": {
+          "name": "Customer Satisfaction",
+          "status": "open",
+          "publishedAt": "2026-10-10T10:00:00.000Z",
+          "questions": [{ "id": "q_1", "text": "How satisfied are you?", "type": "rating", "options": [], "required": true, "branching": [] }]
+        }
+      },
+      { "fixture": "surveyResponse", "with": { "surveyId": "sv_1", "answers": { "q_1": 5 } } },
+      { "fixture": "surveyResponse", "with": { "surveyId": "sv_1", "answers": { "q_1": 4 } } },
+      { "fixture": "surveyResponse", "with": { "surveyId": "sv_1", "answers": { "q_1": 3 } } }
+    ],
+    "turns": [{ "user": "How are people rating us in the Customer Satisfaction survey so far?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M19.A10"] },
+      "reply": { "includes": ["\\b3\\b"] },
+      "noChanges": true
+    }
+  }
+]
