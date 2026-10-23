@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { candidates, contains, Limit, listOf, page } from "../../registry/helpers.js";
+import { candidates, contains, Limit, listOf, Name, page } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
+import type { Campaign } from "../m15-campaigns/schema.js";
 import { Tag, TAG_COLORS, TAGGED_TABLES, TAGGED_TYPES } from "./schema.js";
 
 export { Tag } from "./schema.js";
@@ -31,8 +32,13 @@ function usage(store: Store, name: string): { contacts: number; leads: number; t
   return { contacts, leads, total: contacts + leads };
 }
 
-/** Replaces tag `from` with `to` on every record (dropping it when `to` is null), without duplicates. */
+/**
+ * Replaces tag `from` with `to` on every record (dropping it when `to` is null), without duplicates, and on the
+ * audience of every campaign that hasn't launched. Returns how many records changed.
+ */
 function retag(store: Store, from: string, to: string | null): number {
+  for (const c of store.find<Campaign>("campaigns", (c) => (c.status === "draft" || c.status === "scheduled") && !!c.audience.tag && lower(c.audience.tag) === lower(from)))
+    store.update("campaigns", c.id, { audience: { ...c.audience, tag: to } });
   let n = 0;
   for (const type of TAGGED_TYPES) {
     for (const r of taggedWith(store, type, from)) {
@@ -53,7 +59,7 @@ const createTag = defineAction({
   id: "M08.A01",
   description: "Add a new tag to the account's tag list, with an optional color and description. To put a tag on a record, use M08.A06 Apply tag.",
   risk: "write",
-  input: z.strictObject({ name: z.string().min(1).max(40), color: z.enum(TAG_COLORS).optional().describe("default gray"), description: z.string().optional() }),
+  input: z.strictObject({ name: Name.max(40), color: z.enum(TAG_COLORS).optional().describe("default gray"), description: z.string().optional() }),
   output: Tag,
   entities: { produces: "tag" },
   example: () => ({ name: "Hot prospect", color: "red" }),
@@ -83,7 +89,7 @@ const renameTag = defineAction({
   id: "M08.A03",
   description: "Rename a tag. Every contact and lead that has it gets the new name.",
   risk: "write",
-  input: z.strictObject({ tagId: TagId, name: z.string().min(1).max(40) }),
+  input: z.strictObject({ tagId: TagId, name: Name.max(40) }),
   output: Tag.extend({ recordsUpdated: z.number() }),
   entities: { consumes: ["tag"] },
   example: () => ({ tagId: "tg_2", name: "Newsletter subscriber" }),

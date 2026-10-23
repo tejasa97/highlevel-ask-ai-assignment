@@ -143,10 +143,10 @@ describe("M45–M47 through real HTTP (scripted plans, not AI evaluation)", () =
     assert.match(p.requests[1]!.user,/M47.A01/);
     assert.equal(app.world().store.find<any>("tickets",t=>t.title==="Invoice follow-up").length,1);
   });
-  test("all thirty actions and their tables are visible to the existing UI", async () => {
+  test("every built action and the review, listing and ticket tables are visible to the existing UI", async () => {
     const app = await start(scripted());
     const meta = await (await app.get("/api/meta")).json() as any;
-    assert.equal(meta.actions.length, 180);
+    assert.equal(meta.actions.length, 500);
     for (const module of ["M45", "M46", "M47"]) assert.equal(meta.actions.filter((a:any) => a.id.startsWith(module)).length, 10);
     for (const table of ["review_requests", "reviews", "listings", "tickets"]) {
       assert.ok(meta.tables.some((t:any) => t.name === table && t.count > 0));

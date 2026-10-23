@@ -24,6 +24,8 @@ const DISABLED = [
 /** Local development only: use the CLI's ChatGPT login, never inherited API credentials. */
 export class CodexCliPlanner implements Planner {
   readonly name = "codex-cli";
+  /** Set once the ChatGPT login check has passed, so later calls skip the extra process. */
+  private signedIn = false;
 
   constructor(private readonly models: Record<Tier, string>, private readonly options: Options = {}) {
     for (const effort of Object.values(options.reasoning ?? {})) {
@@ -41,7 +43,10 @@ export class CodexCliPlanner implements Planner {
       const executable = this.options.executable ?? "codex";
       // Applying forced_login_method to an API-key login deletes the shared login cache.
       // Check first without that override; never echo login-status output (it may include key hints).
-      await run(executable, ["login", "status", "-c", 'cli_auth_credentials_store="auto"'], "", { cwd, env, signal }, "auth");
+      if (!this.signedIn) {
+        await run(executable, ["login", "status", "-c", 'cli_auth_credentials_store="auto"'], "", { cwd, env, signal }, "auth");
+        this.signedIn = true;
+      }
       const schema = join(cwd, "schema.json");
       const instructions = join(cwd, "instructions.txt");
       const final = join(cwd, "final.json");

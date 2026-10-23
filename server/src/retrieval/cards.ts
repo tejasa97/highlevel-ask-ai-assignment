@@ -55,7 +55,7 @@ export function loadCardMeta(): Record<string, CardMeta> {
  * source of truth (description, entities, siblings); cards.json only adds synonyms.
  */
 export function buildCards(registry: Registry, meta = loadCardMeta()): SearchCard[] {
-  return CATALOG.flatMap((m) =>
+  const cards = CATALOG.flatMap((m) =>
     m.actions.map((a) => {
       const g = meta[a.id];
       const impl = registry.get(a.id);
@@ -74,4 +74,13 @@ export function buildCards(registry: Registry, meta = loadCardMeta()): SearchCar
       };
     }),
   );
+  // Look-alikes are mutual: whichever of the pair is retrieved should bring the other.
+  const byId = new Map(cards.map((c) => [c.id, c]));
+  for (const card of cards) {
+    for (const id of card.siblings) {
+      const other = byId.get(id);
+      if (other && other.id !== card.id && !other.siblings.includes(card.id)) other.siblings.push(card.id);
+    }
+  }
+  return cards;
 }

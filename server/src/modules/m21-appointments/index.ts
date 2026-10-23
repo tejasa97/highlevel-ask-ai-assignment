@@ -71,6 +71,7 @@ const createAppointment = defineAction({
       title: a.title ?? `Meeting with ${p.name}`,
       ...personRef(p),
       hostId: host.id,
+      calendarId: null,
       attendees: [{ kind: p.type, id: p.id, name: p.name, noShow: false }] as Attendee[],
       ...t,
       location: a.location ?? null,
@@ -180,7 +181,7 @@ const assignHost = defineAction({
     const ap = booked(store, appointmentId, "change host");
     if (ap.hostId === hostId) throw new ActionError("CONFLICT", `${hostId} is already the host`);
     requireHost(store, hostId, ap.startAt, ap.endAt, ap.id);
-    return store.update<Appointment>("appointments", ap.id, { hostId });
+    return store.update<Appointment>("appointments", ap.id, { hostId, attendees: ap.attendees.filter((t) => t.id !== hostId) });
   },
 });
 

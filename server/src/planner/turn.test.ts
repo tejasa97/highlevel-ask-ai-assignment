@@ -45,10 +45,20 @@ function scripted(...replies: SubmitPlan[]): Planner & { requests: PlanRequest[]
   };
 }
 
-async function run(message: string, planner: Planner, extra: { answering?: string } = {}, look?: TurnDeps["look"]) {
+async function run(message: string, planner: Planner, extra: { answering?: string } = {}, look?: TurnDeps["look"], reg: Registry = registry) {
   const events: TurnEvent[] = [];
-  const out = await planTurn({ message, tier: "fast", ...extra }, { registry, retriever, planner, clock: frozenClock(), look }, (e) => events.push(e));
+  const out = await planTurn({ message, tier: "fast", ...extra }, { registry: reg, retriever, planner, clock: frozenClock(), look }, (e) => events.push(e));
   return { out, events };
+}
+// Every catalog action is registered. Hiding one handler is how these tests still reach the "not in this version" branch.
+function hiding(id: string): Registry {
+  return new Proxy(registry, {
+    get(target, prop, receiver) {
+      if (prop === "get") return (actionId: string) => (actionId === id ? undefined : target.get(actionId));
+      const value = Reflect.get(target, prop, receiver);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
 }
 const offeredIn = (req: PlanRequest) => [...req.user.matchAll(/\b(M\d\d\.A\d\d)\b/g)].map((m) => m[1]!);
 
@@ -60,7 +70,7 @@ describe("compile against what was offered", () => {
   });
 
   test("rejects a catalog action that isn't built yet, by name", () => {
-    const r = compile(createTask("M02.A03"), registry, new Set(["M02.A03"]));
+    const r = compile(createTask("M02.A03"), hiding("M02.A03"), new Set(["M02.A03"]));
     assert.ok(!r.ok);
     assert.match(r.errors.join("\n"), /M02\.A03 \(.+\) is not available in this version/);
   });
@@ -105,6 +115,21 @@ describe("planTurn", () => {
     assert.equal(planner.requests.length, 2);
   });
 
+  test("an unsupported reply is checked with one more retrieval on its own words, and re-planned if that finds actions", async () => {
+    const planner = scripted(reply({ type: "unsupported", reason: "I can't create a task to call Ana." }), createTask());
+    const { out, events } = await run("remind me to call Ana tomorrow", planner);
+    assert.equal(out.kind, "plan");
+    assert.deepEqual(events.flatMap((e) => (e.type === "retrieval" ? [e.data.label] : [])), ["retrieve", "search_tools"]);
+    assert.match(events.flatMap((e) => (e.type === "retrieval" ? [e.data.query] : []))[1]!, /create a task to call Ana/);
+  });
+
+  test("an unsupported reply stands once the extra retrieval has been spent", async () => {
+    const planner = scripted(reply({ type: "search_tools", query: "x" }), reply({ type: "unsupported", reason: "No." }));
+    const { out } = await run("have Ana join the follow-up", planner);
+    assert.ok(out.kind === "reply" && out.status === "unsupported");
+    assert.equal(planner.requests.length, 2);
+  });
+
   describe("look", () => {
     const listTasks = reply({ type: "look", steps: [{ id: "s1", kind: "action", action: "M06.A03", argsJson: JSON.stringify({ query: "Ana" }) }] });
 
@@ -120,6 +145,25 @@ describe("planTurn", () => {
       assert.equal(planner.requests.length, 2);
       assert.match(planner.requests[1]!.user, /<looked>\[\{"id":"s1","output":\{"items":\[\{"title":"Call Ana &lt;soon&gt;"\}\]/);
       assert.doesNotMatch(planner.requests[0]!.user, /<looked>/);
+    });
+
+    test("a ref to a look step re-runs that read as part of the plan, with no repair round", async () => {
+      const refsLook = reply({ steps: [{ id: "s2", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$s1.items[0].title" }) }] });
+      const planner = scripted(listTasks, refsLook);
+      const { out } = await run("create a task like the Ana one", planner, {}, async () => [{ id: "s1", output: { items: [{ title: "Call Ana" }], total: 1 } }]);
+      assert.equal(planner.requests.length, 2);
+      assert.ok(out.kind === "plan");
+      assert.deepEqual(out.plan.steps.map((s) => s.id), ["s1", "s2"]);
+    });
+
+    test("a plan that defines its own step with a look step's id keeps its own", async () => {
+      const ownS1 = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "Call Ana" }) }, { id: "s2", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$s1.title" }) }] });
+      const planner = scripted(listTasks, ownS1);
+      const { out } = await run("create two tasks", planner, {}, async () => []);
+      assert.ok(out.kind === "plan");
+      assert.deepEqual(out.plan.steps.map((s) => s.id), ["s1", "s2"]);
+      const first = out.plan.steps[0]!;
+      assert.ok(first.kind === "action" && first.call.action.id === "M06.A01");
     });
 
     test("a write in a look is never run; it goes to repair", async () => {
@@ -180,8 +224,8 @@ describe("planTurn", () => {
   });
 
   test("the repair round may answer unsupported, as the error for an unbuilt action asks", async () => {
-    const planner = scripted(createTask("M02.A03"), reply({ type: "unsupported", reason: "Companies aren't in this version." }));
-    const { out } = await run("create a task to call Ana", planner);
+    const planner = scripted(createTask("M02.A03"), reply({ type: "unsupported", reason: "Companies aren't in this version." }), reply({ type: "unsupported", reason: "Still not." }));
+    const { out } = await run("create a task to call Ana", planner, {}, undefined, hiding("M02.A03"));
     assert.ok(out.kind === "reply" && out.status === "unsupported", JSON.stringify(out));
     assert.match(planner.requests[1]!.user, /M02\.A03 \(.+\) is not available in this version/);
   });
@@ -204,7 +248,7 @@ describe("planTurn", () => {
   test("clarify and unsupported pass through with their options and alternatives", async () => {
     const q = await run("create a task", scripted(reply({ type: "clarify", question: "What should the task say?", options: ["Call Ana", "Email Ana"] })));
     assert.deepEqual(q.out, { kind: "reply", status: "clarify", text: "What should the task say?", options: ["Call Ana", "Email Ana"] });
-    const u = await run("send Priya an invoice reminder", scripted(reply({ type: "unsupported", reason: "Invoices aren't in this version.", alternatives: ["Create a task to follow up"] })));
+    const u = await run("send Priya an invoice reminder", scripted(reply({ type: "unsupported", reason: "Invoices aren't in this version." }), reply({ type: "unsupported", reason: "Invoices aren't in this version.", alternatives: ["Create a task to follow up"] })));
     assert.ok(u.out.kind === "reply" && u.out.status === "unsupported");
     if (u.out.kind === "reply") assert.match(u.out.text, /Alternatives: Create a task to follow up/);
   });
@@ -224,12 +268,12 @@ describe("planTurn", () => {
     assert.equal(await picked("create a task to call her"), true);
   });
 
-  test("the prompt names built and unbuilt matches separately", async () => {
-    const planner = scripted(reply({ type: "unsupported", reason: "x" }));
+  test("the prompt offers the product and invoice actions for adding a product to an invoice", async () => {
+    const planner = scripted(reply({ type: "unsupported", reason: "x" }), reply({ type: "unsupported", reason: "x" }));
     await run("add a product called Gold Plan to Priya's invoice", planner);
     const user = planner.requests[0]!.user;
     assert.match(user, /<actions>[\s\S]*M28\.A04[\s\S]*<\/actions>/);
-    assert.match(user, /<not_available>[\s\S]*product[\s\S]*<\/not_available>/i);
+    assert.match(user, /<actions>[\s\S]*M25\.A01[\s\S]*<\/actions>/);
   });
 });
 

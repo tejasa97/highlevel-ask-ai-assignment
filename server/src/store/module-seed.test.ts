@@ -22,6 +22,10 @@ test("frozen seed/reporting and archived/current development bytes match their r
   }
 });
 
+/** The baseline predates the seam fields (contacts.companyId, appointments.calendarId); everything else must be byte-identical. */
+const SEAMS = ["companyId", "calendarId"];
+const withoutSeams = (row: unknown) => Object.fromEntries(Object.entries(row as object).filter(([k]) => !SEAMS.includes(k)));
+
 test("frozen module manifest loads exactly, while every legacy row and id remains unchanged", () => {
   const w = world();
   const baseline = JSON.parse(
@@ -36,14 +40,14 @@ test("frozen module manifest loads exactly, while every legacy row and id remain
   for (const b of baseline.legacyTables) {
     const old = w.store.all(b.table).slice(0, b.count);
     assert.equal(
-      createHash("sha256").update(JSON.stringify(old)).digest("hex"),
+      createHash("sha256").update(JSON.stringify(old.map(withoutSeams))).digest("hex"),
       b.sha,
       b.table,
     );
   }
   const m = JSON.parse(readFileSync(MODULE_SEED_URL, "utf8"));
   for (const { table, record } of m.records)
-    assert.deepEqual(w.store.get(table, record.id), record);
+    assert.deepEqual(withoutSeams(w.store.get(table, record.id)!), withoutSeams(record));
   assert.equal(w.f.contact().id, "ct_39");
   assert.equal(w.f.ticket().id, "tic_5");
   w.store.close();

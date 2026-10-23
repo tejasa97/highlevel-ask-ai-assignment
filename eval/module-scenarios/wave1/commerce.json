@@ -1,0 +1,210 @@
+[
+  {
+    "id": "w1-quote-create",
+    "category": "direct",
+    "modules": ["M27", "M25", "M26"],
+    "note": "Setup Package is prd_1 at $1,200 (prc_1). Elena Costa is ct_2.",
+    "setup": [
+      { "fixture": "product", "with": { "name": "Setup Package" } },
+      { "fixture": "price", "with": { "productId": "prd_1", "label": "Standard", "amount": 1200 } }
+    ],
+    "turns": [{ "user": "Create a quote for Elena Costa for the Setup Package" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M27.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM quotes WHERE json_extract(data,'$.contactId')='ct_2'", "equals": 1 },
+        { "sql": "SELECT json_extract(data,'$.total') FROM quotes WHERE json_extract(data,'$.contactId')='ct_2'", "equals": 1200 }
+      ]
+    }
+  },
+  {
+    "id": "w1-quote-send-accept-convert",
+    "category": "multi",
+    "modules": ["M27", "M28"],
+    "note": "Quote to invoice chain on a draft quote that already has its line. The user says the client accepted.",
+    "setup": [
+      { "fixture": "product", "with": { "name": "Setup Package" } },
+      { "fixture": "price", "with": { "productId": "prd_1", "label": "Standard", "amount": 1200 } },
+      { "fixture": "quote", "with": { "contactId": "ct_2", "lines": [{ "id": "ql_1", "description": "Setup Package", "productId": "prd_1", "priceId": "prc_1", "quantity": 1, "unitPrice": 1200, "amount": 1200 }] } }
+    ],
+    "turns": [{ "user": "Send Elena Costa's quote, record that she accepted it, and turn it into an invoice" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M27.A08", "M27.A09", "M27.A10"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM quotes WHERE id='qt_1'", "equals": "converted" },
+        { "sql": "SELECT count(*) FROM invoices WHERE id=(SELECT json_extract(data,'$.invoiceId') FROM quotes WHERE id='qt_1') AND json_extract(data,'$.contactId')='ct_2'", "equals": 1 },
+        { "sql": "SELECT count(*) FROM invoices", "equals": 10 }
+      ]
+    }
+  },
+  {
+    "id": "w1-quote-to-invoice-payment",
+    "category": "multi",
+    "modules": ["M27", "M28", "M29"],
+    "note": "Quote, invoice, payment. The quote is already accepted. Payments here are simulated.",
+    "setup": [
+      { "fixture": "quote", "with": { "contactId": "ct_3", "status": "accepted", "lines": [{ "id": "ql_1", "description": "Site audit", "productId": null, "priceId": null, "quantity": 1, "unitPrice": 500, "amount": 500 }] } }
+    ],
+    "turns": [{ "user": "Ana Ruiz's quote is accepted: invoice it and record her $500 card payment against that invoice" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M27.A10"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM quotes WHERE id='qt_1'", "equals": "converted" },
+        { "sql": "SELECT count(*) FROM payments WHERE json_extract(data,'$.contactId')='ct_3' AND json_extract(data,'$.amount')=500", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-quote-discount-followup",
+    "category": "followup",
+    "modules": ["M27"],
+    "setup": [
+      { "fixture": "quote", "with": { "contactId": "ct_2", "lines": [{ "id": "ql_1", "description": "Consulting", "productId": null, "priceId": null, "quantity": 10, "unitPrice": 100, "amount": 1000 }] } }
+    ],
+    "turns": [
+      { "user": "What's on Elena Costa's quote?" },
+      { "user": "Give her 10% off" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M27.A07"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.discount.value') FROM quotes WHERE id='qt_1'", "equals": 10 },
+        { "sql": "SELECT json_extract(data,'$.total') FROM quotes WHERE id='qt_1'", "equals": 900 }
+      ]
+    }
+  },
+  {
+    "id": "w1-coupon-create",
+    "category": "direct",
+    "modules": ["M31"],
+    "turns": [{ "user": "Create a 25% off coupon with the code LAUNCH25" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M31.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM coupons WHERE json_extract(data,'$.code')='LAUNCH25' AND json_extract(data,'$.discount.type')='percent' AND json_extract(data,'$.discount.value')=25", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-order-with-coupon",
+    "category": "multi",
+    "modules": ["M32", "M31", "M25"],
+    "note": "Ceramic Mug is $40 each; SPRING20 is 20% off, so 2 mugs are $80 less $16. Marco Patel is ct_4.",
+    "setup": [
+      { "fixture": "product", "with": { "name": "Ceramic Mug" } },
+      { "fixture": "price", "with": { "productId": "prd_1", "label": "Standard", "amount": 40 } },
+      { "fixture": "coupon", "with": { "code": "SPRING20", "discount": { "type": "percent", "value": 20 } } }
+    ],
+    "turns": [{ "user": "Start an order for Marco Patel with 2 Ceramic Mugs, put the code SPRING20 on it, and submit it" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M32.A01", "M32.A07", "M32.A08"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM orders WHERE json_extract(data,'$.contactId')='ct_4'", "equals": "submitted" },
+        { "sql": "SELECT json_extract(data,'$.discountTotal') FROM orders WHERE json_extract(data,'$.contactId')='ct_4'", "equals": 16 },
+        { "sql": "SELECT json_extract(data,'$.total') FROM orders WHERE json_extract(data,'$.contactId')='ct_4'", "equals": 64 }
+      ]
+    }
+  },
+  {
+    "id": "w1-order-inactive-coupon",
+    "category": "failure",
+    "modules": ["M32", "M31"],
+    "note": "OLD10 was deactivated. The assistant must not attach it, and must not report that it did.",
+    "setup": [
+      { "fixture": "coupon", "with": { "code": "OLD10", "status": "inactive" } },
+      { "fixture": "order", "with": { "contactId": "ct_4", "lines": [{ "id": "ol_1", "productId": "prd_1", "variantId": null, "priceId": "prc_1", "description": "Ceramic Mug", "quantity": 1, "unitPrice": 40, "amount": 40 }], "subtotal": 40, "total": 40 } }
+    ],
+    "turns": [{ "user": "Put the code OLD10 on Marco Patel's order" }],
+    "expect": {
+      "state": [{ "sql": "SELECT json_extract(data,'$.couponId') FROM orders WHERE id='ord_1'", "equals": null }],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "w1-subscription-change-plan",
+    "category": "indirect",
+    "modules": ["M30", "M25", "M26"],
+    "note": "Yusuf Silva (ct_5) is on Starter ($49 a month); Pro is $99 a month.",
+    "setup": [
+      { "fixture": "product", "with": { "name": "Starter" } },
+      { "fixture": "price", "with": { "productId": "prd_1", "label": "Monthly", "amount": 49, "interval": "month" } },
+      { "fixture": "product", "with": { "name": "Pro" } },
+      { "fixture": "price", "with": { "productId": "prd_2", "label": "Monthly", "amount": 99, "interval": "month" } },
+      { "fixture": "subscription", "with": { "contactId": "ct_5", "productId": "prd_1", "priceId": "prc_1" } }
+    ],
+    "turns": [{ "user": "Move Yusuf Silva from Starter to Pro" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M30.A04"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.priceId') FROM subscriptions WHERE id='sub_1'", "equals": "prc_2" },
+        { "sql": "SELECT count(*) FROM subscriptions", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-subscription-cancel-declined",
+    "category": "multi",
+    "modules": ["M30"],
+    "note": "Cancelling is gated; the user declines.",
+    "setup": [
+      { "fixture": "product", "with": { "name": "Starter" } },
+      { "fixture": "price", "with": { "productId": "prd_1", "label": "Monthly", "amount": 49, "interval": "month" } },
+      { "fixture": "subscription", "with": { "contactId": "ct_5", "productId": "prd_1", "priceId": "prc_1" } }
+    ],
+    "turns": [{ "user": "Cancel Yusuf Silva's subscription, he says it's too expensive", "approve": false }],
+    "expect": {
+      "status": ["cancelled"],
+      "actions": { "includes": ["M30.A09"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM subscriptions WHERE id='sub_1'", "equals": "active" }],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "w1-event-waitlist",
+    "category": "indirect",
+    "modules": ["M24"],
+    "note": "Autumn Workshop has one seat and Tara Larsen (ct_9) has it. Ana Ruiz is ct_3.",
+    "setup": [
+      { "fixture": "event", "with": { "title": "Autumn Workshop", "capacity": 1 } },
+      { "fixture": "registration", "with": { "eventId": "ev_1", "contactId": "ct_9" } }
+    ],
+    "turns": [{ "user": "Ana Ruiz wants to come to the Autumn Workshop but it's full, so put her on the waiting list" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M24.A08"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM event_registrations WHERE json_extract(data,'$.eventId')='ev_1' AND json_extract(data,'$.contactId')='ct_3'", "equals": "waitlisted" },
+        { "sql": "SELECT count(*) FROM event_registrations WHERE json_extract(data,'$.status')='registered'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "w1-event-checkin-followup",
+    "category": "followup",
+    "modules": ["M24"],
+    "setup": [
+      { "fixture": "event", "with": { "title": "Autumn Workshop" } },
+      { "fixture": "registration", "with": { "eventId": "ev_1", "contactId": "ct_6" } },
+      { "fixture": "registration", "with": { "eventId": "ev_1", "contactId": "ct_9" } }
+    ],
+    "turns": [
+      { "user": "Who's registered for the Autumn Workshop?" },
+      { "user": "Check Ben Brown in" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M24.A10"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM event_registrations WHERE json_extract(data,'$.contactId')='ct_6'", "equals": "checked_in" },
+        { "sql": "SELECT json_extract(data,'$.status') FROM event_registrations WHERE json_extract(data,'$.contactId')='ct_9'", "equals": "registered" }
+      ]
+    }
+  }
+]

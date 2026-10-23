@@ -24,12 +24,55 @@ export function localTime(d: Date): string {
   return d.toLocaleTimeString("en-GB", { timeZone: TIMEZONE, hour12: false });
 }
 
+/** The wall-clock date (YYYY-MM-DD) and time (HH:MM:SS) an instant has in `timeZone`. */
+export function wallParts(ms: number, timeZone: string): { date: string; time: string } {
+  const d = new Date(ms);
+  const date = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+  const bits = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(d)
+      .map((p) => [p.type, p.value]),
+  );
+  let hour = bits.hour ?? "00";
+  if (hour === "24") hour = "00";
+  return { date: date.replaceAll("/", "-"), time: `${hour}:${bits.minute ?? "00"}:${bits.second ?? "00"}` };
+}
+
+const DAY_MS = 86_400_000;
+
+/**
+ * ISO instant for a wall-clock time (HH:MM or HH:MM:SS) on a calendar date in `timeZone`.
+ * A wall time that happens twice (clocks going back) is its first occurrence; one that never happens
+ * (clocks going forward) lands the same distance after the gap, as if the old offset still applied.
+ */
+export function zonedInstant(date: string, time: string, timeZone: string): string {
+  const hms = time.length === 5 ? `${time}:00` : time;
+  const wall = Date.parse(`${date}T${hms}Z`);
+  const offset = (ms: number) => {
+    const p = wallParts(ms, timeZone);
+    return Date.parse(`${p.date}T${p.time}Z`) - ms;
+  };
+  // The offsets in force a day before and a day after bracket any single transition.
+  const before = offset(wall - DAY_MS);
+  const after = offset(wall + DAY_MS);
+  const candidates = [wall - before, wall - after].filter((ms) => offset(ms) === wall - ms);
+  return new Date(candidates.length ? Math.min(...candidates) : wall - before).toISOString();
+}
+
 /** The instant a wall-clock time on a date has in the app's timezone, across daylight-saving changes. */
 export function atLocal(date: string, time: string): Date {
-  const wall = Date.parse(`${date}T${time}Z`);
-  const offset = (ms: number) => Date.parse(`${localDate(new Date(ms))}T${localTime(new Date(ms))}Z`) - ms;
-  const guess = wall - offset(wall);
-  return new Date(wall - offset(guess));
+  return new Date(zonedInstant(date, time, TIMEZONE));
 }
 
 export function addDays(date: string, days: number): string {

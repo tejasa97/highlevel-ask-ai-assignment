@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, atLeastOne, candidates, contains, fullName, inDateRange, Limit, listOf, page, requireState, sameEmail } from "../../registry/helpers.js";
+import { activeUser, atLeastOne, candidates, contains, fullName, inDateRange, Limit, listOf, Name, page, requireState, sameEmail } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Lead } from "../m03-leads/schema.js";
@@ -31,8 +31,8 @@ const createContact = defineAction({
   description: "Add a person to contacts (an existing customer or person you deal with). For a new prospect, use M03.A01 Create lead.",
   risk: "write",
   input: z.strictObject({
-    firstName: z.string().min(1),
-    lastName: z.string().min(1).optional(),
+    firstName: Name,
+    lastName: Name.optional(),
     email: z.email().optional(),
     phone: z.string().min(5).optional(),
     company: z.string().optional(),
@@ -57,6 +57,7 @@ const createContact = defineAction({
       email: a.email?.toLowerCase() ?? null,
       phone: a.phone ?? null,
       company: a.company ?? null,
+      companyId: null,
       ownerId: a.ownerId ?? null,
       tags: [...new Set(a.tags ?? [])],
       preferences: { email: true, sms: true, call: true, dnd: false },
@@ -120,8 +121,8 @@ const updateContact = defineAction({
   risk: "write",
   input: z.strictObject({
     contactId: ContactId,
-    firstName: z.string().min(1).optional(),
-    lastName: z.string().min(1).optional(),
+    firstName: Name.optional(),
+    lastName: Name.optional(),
     email: z.email().optional(),
     phone: z.string().min(5).optional(),
     company: z.string().optional(),
@@ -141,6 +142,8 @@ const updateContact = defineAction({
     return store.update<Contact>("contacts", c.id, {
       ...patch,
       ...(patch.email ? { email: patch.email.toLowerCase() } : {}),
+      // Typing a different company name in means they no longer belong to the linked company record (M02).
+      ...(patch.company !== undefined && patch.company !== c.company ? { companyId: null } : {}),
       firstName,
       lastName,
       name: fullName(firstName, lastName),
@@ -193,6 +196,7 @@ const mergeContacts = defineAction({
       }
     }
     if (patch.lastName) patch.name = fullName(keep.firstName, patch.lastName);
+    if (patch.company) patch.companyId = dup.companyId; // the company record travels with its name
     patch.tags = [...new Set([...keep.tags, ...dup.tags])];
     const rels = new Map(keep.relationships.map((r) => [`${r.contactId}:${r.type}`, r]));
     for (const r of dup.relationships) if (r.contactId !== keepId) rels.set(`${r.contactId}:${r.type}`, r);

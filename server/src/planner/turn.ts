@@ -151,6 +151,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let searched = false;
   let repaired = false;
   let lookPlan: CompiledPlan | undefined;
+  let lookSteps: Step[] = [];
   // Each reply is one of: search_tools (retrieve once more, re-plan), a plan (compile; repair once if invalid),
   // or a reply for the user. The repair prompt may itself say "reply search_tools" or "reply unsupported".
   for (;;) {
@@ -186,6 +187,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         continue;
       }
       lookPlan = compiled.plan;
+      lookSteps = d.steps ?? [];
       looked = JSON.stringify(await deps.look!(compiled.plan));
       if (looked.length > LOOKED_MAX) looked = `${looked.slice(0, LOOKED_MAX)}…(cut)`;
       user = prompt();
@@ -199,10 +201,22 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
 
     if (d.type !== "plan") {
       const text = [d.question ?? d.reason ?? d.text ?? "", d.alternatives?.length ? `Alternatives: ${d.alternatives.join("; ")}` : ""].filter(Boolean).join("\n");
+      // "Unsupported" only means nothing on the shortlist fits, and the shortlist came from the user's loose wording.
+      // Before believing it, retrieve once more on the planner's own description; re-plan only if that finds new cards.
+      if (d.type === "unsupported" && !searched) {
+        searched = true;
+        const before = offered.length;
+        await shortlist("search_tools", `${text}\n${input.message}`);
+        if (offered.length > before) {
+          user = prompt();
+          reply = await call(user, "plan after search_tools");
+          continue;
+        }
+      }
       return { kind: "reply", status: d.type, text, options: d.options ?? undefined };
     }
 
-    const compiled = compile(d, registry, new Set(offered.map((a) => a.id)));
+    const compiled = compile(withLookSteps(d, lookSteps), registry, new Set(offered.map((a) => a.id)));
     // A plan that only finds records does nothing the user can see: run, it would end "done" with no reply.
     const errors = !compiled.ok
       ? compiled.errors
@@ -215,6 +229,25 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     repaired = true;
     reply = await call(repairBlock(user, reply.json, errors), "repair");
   }
+}
+
+type Step = NonNullable<SubmitPlan["steps"]>[number];
+
+/**
+ * A plan after a look round may write `$s1.items` for a step it only saw in <looked>. A look is read-only, so
+ * the read can simply run again as part of the plan: look steps the plan refers to, and doesn't define itself,
+ * are put in front of it (with the look steps they in turn refer to).
+ */
+export function withLookSteps(plan: SubmitPlan, looks: Step[]): SubmitPlan {
+  const defined = new Set((plan.steps ?? []).map((s) => s.id));
+  const wanted = new Set<string>();
+  const queue = [...(plan.steps ?? [])];
+  for (let s = queue.shift(); s; s = queue.shift())
+    for (const [, root] of JSON.stringify(s).matchAll(/\$([A-Za-z_]\w*)/g)) {
+      const look = looks.find((l) => l.id === root);
+      if (look && !defined.has(root!)) (defined.add(root!), wanted.add(root!), queue.push(look));
+    }
+  return wanted.size ? { ...plan, steps: [...looks.filter((l) => wanted.has(l.id)), ...(plan.steps ?? [])] } : plan;
 }
 
 /** Characters of look results shown to the planner. */

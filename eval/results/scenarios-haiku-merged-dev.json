@@ -1,0 +1,3397 @@
+{
+ "summary": {
+  "label": "haiku-merged-dev",
+  "planner": "claude-cli",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "51f56e2dbc48",
+  "tier": "strong",
+  "scenarios": 45,
+  "repeat": 1,
+  "runs": 45,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 97.8,
+  "allPass": 44,
+  "measured": 45,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 4890,
+   "p95": 14904
+  },
+  "firstReplyMs": {
+   "p50": 4652,
+   "p95": 14904
+  },
+  "plannerRoundsPerRun": 1.24,
+  "callsPerRun": 1.3,
+  "costUsd": {
+   "perRun": 0.032,
+   "total": 1.44
+  },
+  "wallMs": 78072
+ },
+ "runs": [
+  {
+   "id": "listing-ambiguous",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Change Maple Dental's listing phone to +15550987654",
+     "status": "clarify",
+     "reply": "Maple Dental has two business listings, one on Google and one on Yelp. Which one should I change the phone number to +15550987654 on?",
+     "offered": [
+      "M46.A06",
+      "M46.A05",
+      "M01.A04",
+      "M46.A07",
+      "M46.A04",
+      "M03.A04",
+      "M48.A04",
+      "M04.A04",
+      "M46.A08",
+      "M12.A10",
+      "M46.A02",
+      "M28.A08",
+      "M46.A03"
+     ],
+     "planned": [],
+     "calls": [
+      {
+       "action": "M46.A03",
+       "args": {
+        "query": "Maple Dental"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 10569,
+     "ms": 10569
+    }
+   ],
+   "metrics": {
+    "ms": 10569,
+    "firstReplyMs": 10569,
+    "plannerMs": 10555,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 21308,
+     "cachedRead": 11206,
+     "cacheWrite": 10096,
+     "output": 1135,
+     "thinking": 0,
+     "costUsd": 0.0539872,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "listing-provider-down",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Publish listing bl_3",
+     "status": "failed",
+     "reply": "Couldn't publish listing to simulated directory: Directory unavailable.",
+     "offered": [
+      "M46.A09",
+      "M46.A08",
+      "M46.A10",
+      "M46.A05",
+      "M46.A06",
+      "M46.A04",
+      "M45.A09"
+     ],
+     "planned": [
+      "M46.A09"
+     ],
+     "calls": [
+      {
+       "action": "M46.A09",
+       "args": {
+        "listingId": "bl_3"
+       },
+       "error": "UNAVAILABLE: Directory unavailable"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4563,
+     "ms": 4566,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c7ebd0924f2ea637",
+       "targetsHash": "d75831d40456f872",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M46.A09",
+         "name": "Publish listing to simulated directory",
+         "args": {
+          "listingId": "bl_3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4566,
+    "firstReplyMs": 4563,
+    "plannerMs": 4551,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4775,
+     "cachedRead": 2238,
+     "cacheWrite": 2535,
+     "output": 335,
+     "thinking": 0,
+     "costUsd": 0.0139416,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m45-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a review request for Elodie Mercer with subject 'Visit feedback' and body 'How was your visit?'",
+     "status": "done",
+     "reply": "Done: Create review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A02",
+      "M45.A05",
+      "M45.A07",
+      "M45.A04",
+      "M45.A09",
+      "M21.A01",
+      "M29.A01",
+      "M21.A02",
+      "M01.A02",
+      "M01.A03",
+      "M29.A04"
+     ],
+     "planned": [
+      "M45.A01"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "How was your visit?"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5350,
+     "ms": 5350
+    }
+   ],
+   "metrics": {
+    "ms": 5350,
+    "firstReplyMs": 5350,
+    "plannerMs": 5272,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5962,
+     "cachedRead": 1269,
+     "cacheWrite": 4691,
+     "output": 505,
+     "thinking": 0,
+     "costUsd": 0.0240718,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A09",
+      "M45.A04",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M21.A02",
+      "M45.A08",
+      "M45.A06",
+      "M45.A03",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Your feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 7143,
+     "ms": 7146,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "762e1c595363f6cb",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 7146,
+    "firstReplyMs": 7143,
+    "plannerMs": 7053,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 6406,
+     "cachedRead": 1269,
+     "cacheWrite": 5135,
+     "output": 759,
+     "thinking": 0,
+     "costUsd": 0.028387799999999998,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m45-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Cancel Elodie Mercer's unsent review request rrq_1",
+     "status": "done",
+     "reply": "Done: Cancel unsent review request.",
+     "offered": [
+      "M45.A03",
+      "M29.A03",
+      "M45.A02",
+      "M45.A05",
+      "M45.A01",
+      "M45.A04",
+      "M13.A05",
+      "M12.A05",
+      "M06.A10",
+      "M29.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [
+      {
+       "action": "M45.A03",
+       "args": {
+        "requestId": "rrq_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 7758,
+     "ms": 7759,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "9d6e18686f04ab63",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 7759,
+    "firstReplyMs": 7758,
+    "plannerMs": 7650,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5712,
+     "cachedRead": 1269,
+     "cacheWrite": 4441,
+     "output": 671,
+     "thinking": 0,
+     "costUsd": 0.024731799999999998,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m45-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "List the draft review requests",
+     "status": "done",
+     "reply": "Found 1 review_request: Elodie Mercer: status draft, subject How was your visit?, body Please tell us about your experience..",
+     "offered": [
+      "M45.A04",
+      "M45.A02",
+      "M45.A01",
+      "M45.A03",
+      "M45.A08",
+      "M45.A07",
+      "M13.A02",
+      "M28.A05",
+      "M28.A01",
+      "M46.A01",
+      "M46.A09",
+      "M15.A03"
+     ],
+     "planned": [
+      "M45.A04"
+     ],
+     "calls": [
+      {
+       "action": "M45.A04",
+       "args": {
+        "status": "draft"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4899,
+     "ms": 4899
+    }
+   ],
+   "metrics": {
+    "ms": 4899,
+    "firstReplyMs": 4899,
+    "plannerMs": 4757,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5819,
+     "cachedRead": 1269,
+     "cacheWrite": 4548,
+     "output": 249,
+     "thinking": 0,
+     "costUsd": 0.0209398,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m45-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Record a 4-star customer review from Dorian Vale for request rrq_2: 'Friendly service.'",
+     "status": "done",
+     "reply": "Done: Record simulated customer review.",
+     "offered": [
+      "M45.A05",
+      "M45.A06",
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A04",
+      "M47.A08",
+      "M47.A06",
+      "M47.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A04"
+     ],
+     "planned": [
+      "M45.A05"
+     ],
+     "calls": [
+      {
+       "action": "M45.A05",
+       "args": {
+        "requestId": "rrq_2",
+        "rating": 4,
+        "body": "Friendly service."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5987,
+     "ms": 5987
+    }
+   ],
+   "metrics": {
+    "ms": 5987,
+    "firstReplyMs": 5987,
+    "plannerMs": 5911,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6408,
+     "cachedRead": 2238,
+     "cacheWrite": 4168,
+     "output": 681,
+     "thinking": 0,
+     "costUsd": 0.0239336,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m45-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Find customer reviews rated two stars",
+     "status": "done",
+     "reply": "Found 1 review: Elodie Mercer: rating 2, body The wait was too long..",
+     "offered": [
+      "M45.A06",
+      "M45.A05",
+      "M45.A10",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M45.A02",
+      "M45.A09",
+      "M45.A03",
+      "M45.A08"
+     ],
+     "planned": [
+      "M45.A06"
+     ],
+     "calls": [
+      {
+       "action": "M45.A06",
+       "args": {
+        "minRating": 2,
+        "maxRating": 2
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3612,
+     "ms": 3612
+    }
+   ],
+   "metrics": {
+    "ms": 3612,
+    "firstReplyMs": 3612,
+    "plannerMs": 3589,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4707,
+     "cachedRead": 2238,
+     "cacheWrite": 2467,
+     "output": 258,
+     "thinking": 0,
+     "costUsd": 0.0128996,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m45-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Show review rv_1 in full",
+     "status": "done",
+     "reply": "Nisha Khatri (review_request): rating 5, body Helpful staff and a smooth appointment..",
+     "offered": [
+      "M45.A07",
+      "M45.A04",
+      "M45.A05",
+      "M45.A02",
+      "M45.A08",
+      "M45.A06"
+     ],
+     "planned": [
+      "M45.A07"
+     ],
+     "calls": [
+      {
+       "action": "M45.A07",
+       "args": {
+        "reviewId": "rv_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3876,
+     "ms": 3876
+    }
+   ],
+   "metrics": {
+    "ms": 3876,
+    "firstReplyMs": 3876,
+    "plannerMs": 3859,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4156,
+     "cachedRead": 2238,
+     "cacheWrite": 1916,
+     "output": 254,
+     "thinking": 0,
+     "costUsd": 0.0106556,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m45-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Draft this response to review rv_2: 'Thank you. We will improve our waiting times.'",
+     "status": "done",
+     "reply": "Done: Draft review response.",
+     "offered": [
+      "M45.A08",
+      "M45.A09",
+      "M11.A10",
+      "M45.A02",
+      "M45.A01",
+      "M45.A07",
+      "M47.A05",
+      "M45.A04",
+      "M47.A10",
+      "M28.A06",
+      "M47.A06"
+     ],
+     "planned": [
+      "M45.A08"
+     ],
+     "calls": [
+      {
+       "action": "M45.A08",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you. We will improve our waiting times."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3643,
+     "ms": 3643
+    }
+   ],
+   "metrics": {
+    "ms": 3643,
+    "firstReplyMs": 3643,
+    "plannerMs": 3611,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5578,
+     "cachedRead": 2238,
+     "cacheWrite": 3338,
+     "output": 278,
+     "thinking": 0,
+     "costUsd": 0.0165836,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m45-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Publish this response to review rv_2: 'We appreciate your feedback.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M45.A08",
+      "M45.A02",
+      "M45.A01",
+      "M45.A07",
+      "M45.A05",
+      "M47.A08"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "We appreciate your feedback."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4494,
+     "ms": 4497,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "45992f16470f7ceb",
+       "targetsHash": "a96afee2e72f516c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "We appreciate your feedback."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4497,
+    "firstReplyMs": 4494,
+    "plannerMs": 4387,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4418,
+     "cachedRead": 2238,
+     "cacheWrite": 2178,
+     "output": 383,
+     "thinking": 0,
+     "costUsd": 0.0129936,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m45-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "What is our average customer review rating and how many reviews do we have?",
+     "status": "done",
+     "reply": "Review_request: count 2, average rating 3.5.",
+     "offered": [
+      "M45.A10",
+      "M45.A06",
+      "M45.A05",
+      "M45.A07",
+      "M45.A04",
+      "M45.A01",
+      "M08.A10",
+      "M45.A02",
+      "M45.A08",
+      "M45.A09",
+      "M45.A03"
+     ],
+     "planned": [
+      "M45.A10"
+     ],
+     "calls": [
+      {
+       "action": "M45.A10",
+       "args": {}
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3736,
+     "ms": 3736
+    }
+   ],
+   "metrics": {
+    "ms": 3736,
+    "firstReplyMs": 3736,
+    "plannerMs": 3704,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4802,
+     "cachedRead": 2238,
+     "cacheWrite": 2562,
+     "output": 238,
+     "thinking": 0,
+     "costUsd": 0.0130796,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m46-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a business listing for Pine Studio on google at 30 Forest Lane with phone +15550123457",
+     "status": "done",
+     "reply": "Done: Create business listing (Pine Studio).",
+     "offered": [
+      "M46.A06",
+      "M46.A01",
+      "M46.A02",
+      "M46.A07",
+      "M46.A09",
+      "M46.A05",
+      "M45.A01",
+      "M08.A01",
+      "M07.A01",
+      "M47.A02"
+     ],
+     "planned": [
+      "M46.A01"
+     ],
+     "calls": [
+      {
+       "action": "M46.A01",
+       "args": {
+        "name": "Pine Studio",
+        "directory": "google",
+        "address": "30 Forest Lane",
+        "phone": "+15550123457"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5000,
+     "ms": 5000
+    }
+   ],
+   "metrics": {
+    "ms": 5000,
+    "firstReplyMs": 5000,
+    "plannerMs": 4980,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5943,
+     "cachedRead": 2238,
+     "cacheWrite": 3703,
+     "output": 448,
+     "thinking": 0,
+     "costUsd": 0.0197436,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m46-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Show the details of listing bl_3",
+     "status": "done",
+     "reply": "Harbor Optics (listing): directory google, address 20 Bay Street, phone +15550123456, categories professional_services, timezone America/New_York, version 1.",
+     "offered": [
+      "M46.A02",
+      "M04.A02",
+      "M03.A02",
+      "M46.A08",
+      "M08.A08",
+      "M46.A06",
+      "M47.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M46.A02"
+     ],
+     "calls": [
+      {
+       "action": "M46.A02",
+       "args": {
+        "listingId": "bl_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3708,
+     "ms": 3708
+    }
+   ],
+   "metrics": {
+    "ms": 3708,
+    "firstReplyMs": 3708,
+    "plannerMs": 3693,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5188,
+     "cachedRead": 2238,
+     "cacheWrite": 2948,
+     "output": 253,
+     "thinking": 0,
+     "costUsd": 0.014773600000000001,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m46-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Find all Maple Dental business listings",
+     "status": "done",
+     "reply": "Found 2 listings matching query Maple Dental: Maple Dental, +15550123456, Maple Dental, +15550123456.",
+     "offered": [
+      "M46.A03",
+      "M46.A01",
+      "M46.A02",
+      "M46.A06",
+      "M46.A07",
+      "M46.A05",
+      "M08.A08",
+      "M01.A03",
+      "M04.A03",
+      "M28.A03",
+      "M12.A07",
+      "M11.A02",
+      "M21.A03",
+      "M47.A03",
+      "M47.A02"
+     ],
+     "planned": [
+      "M46.A03"
+     ],
+     "calls": [
+      {
+       "action": "M46.A03",
+       "args": {
+        "query": "Maple Dental"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3778,
+     "ms": 3778
+    }
+   ],
+   "metrics": {
+    "ms": 3778,
+    "firstReplyMs": 3778,
+    "plannerMs": 3756,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 8222,
+     "cachedRead": 2238,
+     "cacheWrite": 5982,
+     "output": 253,
+     "thinking": 0,
+     "costUsd": 0.026909600000000002,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m46-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Rename listing bl_3 to Harbor Eyecare",
+     "status": "done",
+     "reply": "Done: Update listing name (Harbor Eyecare).",
+     "offered": [
+      "M46.A04",
+      "M46.A08",
+      "M46.A01",
+      "M08.A03",
+      "M46.A06",
+      "M46.A05",
+      "M46.A07",
+      "M49.A04"
+     ],
+     "planned": [
+      "M46.A04"
+     ],
+     "calls": [
+      {
+       "action": "M46.A04",
+       "args": {
+        "listingId": "bl_3",
+        "name": "Harbor Eyecare"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4184,
+     "ms": 4184
+    }
+   ],
+   "metrics": {
+    "ms": 4184,
+    "firstReplyMs": 4184,
+    "plannerMs": 4169,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5306,
+     "cachedRead": 2238,
+     "cacheWrite": 3066,
+     "output": 271,
+     "thinking": 0,
+     "costUsd": 0.015425600000000001,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m46-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Change listing bl_3's address to 21 Bay Street",
+     "status": "done",
+     "reply": "Done: Update listing address (Harbor Optics).",
+     "offered": [
+      "M46.A05",
+      "M46.A06",
+      "M46.A04",
+      "M46.A08",
+      "M46.A01",
+      "M46.A07",
+      "M46.A02"
+     ],
+     "planned": [
+      "M46.A05"
+     ],
+     "calls": [
+      {
+       "action": "M46.A05",
+       "args": {
+        "listingId": "bl_3",
+        "address": "21 Bay Street"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3613,
+     "ms": 3613
+    }
+   ],
+   "metrics": {
+    "ms": 3613,
+    "firstReplyMs": 3613,
+    "plannerMs": 3589,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5329,
+     "cachedRead": 2238,
+     "cacheWrite": 3089,
+     "output": 341,
+     "thinking": 0,
+     "costUsd": 0.0162176,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m46-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Change listing bl_3's phone to +15550987654",
+     "status": "done",
+     "reply": "Done: Update listing phone (Harbor Optics).",
+     "offered": [
+      "M46.A06",
+      "M46.A05",
+      "M46.A04",
+      "M01.A04",
+      "M46.A08",
+      "M03.A04",
+      "M46.A07",
+      "M47.A06",
+      "M01.A07",
+      "M11.A03",
+      "M46.A02",
+      "M12.A10"
+     ],
+     "planned": [
+      "M46.A06"
+     ],
+     "calls": [
+      {
+       "action": "M46.A06",
+       "args": {
+        "listingId": "bl_3",
+        "phone": "+15550987654"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3893,
+     "ms": 3893
+    }
+   ],
+   "metrics": {
+    "ms": 3893,
+    "firstReplyMs": 3893,
+    "plannerMs": 3877,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6643,
+     "cachedRead": 2238,
+     "cacheWrite": 4403,
+     "output": 268,
+     "thinking": 0,
+     "costUsd": 0.0207436,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m46-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Set listing bl_3's business hours to Monday through Friday 10am to 6pm, closed Saturday and Sunday",
+     "status": "done",
+     "reply": "Done: Set listing business hours (Harbor Optics).",
+     "offered": [
+      "M46.A07",
+      "M04.A07",
+      "M46.A08",
+      "M46.A06",
+      "M46.A02",
+      "M04.A09",
+      "M04.A10",
+      "M46.A05",
+      "M47.A05",
+      "M06.A06"
+     ],
+     "planned": [
+      "M46.A07"
+     ],
+     "calls": [
+      {
+       "action": "M46.A07",
+       "args": {
+        "listingId": "bl_3",
+        "hours": {
+         "monday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "tuesday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "wednesday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "thursday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "friday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "saturday": null,
+         "sunday": null
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4572,
+     "ms": 4572
+    }
+   ],
+   "metrics": {
+    "ms": 4572,
+    "firstReplyMs": 4572,
+    "plannerMs": 4516,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5741,
+     "cachedRead": 2238,
+     "cacheWrite": 3501,
+     "output": 538,
+     "thinking": 0,
+     "costUsd": 0.019835600000000002,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m46-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Set listing bl_3's categories to optician and eyewear",
+     "status": "done",
+     "reply": "Done: Set listing categories (Harbor Optics).",
+     "offered": [
+      "M46.A08",
+      "M46.A02",
+      "M46.A07",
+      "M08.A08",
+      "M01.A03",
+      "M46.A03",
+      "M46.A06",
+      "M46.A09",
+      "M47.A02"
+     ],
+     "planned": [
+      "M46.A08"
+     ],
+     "calls": [
+      {
+       "action": "M46.A08",
+       "args": {
+        "listingId": "bl_3",
+        "categories": [
+         "optician",
+         "eyewear"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4069,
+     "ms": 4069
+    }
+   ],
+   "metrics": {
+    "ms": 4069,
+    "firstReplyMs": 4069,
+    "plannerMs": 4036,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5766,
+     "cachedRead": 2238,
+     "cacheWrite": 3526,
+     "output": 275,
+     "thinking": 0,
+     "costUsd": 0.0173056,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m46-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Publish the Harbor Optics listing bl_3 to its simulated directory",
+     "status": "done",
+     "reply": "Done: Publish listing to simulated directory (Harbor Optics).",
+     "offered": [
+      "M46.A09",
+      "M46.A01",
+      "M46.A08",
+      "M46.A10",
+      "M46.A04",
+      "M46.A05",
+      "M45.A09",
+      "M48.A03",
+      "M46.A06",
+      "M46.A02",
+      "M46.A03",
+      "M46.A07"
+     ],
+     "planned": [
+      "M46.A09"
+     ],
+     "calls": [
+      {
+       "action": "M46.A09",
+       "args": {
+        "listingId": "bl_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4949,
+     "ms": 4951,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c7ebd0924f2ea637",
+       "targetsHash": "d75831d40456f872",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M46.A09",
+         "name": "Publish listing to simulated directory",
+         "args": {
+          "listingId": "bl_3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4951,
+    "firstReplyMs": 4949,
+    "plannerMs": 4934,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6445,
+     "cachedRead": 2238,
+     "cacheWrite": 4205,
+     "output": 405,
+     "thinking": 0,
+     "costUsd": 0.021321600000000003,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m46-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Check the directory sync status of listing bl_3",
+     "status": "done",
+     "reply": "Harbor Optics (listing): directory google, status never_published, version 1.",
+     "offered": [
+      "M46.A10",
+      "M46.A09",
+      "M46.A04",
+      "M46.A02",
+      "M46.A08",
+      "M47.A10",
+      "M46.A06",
+      "M29.A06",
+      "M48.A03",
+      "M12.A08",
+      "M12.A07"
+     ],
+     "planned": [
+      "M46.A10"
+     ],
+     "calls": [
+      {
+       "action": "M46.A10",
+       "args": {
+        "listingId": "bl_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4558,
+     "ms": 4558
+    }
+   ],
+   "metrics": {
+    "ms": 4558,
+    "firstReplyMs": 4558,
+    "plannerMs": 4541,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6041,
+     "cachedRead": 2238,
+     "cacheWrite": 3801,
+     "output": 253,
+     "thinking": 0,
+     "costUsd": 0.0181856,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m47-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Open a support ticket for Elodie Mercer titled 'Billing screen blank' with description 'The billing screen is blank.'",
+     "status": "done",
+     "reply": "Done: Create support ticket (Billing screen blank).",
+     "offered": [
+      "M47.A01",
+      "M47.A02",
+      "M47.A05",
+      "M47.A03",
+      "M47.A09",
+      "M47.A08",
+      "M29.A01",
+      "M06.A04",
+      "M01.A02",
+      "M01.A03",
+      "M06.A01",
+      "M01.A01",
+      "M06.A02",
+      "M06.A07"
+     ],
+     "planned": [
+      "M47.A01"
+     ],
+     "calls": [
+      {
+       "action": "M47.A01",
+       "args": {
+        "title": "Billing screen blank",
+        "body": "The billing screen is blank.",
+        "contactId": "ct_35"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5017,
+     "ms": 5017
+    }
+   ],
+   "metrics": {
+    "ms": 5017,
+    "firstReplyMs": 5017,
+    "plannerMs": 4995,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7345,
+     "cachedRead": 2238,
+     "cacheWrite": 5105,
+     "output": 444,
+     "thinking": 0,
+     "costUsd": 0.0253116,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m47-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Show support ticket tic_1",
+     "status": "done",
+     "reply": "Portal export fails (ticket): body Please investigate this issue., requester email elodie@cedar.example, priority normal, status open, person name Elodie Mercer.",
+     "offered": [
+      "M47.A01",
+      "M47.A02",
+      "M47.A05",
+      "M47.A06",
+      "M47.A10",
+      "M47.A03",
+      "M21.A09",
+      "M47.A04",
+      "M47.A09",
+      "M47.A08",
+      "M47.A07",
+      "M06.A01",
+      "M01.A01",
+      "M06.A02",
+      "M01.A02",
+      "M06.A07"
+     ],
+     "planned": [
+      "M47.A02"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4412,
+     "ms": 4412
+    }
+   ],
+   "metrics": {
+    "ms": 4412,
+    "firstReplyMs": 4412,
+    "plannerMs": 4395,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7912,
+     "cachedRead": 2238,
+     "cacheWrite": 5672,
+     "output": 254,
+     "thinking": 0,
+     "costUsd": 0.0256796,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m47-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "List open high-priority support tickets",
+     "status": "done",
+     "reply": "Found 1 ticket: Workspace login: body Please investigate this issue., requester email nisha@cedar.example, priority high, status open, person name Nisha Khatri.",
+     "offered": [
+      "M47.A05",
+      "M47.A03",
+      "M47.A01",
+      "M47.A02",
+      "M47.A06",
+      "M47.A10",
+      "M06.A07",
+      "M06.A03",
+      "M46.A07",
+      "M46.A02",
+      "M47.A09",
+      "M47.A07",
+      "M47.A08",
+      "M47.A04",
+      "M11.A02",
+      "M06.A01",
+      "M01.A01"
+     ],
+     "planned": [
+      "M47.A03"
+     ],
+     "calls": [
+      {
+       "action": "M47.A03",
+       "args": {
+        "priority": "high",
+        "status": "open"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4200,
+     "ms": 4200
+    }
+   ],
+   "metrics": {
+    "ms": 4200,
+    "firstReplyMs": 4200,
+    "plannerMs": 4183,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 8799,
+     "cachedRead": 2238,
+     "cacheWrite": 6559,
+     "output": 414,
+     "thinking": 0,
+     "costUsd": 0.030827599999999997,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m47-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Assign support ticket tic_1 to Raj Iyer",
+     "status": "done",
+     "reply": "Done: Assign ticket owner (Portal export fails).",
+     "offered": [
+      "M47.A04",
+      "M47.A01",
+      "M47.A05",
+      "M47.A06",
+      "M47.A09",
+      "M47.A03",
+      "M06.A05",
+      "M48.A05",
+      "M03.A05",
+      "M47.A10",
+      "M47.A02",
+      "M47.A08",
+      "M48.A02",
+      "M11.A03",
+      "M06.A01",
+      "M01.A01",
+      "M06.A07"
+     ],
+     "planned": [
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A04",
+       "args": {
+        "ticketId": "tic_1",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5410,
+     "ms": 5410
+    }
+   ],
+   "metrics": {
+    "ms": 5410,
+    "firstReplyMs": 5410,
+    "plannerMs": 5388,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 8217,
+     "cachedRead": 2238,
+     "cacheWrite": 5977,
+     "output": 505,
+     "thinking": 0,
+     "costUsd": 0.0294096,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m47-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Make support ticket tic_1 urgent",
+     "status": "done",
+     "reply": "Done: Set ticket priority (Portal export fails).",
+     "offered": [
+      "M47.A05",
+      "M47.A01",
+      "M47.A10",
+      "M47.A03",
+      "M47.A06",
+      "M47.A02",
+      "M06.A07",
+      "M47.A09",
+      "M47.A08",
+      "M47.A04",
+      "M47.A07",
+      "M06.A01",
+      "M01.A01"
+     ],
+     "planned": [
+      "M47.A05"
+     ],
+     "calls": [
+      {
+       "action": "M47.A05",
+       "args": {
+        "ticketId": "tic_1",
+        "priority": "urgent"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4582,
+     "ms": 4582
+    }
+   ],
+   "metrics": {
+    "ms": 4582,
+    "firstReplyMs": 4582,
+    "plannerMs": 4564,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7234,
+     "cachedRead": 2238,
+     "cacheWrite": 4994,
+     "output": 382,
+     "thinking": 0,
+     "costUsd": 0.0242476,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m47-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Resolve the Portal export fails support ticket tic_1",
+     "status": "done",
+     "reply": "Done: Update ticket status (Portal export fails).",
+     "offered": [
+      "M47.A06",
+      "M47.A01",
+      "M47.A03",
+      "M47.A09",
+      "M47.A08",
+      "M47.A10",
+      "M47.A05",
+      "M47.A04",
+      "M47.A02",
+      "M47.A07",
+      "M11.A06",
+      "M06.A08",
+      "M06.A01",
+      "M01.A01",
+      "M06.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M47.A06"
+     ],
+     "calls": [
+      {
+       "action": "M47.A06",
+       "args": {
+        "ticketId": "tic_1",
+        "status": "resolved"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4615,
+     "ms": 4615
+    }
+   ],
+   "metrics": {
+    "ms": 4615,
+    "firstReplyMs": 4615,
+    "plannerMs": 4596,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 8305,
+     "cachedRead": 2238,
+     "cacheWrite": 6065,
+     "output": 542,
+     "thinking": 0,
+     "costUsd": 0.0301316,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m47-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Add an internal note to support ticket tic_1: 'Reproduced on Safari.'",
+     "status": "done",
+     "reply": "Done: Add internal ticket note (Portal export fails).",
+     "offered": [
+      "M47.A07",
+      "M47.A02",
+      "M47.A01",
+      "M47.A09",
+      "M47.A10",
+      "M47.A06",
+      "M11.A08",
+      "M07.A06",
+      "M07.A01",
+      "M29.A04",
+      "M06.A02",
+      "M01.A02",
+      "M06.A01",
+      "M01.A01",
+      "M29.A01"
+     ],
+     "planned": [
+      "M47.A07"
+     ],
+     "calls": [
+      {
+       "action": "M47.A07",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "Reproduced on Safari."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3683,
+     "ms": 3683
+    }
+   ],
+   "metrics": {
+    "ms": 3683,
+    "firstReplyMs": 3683,
+    "plannerMs": 3647,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7344,
+     "cachedRead": 2238,
+     "cacheWrite": 5104,
+     "output": 273,
+     "thinking": 0,
+     "costUsd": 0.0235976,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m47-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support ticket tic_1: 'We are investigating the export issue.'",
+     "status": "done",
+     "reply": "Done: Reply to ticket requester (Portal export fails).",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A06",
+      "M47.A03",
+      "M47.A10",
+      "M11.A02",
+      "M28.A07",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We are investigating the export issue."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3886,
+     "ms": 3889,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "2c33b519262ea326",
+       "targetsHash": "43e1b68e750cf3cd",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We are investigating the export issue."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3889,
+    "firstReplyMs": 3886,
+    "plannerMs": 3844,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6831,
+     "cachedRead": 2238,
+     "cacheWrite": 4591,
+     "output": 273,
+     "thinking": 0,
+     "costUsd": 0.021545599999999998,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m47-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Link support ticket tic_1 to Dorian Vale",
+     "status": "done",
+     "reply": "Done: Link ticket to contact (Portal export fails).",
+     "offered": [
+      "M47.A09",
+      "M47.A06",
+      "M47.A01",
+      "M47.A05",
+      "M47.A02",
+      "M47.A07",
+      "M47.A03",
+      "M47.A10",
+      "M47.A04",
+      "M47.A08",
+      "M01.A02",
+      "M01.A03",
+      "M07.A06",
+      "M11.A06",
+      "M06.A08",
+      "M06.A01",
+      "M01.A01"
+     ],
+     "planned": [
+      "M47.A09"
+     ],
+     "calls": [
+      {
+       "action": "M47.A09",
+       "args": {
+        "ticketId": "tic_1",
+        "contactId": "ct_36"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4890,
+     "ms": 4890
+    }
+   ],
+   "metrics": {
+    "ms": 4890,
+    "firstReplyMs": 4890,
+    "plannerMs": 4872,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 8350,
+     "cachedRead": 2238,
+     "cacheWrite": 6110,
+     "output": 545,
+     "thinking": 0,
+     "costUsd": 0.0303416,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "m47-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Has support ticket tic_1 breached its first-response SLA?",
+     "status": "done",
+     "reply": "Portal export fails (ticket): status breached, policy first_response, time basis elapsed, priority normal, target hours 24, due at 2026-10-20T14:00:00.000Z.",
+     "offered": [
+      "M47.A10",
+      "M47.A06",
+      "M47.A08",
+      "M47.A05",
+      "M47.A07",
+      "M47.A03",
+      "M47.A01",
+      "M47.A04",
+      "M47.A02",
+      "M47.A09",
+      "M11.A06",
+      "M06.A08",
+      "M13.A03",
+      "M45.A09"
+     ],
+     "planned": [
+      "M47.A10"
+     ],
+     "calls": [
+      {
+       "action": "M47.A10",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6386,
+     "ms": 6386
+    }
+   ],
+   "metrics": {
+    "ms": 6386,
+    "firstReplyMs": 6386,
+    "plannerMs": 6366,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 7383,
+     "cachedRead": 2238,
+     "cacheWrite": 5143,
+     "output": 354,
+     "thinking": 0,
+     "costUsd": 0.024563599999999998,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "partial-ticket-replies",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "partial",
+     "reply": "Done: Reply to ticket requester (Portal export fails).\nCouldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A09",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We received your report."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5246,
+     "ms": 5248,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c201d215b4922fea",
+       "targetsHash": "a988d0cb30a77f27",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "Reply to ticket requester (tic_4)",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5248,
+    "firstReplyMs": 5246,
+    "plannerMs": 5216,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6667,
+     "cachedRead": 2238,
+     "cacheWrite": 4427,
+     "output": 604,
+     "thinking": 0,
+     "costUsd": 0.0241996,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "review-cancel-declined",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Cancel review request rrq_1",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M45.A03",
+      "M45.A04",
+      "M45.A02",
+      "M29.A03",
+      "M45.A01",
+      "M45.A05",
+      "M45.A07",
+      "M13.A05",
+      "M06.A10",
+      "M21.A05",
+      "M29.A02",
+      "M29.A04"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5453,
+     "ms": 5453,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "3e416562c4a8d83f",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5453,
+    "firstReplyMs": 5453,
+    "plannerMs": 5441,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 5535,
+     "cachedRead": 2238,
+     "cacheWrite": 3295,
+     "output": 385,
+     "thinking": 0,
+     "costUsd": 0.0174816,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "review-publish-not-listing",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Make this response public on the two-star review rv_2: 'Thank you for telling us.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M45.A08",
+      "M47.A08",
+      "M45.A05",
+      "M45.A07",
+      "M45.A01",
+      "M45.A02",
+      "M47.A07",
+      "M11.A10",
+      "M13.A03"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you for telling us."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4276,
+     "ms": 4277,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "4ba63806d5f78235",
+       "targetsHash": "9c1003ce540c374e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "Thank you for telling us."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4277,
+    "firstReplyMs": 4276,
+    "plannerMs": 4245,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5443,
+     "cachedRead": 2238,
+     "cacheWrite": 3203,
+     "output": 419,
+     "thinking": 0,
+     "costUsd": 0.0174536,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM review_requests WHERE id='rrq_1' → \"sent\", wanted \"draft\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Create review request for 2 of 2: Cedar onboarding 7, Cedar onboarding 8.\nSend review request for 3 of 3: rrq_4, rrq_5, rrq_1.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M21.A03",
+      "M45.A01",
+      "M45.A04",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25"
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A04",
+       "args": {
+        "status": "draft"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25"
+       }
+      },
+      {
+       "action": "M45.A04",
+       "args": {
+        "status": "draft"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_1"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step s2: $s1 is not an earlier step (refs can only point back)",
+      "step s5: $s1 is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 35069,
+     "ms": 35073,
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "73b8fc463ab8d4ce",
+       "targetsHash": "7cd6c168f10b2eb4",
+       "reason": "sends something outside the account",
+       "count": 3,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        },
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        },
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 35073,
+    "firstReplyMs": 35069,
+    "plannerMs": 35010,
+    "plannerRounds": 3,
+    "calls": 10,
+    "usage": {
+     "input": 23029,
+     "cachedRead": 6714,
+     "cacheWrite": 16309,
+     "output": 6068,
+     "thinking": 0,
+     "costUsd": 0.1272708,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-followup-priority",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Show support ticket tic_1",
+     "status": "done",
+     "reply": "Portal export fails (ticket): body Please investigate this issue., requester email elodie@cedar.example, priority normal, status open, person name Elodie Mercer.",
+     "offered": [
+      "M47.A01",
+      "M47.A02",
+      "M47.A05",
+      "M47.A06",
+      "M47.A10",
+      "M47.A03",
+      "M21.A09",
+      "M47.A04",
+      "M47.A09",
+      "M47.A08",
+      "M47.A07",
+      "M06.A01",
+      "M01.A01",
+      "M06.A02",
+      "M01.A02",
+      "M06.A07"
+     ],
+     "planned": [
+      "M47.A02"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3889,
+     "ms": 3889
+    },
+    {
+     "user": "Make that urgent",
+     "status": "done",
+     "reply": "Done: Set ticket priority (Portal export fails).",
+     "offered": [
+      "M06.A07",
+      "M47.A05",
+      "M47.A10",
+      "M06.A01",
+      "M06.A06",
+      "M06.A09",
+      "M15.A07",
+      "M21.A04",
+      "M12.A04",
+      "M21.A03",
+      "M12.A03",
+      "M47.A02"
+     ],
+     "planned": [
+      "M47.A05"
+     ],
+     "calls": [
+      {
+       "action": "M47.A05",
+       "args": {
+        "ticketId": "tic_1",
+        "priority": "urgent"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4350,
+     "ms": 4350
+    }
+   ],
+   "metrics": {
+    "ms": 8239,
+    "firstReplyMs": 3889,
+    "plannerMs": 8210,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 14373,
+     "cachedRead": 10148,
+     "cacheWrite": 4221,
+     "output": 656,
+     "thinking": 0,
+     "costUsd": 0.0254816,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-note-not-contact",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Keep this private on the Portal export fails support ticket: 'Customer prefers an afternoon call.'",
+     "status": "done",
+     "reply": "Done: Add internal ticket note (Portal export fails).",
+     "offered": [
+      "M47.A07",
+      "M01.A08",
+      "M47.A01",
+      "M47.A08",
+      "M47.A05",
+      "M47.A09",
+      "M45.A08",
+      "M47.A06",
+      "M21.A01",
+      "M11.A08",
+      "M21.A04",
+      "M47.A02",
+      "M47.A03",
+      "M07.A01",
+      "M12.A10",
+      "M13.A10",
+      "M06.A01",
+      "M01.A01"
+     ],
+     "planned": [
+      "M47.A07"
+     ],
+     "calls": [
+      {
+       "action": "M47.A03",
+       "args": {
+        "query": "Portal export fails"
+       }
+      },
+      {
+       "action": "M47.A07",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "Customer prefers an afternoon call."
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 10082,
+     "ms": 10082
+    }
+   ],
+   "metrics": {
+    "ms": 10082,
+    "firstReplyMs": 10082,
+    "plannerMs": 10036,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 17326,
+     "cachedRead": 4476,
+     "cacheWrite": 12846,
+     "output": 965,
+     "thinking": 0,
+     "costUsd": 0.0619372,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-owner-not-task",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Raj should take over the Portal export fails support issue.",
+     "status": "done",
+     "reply": "Done: Assign ticket owner (Portal export fails).",
+     "offered": [
+      "M47.A01",
+      "M47.A06",
+      "M47.A04",
+      "M47.A02",
+      "M47.A07",
+      "M47.A08",
+      "M48.A05",
+      "M28.A07",
+      "M12.A08",
+      "M29.A10",
+      "M29.A06",
+      "M48.A02",
+      "M47.A03",
+      "M06.A01",
+      "M01.A01",
+      "M11.A06",
+      "M06.A08",
+      "M06.A05",
+      "M11.A03",
+      "M12.A07"
+     ],
+     "planned": [
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A03",
+       "args": {
+        "query": "Portal export fails"
+       }
+      },
+      {
+       "action": "M47.A04",
+       "args": {
+        "ticketId": "tic_1",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step st1: $s1 is not an earlier step (refs can only point back)",
+      "step st1: $r1 is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 14904,
+     "ms": 14904
+    }
+   ],
+   "metrics": {
+    "ms": 14904,
+    "firstReplyMs": 14904,
+    "plannerMs": 14890,
+    "plannerRounds": 3,
+    "calls": 2,
+    "usage": {
+     "input": 27105,
+     "cachedRead": 6714,
+     "cacheWrite": 20385,
+     "output": 1723,
+     "thinking": 0,
+     "costUsd": 0.1001248,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-owner-unavailable",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Assign support ticket tic_1 to Eva Rossi",
+     "status": "failed",
+     "reply": "Couldn't assign ticket owner: Eva Rossi must be available and have tickets.manage to own support tickets.",
+     "offered": [
+      "M47.A04",
+      "M47.A01",
+      "M47.A06",
+      "M47.A05",
+      "M47.A09",
+      "M47.A02",
+      "M48.A05",
+      "M21.A06",
+      "M03.A05",
+      "M06.A05",
+      "M47.A03",
+      "M47.A08",
+      "M48.A02",
+      "M11.A03",
+      "M06.A01",
+      "M01.A01",
+      "M11.A06",
+      "M06.A08"
+     ],
+     "planned": [
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A04",
+       "args": {
+        "ticketId": "tic_1",
+        "ownerId": "us_7"
+       },
+       "error": "CONFLICT: Eva Rossi must be available and have tickets.manage to own support tickets"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5216,
+     "ms": 5216
+    }
+   ],
+   "metrics": {
+    "ms": 5216,
+    "firstReplyMs": 5216,
+    "plannerMs": 5200,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 8405,
+     "cachedRead": 2238,
+     "cacheWrite": 6165,
+     "output": 512,
+     "thinking": 0,
+     "costUsd": 0.0302316,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-declined",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to ticket tic_1: 'We have your report.'",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A04",
+      "M47.A05",
+      "M47.A03",
+      "M11.A10",
+      "M45.A09",
+      "M15.A10",
+      "M13.A03",
+      "M06.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4652,
+     "ms": 4652,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "1a531b8f44720596",
+       "targetsHash": "168c6b85c6d50cd9",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We have your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4652,
+    "firstReplyMs": 4652,
+    "plannerMs": 4621,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 6698,
+     "cachedRead": 2238,
+     "cacheWrite": 4458,
+     "output": 386,
+     "thinking": 0,
+     "costUsd": 0.0221436,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M45.A02",
+      "M13.A03",
+      "M45.A09",
+      "M06.A02",
+      "M01.A02",
+      "M06.A03",
+      "M12.A09"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A03",
+       "args": {
+        "query": "Owen Hale Mailbox delivery"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 11463,
+     "ms": 11463
+    }
+   ],
+   "metrics": {
+    "ms": 11463,
+    "firstReplyMs": 11463,
+    "plannerMs": 11434,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 16831,
+     "cachedRead": 4476,
+     "cacheWrite": 12351,
+     "output": 1140,
+     "thinking": 0,
+     "costUsd": 0.061707200000000004,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "ticket-reply-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Reply to Elodie Mercer's Portal export fails ticket: 'We are investigating.' Then create a task for Noah Park titled 'Follow up on Elodie export' due tomorrow.",
+     "status": "done",
+     "reply": "Done: Reply to ticket requester (Portal export fails).\nDone: Create task (Follow up on Elodie export).",
+     "offered": [
+      "M47.A08",
+      "M06.A01",
+      "M47.A02",
+      "M06.A03",
+      "M47.A03",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M45.A02",
+      "M11.A10",
+      "M06.A04",
+      "M06.A06",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03",
+      "M45.A09",
+      "M07.A01",
+      "M21.A01",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We are investigating."
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up on Elodie export",
+        "assigneeId": "us_6",
+        "dueDate": "2026-10-22"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 8211,
+     "ms": 8215,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "f22cba80d4c670d7",
+       "targetsHash": "ac6bbefd7837584f",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We are investigating."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8215,
+    "firstReplyMs": 8211,
+    "plannerMs": 8156,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 9038,
+     "cachedRead": 2238,
+     "cacheWrite": 6798,
+     "output": 1066,
+     "thinking": 0,
+     "costUsd": 0.0383036,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "tickets-from-invoices-messages",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "For contacts who have an overdue invoice and an inbound reply in the last 7 days, open one support ticket per contact titled 'Overdue invoice follow-up' with description 'Check the invoice and recent reply.'",
+     "status": "done",
+     "reply": "Done: Create support ticket (Overdue invoice follow-up).",
+     "offered": [
+      "M28.A10",
+      "M13.A09",
+      "M28.A08",
+      "M28.A03",
+      "M12.A09",
+      "M28.A02",
+      "M47.A08",
+      "M11.A10",
+      "M28.A07",
+      "M28.A01",
+      "M47.A09",
+      "M47.A02",
+      "M29.A07",
+      "M47.A10",
+      "M13.A01",
+      "M13.A03",
+      "M47.A01",
+      "M47.A03",
+      "M01.A05",
+      "M01.A01",
+      "M47.A04",
+      "M47.A07",
+      "M04.A01",
+      "M47.A06",
+      "M47.A05",
+      "M45.A01",
+      "M01.A02",
+      "M01.A03",
+      "M01.A09",
+      "M01.A10",
+      "M06.A01",
+      "M06.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M47.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 1,
+        "limit": 200
+       }
+      },
+      {
+       "action": "M11.A02",
+       "args": {
+        "lastMessageFrom": "2026-10-15",
+        "lastMessageTo": "2026-10-21",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M47.A01",
+       "args": {
+        "title": "Overdue invoice follow-up",
+        "body": "Check the invoice and recent reply.",
+        "contactId": "ct_31"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 22160,
+     "ms": 22160
+    }
+   ],
+   "metrics": {
+    "ms": 22160,
+    "firstReplyMs": 22160,
+    "plannerMs": 22065,
+    "plannerRounds": 3,
+    "calls": 3,
+    "usage": {
+     "input": 38357,
+     "cachedRead": 6714,
+     "cacheWrite": 31637,
+     "output": 2935,
+     "thinking": 0,
+     "costUsd": 0.15725280000000003,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  },
+  {
+   "id": "unsupported-delete-review",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Permanently delete customer review rv_2",
+     "status": "unsupported",
+     "reply": "I can't permanently delete customer reviews. None of the available actions removes a review, and the only delete action covers notes.\nAlternatives: Look up review rv_2 to check its rating, body and response before you decide anything; Draft a private response to review rv_2, or publish a response to it; Search or count your reviews to see the overall rating picture",
+     "offered": [
+      "M45.A03",
+      "M45.A05",
+      "M45.A06",
+      "M45.A01",
+      "M45.A04",
+      "M07.A05",
+      "M45.A07",
+      "M07.A03",
+      "M01.A03",
+      "M45.A08",
+      "M13.A02",
+      "M04.A07",
+      "M45.A09",
+      "M45.A10",
+      "M28.A06",
+      "M12.A07",
+      "M29.A03",
+      "M45.A02",
+      "M47.A03",
+      "M03.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 10032,
+     "ms": 10032
+    }
+   ],
+   "metrics": {
+    "ms": 10032,
+    "firstReplyMs": 10032,
+    "plannerMs": 9868,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 12459,
+     "cachedRead": 4476,
+     "cacheWrite": 7979,
+     "output": 920,
+     "thinking": 0,
+     "costUsd": 0.0420192,
+     "billing": "api_estimate"
+    }
+   },
+   "models": [
+    "claude-haiku-5-5"
+   ]
+  }
+ ]
+}

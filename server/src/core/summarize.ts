@@ -21,7 +21,7 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
 
   for (const r of run.steps) {
     const step = byId.get(r.id)!;
-    const line = describe(step, r, registry) ?? (used.has(r.id) || r.status !== "done" ? null : found(step, r.output, nounOf(step, byId, registry)));
+    const line = describe(step, r, registry, used) ?? (used.has(r.id) || r.status !== "done" ? null : found(step, r.output, nounOf(step, byId, registry)));
     if (line) lines.push(line);
   }
 
@@ -46,7 +46,7 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
   return lines.join("\n");
 }
 
-function describe(step: CStep, r: StepResult, registry: Registry): string | null {
+function describe(step: CStep, r: StepResult, registry: Registry, used: Set<string>): string | null {
   if (r.status === "awaiting_confirmation" || r.status === "needs_clarification") return null;
   if (r.status === "skipped") return `Skipped ${what(step, registry)}: an earlier step didn't complete.`;
   if (r.status === "failed" && !r.items) return `Couldn't ${what(step, registry)}: ${r.error!.message}.`;
@@ -59,7 +59,7 @@ function describe(step: CStep, r: StepResult, registry: Registry): string | null
   }
   if (step.kind === "forEach" && r.items) {
     const writes = step.calls.filter((c) => c.action.risk !== "read");
-    if (writes.length === 0) return null;
+    if (writes.length === 0) return used.has(r.id) ? null : eachRead(r.items);
     const actions = writes.map((c) => c.action.name).join(" + ");
     const ok = r.items.filter((i) => i.status === "done");
     const bad = r.items.filter((i) => i.status === "failed");
@@ -71,6 +71,19 @@ function describe(step: CStep, r: StepResult, registry: Registry): string | null
     return out.join(" ");
   }
   return null;
+}
+
+/** A loop of reads nothing else consumed: what each item looked up is the answer. */
+function eachRead(items: NonNullable<StepResult["items"]>): string {
+  if (items.length === 0) return "Nothing matched, so there was nothing to look up.";
+  const lines = items.slice(0, NAMES_MAX).map((i) => {
+    const who = i.label ?? (ID.test(i.key) ? null : i.key);
+    const prefix = who ? `${who}: ` : "";
+    if (i.status === "failed") return `${prefix}couldn't look up (${i.error!.message}).`;
+    return `${prefix}${(i.results ?? []).map((x) => record(x)).filter(Boolean).join("; ") || "nothing found"}.`;
+  });
+  if (items.length > NAMES_MAX) lines.push(`…and ${items.length - NAMES_MAX} more.`);
+  return lines.join("\n");
 }
 
 /** What a read returned, for a step nothing else consumed. */

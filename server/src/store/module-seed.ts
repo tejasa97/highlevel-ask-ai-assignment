@@ -15,6 +15,11 @@ const schemas: Record<string, z.ZodType<{ id: string }>> = {
   listings: Listing,
   tickets: Ticket,
 };
+/** The manifest is frozen and predates the null-until-linked seam fields, so they are filled in as they load. */
+const SEAM_DEFAULTS: Record<string, Record<string, null>> = {
+  contacts: { companyId: null },
+  appointments: { calendarId: null },
+};
 export const MODULE_SEED_URL = new URL(
   "../../../eval/module-scenarios/m45-m47/seed-manifest.json",
   import.meta.url,
@@ -27,7 +32,7 @@ export function appendModuleSeed(store: Store): void {
   for (const entry of manifest.records) {
     const schema = schemas[entry.table];
     if (!schema) throw Error(`Unknown manifest table ${entry.table}`);
-    const record = schema.parse(entry.record);
+    const record = schema.parse({ ...SEAM_DEFAULTS[entry.table], ...(entry.record as object) });
     const id = store.nextId(entry.table, entry.prefix);
     if (id !== record.id)
       throw Error(

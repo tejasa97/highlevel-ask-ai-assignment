@@ -3,7 +3,7 @@ import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { contains, inDateRange, Limit, listOf, page, person, PersonArgs, personName, personRef, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
-import { deliverSms, OUR_PHONE, personOf, recordOptOut, requireReachable, sender, touch } from "../m11-conversations/messaging.js";
+import { deliverSms, optOut, OUR_PHONE, personOf, recordOptOut, requireReachable, sender, touch } from "../m11-conversations/messaging.js";
 import { OptOut } from "../m11-conversations/schema.js";
 import { Sms, SMS_STATUSES } from "./schema.js";
 
@@ -106,7 +106,7 @@ const sendSms = defineAction({
     requirePermission(store, actorId, "messaging.send");
     const now = clock.now().toISOString();
     const s = outgoing(store, a, actorId, now);
-    requireReachable(store, personOf(store, s, "be texted"), "sms");
+    requireReachable(store, { ...personOf(store, s, "be texted"), phone: s.to }, "sms");
     return deliverSms(store, s, now);
   },
 });
@@ -124,7 +124,7 @@ const scheduleSms = defineAction({
     requirePermission(store, actorId, "messaging.send");
     if (new Date(sendAt) <= clock.now()) throw new ActionError("INVALID", `sendAt ${sendAt} isn't in the future (now is ${clock.now().toISOString()})`);
     const s = outgoing(store, a, actorId, clock.now().toISOString());
-    requireReachable(store, personOf(store, s, "be texted"), "sms");
+    requireReachable(store, { ...personOf(store, s, "be texted"), phone: s.to }, "sms");
     return store.update<Sms>("sms", s.id, { status: "scheduled", scheduledAt: new Date(sendAt).toISOString() });
   },
 });
@@ -247,7 +247,8 @@ const receiveSms = defineAction({
       createdAt: now,
     });
     const stop = STOP_WORDS.includes(body.trim().toLowerCase());
-    if (stop) recordOptOut(store, "sms", from, ref, "reply_stop", now);
+    // Someone already opted out can text STOP again; the reply is still recorded.
+    if (stop && !optOut(store, "sms", from)) recordOptOut(store, "sms", from, ref, "reply_stop", now);
     return { ...s, optedOut: stop };
   },
 });

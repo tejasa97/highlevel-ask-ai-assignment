@@ -8,21 +8,27 @@ import type { Candidate } from "./registry.js";
 
 // Small helpers shared by module handlers.
 
-export const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
+// A possessive is dropped before punctuation is, so "Sarah Johnson's walkthrough" names the same words as "Sarah Johnson walkthrough".
+export const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/['\u2019]s\b/gu, "").replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
 
 /**
  * Name matching for resolvers: exact (case-insensitive) beats a whole-word match, which beats a prefix.
+ * Last, a name of two or more words that the request contains whole, with words of its own around it:
+ * "Zoe Costa at Umbrella" names the contact "Zoe Costa"; "Mailbox delivery support" names "Mailbox delivery".
  * Returns only the best tier, so "Jo" doesn't match "Jo Park" and "Joan Silva" equally when "Jo Park" is exact.
  */
 export function matchByName<T>(docs: T[], name: string, label: (d: T) => string): T[] {
   const q = norm(name);
   if (!q) return [];
-  const tiers: T[][] = [[], [], []];
+  const qWords = new Set(q.split(" "));
+  const tiers: T[][] = [[], [], [], []];
   for (const d of docs) {
     const n = norm(label(d));
+    const words = n.split(" ");
     if (n === q) tiers[0]!.push(d);
-    else if (n.split(" ").includes(q) || q.split(" ").every((w) => n.split(" ").includes(w))) tiers[1]!.push(d);
-    else if (n.split(" ").some((w) => w.startsWith(q))) tiers[2]!.push(d);
+    else if (words.includes(q) || q.split(" ").every((w) => words.includes(w))) tiers[1]!.push(d);
+    else if (words.some((w) => w.startsWith(q))) tiers[2]!.push(d);
+    else if (words.length >= 2 && words.every((w) => qWords.has(w))) tiers[3]!.push(d);
   }
   return tiers.find((t) => t.length > 0) ?? [];
 }
@@ -78,6 +84,11 @@ export function activeUser(store: Store, id: string, purpose: string): User {
 /** Throws CONFLICT unless `current` is one of `allowed`. */
 export function requireState<S extends string>(label: string, current: S, allowed: readonly S[], doing: string): void {
   if (!allowed.includes(current)) throw new ActionError("CONFLICT", `${label} is ${current}; can only ${doing} when ${allowed.join(" or ")}`, { status: current });
+}
+
+/** Throws CONFLICT for an update that would leave the record exactly as it is. */
+export function noChange(): never {
+  throw new ActionError("CONFLICT", "The record already has that value");
 }
 
 /** Rejects dates before today, which almost always means a date was worked out wrong. */
@@ -149,3 +160,30 @@ export function personName(store: Store, ref: { contactId: string | null; leadId
 
 /** Money rounded to cents, so sums of line items don't drift. */
 export const cents = (n: number): number => Math.round(n * 100) / 100;
+
+/** An id for a record nested inside another one, skipping any already in `used`. */
+export function freshId(store: Store, prefix: string, used: readonly string[]): string {
+  const taken = new Set(used);
+  let id = store.nextId("_nested", prefix);
+  while (taken.has(id)) id = store.nextId("_nested", prefix);
+  return id;
+}
+
+/** A required name: trimmed, and rejected when empty or only spaces. */
+export const Name = z.string().trim().min(1);
+
+/** Trims a string, and turns an empty or whitespace-only one into null. */
+export function blankToNull(value: string | null): string | null {
+  if (value === null) return null;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/** Throws INVALID unless `iso` is a valid timestamp strictly after `nowIso`. */
+export function requireFuture(iso: string, nowIso: string, label: string): void {
+  const when = Date.parse(iso);
+  const now = Date.parse(nowIso);
+  if (Number.isNaN(when)) throw new ActionError("INVALID", `${label} is not a valid timestamp`);
+  if (when < now) throw new ActionError("INVALID", `${label} ${iso} is in the past (now is ${nowIso})`);
+  if (when === now) throw new ActionError("INVALID", `${label} ${iso} is not in the future (now is ${nowIso})`);
+}

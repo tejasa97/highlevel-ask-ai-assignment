@@ -57,6 +57,21 @@
     }
   },
   {
+    "id": "direct-card-refund-request",
+    "category": "direct",
+    "modules": ["M29", "M33"],
+    "note": "Replaces unsupported-card-refund: it expected 'unsupported' back when no refund action existed. M33 now has one. The planner may stop at the request or carry on to approve and execute it (execution asks for approval, which this runner grants), so only the request itself and its count are pinned.",
+    "turns": [{ "user": "Refund Rosa Ito's last payment back to her card" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M33.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM refunds WHERE json_extract(data,'$.contactId')='ct_1' AND json_extract(data,'$.status') IN ('requested','approved','executed')", "equals": 1 },
+        { "sql": "SELECT count(*) FROM refunds", "equals": 1 }
+      ]
+    }
+  },
+  {
     "id": "direct-appointment-reschedule",
     "category": "direct",
     "modules": ["M21"],

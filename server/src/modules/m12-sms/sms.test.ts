@@ -43,6 +43,24 @@ test("receive: STOP opts the sender out; unknown numbers NOT_FOUND", async () =>
   assert.equal(failure(() => w.call("M12.A09", { from: "+19999999999", body: "hi" })).code, "NOT_FOUND");
 });
 
+test("receive: a second STOP from someone already opted out is recorded, not refused", async () => {
+  const w = await testWorld();
+  const c = w.f.contact({ phone: "+15550123461" });
+  w.call("M12.A09", { from: c.phone!, body: "STOP" });
+  const again = w.call("M12.A09", { from: c.phone!, body: "stop" });
+  assert.equal(again.optedOut, true);
+  assert.equal(w.call("M12.A07", { contactId: c.id, direction: "inbound" }).total, 2);
+});
+
+test("send: consent is checked against the number the draft will go to, not the contact's current one", async () => {
+  const w = await testWorld();
+  const c = w.f.contact({ phone: "+15550123462" });
+  const draft = w.call("M12.A01", { contactId: c.id, body: "Hi" });
+  w.call("M12.A10", { contactId: c.id });
+  w.store.update("contacts", c.id, { phone: "+15550123463", preferences: { ...c.preferences, sms: true } });
+  assert.match(failure(() => w.call("M12.A03", { smsId: draft.id })).message, /opted out/);
+});
+
 test("schedule and cancel", async () => {
   const w = await testWorld();
   const c = w.f.contact({ phone: "+15550123459" });

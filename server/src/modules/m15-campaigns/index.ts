@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, atLeastOne, candidates, contains, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { activeUser, atLeastOne, candidates, contains, Limit, listOf, Name, page, requirePermission, requireState } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Contact } from "../m01-contacts/schema.js";
@@ -21,7 +21,7 @@ const CampaignId = z.string().describe("campaign id (cp_…)");
 
 function audience(store: Store, c: Campaign): Contact[] {
   const ids = new Set(c.audience.contactIds);
-  return store.find<Contact>("contacts", (x) => x.status === "active" && (ids.has(x.id) || (!!c.audience.tag && x.tags.includes(c.audience.tag))));
+  return store.find<Contact>("contacts", (x) => x.status === "active" && (ids.has(x.id) || (!!c.audience.tag && x.tags.some((t) => t.toLowerCase() === c.audience.tag!.toLowerCase()))));
 }
 
 function editable(store: Store, id: string): Campaign {
@@ -36,7 +36,7 @@ const createCampaign = defineAction({
   id: "M15.A01",
   description: "Create a draft marketing campaign with a name and main channel (email or SMS). Add an audience (M15.A04) and steps (M15.A05) before launching.",
   risk: "write",
-  input: z.strictObject({ name: z.string().min(1), channel: z.enum(["email", "sms"]), ownerId: z.string().optional() }),
+  input: z.strictObject({ name: Name, channel: z.enum(["email", "sms"]), ownerId: z.string().optional() }),
   output: Campaign,
   entities: { produces: "campaign", consumes: ["user"] },
   example: () => ({ name: "Winter Check-in", channel: "email" }),

@@ -17,6 +17,8 @@ export const Appointment = z.object({
   contactId: z.string().nullable(),
   leadId: z.string().nullable(),
   hostId: z.string(),
+  /** The calendar (M20) it was booked on, if any. Slot finding (M22) checks a calendar's hosts against these. */
+  calendarId: z.string().nullable(),
   /** Everyone invited, the primary contact or lead first. */
   attendees: z.array(Attendee),
   startAt: z.string(),

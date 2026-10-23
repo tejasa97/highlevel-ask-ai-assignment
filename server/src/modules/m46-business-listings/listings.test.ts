@@ -27,6 +27,18 @@ test("listing identity includes normalized name, address and directory; updates 
   );
   assert.equal(w.call("M46.A03", { query: "Cedar Clinic", limit: 1 }).total, 3);
 });
+test("M46.A01 categories are lowercased and deduplicated, as when they're edited", async () => {
+  const w = await testWorld();
+  const l = w.call("M46.A01", {
+    name: "Cedar Clinic",
+    address: "1 Cedar Rd",
+    phone: "+15550123456",
+    directory: "google",
+    categories: ["Dentist", "dentist"],
+  });
+  assert.deepEqual(l.categories, ["dentist"]);
+  assert.equal(failure(() => w.call("M46.A08", { listingId: l.id, categories: ["DENTIST"] })).code, "CONFLICT");
+});
 test("name/address/phone/categories edits increment version and reject no-ops", async () => {
   const w = await testWorld(),
     l = w.f.listing();

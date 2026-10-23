@@ -230,8 +230,10 @@ export function check(s: Scenario, turns: TurnTrace[], changes: number, query: (
 
   const planned = new Set(turns.flatMap((t) => t.planned));
   const offered = new Set(turns.flatMap((t) => t.offered));
+  // A read the planner ran in a look round never reaches the final plan, but it did the work the scenario asks for.
+  const executed = new Set(turns.flatMap((t) => t.calls.filter((c) => !c.error).map((c) => c.action)));
   for (const id of e.actions?.includes ?? []) {
-    if (!planned.has(id)) out.push({ kind: "action-missing", detail: `${id} not planned (${offered.has(id) ? "was offered" : "not offered"}; planned: ${[...planned].join(", ") || "nothing"})` });
+    if (!planned.has(id) && !executed.has(id)) out.push({ kind: "action-missing", detail: `${id} not planned (${offered.has(id) ? "was offered" : "not offered"}; planned: ${[...planned].join(", ") || "nothing"})` });
   }
   for (const id of e.actions?.excludes ?? []) if (planned.has(id)) out.push({ kind: "action-unwanted", detail: `${id} was planned` });
 

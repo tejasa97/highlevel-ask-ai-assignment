@@ -7,6 +7,8 @@ Working plan for the HighLevel "Ask AI framework" assignment. The requirements a
 
 **Scope (decided 2026-10-21): v1 = 15 modules in depth.** All 500 actions stay in the catalog and in retrieval, but only these 15 modules have handlers; a request that lands on one of the other 35 gets an honest "not available in v1" answer, never a fake success. The other 35 come after v1 works end to end and covers its edge cases.
 
+**Status (2026-10-23):** the other modules have since been built, so all 50 modules and 500 actions execute and the "not available in v1" answer no longer applies. See `WAVE1-REPORT.md` and `WAVE1-HARDENING-REPORT.md`. The rest of this plan is the original design and schedule, kept as written.
+
 | Group | Modules |
 |---|---|
 | CRM core | M01 Contacts, M03 Leads, M04 Opportunities, M06 Tasks, M07 Notes, M08 Tags |

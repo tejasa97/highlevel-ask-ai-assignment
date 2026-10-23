@@ -3,7 +3,6 @@ import { ActionError, defineAction, mustGet, type ActionContext } from "../../re
 import {
   activeUser,
   candidates,
-  contains,
   inDateRange,
   Limit,
   listOf,
@@ -50,6 +49,9 @@ const detail = (s: Store, t: Ticket) => ({
   ...t,
   personName: personName(s, { contactId: t.contactId, leadId: null }),
 });
+/** What a search words match against: the ticket's own text plus who asked, so "Dorian Vale receipt" finds it. */
+const text = (s: Store, t: Ticket) =>
+  norm([t.title, t.body, personName(s, { contactId: t.contactId, leadId: null }), t.requesterEmail].filter(Boolean).join(" "));
 const Detail = Ticket.extend({ personName: z.string().nullable() });
 const create = defineAction({
   id: "M47.A01",
@@ -122,7 +124,7 @@ const details = defineAction({
 const search = defineAction({
   id: "M47.A03",
   description:
-    "Search support tickets by title/body text, contact, owner, priority or status; newest first. With no status filter includes resolved and closed tickets.",
+    "Search support tickets by text (matched against title, body, requester name and email: every word must appear somewhere), contact, owner, priority or status; newest first. With no status filter includes resolved and closed tickets.",
   risk: "read",
   input: z.strictObject({
     query: Text.optional(),
@@ -137,15 +139,15 @@ const search = defineAction({
   output: listOf(Detail),
   entities: { produces: "ticket" },
   example: () => ({ status: "open" }),
-  handler: (a, { store }) =>
-    page(
+  handler: (a, { store }) => {
+    const words = a.query ? norm(a.query).split(" ").filter(Boolean) : null;
+    return page(
       store
         .find<Ticket>(
           "tickets",
           (t) =>
-            (!a.query ||
-              contains(t.title, a.query) ||
-              contains(t.body, a.query)) &&
+            (!words ||
+              words.every((w) => text(store, t).includes(w))) &&
             (!a.contactId || t.contactId === a.contactId) &&
             (!a.ownerId || t.ownerId === a.ownerId) &&
             (!a.priority || t.priority === a.priority) &&
@@ -158,7 +160,8 @@ const search = defineAction({
         )
         .map((t) => detail(store, t)),
       a.limit,
-    ),
+    );
+  },
 });
 const assign = defineAction({
   id: "M47.A04",
@@ -331,7 +334,7 @@ const link = defineAction({
       );
     return store.update<Ticket>("tickets", t.id, {
       contactId,
-      requesterEmail: p.email,
+      requesterEmail: p.email ?? t.requesterEmail,
       updatedAt: clock.now().toISOString(),
     });
   },
