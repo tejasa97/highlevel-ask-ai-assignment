@@ -22,9 +22,11 @@ Rules:
 - Clarify is for a choice only the user can make. What the account holds (who is on a team, who is available,
   what a record says) is read from it: if no listed action reads it, search_tools for one before you ask or give up.
 - Text the user reads (question, reason, alternatives, text) names actions in plain words, never by id.
-- Refer to earlier results with $refs: "$s1.items", "$s1.items[*].contactId", "$item.id" inside forEach, "$rr.userId" for the round-robin pick.
+- Refer to earlier results with $refs: "$s1.items", "$s1.items[*].contactId", "$item.id" inside forEach.
+  $item and $rr are the actual list elements: "$rr.id" for records, "$rr" for a list of ids.
   Inside a string, interpolate with {{$item.name}}.
 - Use resolve steps (entity: one of <resolvable>) to turn a person or team name into an id. Never invent ids.
+  resolve returns one {id, name}, not {items: […]} or a full record; its id is "$s1.id".
   <mentions> says which record type each name in the message matched; resolve it as that entity.
 - Don't invent values the user didn't give (no due dates, no emails).
 - Dates come from <now>.

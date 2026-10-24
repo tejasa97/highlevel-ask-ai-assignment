@@ -73,6 +73,35 @@ describe("forEach over a literal list", () => {
 });
 
 describe("ref errors name the legal steps", () => {
+  test("resolve path errors explain the singleton output without broadening it", () => {
+    for (const ref of ["$s1.items[0].id", "$s1.userId", "$s1.memberIds"]) {
+      const r = compile(plan([
+        { id: "s1", kind: "resolve", entity: "user", name: "Ana" },
+        action("s2", "M06.A01", { title: ref }),
+      ]), registry);
+      assert.ok(!r.ok);
+      assert.match(r.errors.join("\n"), /Resolve returns one \{id, name\}, not a list or a full record; use \$s1\.id/);
+      assert.match(r.errors.join("\n"), /Read other record fields with a listed action/);
+    }
+  });
+
+  test("projected list elements use bare $item or $rr, not a record field", () => {
+    for (const root of ["item", "rr"]) {
+      const r = compile(plan([
+        action("s1", "M06.A03", {}),
+        op("s2", "forEach", { in: "$s1.items[*].id", roundRobin: "$s1.items[*].id", do: [{ action: "M06.A01", args: { title: `$${root}.id` } }] }),
+      ]), registry);
+      assert.ok(!r.ok);
+      assert.ok(r.errors.some((e) => e.includes(`$${root} is the scalar element of its input list; use $${root} directly, without a field.`)));
+    }
+  });
+
+  test("an empty loop gets a call-shape diagnostic, not a list-building suggestion", () => {
+    const r = compile(plan([op("s1", "forEach", { in: ["one"] })]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /does not construct a list.*action\/argsJson calls/);
+  });
+
   const badRef = (ref: string) =>
     compile(
       plan([

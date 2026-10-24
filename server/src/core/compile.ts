@@ -114,7 +114,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
           types.set(s.id, inType);
         } else {
           if (!s.do?.length) {
-            err(`forEach needs at least one call in "do"`);
+            err(`forEach needs at least one call in "do"; it runs actions, it does not construct a list. Put action/argsJson calls in "do".`);
             continue;
           }
           let rr: JsonSchema | null = null;
@@ -165,7 +165,12 @@ function refType(raw: string, scope: Scope, err: (m: string) => void): JsonSchem
   if (!root) return null;
   const t = typeAt(root, ref.path, `$${ref.root}`);
   if ("error" in t) {
-    err(t.error);
+    const hint = scope.kinds.get(ref.root) === "resolve"
+      ? ` Resolve returns one {id, name}, not a list or a full record; use $${ref.root}.id for its id. Read other record fields with a listed action.`
+      : (ref.root === "item" || ref.root === "rr") && kindOf(root) === "scalar"
+        ? ` $${ref.root} is the scalar element of its input list; use $${ref.root} directly, without a field.`
+        : "";
+    err(t.error + hint);
     return null;
   }
   return t.type;
