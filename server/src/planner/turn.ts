@@ -235,7 +235,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       return { kind: "reply", status: d.type, text, options: d.options ?? undefined };
     }
 
-    const compiled = compile(withLookSteps(d, lookSteps), registry, new Set(offered.map((a) => a.id)), named);
+    const compiled = compile(withLookSteps(d, lookSteps), registry, new Set(offered.map((a) => a.id)));
     // A plan that only finds records does nothing the user can see: run, it would end "done" with no reply.
     const errors = !compiled.ok
       ? compiled.errors

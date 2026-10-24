@@ -105,29 +105,3 @@ describe("ref errors name the legal steps", () => {
     }
   });
 });
-
-
-describe("ambiguous linked write targets", () => {
-  const named = [{ name: "Avery Lane", entity: "contact", count: 2 }];
-  const write = action("w", "M01.A08", { contactId: "ct_generic", sms: false });
-  test("literal writes and forEach both require resolution", () => {
-    for (const steps of [[write], [action("s", "M01.A03", { query: "Avery Lane" }), op("w", "forEach", { in: "$s.items", do: [{ action: "M01.A08", args: { contactId: "$item.id", sms: false } }] })]]) {
-      const r = compile(plan(steps), registry, undefined, named);
-      assert.ok(!r.ok);
-      assert.match(r.errors.join("\n"), /Avery Lane matches 2 contacts; use resolve so the user can choose, or ask/);
-    }
-  });
-  test("a resolve for that name and entity satisfies the guard", () => {
-    assert.ok(compile(plan([{ id: "s", kind: "resolve", entity: "contact", name: "avery lane" }, write]), registry, undefined, named).ok);
-  });
-  test("resolving a different name or entity does not bypass it", () => {
-    for (const s of [{ id: "s", kind: "resolve" as const, entity: "contact", name: "Other Person" }, { id: "s", kind: "resolve" as const, entity: "user", name: "Avery Lane" }]) {
-      assert.ok(!compile(plan([s, write]), registry, undefined, named).ok);
-    }
-  });
-  test("reads, unrelated writes and unambiguous mentions are unaffected", () => {
-    assert.ok(compile(plan([action("s", "M01.A03", {})]), registry, undefined, named).ok);
-    assert.ok(compile(plan([action("s", "M06.A01", { title: "Prepare report" })]), registry, undefined, named).ok);
-    assert.ok(compile(plan([write]), registry, undefined, [{ ...named[0]!, count: 1 }]).ok);
-  });
-});

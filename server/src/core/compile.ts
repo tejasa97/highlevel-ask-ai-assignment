@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import type { z } from "zod";
-import type { Mention } from "../retrieval/mentions.js";
 import type { SubmitPlan } from "../planner/submit-plan.js";
 import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import type { JsonSchema, RegisteredAction, Registry } from "../registry/registry.js";
@@ -44,9 +43,8 @@ const RESOLVED: JsonSchema = {
 /**
  * `offered`: the action ids the planner was shown this turn. A plan may only use those, so a model that
  * remembers an id from an earlier turn (or makes one up) can't reach an action retrieval didn't pick.
- * `named`: linked names from the user's message; ambiguous write targets need a resolve before execution.
  */
-export function compile(plan: SubmitPlan, registry: Registry, offered?: ReadonlySet<string>, named: readonly Mention[] = []): CompileResult {
+export function compile(plan: SubmitPlan, registry: Registry, offered?: ReadonlySet<string>): CompileResult {
   const errors: string[] = [];
   if (plan.type !== "plan") return { ok: false, errors: [`expected type "plan", got "${plan.type}"`] };
   const raw = plan.steps ?? [];
@@ -141,14 +139,6 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
     }
   }
 
-  for (const mention of named.filter((m) => m.count > 1)) {
-    const writesEntity = steps.some((s) => {
-      const actions = s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : [];
-      return actions.some((a) => a.risk !== "read" && (a.entities?.consumes?.includes(mention.entity) || a.entities?.produces === mention.entity));
-    });
-    const resolved = steps.some((s) => s.kind === "resolve" && s.entity === mention.entity && s.name.trim().toLowerCase() === mention.name.trim().toLowerCase());
-    if (writesEntity && !resolved) errors.push(`${mention.name} matches ${mention.count} ${mention.entity}s; use resolve so the user can choose, or ask`);
-  }
   if (errors.length) return { ok: false, errors };
   const hash = createHash("sha256").update(JSON.stringify(raw)).digest("hex").slice(0, 16);
   return { ok: true, plan: { steps, hash } };
