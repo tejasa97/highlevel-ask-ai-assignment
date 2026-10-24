@@ -56,6 +56,7 @@ export interface UserBlockOptions {
   context?: string;
   /** JSON results of a look round: [{id, output | error}]. */
   looked?: string;
+  runtimeNoMatch?: string;
 }
 
 export function userBlock(opts: UserBlockOptions): string {
@@ -68,6 +69,7 @@ export function userBlock(opts: UserBlockOptions): string {
     ...(opts.notAvailable?.length ? [`<not_available>\n${opts.notAvailable.join("\n")}\n</not_available>`] : []),
     `<message>${escape(opts.message)}</message>`,
     ...(opts.looked ? [`<looked>${escape(opts.looked)}</looked>`] : []),
+    ...(opts.runtimeNoMatch ? [`<runtime_no_match>${escape(opts.runtimeNoMatch)}</runtime_no_match>`] : []),
   ].join("\n");
 }
 

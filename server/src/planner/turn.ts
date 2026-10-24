@@ -42,6 +42,8 @@ export interface TurnInput {
   carry?: Carry;
   /** Set when the last reply was a question: the message it asked about, so retrieval sees both. */
   answering?: string;
+  /** A proven runtime lookup miss from a previous, write-free attempt of this turn. */
+  runtimeNoMatch?: string;
 }
 
 export interface Carry {
@@ -138,7 +140,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   };
   let looked: string | undefined;
   const prompt = () =>
-    userBlock({ clock, actions: offered, notAvailable, resolvable, mentions: named, message: input.message, context: input.context, looked });
+    userBlock({ clock, actions: offered, notAvailable, resolvable, mentions: named, message: input.message, context: input.context, looked, runtimeNoMatch: input.runtimeNoMatch });
   const call = async (user: string, label: string) => {
     emit({ type: "planner.request", data: { label, tier: input.tier, system: SYSTEM, user, actions: offered.map((a) => a.id) } });
     const r = await withDeadline(deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }));

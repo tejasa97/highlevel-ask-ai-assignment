@@ -2,8 +2,9 @@
 // The HTTP app streams its events to the web UI; the scenario evals drive it headless, so both take the same path.
 import type { CompiledPlan, CStep } from "../core/compile.js";
 import { execute, type Approval, type Pending, type RunResult } from "../core/execute.js";
+import { runtimeNoMatch } from "../core/no-match.js";
 import { summarize } from "../core/summarize.js";
-import { type Carry, type InfraKind, planTurn } from "../planner/turn.js";
+import { type Carry, type InfraKind, type TurnOutcome, planTurn } from "../planner/turn.js";
 import type { Planner, Tier } from "../planner/types.js";
 import type { CallTrace } from "../registry/define.js";
 import type { Registry } from "../registry/registry.js";
@@ -65,17 +66,18 @@ export class Conversation {
       const c = r.clarification;
       return c ? [...steps, { id: c.stepId, error: `more than one ${c.entity} matches "${c.name}": ${c.candidates.map((x) => x.name).join(", ")}` }] : steps;
     };
-    const outcome = await planTurn(
-      { message, tier, context, carry: this.carry, answering: this.answering },
-      { registry, retriever, planner, clock: this.world.clock, store: this.world.store, look },
-      (e) => emit(e.type, e.data),
-    );
+    const input = { message, tier, context, carry: this.carry, answering: this.answering };
+    const planningDeps = { registry, retriever, planner, clock: this.world.clock, store: this.world.store, look };
+    const outcome = await planTurn(input, planningDeps, (e) => emit(e.type, e.data));
     if (outcome.kind === "reply") return this.finish(message, outcome.status, outcome.text, emit, outcome.options, outcome.infra);
     this.carry = outcome.carry;
     const turn: Turn = { id: turnId, message, plan: outcome.plan, executionId: `ex_${turnId}` };
     this.turns.set(turnId, turn);
     emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
-    await this.run(turn, actorId, emit);
+    await this.run(turn, actorId, emit, undefined, (fact) => planTurn(
+      { ...input, runtimeNoMatch: fact }, planningDeps,
+      (e) => emit(e.type, "label" in e.data ? { ...e.data, label: `runtime replan: ${e.data.label}` } : e.data),
+    ));
   }
 
   async confirm(turnId: string, approve: boolean, actorId: string, emit: Emit): Promise<void> {
@@ -93,7 +95,7 @@ export class Conversation {
     await this.run(turn, actorId, emit, turn.approvals);
   }
 
-  private async run(turn: Turn, actorId: string, emit: Emit, approvals?: Approval[]): Promise<void> {
+  private async run(turn: Turn, actorId: string, emit: Emit, approvals?: Approval[], replan?: (fact: string) => Promise<TurnOutcome>): Promise<void> {
     const { store } = this.world;
     const before = snapshot(store);
     const auditBefore = store.audit().length;
@@ -108,6 +110,19 @@ export class Conversation {
     emit("run", { status: result.status, ms: Math.round(performance.now() - t), steps: result.steps });
     const audit = store.audit();
     emit("diff", { changes: diff(before, store), audit: audit.slice(0, audit.length - auditBefore) });
+
+    const fact = replan ? runtimeNoMatch(turn.plan, result) : undefined;
+    if (fact) {
+      emit("runtime.no_match", { fact });
+      const outcome = await replan!(fact);
+      if (outcome.kind === "reply") return this.finish(turn.message, outcome.status, outcome.text, emit, outcome.options, outcome.infra);
+      turn.plan = outcome.plan;
+      turn.executionId += "_replan";
+      this.carry = outcome.carry;
+      emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
+      // No callback on the retry: one replan per message, and never during confirmation resume.
+      return this.run(turn, actorId, emit);
+    }
 
     turn.pending = result.pending;
     const text = summarize(turn.plan, result, this.deps.registry);

@@ -80,6 +80,8 @@ export interface RunResult {
   steps: StepResult[];
   pending?: Pending;
   clarification?: Clarification;
+  /** Conservative recovery boundary: even an attempted write that rolled back prevents replanning. */
+  writesAttempted?: boolean;
 }
 
 export type ExecEvent =
@@ -102,7 +104,9 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   // Consecutive independent preflight-capable sends share one approval, including known exclusions.
   const checkedActions = new Map<string, { error?: StepError; gate: Pending | null }>();
   const emit = opts.onEvent ?? (() => {});
+  let writesAttempted = false;
   const finish = (status: RunStatus, extra: Partial<RunResult> = {}): RunResult => ({
+    writesAttempted,
     executionId: opts.executionId,
     planHash: plan.hash,
     status,
@@ -216,6 +220,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             fail(checked.error);
             break;
           }
+          if (step.call.action.risk !== "read") writesAttempted = true;
           const r = runItem(ctx, opts.executionId, step.id, "-", [{ call: step.call, args: args.value }]);
           if (r.status === "failed") fail(r.error!);
           else done(r.results![0], r.replayed ? { items: [r] } : {});
@@ -260,6 +265,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             return finish("awaiting_confirmation", { pending: gate });
           }
 
+          if (prepared.some((p) => !p.error && p.calls.some((c) => c.call.action.risk !== "read"))) writesAttempted = true;
           const items: ItemResult[] = prepared.map((p) =>
             p.error
               ? { key: p.key, label: p.label, status: "failed", error: p.error }
