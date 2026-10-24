@@ -326,6 +326,12 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
       ok = false;
     }
   }
+  // "requires one input group": a call naming none of them would only fail when it runs.
+  const groups = action.inputAlternatives ?? [];
+  if (groups.length && !groups.some((g) => g.every((k) => args[k] !== undefined && args[k] !== null))) {
+    err(`${id} needs one of these input groups: ${groups.map((g) => g.join(" + ")).join(" or ")}`);
+    ok = false;
+  }
   return ok ? { action, args, ...(one.length ? { one } : {}) } : null;
 }
 

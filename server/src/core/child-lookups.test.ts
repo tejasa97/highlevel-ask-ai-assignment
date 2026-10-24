@@ -95,7 +95,6 @@ test("duplicate answer entries and mixed input routes fail without creating a co
   for (const extra of [
     { answers: [{ fieldId: named("form_field", "Email"), value: "a@example.com" }, { fieldId: named("form_field", "Email"), value: "b@example.com" }] },
     { answers: [{ fieldId: named("form_field", "Email"), value: "a@example.com" }], values: {} },
-    {},
   ]) {
     const w = world();
     const form = w.f.form({ name: "Duplicate Intake", status: "published", fields: [field("field_once")] });
@@ -105,6 +104,9 @@ test("duplicate answer entries and mixed input routes fail without creating a co
     assert.equal(w.store.all("contacts").length, contacts);
     assert.equal(w.store.all("form_submissions").length, 0);
   }
+  // Neither values nor answers: refused before it runs.
+  const none = compile(plan([action("M18.A09", { formId: "frm_1" })]), registry);
+  assert.ok(!none.ok && none.errors.some((e) => /input groups/.test(e)));
 });
 
 test("a per-item variable parent cannot be silently hoisted into a global child lookup", () => {
