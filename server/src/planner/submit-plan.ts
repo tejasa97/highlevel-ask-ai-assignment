@@ -94,15 +94,17 @@ const Step = z.discriminatedUnion("kind", [
   }),
 ]);
 
+// Root fields unused by a reply kind normalize just like unused op fields. This parser tolerance does
+// not change SUBMIT_PLAN_SCHEMA: strict providers still receive every required nullable field.
 export const SubmitPlan = z.object({
   type: z.enum(["plan", "look", "clarify", "unsupported", "answer", "search_tools"]),
-  steps: z.array(Step).nullable(),
-  question: z.string().nullable(),
-  options: z.array(z.string()).nullable(),
-  reason: z.string().nullable(),
-  alternatives: z.array(z.string()).nullable(),
-  query: z.string().nullable(),
-  text: z.string().nullable(),
+  steps: z.array(Step).nullable().default(null),
+  question: z.string().nullable().default(null),
+  options: z.array(z.string()).nullable().default(null),
+  reason: z.string().nullable().default(null),
+  alternatives: z.array(z.string()).nullable().default(null),
+  query: z.string().nullable().default(null),
+  text: z.string().nullable().default(null),
 });
 export type SubmitPlan = z.infer<typeof SubmitPlan>;
 export type Step = z.infer<typeof Step>;

@@ -266,12 +266,12 @@ describe("planTurn", () => {
   });
 
   test("schema issues get one repair, with the rejected JSON and issue paths", async () => {
-    const malformed = { type: "plan" } as SubmitPlan;
+    const malformed = { type: "plan", steps: 42 } as unknown as SubmitPlan;
     const planner = scripted(malformed, createTask());
     const { out, events } = await run("create a task", planner);
     assert.equal(out.kind, "plan");
     assert.match(planner.requests[1]!.user, /submit_plan steps:/);
-    assert.match(planner.requests[1]!.user, /<rejected_plan>\{"type":"plan"\}/);
+    assert.match(planner.requests[1]!.user, /<rejected_plan>\{"type":"plan","steps":42\}/);
     assert.ok(events.some((e) => e.type === "compile.errors"));
     const again = scripted(malformed, malformed);
     const { out: failed } = await run("create a task", again);
@@ -280,7 +280,7 @@ describe("planTurn", () => {
   });
 
   test("schema and compilation share one repair budget", async () => {
-    const planner = scripted({ type: "plan" } as SubmitPlan, createTask("M48.A01"));
+    const planner = scripted({ type: "plan", steps: 42 } as unknown as SubmitPlan, createTask("M48.A01"));
     const { out } = await run("create a task", planner);
     assert.ok(out.kind === "reply" && out.status === "failed");
     assert.equal(planner.requests.length, 2);

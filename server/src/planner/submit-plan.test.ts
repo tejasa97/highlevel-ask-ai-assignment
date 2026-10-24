@@ -4,6 +4,19 @@ import { SubmitPlan, SUBMIT_PLAN_SCHEMA } from "./submit-plan.js";
 
 const base = { type: "plan", steps: null, question: null, options: null, reason: null, alternatives: null, query: null, text: null };
 
+test("unused root fields default to null for every reply kind; strict wire fields stay required", () => {
+  for (const type of SUBMIT_PLAN_SCHEMA.properties.type.enum) {
+    const parsed = SubmitPlan.parse({ type });
+    assert.deepEqual(parsed, { ...base, type });
+  }
+  assert.deepEqual(SUBMIT_PLAN_SCHEMA.required, ["type", "steps", "question", "options", "reason", "alternatives", "query", "text"]);
+  assert.equal(SUBMIT_PLAN_SCHEMA.additionalProperties, false);
+  for (const [field, bad] of [["steps", 42], ["question", []], ["options", "bad"], ["reason", {}], ["alternatives", [1]], ["query", false], ["text", 1]]) {
+    assert.ok(!SubmitPlan.safeParse({ ...base, [field as string]: bad }).success, String(field));
+  }
+  assert.ok(!SubmitPlan.safeParse({}).success, "reply type remains required");
+});
+
 test("absent optional op fields become null without weakening the provider wire schema", () => {
   const parsed = SubmitPlan.parse({ ...base, steps: [{ id: "s2", kind: "op", op: "filter", in: "$s1.items" }] });
   const op = parsed.steps![0]!;
