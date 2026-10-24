@@ -25,6 +25,15 @@ test("informational questions and absent write cards never trigger completion re
   assert.deepEqual(readOnlyIntentError("send payment reminders", read, [registry.get("M28.A10")!]), []);
 });
 
+test("read commands can contain write-shaped adjectives without becoming action requests", () => {
+  const draft = { ...registry.get("M45.A08")!, name: "Draft response" };
+  for (const message of ["List draft responses", "Please show the draft responses", "Find draft responses"]) {
+    assert.deepEqual(readOnlyIntentError(message, read, [draft]), [], message);
+  }
+  assert.equal(readOnlyIntentError("Find invoices, then send payment reminders", read, [registry.get("M28.A08")!]).length, 1);
+  assert.equal(readOnlyIntentError("List responses and draft a response", read, [draft]).length, 1);
+});
+
 test("a plan containing a write already is left alone", () => {
   const action = registry.get("M28.A08")!;
   const plan: CompiledPlan = { hash: "write", steps: [{ id: "s1", kind: "action", deps: [], type: action.outputSchema, call: { action, args: {} } }] };
