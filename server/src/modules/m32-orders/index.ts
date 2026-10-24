@@ -162,10 +162,11 @@ function writeStock(store: Store, rows: StockRow[], sign: 1 | -1, now: string): 
   }
 }
 
-function pricedProduct(store: Store, productId: string, priceId: string, variantId: string | undefined): { product: Product; price: Price; variantId: string | null; description: string } {
+function pricedProduct(store: Store, productId: string, priceId: string | undefined, variantId: string | undefined): { product: Product; price: Price; variantId: string | null; description: string } {
   const product = mustGet<Product>(store, "products", productId, "product");
   if (product.status !== "active") throw new ActionError("CONFLICT", `Product ${product.name} is archived; choose an active product`);
-  const price = mustGet<Price>(store, "prices", priceId, "price");
+  if (!priceId && !product.defaultPriceId) throw new ActionError("CONFLICT", `${product.name} has no default price; name one of its prices`);
+  const price = mustGet<Price>(store, "prices", priceId ?? product.defaultPriceId!, "price");
   if (price.productId !== product.id) throw new ActionError("CONFLICT", `Price ${price.label} belongs to a different product`);
   if (price.currency !== "USD") throw new ActionError("CONFLICT", `Price ${price.label} is ${price.currency}; orders are USD only`);
   if (price.status !== "active") throw new ActionError("CONFLICT", `Price ${price.label} is archived; choose an active price`);
@@ -288,12 +289,12 @@ const searchOrders = defineAction({
 const addLine = defineAction({
   id: "M32.A04",
   description:
-    "Add a product line to a draft order, priced from a USD price. Variants are required when the product has them. Unlike M32.A05 Update order quantity, this adds a new line instead of changing one that is already there.",
+    "Add a product line to a draft order, priced from a USD price: the product's default price unless another is named. Variants are required when the product has them. Unlike M32.A05 Update order quantity, this adds a new line instead of changing one that is already there.",
   risk: "write",
   input: z.strictObject({
     orderId: OrderId,
     productId: z.string(),
-    priceId: z.string(),
+    priceId: z.string().optional().describe("price id (prc_…); the product's default price when omitted"),
     quantity: z.number().int().min(1),
     variantId: z.string().optional().describe("required when the product has variants"),
   }),

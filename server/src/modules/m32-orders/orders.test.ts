@@ -326,3 +326,17 @@ test("cancel voids an unpaid invoice and restores inventory; a paid invoice is r
 });
 
 type OrderStatus = { status: string };
+
+test("a line without a price uses the product's default price; with no default it asks for one", async () => {
+  const w = await testWorld();
+  const order = w.call("M32.A01", { contactId: w.f.contact().id }) as { id: string };
+  const mug = product(w, { name: "Mug" });
+  price(w, mug.id, { label: "Bulk", amount: 30 });
+  const standard = price(w, mug.id, { label: "Standard", amount: 40, isDefault: true });
+  w.store.update("products", mug.id, { defaultPriceId: standard.id });
+  const withLine = w.call("M32.A04", { orderId: order.id, productId: mug.id, quantity: 2 }) as { lines: { priceId: string; amount: number }[] };
+  assert.deepEqual(withLine.lines.map((l) => [l.priceId, l.amount]), [[standard.id, 80]]);
+  const plain = product(w, { name: "Plain" });
+  price(w, plain.id);
+  assert.match(failure(() => w.call("M32.A04", { orderId: order.id, productId: plain.id, quantity: 1 })).message, /no default price/);
+});

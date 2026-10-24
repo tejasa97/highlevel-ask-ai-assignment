@@ -63,7 +63,7 @@ await Promise.all(
         next = jobs.length;
         console.log(`\nquota hit: stopping; ${jobs.length - runs.length} runs not started\n`);
       }
-      console.log(`${r.infra ? "INFRA" : r.pass ? "pass" : "FAIL"}  ${r.id.padEnd(34)} ${String(r.metrics.ms).padStart(6)} ms${r.pass ? "" : `  ${r.failures.map((f) => `${f.kind}: ${f.detail}`).join(" · ")}`}`);
+      console.log(`${r.infra ? "INFRA" : r.pass ? "pass" : "FAIL"}  ${r.id.padEnd(34)} ${String(r.metrics.ms).padStart(6)} ms${r.metrics.clarifications ? " (asked)" : ""}${r.pass ? "" : `  ${r.failures.map((f) => `${f.kind}: ${f.detail}`).join(" · ")}`}`);
     }
   }),
 );
@@ -134,6 +134,8 @@ const summary = {
   firstReplyMs: { p50: quantile(first, 0.5), p95: quantile(first, 0.95) },
   plannerRoundsPerRun: Math.round(mean(clean.map((r) => r.metrics.plannerRounds)) * 100) / 100,
   callsPerRun: Math.round(mean(clean.map((r) => r.metrics.calls)) * 10) / 10,
+  /** Runs that asked one clarifying question they weren't scripted to ask, and how many of those passed once answered. */
+  clarified: { runs: clean.filter((r) => r.metrics.clarifications).length, passed: clean.filter((r) => r.metrics.clarifications && r.pass).length },
   costUsd: {
     perRun: totalCleanCost === null ? null : Math.round((totalCleanCost / (cleanCost.length || 1)) * 10000) / 10000,
     total: totalCost === null ? null : Math.round(totalCost * 100) / 100,
@@ -141,6 +143,7 @@ const summary = {
   wallMs: Math.round(performance.now() - started),
 };
 console.log(`\npass ${summary.passRate}% of clean runs · ${summary.allPass}/${summary.measured} scenarios pass every run · ${summary.flaky} flaky`);
+if (summary.clarified.runs) console.log(`${summary.clarified.runs} runs asked a clarifying question; ${summary.clarified.passed} of them passed once it was answered`);
 if (summary.infraRuns || summary.notRun) console.log(`NOT A CLEAN RUN: ${summary.infraRuns} runs failed outside the app, ${summary.notRun} not started; ${scenarios.length - summary.measured} scenarios unmeasured`);
 console.log(`e2e p50 ${summary.e2eMs.p50} ms, p95 ${summary.e2eMs.p95} ms · first reply p50 ${summary.firstReplyMs.p50} ms, p95 ${summary.firstReplyMs.p95} ms`);
 console.log(`planner rounds/run ${summary.plannerRoundsPerRun} · calls/run ${summary.callsPerRun} · cost/run ${formatCost(summary.costUsd.perRun, planner.name === "codex-cli" ? "subscription" : "api_estimate")} (total ${formatCost(summary.costUsd.total)}) · wall ${Math.round(summary.wallMs / 1000)} s`);
