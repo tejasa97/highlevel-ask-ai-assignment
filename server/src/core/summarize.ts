@@ -190,3 +190,34 @@ function list(names: string[], total: number): string {
   const shown = names.slice(0, NAMES_MAX);
   return total > shown.length ? `${shown.join(", ")} and ${total - shown.length} more` : shown.join(", ");
 }
+
+const RECORDS_MAX = 8;
+
+/**
+ * The records a run created, changed or found, with their ids, for the next turn's <context>: the reply the user
+ * reads leaves ids out, but "give it to Aisha" needs the id of the task just made. Undefined when there are none.
+ */
+export function touchedRecords(plan: CompiledPlan, run: RunResult): string | undefined {
+  const byId = new Map(plan.steps.map((s) => [s.id, s]));
+  const out = new Map<string, string>();
+  const add = (x: unknown, noun: string) => {
+    const o = x && typeof x === "object" ? (x as Record<string, unknown>) : undefined;
+    if (!o || typeof o.id !== "string" || out.has(o.id)) return;
+    const title = titleOf(o);
+    out.set(o.id, `${noun} ${o.id}${title ? ` ${JSON.stringify(title)}` : ""}${typeof o.status === "string" ? ` (${o.status})` : ""}`);
+  };
+  const addAll = (v: unknown, noun: string) => {
+    const items = v && typeof v === "object" && Array.isArray((v as { items?: unknown }).items) ? (v as { items: unknown[] }).items : [v];
+    items.forEach((x) => add(x, noun));
+  };
+  for (const r of run.steps) {
+    const step = byId.get(r.id);
+    if (!step || r.output === undefined) continue;
+    if (step.kind === "resolve") add(r.output, step.entity);
+    else if (step.kind === "action") addAll(r.output, step.call.action.entities?.produces ?? "record");
+    else if (step.kind === "forEach")
+      for (const each of r.output as { results?: unknown[] }[]) (each.results ?? []).forEach((x, i) => addAll(x, step.calls[i]?.action.entities?.produces ?? "record"));
+  }
+  const all = [...out.values()];
+  return all.length ? `${all.slice(0, RECORDS_MAX).join("; ")}${all.length > RECORDS_MAX ? `; and ${all.length - RECORDS_MAX} more` : ""}` : undefined;
+}

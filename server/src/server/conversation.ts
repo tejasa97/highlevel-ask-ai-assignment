@@ -3,7 +3,7 @@
 import type { CompiledPlan, CStep } from "../core/compile.js";
 import { execute, type Approval, type Pending, type RunResult } from "../core/execute.js";
 import { runtimeNoMatch } from "../core/no-match.js";
-import { summarize } from "../core/summarize.js";
+import { summarize, touchedRecords } from "../core/summarize.js";
 import { type Carry, type InfraKind, type TurnOutcome, planTurn } from "../planner/turn.js";
 import type { Planner, Tier } from "../planner/types.js";
 import type { CallTrace } from "../registry/define.js";
@@ -36,7 +36,7 @@ interface Turn {
 
 export class Conversation {
   private turns = new Map<string, Turn>();
-  private history: { user: string; assistant: string }[] = [];
+  private history: { user: string; assistant: string; records?: string }[] = [];
   /** The last planned turn's actions, carried into the next retrieval so follow-ups keep their tools. */
   private carry: Carry | undefined;
   /** The messages the last reply asked a question about, if it did (kept across a chain of questions). */
@@ -59,7 +59,9 @@ export class Conversation {
     const { registry, retriever, planner } = this.deps;
     const turnId = `t${this.turns.size + 1}_${Date.now().toString(36)}`;
     emit("turn", { turnId, message });
-    const context = this.history.length ? this.history.slice(-HISTORY_TURNS).map((h) => `user: ${h.user}\nassistant: ${h.assistant}`).join("\n") : undefined;
+    const context = this.history.length
+      ? this.history.slice(-HISTORY_TURNS).map((h) => `user: ${h.user}\nassistant: ${h.assistant}${h.records ? `\nrecords: ${h.records}` : ""}`).join("\n")
+      : undefined;
     // A look runs reads only (planTurn checks), as this user, before the real plan.
     const look = async (plan: CompiledPlan) => {
       const onCall = (c: CallTrace) => emit("call", { ...c, ms: Math.round(c.ms * 10) / 10 });
@@ -134,11 +136,12 @@ export class Conversation {
       emit("reply", { status: result.status, text });
       return;
     }
-    this.finish(turn.message, result.status, text, emit, result.clarification?.candidates.map((c) => (c.detail ? `${c.name} (${c.detail})` : c.name)));
+    const records = touchedRecords(turn.plan, result);
+    this.finish(turn.message, result.status, text, emit, result.clarification?.candidates.map((c) => (c.detail ? `${c.name} (${c.detail})` : c.name)), undefined, records);
   }
 
-  private finish(message: string, status: string, text: string, emit: Emit, options?: string[], infra?: InfraKind): void {
-    this.history.push({ user: message, assistant: text });
+  private finish(message: string, status: string, text: string, emit: Emit, options?: string[], infra?: InfraKind, records?: string): void {
+    this.history.push({ user: message, assistant: text, ...(records ? { records } : {}) });
     const asked = status === "clarify" || status === "needs_clarification";
     this.answering = asked ? (this.answering ? `${this.answering}\n${message}` : message) : undefined;
     emit("reply", { status, text, options, ...(infra ? { infra } : {}) });

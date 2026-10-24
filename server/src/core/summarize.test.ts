@@ -5,7 +5,7 @@ import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile } from "./compile.js";
 import { execute } from "./execute.js";
-import { summarize } from "./summarize.js";
+import { summarize, touchedRecords } from "./summarize.js";
 
 let registry: Registry;
 before(async () => {
@@ -151,3 +151,27 @@ describe("summarize: a plan that only reads still answers", () => {
 });
 
 const NAMES_SHOWN = 5;
+
+describe("touchedRecords", () => {
+  async function records(steps: SubmitPlan["steps"]) {
+    const r = compile(plan(steps), registry);
+    if (!r.ok) assert.fail(r.errors.join("\n"));
+    return touchedRecords(r.plan, await execute(r.plan, registry, world(), { executionId: `rec${++runs}` }));
+  }
+
+  test("name each record a turn found or made, with its id and status, for the next turn to refer to", async () => {
+    const text = await records([{ id: "s1", kind: "resolve", entity: "user", name: "Raj" }, action("s2", "M06.A01", { title: "Call Ana", assigneeId: "$s1.id" })]);
+    assert.match(text!, /^user us_\d+ "Raj[^"]*"/);
+    assert.match(text!, /; task tk_\d+ "Call Ana" \(\w+\)$/);
+  });
+
+  test("a long list is cut short and says how many more", async () => {
+    const text = await records([action("s1", "M06.A03", {})]);
+    assert.match(text!, /; and \d+ more$/);
+    assert.equal(text!.split("; ").length, 9);
+  });
+
+  test("nothing found, nothing said", async () => {
+    assert.equal(await records([{ id: "s1", kind: "resolve", entity: "team", name: "Nonexistent Squad" }]), undefined);
+  });
+});
