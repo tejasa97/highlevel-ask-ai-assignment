@@ -364,6 +364,6 @@ export default {
   actions: [createInvoice, getInvoice, searchInvoices, addLineItem, updateDraft, setDueDate, issueInvoice, sendReminder, voidInvoice, listOverdue],
   resolvers: {
     // "Marco Patel's open invoice": by number, or by its contact and status.
-    invoice: ownedResolver<Invoice>({ table: "invoices", noun: "invoice", label: (_, i) => i.number, detail: (i) => `${i.status}, $${i.amountDue} due`, qualifiers: { status: (_, i) => i.status } }),
+    invoice: ownedResolver<Invoice>({ table: "invoices", noun: "invoice", state: (i) => i.status, label: (_, i) => i.number, detail: (i) => `${i.status}, $${i.amountDue} due`, qualifiers: { status: (_, i) => i.status } }),
   },
 } satisfies ModuleExports;

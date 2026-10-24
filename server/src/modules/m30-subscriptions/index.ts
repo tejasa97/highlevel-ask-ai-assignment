@@ -358,6 +358,7 @@ export default {
     subscription: ownedResolver<Subscription>({
       table: "subscriptions",
       noun: "subscription",
+      state: (s) => s.status,
       label: (store, s) => [store.get<Product>("products", s.productId)?.name, store.get<Price>("prices", s.priceId)?.label].filter(Boolean).join(" "),
       detail: (s) => s.status,
       inactive: (s) => (s.status === "canceled" ? "canceled" : undefined),

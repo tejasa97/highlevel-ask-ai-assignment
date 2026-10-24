@@ -70,6 +70,8 @@ export function ownedResolver<T extends { id: string; contactId: string }>(optio
   /** The record type's word: "quote". */
   noun: string;
   label: (store: Store, row: T) => string;
+  /** The record's state as a word ("open", "paid"), so "Elena Costa's open invoice" names it too. */
+  state?: (row: T) => string;
   detail?: (row: T) => string;
   inactive?: (row: T) => string | undefined;
   /** More qualifiers, e.g. the course an enrollment is in, by id or title. */
@@ -81,7 +83,7 @@ export function ownedResolver<T extends { id: string; contactId: string }>(optio
     exactMention: true,
     records: (store) => store.all<T>(options.table).map((row) => {
       const owner = store.get<{ name: string }>("contacts", row.contactId)?.name ?? "";
-      const named = [owner && `${owner}'s`, options.noun, options.label(store, row)].filter(Boolean).join(" ");
+      const named = [owner && `${owner}'s`, options.state?.(row).replace(/_/g, " "), options.noun, options.label(store, row)].filter(Boolean).join(" ");
       return { ...row, owner, named, more: Object.fromEntries(more.map(([key, value]) => [key, value(store, row)])) };
     }),
     name: (row) => row.named,
