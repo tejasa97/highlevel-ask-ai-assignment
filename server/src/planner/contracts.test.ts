@@ -94,3 +94,27 @@ test("a request to send is not done by only creating the draft that would be sen
   assert.deepEqual(outcomeErrors(plan, outcome, { message: "Draft a review request for Ana, don't send it yet", offered }), []);
   assert.deepEqual(outcomeErrors(plan, outcome, { message: "Create a review request for Ana", offered }), []);
 });
+
+test("an action that emails its own record already sends it", () => {
+  const plan = compiled("M28.A08", { invoiceId: "inv_1" });
+  const outcome = { effect: "change" as const, actions: ["M28.A08"], destination: "email" };
+  const offered = ["M28.A08", "M13.A03"].map((id) => registry.get(id)!);
+  assert.deepEqual(outcomeErrors(plan, outcome, { message: "Send a reminder for invoice INV-1003", offered }), []);
+  for (const id of ["M27.A08", "M28.A07", "M28.A08"]) assert.equal(registry.get(id)!.destination?.id, "email", id);
+});
+
+test("course qualifiers on lessons and enrollments take the course's title as well as its id", () => {
+  const w = world();
+  const course = w.f.course({ title: "Sales 101", status: "published" });
+  const lesson = w.f.lesson({ courseId: course.id, title: "Intro" });
+  w.f.enrollment({ courseId: course.id, contactId: "ct_11" });
+  for (const where of [{ course: "Sales 101" }, { courseId: "sales 101" }, { courseId: course.id }]) {
+    assert.equal(checkIdentity({ entity: "lesson", name: lesson.title, whereJson: JSON.stringify(where) }, registry, w.store).count, 1, JSON.stringify(where));
+  }
+  const enrolled = w.store.all<{ contactId: string; courseId: string }>("enrollments").find((e) => e.courseId === course.id)!;
+  const owner = w.store.get<{ name: string }>("contacts", enrolled.contactId)!.name;
+  for (const where of [{ course: "Sales 101", contact: owner }, { courseId: "Sales 101", contactId: owner }]) {
+    assert.ok(checkIdentity({ entity: "enrollment", name: "enrollment", whereJson: JSON.stringify(where) }, registry, w.store).count >= 1, JSON.stringify(where));
+  }
+  assert.equal(checkIdentity({ entity: "enrollment", name: "enrollment", whereJson: JSON.stringify({ course: "No Such Course" }) }, registry, w.store).count, 0);
+});

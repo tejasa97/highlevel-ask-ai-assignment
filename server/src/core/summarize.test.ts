@@ -113,6 +113,14 @@ describe("summarize: a plan that only reads still answers", () => {
     assert.match(text, /^Omar Haddad \(lead\): .*status contacted/);
   });
 
+  test("a record's named parts, such as a pipeline's stages, are listed with their numbers", async () => {
+    const ctx = world();
+    const pipeline = ctx.store.find<{ id: string; status: string }>("pipelines", (p) => p.status === "active")[0]!;
+    const { text } = await reply([action("s1", "M05.A02", { pipelineId: pipeline.id })], ctx);
+    assert.match(text, /stages [A-Z][^;(]*\(probability \d+\)(; [A-Z][^;(]*\(probability \d+\))+/);
+    assert.doesNotMatch(text, /st_\d/);
+  });
+
   test("records titled rather than named lead with their title, and ids stay out", async () => {
     const ctx = world();
     ctx.f.task({ title: "Chase the Zelda quote", priority: "high" });

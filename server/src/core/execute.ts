@@ -5,6 +5,7 @@ import { DEFAULT_ACTOR, invoke } from "../registry/invoke.js";
 import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
 import { norm } from "../registry/helpers.js";
+import { normalizeDateTimes } from "./datetimes.js";
 import { collectRefs, parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
 
 // Stage 2: run a compiled plan.
@@ -161,6 +162,27 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     if (!c || !/\.items$/.test(raw)) return undefined;
     return list.filter((x) => norm(labelOf(x) ?? "") === norm(c.name)).length >= 2 ? c : undefined;
   };
+  /** Fills each arg the compiler marked as one value of a list, or says why the list doesn't hold exactly one. */
+  const onlyOne = (call: Call): { call: Call } | { error: StepError } | { ask: Clarification } => {
+    if (!call.one?.length) return { call };
+    const args = structuredClone(call.args);
+    for (const at of call.one) {
+      const parent = at.slice(0, -1).reduce<any>((o, k) => o[k], args);
+      const raw = parent[at.at(-1)!] as string;
+      const values = asList(refValue(raw), raw);
+      if (values.length === 1) {
+        parent[at.at(-1)!] = values[0];
+        continue;
+      }
+      if (values.length === 0) return { error: { code: "NOT_FOUND", message: `${raw} found nothing, so there is no ${at.at(-1)} to ${call.action.name.toLowerCase()} with` } };
+      const ref = parseRef(raw)!;
+      const items = asList(valueAt(outputs.get(ref.root), ref.path.slice(0, ref.path.findIndex((p) => "all" in p)), `$${ref.root}`), raw);
+      const candidates = items.slice(0, 20).map((x, i) => ({ id: itemKey(x, i), name: labelOf(x) ?? itemKey(x, i), ...(detailOf(x) ? { detail: detailOf(x) } : {}) }));
+      const search = searched.get(ref.root);
+      return { ask: { stepId: ref.root, entity: search?.entity ?? call.action.entities?.consumes?.[0] ?? "record", name: search?.query ?? String(at.at(-1)), candidates } };
+    }
+    return { call: { ...call, args } };
+  };
   const ask = (step: CStep, clarification: Clarification) => {
     results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });
     emit({ type: "clarify.required", clarification });
@@ -234,7 +256,13 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         }
 
         case "action": {
-          const args = concreteArgs(step.call, lookup());
+          const single = onlyOne(step.call);
+          if ("ask" in single) return ask(step, single.ask);
+          if ("error" in single) {
+            fail(single.error);
+            break;
+          }
+          const args = concreteArgs(single.call, lookup());
           if (!args.ok) {
             fail(args.error);
             break;
@@ -357,7 +385,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
 
 function concreteArgs(call: Call, lookup: (r: Ref) => unknown): { ok: true; value: Record<string, unknown> } | { ok: false; error: StepError } {
   try {
-    const raw = substitute(call.args, lookup);
+    const raw = normalizeDateTimes(substitute(call.args, lookup), call.action.inputSchema);
     const parsed = (call.action.input as z.ZodType).safeParse(raw);
     if (!parsed.success) {
       const msg = parsed.error.issues.map((i) => `${i.path.join(".") || "(args)"}: ${i.message}`).join("; ");
@@ -487,7 +515,7 @@ function itemKey(item: unknown, i: number): string {
 
 function labelOf(item: unknown): string | undefined {
   const o = item as Record<string, unknown> | null;
-  const name = o?.name ?? o?.title;
+  const name = o?.name ?? o?.title ?? o?.number;
   return typeof name === "string" ? name : undefined;
 }
 

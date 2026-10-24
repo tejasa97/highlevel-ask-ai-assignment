@@ -319,7 +319,7 @@ const unpublishLesson = defineAction({
 
 export default {
   resolvers: {
-    lesson: tableResolver("lessons", "title", {"courseId":"courseId","sectionId":"sectionId"}),
+    lesson: tableResolver("lessons", "title", { courseId: "courseId", sectionId: "sectionId" }, { courseId: { table: "courses", label: "title" } }),
   },
   actions: [createLesson, getLesson, searchLessons, updateLesson, attachMedia, moveLesson, setRelease, setCompletion, publishLesson, unpublishLesson],
 } satisfies ModuleExports;

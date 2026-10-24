@@ -291,6 +291,7 @@ const sendQuote = defineAction({
   output: Quote,
   siblings: ["M28.A07"],
   entities: { consumes: ["quote"] },
+  destination: { id: "email", label: "Email" },
   example: (f) => ({ quoteId: f.quote().id }),
   handler: ({ quoteId }, { store, clock, actorId }) => {
     requirePermission(store, actorId, "billing.manage");

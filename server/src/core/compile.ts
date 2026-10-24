@@ -4,6 +4,7 @@ import type { SubmitPlan } from "../planner/submit-plan.js";
 import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import type { JsonSchema, RegisteredAction, Registry } from "../registry/registry.js";
 import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, parseRef, RESERVED_ROOTS, type Ref, typeAt, unwrap } from "./refs.js";
+import { normalizeDateTimes } from "./datetimes.js";
 import { lowerLookups } from "./lookups.js";
 
 // Stage 1 of validation: everything that can be checked before anything runs.
@@ -16,6 +17,8 @@ import { lowerLookups } from "./lookups.js";
 export interface Call {
   action: RegisteredAction;
   args: Record<string, unknown>;
+  /** Arg paths filled from a list ("$s2.items[*].id") that must hold exactly one value when the step runs. */
+  one?: (string | number)[][];
 }
 
 export type CStep = { id: string; deps: string[]; type: JsonSchema } & (
@@ -86,6 +89,11 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
         const where = s.whereJson == null ? {} : parseObject(s.whereJson, "whereJson", err);
         if (!s.name.trim()) err("resolve requires a non-empty name");
         if (!where) continue;
+        // {"courseId": {"$lookup": {"entity": "course", "name": "Sales 101"}}}: qualifiers that name a parent take its name.
+        for (const [key, value] of Object.entries(where)) {
+          const name = (value as { $lookup?: { name?: unknown } } | null)?.$lookup?.name;
+          if (typeof name === "string" && name.trim()) where[key] = name.trim();
+        }
         const allowed = registry.resolver(s.entity)!.qualifiers ?? [];
         const parents = registry.resolver(s.entity)!.parentQualifiers;
         if (parents?.length && !parents.some((key) => where[key])) err(`child lookup ${s.entity} requires a parent qualifier: ${parents.join(" or ")}`);
@@ -270,11 +278,13 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
     err(`${id} was not in <actions>; use a listed action, or reply search_tools with a query for what's missing`);
     return null;
   }
-  const args = parseObject(argsJson, "argsJson", err);
-  if (!args) return null;
+  const parsedArgs = parseObject(argsJson, "argsJson", err);
+  if (!parsedArgs) return null;
+  const args = normalizeDateTimes(parsedArgs, action.inputSchema) as Record<string, unknown>;
 
   // Refs: each must type-check, and its shape must fit the arg it fills.
   const refs = collectRefs(args);
+  const one: (string | number)[][] = [];
   let ok = true;
   for (const r of refs) {
     if (r.template) {
@@ -288,6 +298,11 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
     }
     const want = schemaAt(action.inputSchema, r.at);
     const [have, need] = [kindOf(t), want ? kindOf(want) : "any"];
+    if (have === "array" && need === "scalar" && oneOf(r.ref, t, scope)) {
+      // "the overdue invoice" planned as a search: the step runs only if the search found exactly one.
+      one.push(r.at);
+      continue;
+    }
     if (have !== "any" && need !== "any" && have !== need) {
       err(
         `${id} arg ${r.at.join(".")} needs a ${need === "scalar" ? "single value" : need}, but ${r.ref} is ${have === "scalar" ? "a single value" : `a ${have}`}`,
@@ -311,7 +326,15 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
       ok = false;
     }
   }
-  return ok ? { action, args } : null;
+  return ok ? { action, args, ...(one.length ? { one } : {}) } : null;
+}
+
+/** A top-level step's ref that picks one field from each item of an earlier step's list. */
+function oneOf(raw: string, t: JsonSchema, scope: Scope): boolean {
+  const ref = parseRef(raw);
+  if (!ref || RESERVED_ROOTS.has(ref.root) || scope.item || ref.path.filter((p) => "all" in p).length !== 1) return false;
+  const items = unwrap(t).items as JsonSchema | undefined;
+  return !!items && kindOf(items) === "scalar";
 }
 
 /** For an unknown argument name: the action's real argument names, and the closest one. */
