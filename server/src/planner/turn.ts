@@ -216,7 +216,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     // Answering from <looked> would put the planner's prose (and raw ids) where the summary of the reads belongs:
     // the reads were the plan. But an answer must not bypass the read-only completion check for a write request.
     if (d.type === "answer" && lookPlan) {
-      const errors = readOnlyIntentError(input.message, lookPlan, offered);
+      const errors = readOnlyIntentError(input.message, lookPlan, offered, registry);
       if (!errors.length) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
       emit({ type: "compile.errors", data: { errors } });
       if (repaired) return failed(`The plan was still incomplete after one repair:\n${errors.join("\n")}`);

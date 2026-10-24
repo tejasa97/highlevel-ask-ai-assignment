@@ -8,7 +8,11 @@ const INDIRECT = ["chase", "cover", "take", "help", "pick", "loop", "hand"];
 const READ_HEADS = new Set(["list", "show", "find", "search", "read", "get", "count", "summarize", "tell"]);
 const words = (s: string) => s.toLowerCase().match(/[a-z]+/g) ?? [];
 
-export function readOnlyIntentError(message: string, plan: CompiledPlan, offered: RegisteredAction[]): string[] {
+/**
+ * `catalog` (the registry; else just `offered`) teaches which words open commands: a word that heads at least
+ * IMPERATIVE_MIN synonyms, nearly all of them for writes ("change", "edit"), is a write verb when it opens a clause.
+ */
+export function readOnlyIntentError(message: string, plan: CompiledPlan, offered: RegisteredAction[], catalog?: Catalog): string[] {
   const calls = plan.steps.flatMap((s) => s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []);
   if (!calls.length || calls.some((a) => a.risk !== "read")) return [];
   // Informational questions aren't commands, even if they mention a write verb ("who sent the email?").
@@ -20,10 +24,35 @@ export function readOnlyIntentError(message: string, plan: CompiledPlan, offered
   // imperative clause ("find records, then send reminders") still supplies write-intent evidence.
   const clauses = message.split(/[,;]|\b(?:and|then|but)\b/i).map((clause) => words(clause).filter((w, i) => i !== 0 || w !== "please"));
   const text = ` ${clauses.filter((tokens) => !READ_HEADS.has(tokens[0] ?? "")).flat().join(" ")} `;
+  const opens = new Set(clauses.map((tokens) => tokens[0]).filter((w) => w && imperativeHeads(catalog ?? { list: () => offered }, meta).has(w)));
   const match = writes.some((a) => [a.name, ...(meta[a.id]?.synonyms ?? [])].some((phrase) => {
     const tokens = words(phrase);
     // Match a verb head, not a record noun or an incidental word further inside a phrase.
-    return tokens.length > 0 && verbs.has(tokens[0]!) && text.includes(` ${tokens[0]} `);
+    return tokens.length > 0 && ((verbs.has(tokens[0]!) && text.includes(` ${tokens[0]} `)) || opens.has(tokens[0]!));
   }));
   return match ? ["the plan only finds records; add the action that does it, or reply unsupported if no listed action does"] : [];
+}
+
+const IMPERATIVE_MIN = 5;
+const WRITE_SHARE = 0.9;
+type Catalog = { list(): RegisteredAction[] };
+const headsCache = new WeakMap<Catalog, Set<string>>();
+
+/** Words that head synonyms of write actions far more than of reads: "change" opens "change phone number". */
+function imperativeHeads(catalog: Catalog, meta: ReturnType<typeof loadCardMeta>): Set<string> {
+  const cached = headsCache.get(catalog);
+  if (cached) return cached;
+  const tally = new Map<string, { write: number; read: number }>();
+  for (const a of catalog.list()) {
+    for (const phrase of [a.name, ...(meta[a.id]?.synonyms ?? [])]) {
+      const head = words(phrase)[0];
+      if (!head) continue;
+      const t = tally.get(head) ?? { write: 0, read: 0 };
+      t[a.risk === "read" ? "read" : "write"]++;
+      tally.set(head, t);
+    }
+  }
+  const heads = new Set([...tally].filter(([, t]) => t.write + t.read >= IMPERATIVE_MIN && t.write / (t.write + t.read) >= WRITE_SHARE).map(([h]) => h));
+  headsCache.set(catalog, heads);
+  return heads;
 }
