@@ -543,5 +543,5 @@ const fulfillOrder = defineAction({
 
 export default {
   actions: [createOrder, getOrder, searchOrders, addLine, updateQuantity, setAddress, applyCoupon, submitOrder, cancelOrder, fulfillOrder],
-  resolvers: { order: ownedResolver<Order>({ table: "orders", noun: "order", label: (_, o) => o.number, detail: (o) => `${o.status}, $${o.total}`, inactive: (o) => (o.status === "cancelled" ? "cancelled" : undefined) }) },
+  resolvers: { order: ownedResolver<Order>({ table: "orders", noun: "order", state: (o) => o.status, label: (_, o) => o.number, detail: (o) => `${o.status}, $${o.total}`, inactive: (o) => (o.status === "cancelled" ? "cancelled" : undefined) }) },
 } satisfies ModuleExports;

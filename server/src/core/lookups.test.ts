@@ -175,8 +175,10 @@ describe("model-independent named arguments", () => {
     assert.deepEqual(resolve(ctx.store, "QT-9139").map((c) => c.id), [quote.id]);
     assert.deepEqual(resolve(ctx.store, "Elena Costa's quote").map((c) => c.id), [quote.id]);
     assert.deepEqual(resolve(ctx.store, "quote", { contact: "Elena Costa" }).map((c) => c.id), [quote.id]);
-    ctx.f.quote({ number: "QT-9141", contactId: elena.id });
+    const sent = ctx.f.quote({ number: "QT-9141", contactId: elena.id, status: "sent" });
     assert.equal(resolve(ctx.store, "Elena Costa").length, 2);
+    // Its state tells two of hers apart: "Elena Costa's sent quote".
+    assert.deepEqual(resolve(ctx.store, "Elena Costa's sent quote").map((c) => c.id), [sent.id]);
     // A number in an ID field becomes a lookup, never an invented id.
     assert.deepEqual(compiled(plan([action("get", "M27.A02", { quoteId: "QT-9139" })])).steps.map((s) => s.kind), ["resolve", "action"]);
   });

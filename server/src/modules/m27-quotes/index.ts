@@ -379,5 +379,5 @@ const convertQuote = defineAction({
 
 export default {
   actions: [createQuote, getQuote, searchQuotes, addLine, updateLine, setExpiry, applyDiscount, sendQuote, acceptQuote, convertQuote],
-  resolvers: { quote: ownedResolver<Quote>({ table: "quotes", noun: "quote", label: (_, q) => q.number, detail: (q) => `${q.status}, $${q.total}` }) },
+  resolvers: { quote: ownedResolver<Quote>({ table: "quotes", noun: "quote", state: (q) => q.status, label: (_, q) => q.number, detail: (q) => `${q.status}, $${q.total}` }) },
 } satisfies ModuleExports;
