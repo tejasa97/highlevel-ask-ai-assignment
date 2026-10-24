@@ -2,7 +2,7 @@
 // The HTTP app streams its events to the web UI; the scenario evals drive it headless, so both take the same path.
 import type { CompiledPlan, CStep } from "../core/compile.js";
 import { execute, type Approval, type Pending, type RunResult } from "../core/execute.js";
-import { summarize } from "../core/summarize.js";
+import { shownRecords, summarize, type Shown } from "../core/summarize.js";
 import { type Carry, type InfraKind, planTurn } from "../planner/turn.js";
 import type { Planner, Tier } from "../planner/types.js";
 import type { CallTrace } from "../registry/define.js";
@@ -28,6 +28,8 @@ interface Turn {
   message: string;
   plan: CompiledPlan;
   executionId: string;
+  /** The planner's verdict on a question, said above what the reads found. */
+  answer?: string;
   pending?: Pending;
   approvals?: Approval[];
 }
@@ -81,7 +83,7 @@ export class Conversation {
       if (outcome.kind === "reply") return this.finish(message, outcome.status, outcome.text, emit, outcome.options, outcome.infra);
       this.carry = outcome.carry;
       const id = attempt ? `${turnId}_retry` : turnId;
-      const turn: Turn = { id, message, plan: outcome.plan, executionId: `ex_${id}` };
+      const turn: Turn = { id, message, plan: outcome.plan, executionId: `ex_${id}`, answer: outcome.answer };
       this.turns.set(id, turn);
       emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
       failed = await this.run(turn, actorId, emit, undefined, attempt === 0);
@@ -128,20 +130,23 @@ export class Conversation {
       const failed = retryable(turn.plan, result);
       if (failed) return failed;
     }
-    const text = summarize(turn.plan, result, this.deps.registry);
+    const summary = summarize(turn.plan, result, this.deps.registry);
+    // The verdict was read from the look; if the same reads didn't finish this time, it may no longer hold.
+    const text = turn.answer && result.status === "done" ? `${turn.answer}\n${summary}` : summary;
+    const records = shownRecords(turn.plan, result, this.deps.registry);
     if (result.status === "awaiting_confirmation") {
       emit("confirm", { turnId: turn.id, pending: result.pending });
-      emit("reply", { status: result.status, text });
+      emit("reply", { status: result.status, text, ...(records.length ? { records } : {}) });
       return;
     }
-    this.finish(turn.message, result.status, text, emit, result.clarification?.candidates.map((c) => (c.detail ? `${c.name} (${c.detail})` : c.name)));
+    this.finish(turn.message, result.status, text, emit, result.clarification?.candidates.map((c) => (c.detail ? `${c.name} (${c.detail})` : c.name)), undefined, records);
   }
 
-  private finish(message: string, status: string, text: string, emit: Emit, options?: string[], infra?: InfraKind): void {
+  private finish(message: string, status: string, text: string, emit: Emit, options?: string[], infra?: InfraKind, records?: Shown[]): void {
     this.history.push({ user: message, assistant: text });
     const asked = status === "clarify" || status === "needs_clarification";
     this.answering = asked ? (this.answering ? `${this.answering}\n${message}` : message) : undefined;
-    emit("reply", { status, text, options, ...(infra ? { infra } : {}) });
+    emit("reply", { status, text, options, ...(infra ? { infra } : {}), ...(records?.length ? { records } : {}) });
   }
 }
 

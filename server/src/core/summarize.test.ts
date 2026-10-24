@@ -5,7 +5,7 @@ import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile } from "./compile.js";
 import { execute } from "./execute.js";
-import { summarize } from "./summarize.js";
+import { shownRecords, summarize } from "./summarize.js";
 
 let registry: Registry;
 before(async () => {
@@ -28,7 +28,7 @@ async function reply(steps: SubmitPlan["steps"], ctx = world()) {
   const r = compile(plan(steps), registry);
   if (!r.ok) assert.fail(r.errors.join("\n"));
   const run = await execute(r.plan, registry, ctx, { executionId: "sum" });
-  return { text: summarize(r.plan, run, registry), ctx };
+  return { text: summarize(r.plan, run, registry), records: shownRecords(r.plan, run, registry), ctx };
 }
 
 describe("summarize: writes", () => {
@@ -86,6 +86,18 @@ describe("summarize: a plan that only reads still answers", () => {
     assert.doesNotMatch(text, new RegExp(c.id), "ids stay out of the reply");
   });
 
+  test("a search by a written-out record id doesn't repeat the id", async () => {
+    const { text } = await reply([action("s1", "M45.A06", { contactId: "ct_35" })]);
+    assert.match(text, /^Found 1 review: /);
+    assert.doesNotMatch(text, /ct_35|contact id/, text);
+  });
+
+  test("a record's lists of ids (a team's member ids) stay out; its named members show", async () => {
+    const { text } = await reply([action("s1", "M49.A02", { teamId: "tm_2" })]);
+    assert.doesNotMatch(text, /\b[a-z]{2,4}_\d+\b|member ids/, text);
+    assert.match(text, /Noah Park/);
+  });
+
   test("an empty search says so, with what it searched for", async () => {
     const { text } = await reply([action("s1", "M03.A03", { query: "nobody-by-this-name" })]);
     assert.equal(text, "No leads found matching query nobody-by-this-name.");
@@ -134,6 +146,42 @@ describe("summarize: a plan that only reads still answers", () => {
       action("s2", "M49.A09", { teamId: "$s1.id" }),
     ]);
     assert.equal(text.split("\n").length, 1, text);
+  });
+});
+
+describe("shownRecords: the records sent with the reply", () => {
+  test("a search sends what it found, with the full total", async () => {
+    const { records, ctx } = await reply([action("s1", "M03.A03", { limit: 2 })]);
+    assert.equal(records.length, 1);
+    assert.equal(records[0]!.noun, "lead");
+    assert.equal(records[0]!.items.length, 2);
+    assert.equal(records[0]!.total, ctx.store.all("leads").length);
+    assert.match(records[0]!.heading, /^Found \d+ leads/);
+  });
+
+  test("each card set names the reply line it stands for, word for word", async () => {
+    const { text, records } = await reply([action("s1", "M03.A03", { limit: 2 })]);
+    assert.ok(text.split("\n").includes(records[0]!.replaces!), `${text}\n---\n${records[0]!.replaces}`);
+  });
+
+  test("a write sends the record it made", async () => {
+    const { records } = await reply([action("s1", "M06.A01", { title: "Call Ana" })]);
+    assert.equal(records[0]!.items[0]!.title, "Call Ana");
+    assert.equal(records[0]!.replaces, undefined, "the Done line stays as the confirmation");
+  });
+
+  test("a read that feeds a later step sends nothing of its own", async () => {
+    const { records } = await reply([
+      { id: "s1", kind: "resolve", entity: "team", name: "Sales" },
+      action("s2", "M49.A09", { teamId: "$s1.id" }),
+    ]);
+    assert.equal(records.length, 1);
+    assert.ok("members" in records[0]!.items[0]!);
+  });
+
+  test("an empty search sends no records", async () => {
+    const { records } = await reply([action("s1", "M03.A03", { query: "nobody-by-this-name" })]);
+    assert.deepEqual(records, []);
   });
 });
 

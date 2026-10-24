@@ -13,9 +13,14 @@ Reply with one submit_plan object. Set unused fields to null.
                 and you plan again. Not for values a $ref can pass on unchanged.
   clarify      ONE question, only when a required detail is missing
   unsupported   no listed action can do this; say why
-  answer        a direct answer from <context>, no actions needed
+  answer        a direct answer from <context>, no actions needed; or, after a look, the answer to a question
+                about records
   search_tools  the actions you need are not in <actions>; put what's missing in query ("send an SMS")
 Rules:
+- A yes/no, how-many or which question about records ("is that the only one?", "has Elodie left other reviews?",
+  "how many deals are open?"): look with the reads (outcome effect read), then answer from <looked>. Start text with
+  the verdict (Yes, No, or the number), one or two sentences, records by name, never ids; the app shows the looked
+  records under it. A request to show, list or find records is a plan, not a look.
 - Fill outcome with the user's requested final effect (read or change) and the IDs of ALL final operations.
   Prerequisite searches are not the outcome: finding a payment does not request its refund, and listing tasks
   does not reassign them. Retain the outcome across look/search rounds. Use look for an intermediate read;
@@ -59,6 +64,8 @@ Rules:
   Resolve returns one {id,name}, not a list. Do not invent resolver types, IDs, or JSONPath expressions such as [?name=...].
   <mentions> says which record type each name in the message matched; resolve it as that entity. A mention marked as
   someone's own (their subscription, order, enrollment) is resolved by the matched word and the whereJson it gives.
+  A staff user named as owner, host, assignee or author goes in that ID argument (ownerId, hostId, assigneeId), never
+  in query text: a text search for their name only finds records that mention them.
 - Cards' "named IDs" map argument paths to child entities and authoritative parent scope. Those declared nested/array
   ID paths accept $lookup too. A form_field belongs to formId, a community_channel to communityId, a stage to pipelineId;
   give the parent argument (ID, backward ref or named lookup). The app binds scope; don't invent a child ID.

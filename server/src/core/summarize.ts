@@ -46,6 +46,57 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
   return lines.join("\n");
 }
 
+/** Records the reply talks about, sent with it so the client can show them as cards rather than a sentence. */
+export type Shown = {
+  noun: string;
+  /** What the cards are, e.g. "Found 12 leads matching status new". */
+  heading: string;
+  total: number;
+  items: Record<string, unknown>[];
+  /** The reply line these cards say again in full; the client shows the cards in its place. */
+  replaces?: string;
+};
+const SHOWN_MAX = 25;
+
+/** The records behind the reply's text: what each answering read returned, and the record each write produced. */
+export function shownRecords(plan: CompiledPlan, run: RunResult, registry: Registry): Shown[] {
+  const byId = new Map(plan.steps.map((s) => [s.id, s]));
+  const used = new Set(plan.steps.flatMap((s) => [...s.deps, ...("in" in s ? [rootOf(s.in)] : []), ...(s.kind === "exclude" ? [rootOf(s.set)] : [])]));
+  const out: Shown[] = [];
+  const add = (noun: string, heading: string, total: number, items: unknown[], replaces?: string | null) => {
+    const rows = items.filter(isRecord).slice(0, SHOWN_MAX);
+    if (rows.length) out.push({ noun, heading, total, items: rows, ...(replaces ? { replaces } : {}) });
+  };
+  for (const r of run.steps) {
+    const step = byId.get(r.id)!;
+    if (r.status !== "done") continue;
+    if (step.kind === "action" && step.call.action.risk !== "read") {
+      const noun = actionNoun(step.call.action.id, registry);
+      if (isRecord(r.output)) add(noun, cap(noun), 1, [r.output]);
+      continue;
+    }
+    if (used.has(r.id) || step.kind === "resolve") continue;
+    if (step.kind === "forEach") {
+      const read = step.calls.find((c) => c.action.risk === "read");
+      if (!r.items || step.calls.some((c) => c.action.risk !== "read") || !read) continue;
+      const noun = actionNoun(read.action.id, registry);
+      for (const i of r.items) {
+        const who = i.label ?? (ID.test(i.key) ? null : i.key);
+        if (i.results?.length) add(noun, who ?? `${i.results.length} ${plural(noun, i.results.length)}`, i.results.length, i.results, itemLine(i));
+      }
+      continue;
+    }
+    const noun = nounOf(step, byId, registry);
+    const items = Array.isArray(r.output) ? r.output : isList(r.output) ? r.output.items : null;
+    const line = found(step, r.output, noun);
+    if (items) {
+      const total = isList(r.output) ? r.output.total : items.length;
+      add(noun, `Found ${total} ${plural(noun, total)}${criteria(step)}`, total, items, line);
+    } else if (isRecord(r.output)) add(noun, cap(noun), 1, [r.output], line);
+  }
+  return out;
+}
+
 function describe(step: CStep, r: StepResult, registry: Registry, used: Set<string>): string | null {
   if (r.status === "awaiting_confirmation" || r.status === "needs_clarification") return null;
   if (r.status === "skipped") return `Skipped ${what(step, registry)}: an earlier step didn't complete.`;
@@ -76,14 +127,17 @@ function describe(step: CStep, r: StepResult, registry: Registry, used: Set<stri
 /** A loop of reads nothing else consumed: what each item looked up is the answer. */
 function eachRead(items: NonNullable<StepResult["items"]>): string {
   if (items.length === 0) return "Nothing matched, so there was nothing to look up.";
-  const lines = items.slice(0, NAMES_MAX).map((i) => {
-    const who = i.label ?? (ID.test(i.key) ? null : i.key);
-    const prefix = who ? `${who}: ` : "";
-    if (i.status === "failed") return `${prefix}couldn't look up (${i.error!.message}).`;
-    return `${prefix}${(i.results ?? []).map((x) => record(x)).filter(Boolean).join("; ") || "nothing found"}.`;
-  });
+  const lines = items.slice(0, NAMES_MAX).map(itemLine);
   if (items.length > NAMES_MAX) lines.push(`…and ${items.length - NAMES_MAX} more.`);
   return lines.join("\n");
+}
+
+/** One looked-up item's line in a loop of reads. */
+function itemLine(i: NonNullable<StepResult["items"]>[number]): string {
+  const who = i.label ?? (ID.test(i.key) ? null : i.key);
+  const prefix = who ? `${who}: ` : "";
+  if (i.status === "failed") return `${prefix}couldn't look up (${i.error!.message}).`;
+  return `${prefix}${(i.results ?? []).map((x) => record(x)).filter(Boolean).join("; ") || "nothing found"}.`;
 }
 
 /** What a read returned, for a step nothing else consumed. */
@@ -112,7 +166,7 @@ function record(x: unknown, noun?: string): string {
   if (!x || typeof x !== "object") return String(x);
   const o = x as Record<string, unknown>;
   const fields = Object.entries(o)
-    .filter(([k, v]) => k !== titleKey(o) && k !== "id" && !k.endsWith("Id") && !QUIET.has(k) && (shown(v) || named(v)) && !(typeof v === "string" && ID.test(v)))
+    .filter(([k, v]) => k !== titleKey(o) && k !== "id" && !/Ids?$/.test(k) && !QUIET.has(k) && (shown(v) || named(v)) && !(typeof v === "string" && ID.test(v)) && !(Array.isArray(v) && v.some((x) => typeof x === "string" && ID.test(x))))
     .slice(0, FIELDS_MAX)
     .map(([k, v]) => `${words(k)} ${named(v) ? nested(v) : Array.isArray(v) ? v.join(", ") : String(v)}`);
   const title = titleOf(o);
@@ -141,24 +195,26 @@ function brief(x: unknown): string {
 function criteria(step: CStep): string {
   const args = step.kind === "action" ? step.call.args : step.kind === "filter" ? step.where : {};
   const parts = Object.entries(args)
-    .filter(([k, v]) => k !== "limit" && shown(v) && !(typeof v === "string" && parseRef(v)))
+    // A record id names nothing a user knows, whether passed by $ref or written out ("contact id ct_35").
+    .filter(([k, v]) => k !== "limit" && !/Ids?$/.test(k) && shown(v) && !(typeof v === "string" && parseRef(v)))
     .map(([k, v]) => `${words(k)} ${typeof v === "object" ? JSON.stringify(v) : String(v)}`);
   return parts.length ? ` matching ${parts.join(", ")}` : "";
 }
 
 /** The record type a step returns: the action's own, or for filter/exclude, the type of what it read from. */
 function nounOf(step: CStep, byId: Map<string, CStep>, registry: Registry): string {
-  if (step.kind === "action") {
-    // Few actions declare what they return; the rest return their module's record type.
-    const id = step.call.action.id;
-    const mod = id.slice(0, 3);
-    return registry.get(id)?.entities?.produces ?? registry.list().find((a) => a.id.startsWith(mod) && a.entities?.produces)?.entities?.produces ?? "result";
-  }
+  if (step.kind === "action") return actionNoun(step.call.action.id, registry);
   if (step.kind === "filter" || step.kind === "exclude") {
     const src = byId.get(rootOf(step.in));
     return src && src !== step ? nounOf(src, byId, registry) : "result";
   }
   return "result";
+}
+
+/** Few actions declare what they return; the rest return their module's record type. */
+function actionNoun(id: string, registry: Registry): string {
+  const mod = id.slice(0, 3);
+  return registry.get(id)?.entities?.produces ?? registry.list().find((a) => a.id.startsWith(mod) && a.entities?.produces)?.entities?.produces ?? "result";
 }
 
 /** The field a record is called by: `name`, `title`, else a `…Name` field such as a conversation's `personName`. */
@@ -177,6 +233,7 @@ const detail = (x: unknown): string => {
   const o = x && typeof x === "object" ? (x as Record<string, unknown>) : {};
   return String(o.email ?? o.phone ?? o.company ?? o.id ?? "");
 };
+const isRecord = (x: unknown): x is Record<string, unknown> => !!x && typeof x === "object" && !Array.isArray(x) && !isList(x);
 const isList = (x: unknown): x is { items: unknown[]; total: number } =>
   !!x && typeof x === "object" && Array.isArray((x as { items?: unknown }).items) && typeof (x as { total?: unknown }).total === "number";
 const shown = (v: unknown) =>
