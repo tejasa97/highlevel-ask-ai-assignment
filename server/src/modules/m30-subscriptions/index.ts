@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { cents, inDateRange, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { atLeastOne, cents, inDateRange, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
 import { ownedResolver } from "../../registry/lookup.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
@@ -32,6 +32,18 @@ function recurring(store: Store, priceId: string): { price: Price; product: Prod
   const product = mustGet<Product>(store, "products", price.productId, "product");
   if (product.status !== "active") throw new ActionError("CONFLICT", `Product ${product.name} is archived; choose an active product`);
   return { price, product, interval: price.interval };
+}
+
+/** The product's active recurring price billed like the current one; its default price when it has several or none. */
+function planPrice(store: Store, productId: string, currentPriceId: string): string {
+  const product = mustGet<Product>(store, "products", productId, "product");
+  const interval = store.get<Price>("prices", currentPriceId)?.interval;
+  const prices = store.find<Price>("prices", (p) => p.productId === product.id && p.status === "active" && p.interval !== "one_time");
+  const same = prices.filter((p) => p.interval === interval);
+  if (same.length === 1) return same[0]!.id;
+  if (product.defaultPriceId && prices.some((p) => p.id === product.defaultPriceId)) return product.defaultPriceId;
+  if (prices.length === 1) return prices[0]!.id;
+  throw new ActionError("CONFLICT", prices.length ? `${product.name} has several recurring prices (${prices.map((p) => p.label).join(", ")}); name one` : `${product.name} has no recurring price`);
 }
 
 function load(store: Store, id: string): Subscription {
@@ -170,11 +182,16 @@ const searchSubscriptions = defineAction({
 const changePlan = defineAction({
   id: "M30.A04",
   description:
-    "Point a subscription at a different recurring price, and at that price's product. The current period is kept (no proration). Unlike M26.A07 Set billing interval, the price record itself is not edited. A one-time price is refused.",
+    "Switch a customer's subscription to another plan (upgrade or downgrade, e.g. from Starter to Pro): point it at a different recurring price, and at that price's product. The current period is kept (no proration). Unlike M26.A07 Set billing interval, the price record itself is not edited. A one-time price is refused.",
   risk: "write",
-  input: z.strictObject({ subscriptionId: SubscriptionId, priceId: z.string().describe("the new recurring price") }),
+  input: z.strictObject({
+    subscriptionId: SubscriptionId,
+    priceId: z.string().optional().describe("the new recurring price"),
+    productId: z.string().optional().describe("the new plan's product, when no price is named: its price with the same interval as now"),
+  }),
+  inputAlternatives: [["subscriptionId", "priceId"], ["subscriptionId", "productId"]],
   output: Subscription,
-  entities: { consumes: ["subscription"] },
+  entities: { consumes: ["subscription"], optionalConsumes: ["product", "price"] },
   example: (f) => {
     const product = productOf(f);
     const current = priceOf(f, product.id, { label: "Monthly", amount: 10 });
@@ -182,8 +199,10 @@ const changePlan = defineAction({
     const sub = f.subscription({ contactId: f.contact().id, priceId: current.id, productId: product.id });
     return { subscriptionId: sub.id, priceId: next.id };
   },
-  handler: ({ subscriptionId, priceId }, { store, clock }) => {
-    const sub = openSub(store, subscriptionId, "change plan");
+  handler: (a, { store, clock }) => {
+    atLeastOne(a, ["priceId", "productId"]);
+    const sub = openSub(store, a.subscriptionId, "change plan");
+    const priceId = a.priceId ?? planPrice(store, a.productId!, sub.priceId);
     if (sub.priceId === priceId) throw new ActionError("CONFLICT", `Subscription ${sub.id} already has that value`);
     const { price, product } = recurring(store, priceId);
     return store.update<Subscription>("subscriptions", sub.id, { priceId: price.id, productId: product.id, updatedAt: clock.now().toISOString() });

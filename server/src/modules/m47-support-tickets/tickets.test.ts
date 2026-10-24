@@ -53,6 +53,8 @@ test("search words may span title, body and who asked, in any order", async () =
   assert.deepEqual(ids("receipt marcus"), [t.id]);
   assert.deepEqual(ids("Marcus broken link"), [t.id]);
   assert.deepEqual(ids("Marcus invoice"), []);
+  // Naming the record type is not part of what the ticket says.
+  assert.deepEqual(ids("Marcus receipt support ticket"), [t.id]);
 });
 test("owner must be active, available and eligible; unrelated ownership is untouched", async () => {
   const w = await testWorld(),

@@ -91,5 +91,27 @@ describe("typed session identities", () => {
     assert.equal(requests.length, 4);
     assert.deepEqual(replies2.map((r) => r.status), ["failed"]);
   });
+
+  test("a plan refused for a missing prerequisite (\"join ... first\") is planned again with that error", async () => {
+    const ctx = world();
+    const community = ctx.f.community();
+    const channelId = community.channels[0]!.id;
+    const who = ctx.f.contact();
+    const post = action("post", "M43.A07", { communityId: community.id, channelId, body: "Hi all", contactId: who.id });
+    const join = action("join", "M43.A05", { communityId: community.id, contactId: who.id });
+    const replies = [response([post]), response([join, post])];
+    const requests: PlanRequest[] = [];
+    const planner: Planner = { name: "scripted", async plan(req) {
+      requests.push(req);
+      const json = replies.shift()!;
+      return { model: "scripted-provider", json, text: JSON.stringify(json), usage: { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0, billing: "none" }, latencyMs: 0 };
+    } };
+    const chat = new Conversation({ registry, planner, retriever: new Retriever(buildCards(registry)) }, ctx);
+    const got: { status: string }[] = [];
+    await chat.ask(`Post "Hi all" as ${who.name}`, "fast", "us_1", (e, d) => { if (e === "reply") got.push(d as { status: string }); });
+    assert.equal(requests.length, 2);
+    assert.match(requests[1]!.user, /<failed_attempt>.*first/);
+    assert.equal(got.at(-1)?.status, "done");
+  });
 });
 

@@ -7,7 +7,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { planTurn, renameReusedIds, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
+import { duplicateCreates, planTurn, renameReusedIds, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -178,6 +178,13 @@ describe("grounded outcomes and clarifications", () => {
     assert.deepEqual(fixed.steps!.map((s) => s.id), ["s1", "s2", "s1_2"]);
     const plan = compile(fixed, registry, new Set(["M21.A02", "M21.A04"]));
     assert.ok(plan.ok, JSON.stringify(plan));
+  });
+
+  test("$looked.<step> means the look step itself", () => {
+    const looks = [{ id: "s1", kind: "resolve" as const, entity: "contact", name: "Marcus Lee", whereJson: null }, { id: "s2", kind: "action" as const, action: "M28.A03", argsJson: '{"contactId":"$s1.id"}' }] as NonNullable<SubmitPlan["steps"]>;
+    const fixed = withLookSteps(reply({ steps: [{ id: "s1", kind: "action", action: "M29.A01", argsJson: '{"contactId":"$looked.s1.id","invoiceId":"$looked.s2.items[0].id"}' }] }), looks);
+    assert.deepEqual(fixed.steps!.map((s) => s.id), ["s1", "s2", "s1_2"]);
+    assert.equal((fixed.steps![2] as { argsJson: string }).argsJson, '{"contactId":"$s1.id","invoiceId":"$s2.items[0].id"}');
   });
 
   test("repairing a malformed clarification does not use up the plan's repair", async () => {
@@ -566,5 +573,21 @@ describe("names in the message", () => {
     const planner = scripted(reply({ type: "answer", text: "?" }));
     await run("What is Sarah Johnson's status?", planner);
     assert.doesNotMatch(planner.requests[0]!.user, /<mentions>/);
+  });
+});
+
+describe("creating a record the message names", () => {
+  const plan = (args: object) => {
+    const r = compile(reply({ steps: [{ id: "s1", kind: "action", action: "M01.A01", argsJson: JSON.stringify(args) }] }), registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    return r.plan;
+  };
+  const elodie = [{ name: "Elodie Mercer", entity: "contact", count: 1 }];
+
+  test("is a duplicate when that record already exists, unless a new one is asked for", () => {
+    const p = plan({ firstName: "Elodie", lastName: "Mercer" });
+    assert.match(duplicateCreates(p, elodie, "Add Elodie Mercer, then post as her").join("\n"), /already exists as a contact/);
+    assert.deepEqual(duplicateCreates(p, elodie, "Add a new contact Elodie Mercer"), []);
+    assert.deepEqual(duplicateCreates(plan({ firstName: "Ana", lastName: "Mercer" }), elodie, "Add Ana Mercer"), []);
   });
 });

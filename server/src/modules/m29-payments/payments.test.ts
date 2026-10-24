@@ -30,6 +30,15 @@ test("record: paying a request applies it to the invoice and marks both paid", a
   assert.equal(failure(() => w.call("M29.A03", { paymentRequestId: r.id })).code, "CONFLICT", "paid requests can't be cancelled");
 });
 
+test("record: paid in full needs no amount: it is the invoice's balance due; with neither, amount is required", async () => {
+  const w = await testWorld();
+  const inv = openInvoice(w, 320);
+  const p = w.call("M29.A04", { contactId: inv.contactId, invoiceId: inv.id });
+  assert.deepEqual([p.amount, p.unallocated], [320, 0]);
+  assert.equal(w.call("M28.A02", { invoiceId: inv.id }).status, "paid");
+  assert.equal(failure(() => w.call("M29.A04", { contactId: inv.contactId })).code, "INVALID");
+});
+
 test("record: a payment that isn't the request's amount can't settle the request", async () => {
   const w = await testWorld();
   const inv = openInvoice(w);

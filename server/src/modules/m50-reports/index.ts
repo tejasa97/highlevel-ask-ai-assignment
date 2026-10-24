@@ -288,7 +288,7 @@ const runReport = defineAction({
 
 const compare = defineAction({
   id: "M50.A08",
-  description: "Compare a saved report with the previous window of the same length immediately before from. Both sides are computed live and nothing is saved. pipeline_value ignores the date range, so both windows show the same open-pipeline sum. Unlike Run report, this does not set lastRunAt. Requires reports.view.",
+  description: "Compare a saved report against the previous period (this window versus the one of the same length immediately before from), e.g. this month vs last month. Both sides are computed live and nothing is saved. pipeline_value ignores the date range, so both windows show the same open-pipeline sum. Unlike Run report, this does not set lastRunAt. Requires reports.view.",
   risk: "read",
   input: z.strictObject({ reportId: ReportId }),
   output: z.object({ current: Rows, previous: Rows }),
@@ -330,6 +330,7 @@ const schedule = defineAction({
   }),
   output: SavedReport,
   entities: { consumes: ["report"] },
+  destination: { id: "email", label: "Email" },
   example: (f) => ({ reportId: f.savedReport().id, frequency: "weekly", recipients: ["ops@ourco.example"] }),
   handler: (a, { store, clock, actorId }) => {
     requirePermission(store, actorId, "reports.view");

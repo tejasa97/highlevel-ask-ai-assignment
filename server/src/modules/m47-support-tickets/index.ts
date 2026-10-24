@@ -121,10 +121,17 @@ const details = defineAction({
   example: (f) => ({ ticketId: f.ticket().id }),
   handler: ({ ticketId }, { store }) => detail(store, get(store, ticketId)),
 });
+/** "Portal export fails support ticket": the words naming the record type are not part of what it says. */
+const TYPE_WORDS = new Set(["support", "ticket", "tickets"]);
+function queryWords(query: string): string[] {
+  const words = norm(query).split(" ").filter(Boolean);
+  const kept = words.filter((w) => !TYPE_WORDS.has(w));
+  return kept.length ? kept : words;
+}
 const search = defineAction({
   id: "M47.A03",
   description:
-    "Search support tickets by text (matched against title, body, requester name and email: every word must appear somewhere), contact, owner, priority or status; newest first. With no status filter includes resolved and closed tickets.",
+    "Search support tickets by text (matched against title, body, requester name and email: every word must appear somewhere; the words support and ticket are ignored), contact, owner, priority or status; newest first. With no status filter includes resolved and closed tickets.",
   risk: "read",
   input: z.strictObject({
     query: Text.optional(),
@@ -140,7 +147,7 @@ const search = defineAction({
   entities: { produces: "ticket" },
   example: () => ({ status: "open" }),
   handler: (a, { store }) => {
-    const words = a.query ? norm(a.query).split(" ").filter(Boolean) : null;
+    const words = a.query ? queryWords(a.query) : null;
     return page(
       store
         .find<Ticket>(

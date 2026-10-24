@@ -306,7 +306,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     const errors = !compiled.ok
       ? compiled.errors
       : compiled.plan.steps.some((s) => callsOf(s).length)
-        ? outcomeErrors(compiled.plan, outcome, { message: input.message, offered })
+        ? [...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }), ...duplicateCreates(compiled.plan, named, input.message)]
         : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
     if (compiled.ok && !errors.length) {
       // The reads found nothing to change: say so (once the planner has had the chance to widen its search or answer),
@@ -336,7 +336,7 @@ type Step = NonNullable<SubmitPlan["steps"]>[number];
  * are put in front of it (with the look steps they in turn refer to).
  */
 export function withLookSteps(source: SubmitPlan, looks: Step[]): SubmitPlan {
-  let plan = renameReusedIds(source, new Set(looks.map((l) => l.id)));
+  let plan = renameReusedIds(lookedPrefix(source, looks), new Set(looks.map((l) => l.id)));
   const roots = (s: Step) => [...JSON.stringify(s).matchAll(/\$([A-Za-z_]\w*)/g)].map((m) => m[1]!);
   const own = new Set((plan.steps ?? []).map((s) => s.id));
   const wanted = new Set<string>();
@@ -357,6 +357,14 @@ export function withLookSteps(source: SubmitPlan, looks: Step[]): SubmitPlan {
     plan = { ...plan, steps: (plan.steps ?? []).map((s) => JSON.parse(JSON.stringify(s.id === id ? { ...s, id: fresh } : s).replace(ref, `$${fresh}`)) as Step) };
   }
   return { ...plan, steps: [...looks.filter((l) => wanted.has(l.id)), ...(plan.steps ?? [])] };
+}
+
+/** `$looked.s2.items` names the look step s2 by the block it was shown in; it means `$s2.items`. */
+function lookedPrefix(plan: SubmitPlan, looks: Step[]): SubmitPlan {
+  const ids = new Set(looks.map((l) => l.id));
+  const text = JSON.stringify(plan.steps ?? []);
+  const next = text.replace(/\$looked\.([A-Za-z_]\w*)/g, (all, id: string) => (ids.has(id) ? `$${id}` : all));
+  return next === text ? plan : { ...plan, steps: JSON.parse(next) as Step[] };
 }
 
 /**
@@ -397,6 +405,28 @@ export function renameReusedIds(plan: SubmitPlan, lookIds: ReadonlySet<string> =
 const LOOKED_MAX = 6000;
 
 const callsOf = (s: CompiledPlan["steps"][number]) => (s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []);
+
+const squash = (s: unknown) => (typeof s === "string" ? s.toLowerCase().replace(/\s+/g, " ").trim() : "");
+
+/**
+ * "Add Elodie Mercer, then post as her" when Elodie Mercer is already a contact: creating her again makes a
+ * duplicate that later steps can't tell apart. Unless the message asks for a new or second one, the existing
+ * record is meant.
+ */
+export function duplicateCreates(plan: CompiledPlan, named: Mention[], message: string): string[] {
+  if (/\b(new|another|second|duplicate|separate)\b/i.test(message)) return [];
+  const errors: string[] = [];
+  for (const s of plan.steps) {
+    if (s.kind !== "action") continue;
+    const { action, args } = s.call;
+    const made = action.entities?.produces;
+    const name = squash(args.name) || squash([args.firstName, args.lastName].filter((v) => typeof v === "string").join(" "));
+    if (!made || !name) continue;
+    const existing = named.find((m) => !m.of && m.entity === made && squash(m.name) === name);
+    if (existing) errors.push(`${s.id}: ${existing.name} already exists as a ${made}${existing.count > 1 ? ` (${existing.count} of them)` : ""}; resolve and use it instead of creating a duplicate with ${action.id}`);
+  }
+  return errors;
+}
 
 /** What a follow-up turn inherits: the actions this plan used and the record types they return. */
 export function carryOf(plan: CompiledPlan, registry: Registry): Carry {

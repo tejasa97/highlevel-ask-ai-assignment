@@ -225,6 +225,7 @@ const schedulePost = defineAction({
   input: z.strictObject({ postId: PostId, publishAt: z.iso.datetime() }),
   output: BlogPost,
   entities: { consumes: ["blog_post"] },
+  destination: { id: "blog", label: "Blog" },
   example: (f) => ({ postId: f.blogPost().id, publishAt: "2026-12-01T15:00:00.000Z" }),
   handler: ({ postId, publishAt }, { store, clock }) => {
     const post = load(store, postId);

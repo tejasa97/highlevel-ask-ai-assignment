@@ -12,6 +12,18 @@ test("create: line items total up; past due date INVALID; archived contact CONFL
   assert.equal(failure(() => w.call("M28.A01", { contactId: archived.id })).code, "CONFLICT");
 });
 
+test("a product's line takes its name and its only price; several prices and no default need unitPrice", async () => {
+  const w = await testWorld();
+  const pack = w.f.product({ name: "Setup Package" });
+  w.f.price({ productId: pack.id, label: "Standard", amount: 1200, isDefault: false });
+  const inv = w.call("M28.A01", { contactId: "ct_31", lineItems: [{ productId: pack.id, quantity: 2 }] });
+  assert.deepEqual([inv.total, inv.lineItems[0]?.description, inv.lineItems[0]?.unitPrice], [2400, "Setup Package", 1200]);
+  w.f.price({ productId: pack.id, label: "Rush", amount: 1800, isDefault: false });
+  assert.equal(failure(() => w.call("M28.A04", { invoiceId: inv.id, productId: pack.id })).code, "CONFLICT");
+  assert.equal(w.call("M28.A04", { invoiceId: inv.id, productId: pack.id, unitPrice: 1800 }).total, 4200);
+  assert.equal(failure(() => w.call("M28.A04", { invoiceId: inv.id, quantity: 1 })).code, "INVALID");
+});
+
 test("only drafts take line items or edits; updating needs a field", async () => {
   const w = await testWorld();
   const d = w.f.invoice();

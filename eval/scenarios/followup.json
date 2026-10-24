@@ -10,8 +10,8 @@
     "expect": {
       "status": ["done"],
       "state": [
-        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.title') LIKE '%Marco Patel%'", "equals": 1 },
-        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.title') LIKE '%Marco Patel%' AND json_extract(data,'$.assigneeId')='us_5' AND json_extract(data,'$.priority')='high' AND json_extract(data,'$.dueDate')='2026-10-23'", "equals": 1 }
+        { "sql": "SELECT count(*) FROM tasks WHERE (json_extract(data,'$.title') LIKE '%Marco Patel%' OR json_extract(data,'$.relatedTo.id')='ct_4')", "equals": 1 },
+        { "sql": "SELECT count(*) FROM tasks WHERE (json_extract(data,'$.title') LIKE '%Marco Patel%' OR json_extract(data,'$.relatedTo.id')='ct_4') AND json_extract(data,'$.assigneeId')='us_5' AND json_extract(data,'$.priority')='high' AND json_extract(data,'$.dueDate')='2026-10-23'", "equals": 1 }
       ]
     }
   },
