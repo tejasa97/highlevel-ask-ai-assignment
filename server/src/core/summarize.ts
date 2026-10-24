@@ -17,7 +17,7 @@ const ID = /^[a-z]{2,4}_\d+$/;
 export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry): string {
   const byId = new Map(plan.steps.map((s) => [s.id, s]));
   const lines: string[] = [];
-  const used = new Set(plan.steps.flatMap((s) => [...s.deps, ...("in" in s ? [rootOf(s.in)] : []), ...(s.kind === "exclude" ? [rootOf(s.set)] : [])]));
+  const used = new Set(plan.steps.flatMap((s) => [...s.deps, ...("in" in s ? rootsOf(s.in) : []), ...(s.kind === "exclude" ? [rootOf(s.set)] : [])]));
 
   for (const r of run.steps) {
     const step = byId.get(r.id)!;
@@ -168,6 +168,7 @@ const isList = (x: unknown): x is { items: unknown[]; total: number } =>
 const shown = (v: unknown) =>
   v !== null && v !== undefined && v !== "" && (typeof v !== "object" || (Array.isArray(v) && v.length > 0 && v.every((e) => typeof e !== "object")));
 const rootOf = (ref: string) => parseRef(ref)?.root ?? ref.replace(/^\$/, "").split(/[.[]/)[0]!;
+const rootsOf = (v: string | string[]) => (Array.isArray(v) ? [] : [rootOf(v)]);
 const plural = (noun: string, n: number) => (n === 1 ? noun : noun.endsWith("s") ? noun : noun.endsWith("y") ? `${noun.slice(0, -1)}ies` : `${noun}s`);
 const words = (k: string) => k.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

@@ -223,7 +223,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         }
 
         case "forEach": {
-          const list = asList(refValue(step.in), step.in);
+          const list = Array.isArray(step.in) ? step.in : asList(refValue(step.in), step.in);
           const rr = step.roundRobin ? asList(refValue(step.roundRobin), step.roundRobin) : null;
           if (rr && rr.length === 0 && list.length > 0) {
             fail({ code: "INVALID", message: `round-robin list ${step.roundRobin} is empty, so there is no one to assign to` });
@@ -413,11 +413,13 @@ function asList(v: unknown, ref: string): unknown[] {
 }
 
 function itemKey(item: unknown, i: number): string {
+  if (typeof item === "string") return `#${i}:${item}`;
   const id = (item as Record<string, unknown> | null)?.id;
   return typeof id === "string" || typeof id === "number" ? String(id) : `#${i}`;
 }
 
 function labelOf(item: unknown): string | undefined {
+  if (typeof item === "string") return item;
   const o = item as Record<string, unknown> | null;
   const name = o?.name ?? o?.title;
   return typeof name === "string" ? name : undefined;

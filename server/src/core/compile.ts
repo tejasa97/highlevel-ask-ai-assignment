@@ -3,7 +3,7 @@ import type { z } from "zod";
 import type { SubmitPlan } from "../planner/submit-plan.js";
 import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import type { JsonSchema, RegisteredAction, Registry } from "../registry/registry.js";
-import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, parseRef, RESERVED_ROOTS, type Ref, typeAt, unwrap } from "./refs.js";
+import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, parseRef, RESERVED_ROOTS, type Ref, typeAt, unwrap, literalList } from "./refs.js";
 
 // Stage 1 of validation: everything that can be checked before anything runs.
 // - structure: unique step ids, known actions that were offered to the planner this turn, JSON in argsJson/whereJson
@@ -22,7 +22,7 @@ export type CStep = { id: string; deps: string[]; type: JsonSchema } & (
   | { kind: "resolve"; entity: string; name: string }
   | { kind: "filter"; in: string; where: Record<string, unknown> }
   | { kind: "exclude"; in: string; by: string; set: string }
-  | { kind: "forEach"; in: string; roundRobin: string | null; calls: Call[] }
+  | { kind: "forEach"; in: string | string[]; roundRobin: string | null; calls: Call[] }
 );
 
 export interface CompiledPlan {
@@ -51,6 +51,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
   if (raw.length === 0) return { ok: false, errors: ["plan has no steps"] };
 
   const types = new Map<string, JsonSchema>(); // step id → output type, filled in order
+  const kinds = new Map<string, string>(); // step id → kind/op, for errors that list the legal steps
   const steps: CStep[] = [];
 
   for (const s of raw) {
@@ -64,7 +65,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
       continue;
     }
     const deps = new Set<string>();
-    const scope: Scope = { types, deps, at, item: null, rr: null, offered };
+    const scope: Scope = { types, kinds, deps, at, item: null, rr: null, offered };
     const err = (m: string) => errors.push(`${at}: ${m}`);
 
     // A step with errors still gets its output type, so later steps are checked against it
@@ -83,7 +84,13 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
         steps.push({ id: s.id, kind: "resolve", entity: s.entity, name: s.name, deps: [], type: RESOLVED });
         types.set(s.id, RESOLVED);
       } else {
-        const inType = listRef(s.in, scope, `"in"`, err);
+        if (s.op !== "forEach" && Array.isArray(s.in)) {
+          err(`"in" on ${s.op} must be a $ref to a list; a literal array is only for forEach`);
+          continue;
+        }
+        const literal = s.op === "forEach" ? literalList(s.in, err) : undefined;
+        if (literal === null) continue;
+        const inType = literal ? arrayOf({ type: "string" }) : listRef(s.in as string, scope, `"in"`, err);
         if (!inType) continue;
         const item = (unwrap(inType).items ?? ANY) as JsonSchema;
 
@@ -91,7 +98,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
           const where = parseObject(s.whereJson, "whereJson", err);
           if (!where) continue;
           checkWhere(where, item, scope, err);
-          steps.push({ id: s.id, kind: "filter", in: s.in, where, deps: [...deps], type: inType });
+          steps.push({ id: s.id, kind: "filter", in: s.in as string, where, deps: [...deps], type: inType });
           types.set(s.id, inType);
         } else if (s.op === "exclude") {
           if (!s.by || !s.set) {
@@ -103,7 +110,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
           if (setType && kindOf((unwrap(setType).items ?? ANY) as JsonSchema) === "object") {
             err(`"set" ${s.set} is a list of objects; point at the field, e.g. ${s.set}[*].id`);
           }
-          steps.push({ id: s.id, kind: "exclude", in: s.in, by: s.by, set: s.set, deps: [...deps], type: inType });
+          steps.push({ id: s.id, kind: "exclude", in: s.in as string, by: s.by, set: s.set, deps: [...deps], type: inType });
           types.set(s.id, inType);
         } else {
           if (!s.do?.length) {
@@ -122,12 +129,13 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
           );
           if (calls.some((c) => !c)) continue;
           const out = arrayOf({ type: "object", properties: { item, results: arrayOf(ANY) } });
-          steps.push({ id: s.id, kind: "forEach", in: s.in, roundRobin: s.roundRobin, calls: calls as Call[], deps: [...deps], type: out });
+          steps.push({ id: s.id, kind: "forEach", in: literal ?? (s.in as string), roundRobin: s.roundRobin, calls: calls as Call[], deps: [...deps], type: out });
           types.set(s.id, out);
         }
       }
     } finally {
       if (!types.has(s.id)) types.set(s.id, (s.kind === "action" && registry.get(s.action)?.outputSchema) || ANY);
+      if (!kinds.has(s.id)) kinds.set(s.id, s.kind === "op" ? s.op : s.kind);
     }
   }
 
@@ -138,6 +146,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
 
 interface Scope {
   types: Map<string, JsonSchema>;
+  kinds: Map<string, string>;
   deps: Set<string>;
   at: string;
   item: JsonSchema | null;
@@ -174,7 +183,12 @@ function rootType(ref: Ref, scope: Scope, err: (m: string) => void): JsonSchema 
   }
   const t = scope.types.get(ref.root);
   if (!t) {
-    err(`$${ref.root} is not an earlier step (refs can only point back)`);
+    const steps = [...scope.kinds].map(([id, kind]) => `${id} (${kind})`);
+    const context = new Set(["looked", "mentions", "context", "actions", "now"]);
+    err(
+      `$${ref.root} is not an earlier step; ${steps.length ? `your steps are ${steps.join(", ")}` : "there are no earlier steps yet"}. Refs can only point back to a step id.` +
+        (context.has(ref.root) ? ` <${ref.root}> is a prompt block, not a step: copy the value you need into args as plain text.` : ""),
+    );
     return null;
   }
   scope.deps.add(ref.root);

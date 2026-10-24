@@ -17,7 +17,7 @@ const action = (id: string, act: string, args: unknown) => ({ id, kind: "action"
 const op = (
   id: string,
   o: "filter" | "exclude" | "forEach",
-  fields: { in: string; where?: unknown; by?: string; set?: string; roundRobin?: string; do?: { action: string; args: unknown }[] },
+  fields: { in: string | string[]; where?: unknown; by?: string; set?: string; roundRobin?: string; do?: { action: string; args: unknown }[] },
 ) => ({
   id,
   kind: "op" as const,
@@ -225,6 +225,26 @@ describe("compile errors the planner can act on", () => {
       errs(plan([action("s1", "M03.A03", {}), op("s2", "forEach", { in: "$s1", do: [{ action: "M03.A05", args: { leadId: "$item.id", ownerId: "us_2" } }] })])),
       /did you mean \$s1\.items/,
     );
+  });
+});
+
+describe("forEach over a literal list of ids", () => {
+  test("each occurrence runs once and resuming does not duplicate writes", async () => {
+    const ctx = fresh();
+    const p = compiled(plan([op("s1", "forEach", { in: ["repeated", "repeated"], do: [{ action: "M06.A01", args: { title: "$item" } }] })]));
+    await execute(p, registry, ctx, { executionId: "literal-repeat" });
+    await execute(p, registry, ctx, { executionId: "literal-repeat" });
+    assert.equal(ctx.store.all<{ title: string }>("tasks").filter((t) => t.title === "repeated").length, 2);
+  });
+
+  test("runs once per id, with $item set to the string", async () => {
+    const ctx = fresh();
+    const p = compiled(plan([op("s1", "forEach", { in: ["literal_alpha", "literal_beta"], do: [{ action: "M06.A01", args: { title: "$item" } }] })]));
+    const r = await execute(p, registry, ctx, { executionId: "ids" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps[0]));
+    assert.deepEqual(r.steps[0]!.items!.map((i) => i.label), ["literal_alpha", "literal_beta"]);
+    assert.deepEqual((r.steps[0]!.output as { item: string }[]).map((x) => x.item), ["literal_alpha", "literal_beta"]);
+    assert.deepEqual(ctx.store.all<{ title: string }>("tasks").filter((t) => t.title === "literal_alpha" || t.title === "literal_beta").map((t) => t.title).sort(), ["literal_alpha", "literal_beta"]);
   });
 });
 
