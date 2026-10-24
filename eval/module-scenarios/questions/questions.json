@@ -1,0 +1,561 @@
+[
+  {
+    "id": "q-invoices-open-count",
+    "category": "direct",
+    "modules": [
+      "M28"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "How many open invoices are there?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^[^.\\n]*\\b(6|six)\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-invoice-owes",
+    "category": "direct",
+    "modules": [
+      "M28",
+      "M01"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Does Elena Costa owe us anything?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*yes\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-invoice-paid",
+    "category": "direct",
+    "modules": [
+      "M28",
+      "M01"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Has Rosa Ito paid her invoice?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*yes\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-payment-failed",
+    "category": "direct",
+    "modules": [
+      "M29",
+      "M01"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Did Yusuf Silva's payment go through?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*no\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-tasks-count",
+    "category": "direct",
+    "modules": [
+      "M06"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "How many open tasks does Tom Becker have?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^[^.\\n]*\\b(5|five)\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-tasks-high",
+    "category": "direct",
+    "modules": [
+      "M06"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Does Aisha Bello have any high priority tasks?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*yes\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-tickets-high",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Are there any high priority tickets open?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*yes\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-tickets-count",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "How many open tickets does Noah Park have?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^[^.\\n]*\\b(3|three)\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-appointments-booked",
+    "category": "direct",
+    "modules": [
+      "M21"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Does Aisha Bello have any appointments booked?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*yes\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-appointment-noshow",
+    "category": "direct",
+    "modules": [
+      "M21"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Did Jo Reyes show up for the discovery call?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*no\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-leads-count",
+    "category": "direct",
+    "modules": [
+      "M03"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "How many leads are qualified?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^[^.\\n]*\\b(9|nine)\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-campaign-live",
+    "category": "direct",
+    "modules": [
+      "M15"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Is the Holiday Offer campaign live yet?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*no\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-team-member",
+    "category": "direct",
+    "modules": [
+      "M49"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Is Dan Ortiz on the Sales team?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*yes\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-team-size",
+    "category": "direct",
+    "modules": [
+      "M49"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "How many people are on the Support team?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^[^.\\n]*\\b(2|two)\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-review-replied",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Has anyone replied to Nisha Khatri's review?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*no\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-review-request-sent",
+    "category": "direct",
+    "modules": [
+      "M45"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Has Elodie Mercer's review request been sent?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*no\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-listing-yelp",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Is Harbor Optics listed on Yelp?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*no\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-deals-won",
+    "category": "direct",
+    "modules": [
+      "M04"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Has Aisha Bello won any deals?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*no\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-note-pinned",
+    "category": "direct",
+    "modules": [
+      "M07",
+      "M01"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Is there a pinned note on Ana Ruiz?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*yes\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-conversations-unread",
+    "category": "direct",
+    "modules": [
+      "M11"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "How many unread conversations are there?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^[^.\\n]*\\b(11|eleven)\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-followup-only-review",
+    "category": "followup",
+    "modules": [
+      "M45"
+    ],
+    "note": "A yes/no or count question: the reply leads with the verdict, above the records.",
+    "turns": [
+      {
+        "user": "Show Elodie Mercer's review"
+      },
+      {
+        "user": "Is that the only review she's left?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^\\W*yes\\b"
+        ],
+        "excludes": []
+      }
+    }
+  },
+  {
+    "id": "q-listing-not-question",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "note": "A request to list records is a plan: no verdict above the list.",
+    "turns": [
+      {
+        "user": "List open tickets"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "noChanges": true,
+      "reply": {
+        "includes": [
+          "^Found 3 tickets"
+        ],
+        "excludes": [
+          "^\\W*(yes|no)\\b"
+        ]
+      }
+    }
+  }
+]

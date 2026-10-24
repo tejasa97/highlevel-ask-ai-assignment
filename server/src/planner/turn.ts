@@ -63,7 +63,13 @@ export type TurnEvent =
   | { type: "compile.errors"; data: { errors: string[] } };
 
 export type TurnOutcome =
-  | { kind: "plan"; plan: CompiledPlan; carry: Carry }
+  | {
+      kind: "plan";
+      plan: CompiledPlan;
+      carry: Carry;
+      /** The planner's verdict on a question about records ("Yes, that's her only review"), read from a look the plan repeats. */
+      answer?: string;
+    }
   | {
       kind: "reply";
       status: "clarify" | "unsupported" | "answer" | "failed";
@@ -169,6 +175,15 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let emptyChecked = false;
   let lookPlan: CompiledPlan | undefined;
   let lookSteps: Step[] = [];
+  const runLook = async (plan: CompiledPlan, steps: Step[]) => {
+    lookPlan = plan;
+    // <looked> contains compiler-generated resolve IDs too. Preserve those exact read steps so
+    // the next plan can reference them just like any explicit look step.
+    lookSteps = lowerLookups(steps, registry).steps;
+    lookResults = await deps.look!(plan);
+    looked = JSON.stringify(lookResults);
+    if (looked.length > LOOKED_MAX) looked = `${looked.slice(0, LOOKED_MAX)}…(cut)`;
+  };
   // Each reply is one of: search_tools (retrieve once more, re-plan), a plan (compile; repair once if invalid),
   // or a reply for the user. The repair prompt may itself say "reply search_tools" or "reply unsupported".
   for (;;) {
@@ -244,6 +259,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
 
     if (d.type === "look") {
       // Reads only, run now; a write waits for the real plan (and its approval). A bad look is repaired like a plan.
+      // Asked for a verdict, a model may want to look again: the reads it has are the answer, so they run as the plan.
+      if (looked !== undefined && lookPlan && outcome?.effect === "read") return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
       const compiled = compile({ ...d, type: "plan" }, registry, new Set(offered.map((a) => a.id)));
       const errors = !deps.look
         ? ["look isn't available here; reply with a plan or a question"]
@@ -251,7 +268,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
           ? ["you already looked; plan with the results in <looked>"]
           : !compiled.ok
             ? compiled.errors
-            : compiled.plan.steps.flatMap((s) => callsOf(s).filter((a) => a.risk !== "read").map((a) => `${s.id}: ${a.id} is a ${a.risk} action; a look may only read`));
+            : [...compiled.plan.steps.flatMap((s) => callsOf(s).filter((a) => a.risk !== "read").map((a) => `${s.id}: ${a.id} is a ${a.risk} action; a look may only read`)), ...staffInQuery(compiled.plan, named)];
       if (errors.length || !compiled.ok) {
         emit({ type: "compile.errors", data: { errors } });
         if (repaired) return failed(`The plan was still invalid after one repair:\n${errors.join("\n")}`);
@@ -259,23 +276,21 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         reply = await call(repairBlock(user, reply.json, errors), "repair");
         continue;
       }
-      lookPlan = compiled.plan;
-      // <looked> contains compiler-generated resolve IDs too. Preserve those exact read steps so
-      // the next plan can reference them just like any explicit look step.
-      lookSteps = lowerLookups(d.steps ?? [], registry).steps;
-      lookResults = await deps.look!(compiled.plan);
-      looked = JSON.stringify(lookResults);
-      if (looked.length > LOOKED_MAX) looked = `${looked.slice(0, LOOKED_MAX)}…(cut)`;
+      await runLook(compiled.plan, d.steps ?? []);
       user = prompt();
       reply = await call(user, "plan after look");
       continue;
     }
 
-    // Answering from <looked> would put the planner's prose (and raw ids) where the summary of the reads belongs:
-    // the reads were the plan.
+    // After a look, the reads were the plan: they run again, so the records shown are current and the code's
+    // summary stays. A question that only reads ("is that the only one?") also keeps the planner's verdict on
+    // top, unless it leaks raw ids.
     if (d.type === "answer" && (lookPlan || outcome?.effect === "change") && !emptyChecked) {
       const errors = lookPlan ? outcomeErrors(lookPlan, outcome) : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
-      if (!errors.length && lookPlan) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
+      if (!errors.length && lookPlan) {
+        const answer = outcome?.effect !== "change" ? d.text?.trim() : undefined;
+        return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry), ...(answer && !RAW_ID.test(answer) ? { answer } : {}) };
+      }
       if (repaired) return failed(`The requested outcome is still incomplete:\n${errors.join("\n")}`);
       repaired = true;
       emit({ type: "compile.errors", data: { errors } });
@@ -306,12 +321,20 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     const errors = !compiled.ok
       ? compiled.errors
       : compiled.plan.steps.some((s) => callsOf(s).length)
-        ? [...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }), ...duplicateCreates(compiled.plan, named, input.message)]
+        ? [...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }), ...duplicateCreates(compiled.plan, named, input.message), ...staffInQuery(compiled.plan, named)]
         : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
     if (compiled.ok && !errors.length) {
       // The reads found nothing to change: say so (once the planner has had the chance to widen its search or answer),
       // rather than run a loop over nothing.
       const empty = outcome?.effect === "change" ? emptyTargets(compiled.plan, lookResults) : [];
+      // A yes/no or count question planned as plain reads: run them as a look and ask for the verdict, so the reply
+      // says "No, ..." above the records whichever model planned it. If it plans again instead, that plan runs.
+      if (!empty.length && deps.look && looked === undefined && isQuestion(input.message) && readsOnly(compiled.plan)) {
+        await runLook(compiled.plan, d.steps ?? []);
+        user = `${prompt()}\n${ANSWER_FROM_LOOKED}`;
+        reply = await call(user, "answer after look");
+        continue;
+      }
       if (!empty.length) return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
       if (emptyChecked) return { kind: "reply", status: "answer", text: "Nothing matched, so nothing was changed." };
       emptyChecked = true;
@@ -403,6 +426,19 @@ export function renameReusedIds(plan: SubmitPlan, lookIds: ReadonlySet<string> =
 
 /** Characters of look results shown to the planner. */
 const LOOKED_MAX = 6000;
+/** A record id such as rv_12 or ct_3: users never see these. */
+const RAW_ID = /\b[a-z]{2,4}_\d+\b/;
+
+/** "Is that the only one?", "how many deals are open?", "who owns it?": not "can you list…?" or "show me…". */
+export const isQuestion = (message: string) => {
+  const m = message.trim();
+  if (/^(please\s+)?((can|could|would|will) you|show|list|find|get|give|pull|display|open)\b/i.test(m)) return false;
+  return /^(is|isn't|are|aren't|was|wasn't|were|does|doesn't|do|don't|did|didn't|has|hasn't|have|haven't|had|can|could|will|would|should|how many|how much|which|who|whose|any)\b/i.test(m);
+};
+
+const readsOnly = (plan: CompiledPlan) => plan.steps.every((s) => callsOf(s).every((a) => a.risk === "read"));
+
+const ANSWER_FROM_LOOKED = "The reads in <looked> ran. Reply type answer to the question in <message>: start with the verdict (Yes, No, or the number), one or two sentences, records by name, never ids. Keep outcome.";
 
 const callsOf = (s: CompiledPlan["steps"][number]) => (s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []);
 
@@ -424,6 +460,25 @@ export function duplicateCreates(plan: CompiledPlan, named: Mention[], message: 
     if (!made || !name) continue;
     const existing = named.find((m) => !m.of && m.entity === made && squash(m.name) === name);
     if (existing) errors.push(`${s.id}: ${existing.name} already exists as a ${made}${existing.count > 1 ? ` (${existing.count} of them)` : ""}; resolve and use it instead of creating a duplicate with ${action.id}`);
+  }
+  return errors;
+}
+
+const STAFF_ARGS = ["ownerId", "hostId", "assigneeId", "authorId", "memberId", "userId"];
+
+/**
+ * "How many tickets does Noah have?" searched as query "Noah Park" finds tickets that mention Noah, not his: a staff user
+ * the message names goes in the action's owner/host/assignee argument instead, when it has one.
+ */
+export function staffInQuery(plan: CompiledPlan, named: Mention[]): string[] {
+  const errors: string[] = [];
+  for (const s of plan.steps) {
+    if (s.kind !== "action") continue;
+    const { action, args } = s.call;
+    const user = named.find((m) => m.entity === "user" && !m.of && squash(args.query) === squash(m.name));
+    const shape = (action.input as { shape?: Record<string, unknown> }).shape ?? {};
+    const arg = STAFF_ARGS.find((k) => k in shape);
+    if (user && arg) errors.push(`${s.id}: ${user.name} is a staff user; resolve them and pass ${arg} instead of searching ${action.id}'s text for their name`);
   }
   return errors;
 }

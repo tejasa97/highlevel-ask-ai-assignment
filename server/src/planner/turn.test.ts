@@ -7,7 +7,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { duplicateCreates, planTurn, renameReusedIds, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
+import { duplicateCreates, isQuestion, planTurn, staffInQuery, renameReusedIds, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -132,6 +132,70 @@ describe("grounded outcomes and clarifications", () => {
     const { out } = await run("Show my tasks", planner, {}, async () => []);
     assert.ok(out.kind === "plan");
     assert.equal(planner.requests.length, 2);
+  });
+
+  test("a question answered after a look keeps its verdict above the reads", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("look"), outcome: read }, reply({ type: "answer", text: " Yes, that's your only task. ", outcome: read }));
+    const { out } = await run("Is that my only task?", planner, {}, async () => []);
+    assert.ok(out.kind === "plan" && out.answer === "Yes, that's your only task.", JSON.stringify(out));
+    assert.equal(out.plan.steps.length, 1, "the look's read runs again as the plan");
+  });
+
+  test("a verdict that leaks a record id is dropped; the reads still answer", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("look"), outcome: read }, reply({ type: "answer", text: "Yes, tk_4 is the only one.", outcome: read }));
+    const { out } = await run("Is that my only task?", planner, {}, async () => []);
+    assert.ok(out.kind === "plan" && out.answer === undefined);
+  });
+
+  test("a question planned as plain reads runs them as a look, and the verdict goes above them", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("plan"), outcome: read }, reply({ type: "answer", text: "No, you have 2 open tasks.", outcome: read }));
+    let looks = 0;
+    const { out } = await run("Is that my only task?", planner, {}, async () => (looks++, []));
+    assert.ok(out.kind === "plan" && out.answer === "No, you have 2 open tasks.", JSON.stringify(out));
+    assert.equal(looks, 1);
+    assert.equal(planner.requests.length, 2);
+  });
+
+  test("a question whose model plans again after the look runs that plan, without a verdict or another look", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("plan"), outcome: read });
+    const { out } = await run("How many tasks do I have?", planner, {}, async () => []);
+    assert.ok(out.kind === "plan" && out.answer === undefined, JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+  });
+
+  test("a request to list records is planned once, with no look", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("plan"), outcome: read });
+    let looks = 0;
+    const { out } = await run("List my open tasks", planner, {}, async () => (looks++, []));
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(looks, 0);
+    assert.equal(planner.requests.length, 1);
+  });
+
+  test("a question whose model wants a second look gets the first look's reads, not a failure", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("look"), outcome: read });
+    const { out } = await run("Has Ana got any tasks?", planner, {}, async () => []);
+    assert.ok(out.kind === "plan" && out.answer === undefined, JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+  });
+
+  test("a staff user's name searched as text is sent back to go in the owner argument", () => {
+    const r = compile(reply({ steps: [{ id: "s1", kind: "action", action: "M47.A03", argsJson: JSON.stringify({ query: "Noah Park", status: "open" }) }] }), registry);
+    assert.ok(r.ok);
+    const errors = staffInQuery(r.plan, [{ name: "Noah Park", entity: "user", count: 1 }]);
+    assert.match(errors.join(), /Noah Park is a staff user; resolve them and pass ownerId/);
+    assert.deepEqual(staffInQuery(r.plan, [{ name: "Noah Park", entity: "contact", count: 1 }]), []);
+  });
+
+  test("questions are told apart from requests to show records", () => {
+    for (const q of ["Is that the only review?", "How many leads are qualified?", "Has Aisha won any deals?", "Did Yusuf's payment go through?", "Which team is Dan on?", "Any open tickets?"]) assert.ok(isQuestion(q), q);
+    for (const r of ["List open tickets", "Show Elodie's review", "Can you list my tasks?", "Please find Ana's invoice", "Reassign my tasks to Noah"]) assert.ok(!isQuestion(r), r);
   });
 
   test("a plan step that reuses a looked step's id keeps the read and refers to it, with no repair round", async () => {

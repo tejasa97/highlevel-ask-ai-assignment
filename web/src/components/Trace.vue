@@ -70,6 +70,8 @@ const stepLine = (s) =>
         <div v-if="r.clauses.length > 1" class="small terms">
           <span class="muted">clauses</span> <span v-for="c in r.clauses" :key="c" class="chip">{{ c }}</span>
         </div>
+        <details class="sub" :open="r.noMatch">
+        <summary>Ranked picks ({{ r.picks.length }}) · top: <span class="mono">{{ r.picks[0]?.id }}</span> {{ r.picks[0]?.name }}</summary>
         <table class="picks small">
           <thead><tr><th>#</th><th>action</th><th>why</th><th>score</th><th>matched</th></tr></thead>
           <tbody>
@@ -82,6 +84,7 @@ const stepLine = (s) =>
             </tr>
           </tbody>
         </table>
+        </details>
       </div>
     </template>
 

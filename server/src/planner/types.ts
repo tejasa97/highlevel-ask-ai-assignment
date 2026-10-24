@@ -30,6 +30,8 @@ export interface PlanResult {
 
 export interface Planner {
   readonly name: string;
+  readonly billing?: Usage["billing"]; // how every reply bills; "subscription" means USD stays unknown
+  readonly models?: Record<Tier, string>; // the model per tier, when the provider fixes it up front
   plan(req: PlanRequest): Promise<PlanResult>;
 }
 
