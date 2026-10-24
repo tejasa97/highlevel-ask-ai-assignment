@@ -1,8 +1,9 @@
 import { ClaudeCliPlanner } from "./claude-cli.js";
 import { CodexCliPlanner, type Reasoning } from "./codex-cli.js";
+import { QwenPlanner } from "./qwen.js";
 import type { Planner } from "./types.js";
 
-/** Local development providers: Claude (default) or opt-in Codex subscription access. */
+/** Local development providers: Claude (default), opt-in Codex subscription access, or Qwen Token Plan. */
 export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner {
   if (kind === "claude-cli") {
     return new ClaudeCliPlanner({
@@ -24,5 +25,21 @@ export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner
       },
     });
   }
-  throw new Error(`unknown PLANNER "${kind}"; supported: claude-cli, codex-cli`);
+  if (kind === "qwen" || kind === "qwen-token-plan") {
+    const apiKey = process.env.QWEN_API_KEY ?? process.env.ALIBABA_TOKEN_PLAN_API_KEY;
+    if (!apiKey) {
+      throw new Error("PLANNER=qwen needs QWEN_API_KEY (or ALIBABA_TOKEN_PLAN_API_KEY) in the environment");
+    }
+    const timeout = Number(process.env.QWEN_TIMEOUT_MS);
+    return new QwenPlanner({
+      apiKey,
+      baseUrl: process.env.QWEN_BASE_URL,
+      models: {
+        strong: process.env.QWEN_MODEL ?? "qwen3.8-flash",
+        fast: process.env.QWEN_FAST_MODEL ?? "qwen3.8-flash",
+      },
+      timeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : undefined,
+    });
+  }
+  throw new Error(`unknown PLANNER "${kind}"; supported: claude-cli, codex-cli, qwen`);
 }

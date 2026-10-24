@@ -143,7 +143,8 @@ const summary = {
 console.log(`\npass ${summary.passRate}% of clean runs · ${summary.allPass}/${summary.measured} scenarios pass every run · ${summary.flaky} flaky`);
 if (summary.infraRuns || summary.notRun) console.log(`NOT A CLEAN RUN: ${summary.infraRuns} runs failed outside the app, ${summary.notRun} not started; ${scenarios.length - summary.measured} scenarios unmeasured`);
 console.log(`e2e p50 ${summary.e2eMs.p50} ms, p95 ${summary.e2eMs.p95} ms · first reply p50 ${summary.firstReplyMs.p50} ms, p95 ${summary.firstReplyMs.p95} ms`);
-console.log(`planner rounds/run ${summary.plannerRoundsPerRun} · calls/run ${summary.callsPerRun} · cost/run ${formatCost(summary.costUsd.perRun, planner.name === "codex-cli" ? "subscription" : "api_estimate")} (total ${formatCost(summary.costUsd.total)}) · wall ${Math.round(summary.wallMs / 1000)} s`);
+const planBilling = planner.name === "codex-cli" || planner.name === "qwen" ? "subscription" : "api_estimate";
+console.log(`planner rounds/run ${summary.plannerRoundsPerRun} · calls/run ${summary.callsPerRun} · cost/run ${formatCost(summary.costUsd.perRun, planBilling)} (total ${formatCost(summary.costUsd.total)}) · wall ${Math.round(summary.wallMs / 1000)} s`);
 
 mkdirSync(`${EVAL}results`, { recursive: true });
 const file = `${EVAL}results/scenarios-${label}.json`;

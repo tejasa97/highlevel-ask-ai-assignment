@@ -37,7 +37,7 @@ All messages, payments, review publications and directory syncs are **simulated*
 
 ## Run locally
 
-Use a Node release supporting `node:sqlite` (this branch was tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Configure the planner using the existing environment settings; `claude-cli` requires an authenticated Claude CLI with available quota.
+Use a Node release supporting `node:sqlite` (this branch was tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Configure the planner using the existing environment settings; `claude-cli` requires an authenticated Claude CLI with available quota, and `qwen` needs a Qwen Token Plan key (see below).
 
 In `server/`, run `npm run db:reset` to recreate **this checkout's** demo database, then `npm run serve`. In `web/`, run `npm run dev`. Defaults: API 8787, web 5173. For isolated concurrent work, set `PORT` for the API and matching `API_PORT` for Vite. Reset erases the local demo database; it is not a migration of saved user data.
 
@@ -92,14 +92,42 @@ This is a trusted local development provider. It strips inherited API credential
 current login before enforcing ChatGPT authentication, uses a private working directory and
 read-only sandbox, and requests restricted runtime capabilities. Unexpected tool events and
 configuration errors fail the request; this cannot undo any tool action already started by
-the runtime. Keep it out of public or untrusted services. Direct API calls need their own
-API-key provider and billing.
+the runtime. Keep it out of public or untrusted services. For raw API-key calls, use the Qwen
+provider below.
 
 Calls have a 120-second deadline, bounded output, cancellation and temporary-file cleanup.
 Subscription usage consumes your shared allowance; USD cost remains unknown in the UI, scenario
 results and benchmark reports, with no automatic API fallback. The app still validates plans
 and owns CRM execution and confirmation. See the
 [official non-interactive documentation](https://learn.chatgpt.com/docs/non-interactive-mode).
+
+## Use a Qwen Token Plan locally
+
+The Qwen provider calls the Token Plan's OpenAI-compatible endpoint directly, with no CLI in
+between. Get an `sk-sp-...` key from the Token Plan console (Singapore only) and set it in
+your local `.env`:
+
+```sh
+PLANNER=qwen
+QWEN_API_KEY=sk-sp-...
+```
+
+Then run any command from `server/`:
+
+```sh
+PLANNER=qwen npm run probe:planner
+PLANNER=qwen npm run serve
+PLANNER=qwen npm run ask -- "create a task to call Jo"
+```
+
+`QWEN_MODEL` and `QWEN_FAST_MODEL` select the strong/fast models (both default to
+`qwen3.8-flash`). `QWEN_BASE_URL` defaults to
+`https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1`; use
+`QWEN_BASE_URL=https://token-plan.maas.qwencloudapi.com/compatible-mode/v1` for QwenCloud.
+Token Plan keys must not be pointed at a pay-as-you-go endpoint. The adapter sends the planner
+system/user messages and the `submit_plan` JSON Schema with `response_format: json_schema`, and
+leaves tools out. Calls have a 120-second deadline (`QWEN_TIMEOUT_MS`), cancellation and a 4 MiB
+reply cap. Token Plan usage is prepaid, so USD cost stays unknown in the UI and reports.
 
 ## Layout
 
