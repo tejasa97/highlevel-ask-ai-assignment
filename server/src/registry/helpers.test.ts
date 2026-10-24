@@ -33,7 +33,17 @@ describe("name matching", () => {
     assert.deepEqual(matchByName([...docs, { l: "Fall Webinar Recap" }], "fall webinar campaign", (d) => d.l), [docs[0], { l: "Fall Webinar Recap" }], "still ambiguous: both are returned");
   });
 
-  test("a search term matches a name across punctuation, but a lone word still needs to be a substring", () => {
+  test("a name said in the plural names the singular record, and only as a last resort", () => {
+    const docs = [{ l: "Ceramic Mug" }, { l: "Mug Set" }, { l: "Setup Package" }];
+    assert.deepEqual(matchByName(docs, "Ceramic Mugs", (d) => d.l), [docs[0]]);
+    assert.deepEqual(matchByName(docs, "setup packages", (d) => d.l), [docs[2]]);
+    assert.deepEqual(matchByName(docs, "Ceramic Bowls", (d) => d.l), []);
+    assert.deepEqual(matchByName([...docs, { l: "Ceramic Mugs" }], "Ceramic Mugs", (d) => d.l), [{ l: "Ceramic Mugs" }], "an exact name still wins");
+    assert.ok(contains("Ceramic Mug", "ceramic mugs"));
+    assert.ok(!contains("Ceramic Mug", "ceramic bowls"));
+  });
+
+  test("a search term matches a name across punctuation and plurals, but not another word", () => {
     assert.ok(contains("Soylent - Pro plan", "Soylent Pro"));
     assert.ok(contains("Pro plan - Soylent", "soylent pro"));
     assert.ok(!contains("Soylent - Agency plan", "Soylent Pro"));

@@ -112,12 +112,21 @@ function record(x: unknown, noun?: string): string {
   if (!x || typeof x !== "object") return String(x);
   const o = x as Record<string, unknown>;
   const fields = Object.entries(o)
-    .filter(([k, v]) => k !== titleKey(o) && k !== "id" && !k.endsWith("Id") && !QUIET.has(k) && shown(v) && !(typeof v === "string" && ID.test(v)))
+    .filter(([k, v]) => k !== titleKey(o) && k !== "id" && !k.endsWith("Id") && !QUIET.has(k) && (shown(v) || named(v)) && !(typeof v === "string" && ID.test(v)))
     .slice(0, FIELDS_MAX)
-    .map(([k, v]) => `${words(k)} ${Array.isArray(v) ? v.join(", ") : String(v)}`);
+    .map(([k, v]) => `${words(k)} ${named(v) ? nested(v) : Array.isArray(v) ? v.join(", ") : String(v)}`);
   const title = titleOf(o);
   const head = title ? `${title}${noun ? ` (${noun})` : ""}` : noun ? cap(noun) : "";
   return [head, fields.join(", ")].filter(Boolean).join(fields.length && head ? ": " : "");
+}
+
+/** A record's own list of named parts, such as a pipeline's stages: "New (probability 10); Negotiation (probability 75)". */
+function nested(v: Record<string, unknown>[]): string {
+  const parts = v.slice(0, NAMES_MAX).map((o) => {
+    const plain = Object.entries(o).filter(([k, x]) => k !== titleKey(o) && k !== "id" && !k.endsWith("Id") && (typeof x === "string" || typeof x === "number") && !(typeof x === "string" && ID.test(x)));
+    return plain.length ? `${titleOf(o)} (${plain.slice(0, 2).map(([k, x]) => `${words(k)} ${x}`).join(", ")})` : titleOf(o)!;
+  });
+  return v.length > parts.length ? `${parts.join("; ")}; and ${v.length - parts.length} more` : parts.join("; ");
 }
 
 /** One record in a list: its name, with its status when it has one. */
@@ -172,6 +181,9 @@ const isList = (x: unknown): x is { items: unknown[]; total: number } =>
   !!x && typeof x === "object" && Array.isArray((x as { items?: unknown }).items) && typeof (x as { total?: unknown }).total === "number";
 const shown = (v: unknown) =>
   v !== null && v !== undefined && v !== "" && (typeof v !== "object" || (Array.isArray(v) && v.length > 0 && v.every((e) => typeof e !== "object")));
+/** A list of records that each have a name, e.g. a pipeline's stages. */
+const named = (v: unknown): v is Record<string, unknown>[] =>
+  Array.isArray(v) && v.length > 0 && v.every((e) => !!e && typeof e === "object" && !Array.isArray(e) && !!titleOf(e as Record<string, unknown>));
 const rootOf = (ref: string) => parseRef(ref)?.root ?? ref.replace(/^\$/, "").split(/[.[]/)[0]!;
 const plural = (noun: string, n: number) => (n === 1 ? noun : noun.endsWith("s") ? noun : noun.endsWith("y") ? `${noun.slice(0, -1)}ies` : `${noun}s`);
 const words = (k: string) => k.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();

@@ -277,6 +277,7 @@ export default {
       label: (store, e) => store.get<Course>("courses", e.courseId)?.title ?? "",
       detail: (e) => e.status,
       inactive: (e) => (e.status === "revoked" ? "revoked" : undefined),
+      qualifiers: Object.fromEntries(["course", "courseId"].map((key) => [key, (store: Store, e: Enrollment) => [e.courseId, store.get<Course>("courses", e.courseId)?.title]])),
     }),
   },
 } satisfies ModuleExports;

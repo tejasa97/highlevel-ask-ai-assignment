@@ -1,7 +1,7 @@
 import { namedResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { cents, Limit, listOf, Name, norm, page, requireState } from "../../registry/helpers.js";
+import { cents, Limit, listOf, Name, norm, page, requireState, singular } from "../../registry/helpers.js";
 import type { ModuleExports, Resolver } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Product } from "../m25-products/schema.js";
@@ -271,7 +271,7 @@ function priceResolver(): Resolver {
     const prices = found.map((c) => store.get<Price>("prices", c.id)!);
     const product = prices[0] && store.get<Product>("products", prices[0].productId);
     const def = prices.find((p) => p.isDefault);
-    const onlyProduct = product && norm(product.name) === norm(name) && prices.every((p) => p.productId === product.id);
+    const onlyProduct = product && singular(norm(product.name)) === singular(norm(name)) && prices.every((p) => p.productId === product.id);
     return found.length > 1 && onlyProduct && def ? found.filter((c) => c.id === def.id) : found;
   }, { qualifiers: base.qualifiers, exactMention: base.exactMention });
 }

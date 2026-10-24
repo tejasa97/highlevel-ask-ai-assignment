@@ -210,8 +210,9 @@ describe("compile errors the planner can act on", () => {
   });
 
   test("list where a single value is needed", () => {
-    const e = errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: "$s1.items[*].id", ownerId: "us_2" })]));
-    assert.match(e, /needs a single value/);
+    assert.match(errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: "$s1.items", ownerId: "us_2" })])), /needs a single value/);
+    const inLoop = op("s2", "forEach", { in: "$s1.items", do: [{ action: "M03.A05", args: { leadId: "$s1.items[*].id", ownerId: "us_2" } }] });
+    assert.match(errs(plan([action("s1", "M03.A03", {}), inLoop])), /needs a single value/);
   });
 
   test("$item outside forEach, $rr without roundRobin", () => {
@@ -284,5 +285,31 @@ describe("runtime outcomes", () => {
     const r = await execute(p, registry, ctx, { executionId: "ex4", approvals: [first.pending!] });
     assert.equal(r.steps.at(-1)!.status, "failed");
     assert.ok(r.steps.at(-1)!.items!.every((i) => i.error?.code === "NOT_FOUND"));
+  });
+});
+
+describe("one value of a list in a single-ID argument", () => {
+  const assign = (where: unknown) => compiled(plan([
+    action("s1", "M03.A03", {}),
+    op("s2", "filter", { in: "$s1.items", where }),
+    action("s3", "M03.A05", { leadId: "$s2[*].id", ownerId: "us_2" }),
+  ]));
+
+  test("runs when the list holds exactly one", async () => {
+    const w = fresh();
+    const lead = w.store.all<{ id: string }>("leads")[0]!;
+    const r = await execute(assign({ id: lead.id }), registry, w, { executionId: "one-lead" });
+    assert.equal(r.status, "done", JSON.stringify(r));
+    assert.equal(w.store.get<{ ownerId: string }>("leads", lead.id)!.ownerId, "us_2");
+  });
+
+  test("asks which when the list holds several, and fails without changes when it holds none", async () => {
+    const w = fresh();
+    const several = await execute(assign({}), registry, w, { executionId: "many-leads" });
+    assert.equal(several.status, "needs_clarification");
+    assert.ok(several.clarification!.candidates.length > 1);
+    const none = await execute(assign({ id: "nope" }), registry, w, { executionId: "no-lead" });
+    assert.equal(none.status, "failed");
+    assert.match(JSON.stringify(none.steps.at(-1)!.error), /NOT_FOUND.*found nothing/);
   });
 });

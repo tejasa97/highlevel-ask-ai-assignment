@@ -233,6 +233,7 @@ const issueInvoice = defineAction({
   output: Invoice,
   siblings: ["M29.A01"],
   entities: { consumes: ["invoice"] },
+  destination: { id: "email", label: "Email" },
   example: (f) => ({ invoiceId: f.invoice({ contactId: f.contact().id }).id }),
   handler: ({ invoiceId }, { store, clock, actorId }) => {
     requirePermission(store, actorId, "billing.manage");
@@ -256,6 +257,7 @@ const sendReminder = defineAction({
   output: z.object({ invoice: Invoice, emailId: z.string(), status: z.string() }),
   siblings: ["M13.A01", "M13.A03"],
   entities: { consumes: ["invoice"], produces: "email" },
+  destination: { id: "email", label: "Email" },
   example: (f) => ({ invoiceId: f.invoice({ contactId: f.contact().id, status: "open", issueDate: f.day(-40), dueDate: f.day(-10) }).id }),
   handler: ({ invoiceId, message }, { store, clock, actorId }) => {
     requirePermission(store, actorId, "billing.manage");

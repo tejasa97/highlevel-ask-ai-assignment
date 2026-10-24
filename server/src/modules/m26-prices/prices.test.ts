@@ -142,3 +142,15 @@ test("a price is found by its product's name: the product alone picks its defaul
   assert.deepEqual(resolve(w.store, "Pro Plan Yearly").map((c) => c.id), [yearly.id]);
   assert.equal(resolve(w.store, "Monthly").length, 2);
 });
+
+test("a product named in the plural (\"2 Ceramic Mugs\") still finds its price", async () => {
+  const w = await testWorld();
+  const resolve = (await registry()).resolver("price")!;
+  const mug = w.f.product({ name: "Ceramic Mug" });
+  const standard = w.f.price({ productId: mug.id, label: "Standard", amount: 40 });
+  assert.deepEqual(resolve(w.store, "Ceramic Mugs").map((c) => c.id), [standard.id]);
+  const wholesale = w.f.price({ productId: mug.id, label: "Wholesale", amount: 30, isDefault: false });
+  assert.deepEqual(resolve(w.store, "Ceramic Mugs").map((c) => c.id), [standard.id], "the product alone picks its default");
+  assert.deepEqual(resolve(w.store, "ceramic mugs wholesale").map((c) => c.id), [wholesale.id]);
+  assert.deepEqual(resolve(w.store, "Ceramic Bowls"), []);
+});
