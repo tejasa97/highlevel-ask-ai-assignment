@@ -48,6 +48,8 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   /** Polymorphic IDs, which name different record types: ID argument path -> the sibling argument holding the type
    *  ("relatedTo.id": "relatedTo.type"). A named lookup there uses that type as its entity. */
   typedIds?: Record<string, string>;
+  /** ID arguments named for their role, not their record type: { keepId: ["contact"] }. A name there is looked up as that type. */
+  idTypes?: Record<string, string[]>;
   /** Alternative input groups for actions whose required inputs are conditional. */
   inputAlternatives?: string[][];
   /** Explicit delivery surface, not an inferred match on words like "post". */

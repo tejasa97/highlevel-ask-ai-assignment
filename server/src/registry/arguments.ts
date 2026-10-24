@@ -4,6 +4,7 @@ import { parseRef, unwrap } from "../core/refs.js";
 
 const ALIASES: Record<string, string[]> = {
   ownerId: ["user"], assigneeId: ["user"], accountManagerId: ["user"], authorId: ["user"], instructorId: ["user"],
+  hostId: ["user"], managerId: ["user"], memberId: ["user"],
   fieldId: ["custom_field"], assetId: ["media_asset"], planId: ["membership_plan"],
   postId: ["blog_post", "community_post"], pageId: ["landing_page"],
 };
@@ -22,6 +23,8 @@ export function argumentEntities(action: RegisteredAction, path: string, args?: 
       return [];
     }
   }
+  const role = action.idTypes?.[path.replace(/\[\d+\]/g, "[]")];
+  if (role) return role;
   const key = path.split(".").at(-1)!;
   return key.endsWith("Id") ? ALIASES[key] ?? [key.replace(/Id$/, "").replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)] : [];
 }

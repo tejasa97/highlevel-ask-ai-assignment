@@ -217,7 +217,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         const { check, lookup } = assessed;
         identityCheck = check.digest;
         identityKey = `${lookup.entity}:${lookup.name.trim().toLowerCase()}`;
-        if (check.count > 1) return { kind: "reply", status: "clarify", text: `I found ${check.count} matching ${lookup.entity.replaceAll("_", " ")} records. ${check.options ? "Which one do you mean?" : "Please give a more specific name or qualifier."}`, options: check.options };
+        if (check.count > 1) return { kind: "reply", status: "clarify", text: `I found ${check.count} matching ${lookup.entity.replaceAll("_", " ")} records. ${check.options ? roleQuestion(registry, d.missing) : "Please give a more specific name or qualifier."}`, options: check.options };
         // The only match can't be used (e.g. a deactivated user): that is the answer, whatever the planner asks next.
         if (check.match?.inactive) return { kind: "reply", status: "clarify", text: `${check.match.name} is ${check.match.inactive}, so I can't use ${lookup.entity.replaceAll("_", " ")} ${check.match.name}. Nothing was changed. Who should I use instead?` };
         if (checkedIdentity.includes(identityKey) || checkedIdentity.length > 1) {
@@ -508,3 +508,10 @@ export async function withDeadline<T>(ms: number, fn: (signal: AbortSignal) => P
 }
 
 const failed = (text: string, infra?: InfraKind): TurnOutcome => ({ kind: "reply", status: "failed", text, ...(infra ? { infra } : {}) });
+
+/** "Which one is the contact that stays?" for an argument named for its role (a merge's keepId); otherwise "Which one do you mean?". */
+function roleQuestion(registry: Registry, missing: SubmitPlan["missing"]): string {
+  const action = missing && registry.get(missing.action);
+  const role = action?.idTypes?.[missing!.argument] && ((action.inputSchema.properties ?? {}) as Record<string, { description?: string }>)[missing!.argument]?.description;
+  return role ? `Which one is ${role}?` : "Which one do you mean?";
+}

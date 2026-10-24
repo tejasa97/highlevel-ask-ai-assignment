@@ -23,6 +23,7 @@ const createNote = defineAction({
   description: "Write a note about a contact, lead, deal, appointment or invoice (e.g. what was said on a call). To log a to-do instead, use M06.A01 Create task.",
   risk: "write",
   input: z.strictObject({ body: z.string().min(1), attachTo: Target.optional().describe("the record it's about"), pinned: z.boolean().optional() }),
+  typedIds: { "attachTo.id": "attachTo.type" },
   output: Note,
   siblings: ["M06.A01"],
   entities: { produces: "note" },
@@ -69,6 +70,7 @@ const searchNotes = defineAction({
   }),
   output: listOf(Note),
   entities: { produces: "note" },
+  typedIds: { recordId: "recordType" },
   example: () => ({ recordType: "contact", recordId: "ct_1" }),
   handler: (a, { store }) => {
     const items = store.find<Note>(
@@ -122,6 +124,7 @@ const attachNote = defineAction({
   description: "Put an existing note on another record too (a contact, lead, deal, appointment or invoice).",
   risk: "write",
   input: z.strictObject({ noteId: NoteId, record: Target }),
+  typedIds: { "record.id": "record.type" },
   output: Note,
   entities: { consumes: ["note"] },
   example: () => ({ noteId: "nt_1", record: { type: "opportunity", id: "op_1" } }),
@@ -139,6 +142,7 @@ const detachNote = defineAction({
   description: "Take a note off one record. The note itself is kept; to remove it entirely, use M07.A05 Delete note.",
   risk: "write",
   input: z.strictObject({ noteId: NoteId, record: Target }),
+  typedIds: { "record.id": "record.type" },
   output: Note,
   entities: { consumes: ["note"] },
   example: () => ({ noteId: "nt_1", record: { type: "contact", id: "ct_1" } }),

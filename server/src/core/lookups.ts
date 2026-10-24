@@ -12,6 +12,34 @@ const AMBIGUOUS = new Set(["fieldId", "postId", "pageId"]);
 const ID_SHAPE = /^[a-z]{1,6}_\d+(_\d+)*$/i;
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
+/** Resolve qualifier holding a record the lookup must skip; set by code, never one of an entity's own qualifiers. */
+export const OTHER_THAN = "otherThan";
+
+/**
+ * One call naming the same record twice ("merge the two Sarah Johnsons": keepId and duplicateId) means two different
+ * records. The qualified lookup goes first ("the Brightside one"), or the first argument when neither is; the others
+ * skip whatever it found. Two unqualified matches still ask which one, for the first argument.
+ */
+function otherThan(steps: Step[], start: number): void {
+  const lowered = steps.slice(start).filter((s): s is Extract<Step, { kind: "resolve" }> => s.kind === "resolve");
+  const groups = new Map<string, typeof lowered>();
+  for (const s of lowered) {
+    const key = `${s.entity}:${s.name.trim().toLowerCase()}`;
+    groups.set(key, [...(groups.get(key) ?? []), s]);
+  }
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    const anchor = group.find((s) => s.whereJson) ?? group[0]!;
+    for (const s of group) {
+      if (s === anchor) continue;
+      s.whereJson = JSON.stringify({ ...(s.whereJson ? JSON.parse(s.whereJson) as object : {}), [OTHER_THAN]: `$${anchor.id}.id` });
+    }
+    // The skipped record must be known first: move the anchor ahead of the call's other lookups.
+    steps.splice(steps.indexOf(anchor), 1);
+    steps.splice(start, 0, anchor);
+  }
+}
+
 export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; errors: string[] } {
   const steps: Step[] = [], errors: string[] = [];
   const ids = new Set(raw.map((s) => s.id));
@@ -82,9 +110,11 @@ export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; 
       }
       return value;
     };
+    const start = steps.length;
     // Parents lower first regardless of JSON key order; children bind to those exact parent results.
     walk(parsedArgs, def.inputSchema, "", false);
     walk(parsedArgs, def.inputSchema, "", true);
+    otherThan(steps, start);
     return JSON.stringify(args);
   };
   for (const step of raw) {
