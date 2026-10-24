@@ -246,9 +246,25 @@ describe("planTurn", () => {
     if (u.out.kind === "reply") assert.match(u.out.text, /Alternatives: Create a task to follow up/);
   });
 
-  test("a reply that doesn't match submit_plan fails the turn", async () => {
-    const { out } = await run("create a task", scripted({ type: "plan" } as SubmitPlan));
+  test("schema issues get one repair, with the rejected JSON and issue paths", async () => {
+    const malformed = { type: "plan" } as SubmitPlan;
+    const planner = scripted(malformed, createTask());
+    const { out, events } = await run("create a task", planner);
+    assert.equal(out.kind, "plan");
+    assert.match(planner.requests[1]!.user, /submit_plan steps:/);
+    assert.match(planner.requests[1]!.user, /<rejected_plan>\{"type":"plan"\}/);
+    assert.ok(events.some((e) => e.type === "compile.errors"));
+    const again = scripted(malformed, malformed);
+    const { out: failed } = await run("create a task", again);
+    assert.ok(failed.kind === "reply" && failed.status === "failed");
+    assert.equal(again.requests.length, 2);
+  });
+
+  test("schema and compilation share one repair budget", async () => {
+    const planner = scripted({ type: "plan" } as SubmitPlan, createTask("M48.A01"));
+    const { out } = await run("create a task", planner);
     assert.ok(out.kind === "reply" && out.status === "failed");
+    assert.equal(planner.requests.length, 2);
   });
 
   test("an answer to a question is retrieved together with the question", async () => {

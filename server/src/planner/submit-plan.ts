@@ -86,11 +86,11 @@ const Step = z.discriminatedUnion("kind", [
     kind: z.literal("op"),
     op: z.enum(["filter", "exclude", "forEach"]),
     in: z.union([z.string(), z.array(z.string())]),
-    whereJson: z.string().nullable(),
-    by: z.string().nullable(),
-    set: z.string().nullable(),
-    roundRobin: z.string().nullable(),
-    do: z.array(ActionCall).nullable(),
+    whereJson: z.string().nullable().default(null),
+    by: z.string().nullable().default(null),
+    set: z.string().nullable().default(null),
+    roundRobin: z.string().nullable().default(null),
+    do: z.array(ActionCall).nullable().default(null),
   }),
 ]);
 

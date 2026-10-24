@@ -156,7 +156,14 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   // or a reply for the user. The repair prompt may itself say "reply search_tools" or "reply unsupported".
   for (;;) {
     const parsed = SubmitPlan.safeParse(reply.json);
-    if (!parsed.success) return failed(`The planner's reply didn't match submit_plan: ${parsed.error.message}`);
+    if (!parsed.success) {
+      const errors = parsed.error.issues.map((i) => `submit_plan ${i.path.join(".") || "(reply)"}: ${i.message}`);
+      emit({ type: "compile.errors", data: { errors } });
+      if (repaired) return failed(`The planner's reply still didn't match submit_plan after one repair:\n${errors.join("\n")}`);
+      repaired = true;
+      reply = await call(repairBlock(user, reply.json, errors), "repair");
+      continue;
+    }
     const d = parsed.data;
 
     if (d.type === "search_tools") {
