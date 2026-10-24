@@ -316,15 +316,24 @@ describe("planTurn", () => {
     assert.ok(offeredIn(planner.requests[1]!).length > offeredIn(planner.requests[0]!).length);
   });
 
-  test("a second search_tools gives up as unsupported", async () => {
-    const planner = scripted(reply({ type: "search_tools", query: "book a flight" }), reply({ type: "search_tools", query: "airline booking" }));
+  test("a second search_tools gets one more round; a third gives up as unsupported", async () => {
+    const search = (query: string) => reply({ type: "search_tools", query });
+    const planner = scripted(search("book a flight"), search("airline booking"), search("flight booking"));
     const { out } = await run("book me a flight to Austin", planner);
     assert.equal(out.kind, "reply");
     if (out.kind === "reply") {
       assert.equal(out.status, "unsupported");
-      assert.match(out.text, /airline booking/);
+      assert.match(out.text, /flight booking/);
     }
-    assert.equal(planner.requests.length, 2);
+    assert.equal(planner.requests.length, 3);
+  });
+
+  test("after a second search_tools, a plan built from the offered actions still runs", async () => {
+    const planner = scripted(reply({ type: "search_tools", query: "create a task" }), reply({ type: "search_tools", query: "create a task" }), createTask());
+    const { out } = await run("remind me to call Ana tomorrow", planner);
+    assert.equal(out.kind, "plan");
+    assert.equal(planner.requests.length, 3);
+    assert.match(planner.requests[2]!.user, /search_tools ran again for "create a task".*filter\/exclude ops/s);
   });
 
   test("an unsupported reply is checked with one more retrieval on its own words, and re-planned if that finds actions", async () => {
