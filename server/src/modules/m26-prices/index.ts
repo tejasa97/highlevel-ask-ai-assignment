@@ -1,8 +1,8 @@
-import { tableResolver } from "../../registry/lookup.js";
+import { namedResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { cents, Limit, listOf, Name, page, requireState } from "../../registry/helpers.js";
-import type { ModuleExports } from "../../registry/registry.js";
+import { cents, Limit, listOf, Name, norm, page, requireState } from "../../registry/helpers.js";
+import type { ModuleExports, Resolver } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Product } from "../m25-products/schema.js";
 import { BILLING_INTERVALS, CURRENCIES, Price } from "./schema.js";
@@ -254,9 +254,31 @@ const archivePrice = defineAction({
   },
 });
 
+/** A price is named by its product as much as its label: "Pro", "Pro Monthly" and "Monthly" all find Pro's monthly price.
+ *  Naming only the product picks its default price, since that is the one used when none is chosen. */
+function priceResolver(): Resolver {
+  type Named = Price & { product: Product | undefined };
+  const base = namedResolver<Named>({
+    exactMention: true,
+    records: (store) => store.all<Price>("prices").map((p) => ({ ...p, product: store.get<Product>("products", p.productId) })),
+    name: (p) => [p.product?.name, p.label].filter(Boolean).join(" "),
+    detail: (p) => `${p.currency} ${p.amount}${p.interval === "one_time" ? "" : ` per ${p.interval}`}`,
+    inactive: (p) => (p.status === "archived" ? "archived" : undefined),
+    qualifiers: { productId: (p) => p.productId, currency: (p) => p.currency, interval: (p) => p.interval },
+  });
+  return Object.assign((store: Store, name: string, where?: Record<string, string>) => {
+    const found = base(store, name, where);
+    const prices = found.map((c) => store.get<Price>("prices", c.id)!);
+    const product = prices[0] && store.get<Product>("products", prices[0].productId);
+    const def = prices.find((p) => p.isDefault);
+    const onlyProduct = product && norm(product.name) === norm(name) && prices.every((p) => p.productId === product.id);
+    return found.length > 1 && onlyProduct && def ? found.filter((c) => c.id === def.id) : found;
+  }, { qualifiers: base.qualifiers, exactMention: base.exactMention });
+}
+
 export default {
   resolvers: {
-    price: tableResolver("prices", "label", {"productId":"productId","currency":"currency","interval":"interval"}),
+    price: priceResolver(),
   },
   actions: [createPrice, getPrice, listPrices, updateLabel, setAmount, setCurrency, setInterval, setTrial, setDefault, archivePrice],
 } satisfies ModuleExports;

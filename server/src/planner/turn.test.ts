@@ -7,7 +7,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { planTurn, renameReusedIds, type TurnDeps, type TurnEvent } from "./turn.js";
+import { planTurn, renameReusedIds, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -171,6 +171,15 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(renameReusedIds(same), same);
   });
 
+  test("a plan that reuses a look step's id still gets the look steps it needs, in order", () => {
+    const step = (id: string, argsJson: string) => ({ id, kind: "action" as const, action: "M21.A02", argsJson });
+    const looks = [{ id: "s1", kind: "resolve" as const, entity: "appointment", name: "Agency plan walkthrough", whereJson: null }, step("s2", '{"appointmentId":"$s1.id"}')] as NonNullable<SubmitPlan["steps"]>;
+    const fixed = withLookSteps(reply({ steps: [{ ...step("s1", '{"appointmentId":"$s2.id"}'), action: "M21.A04" }] }), looks);
+    assert.deepEqual(fixed.steps!.map((s) => s.id), ["s1", "s2", "s1_2"]);
+    const plan = compile(fixed, registry, new Set(["M21.A02", "M21.A04"]));
+    assert.ok(plan.ok, JSON.stringify(plan));
+  });
+
   test("repairing a malformed clarification does not use up the plan's repair", async () => {
     const planner = scripted(reply({ type: "clarify", clarification: "content", question: "Which task?", outcome: change }), { ...tasks("plan"), outcome: change }, { ...createTask(), outcome: change });
     const { out } = await run("Create a task like my other tasks", planner);
@@ -231,6 +240,17 @@ describe("grounded outcomes and clarifications", () => {
     assert.ok(out.kind === "reply" && out.status === "failed");
     assert.equal(planner.requests.length, 2);
     assert.equal(w.store.get<{ name: string }>("tags", "tg_4")!.name, "partner");
+  });
+
+  test("an identity question about a second record gets its own check", async () => {
+    const team = reply({ type: "clarify", clarification: "choice", question: "Which sales team?", missing: missing("M49.A05", "teamId", { userId: { $lookup: { entity: "user", name: "Noah" } } }) });
+    const user = reply({ type: "clarify", clarification: "identity", question: "Which Noah?", missing: missing("M49.A05", "userId", { teamId: "tm_1" }), lookup: { entity: "user", name: "Noah", whereJson: null } });
+    const planner = scripted(team, user, reply({ steps: [{ id: "join", kind: "action", action: "M49.A05", argsJson: '{"teamId":"tm_1","userId":"us_6"}' }] }));
+    const w = world();
+    const out = await planTurn({ message: "Noah will help the sales team", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 3);
+    assert.match(planner.requests[2]!.user, /identity_check.*us_6/);
   });
 
   test("an invalid selector cannot turn into an unchecked identity question after the one retry", async () => {

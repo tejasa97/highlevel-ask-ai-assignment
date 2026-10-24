@@ -47,6 +47,8 @@ export interface TurnInput {
   answering?: string;
   /** Compact typed identities only, not previous records or their mutable contents. */
   records?: { entity: string; id: string; name: string }[];
+  /** Set on a retry: the plan that ran for this message and the errors it failed with, nothing changed. */
+  failed?: string;
 }
 
 export interface Carry {
@@ -144,10 +146,11 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let looked: string | undefined;
   let identityCheck: string | undefined;
   let outcome: Outcome | undefined;
-  let checkedIdentity = false;
+  // Identity checks already run, by "entity:name": one more is allowed for a different record ("Sales" then "Noah").
+  const checkedIdentity: string[] = [];
   const deliverySurfaces = registry.deliverySurfaces();
   const prompt = () =>
-    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, looked, deliverySurfaces, identityCheck, outcome });
+    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, failed: input.failed, looked, deliverySurfaces, identityCheck, outcome });
   const call = async (user: string, label: string) => {
     emit({ type: "planner.request", data: { label, tier: input.tier, system: SYSTEM, user, actions: offered.map((a) => a.id) } });
     const r = await withDeadline(deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }));
@@ -180,7 +183,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     }
 
     if (d.type === "clarify") {
-      let assessed;
+      let assessed, identityKey = "";
       try {
         assessed = assessClarification(d, registry, new Set(offered.map((a) => a.id)), input.message, store);
       } catch (err) {
@@ -197,18 +200,20 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       if (assessed.kind === "identity") {
         const { check, lookup } = assessed;
         identityCheck = check.digest;
+        identityKey = `${lookup.entity}:${lookup.name.trim().toLowerCase()}`;
         if (check.count > 1) return { kind: "reply", status: "clarify", text: `I found ${check.count} matching ${lookup.entity.replaceAll("_", " ")} records. ${check.options ? "Which one do you mean?" : "Please give a more specific name or qualifier."}`, options: check.options };
         // The only match can't be used (e.g. a deactivated user): that is the answer, whatever the planner asks next.
         if (check.match?.inactive) return { kind: "reply", status: "clarify", text: `${check.match.name} is ${check.match.inactive}, so I can't use ${lookup.entity.replaceAll("_", " ")} ${check.match.name}. Nothing was changed. Who should I use instead?` };
-        if (checkedIdentity) {
+        if (checkedIdentity.includes(identityKey) || checkedIdentity.length > 1) {
           if (!check.count) return { kind: "reply", status: "clarify", text: `I couldn't find a matching ${lookup.entity.replaceAll("_", " ")}. Please give a fuller name or qualifier.` };
           return failed("The account lookup found one matching record, but the planner still asked which one. Nothing was changed; please try again.");
         }
       } else {
         identityCheck = assessed.digest;
-        if (checkedIdentity) return failed("Matching account records were already supplied, but the planner still asked for that identity. Nothing was changed; please try again.");
+        identityKey = "";
+        if (checkedIdentity.length) return failed("Matching account records were already supplied, but the planner still asked for that identity. Nothing was changed; please try again.");
       }
-      checkedIdentity = true;
+      checkedIdentity.push(identityKey);
       user = prompt();
       reply = await call(user, "plan after identity check");
       continue;
@@ -288,7 +293,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     const errors = !compiled.ok
       ? compiled.errors
       : compiled.plan.steps.some((s) => callsOf(s).length)
-        ? outcomeErrors(compiled.plan, outcome)
+        ? outcomeErrors(compiled.plan, outcome, { message: input.message, offered })
         : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
     if (compiled.ok && !errors.length) {
       // The reads found nothing to change: say so (once the planner has had the chance to widen its search or answer),
@@ -318,16 +323,27 @@ type Step = NonNullable<SubmitPlan["steps"]>[number];
  * are put in front of it (with the look steps they in turn refer to).
  */
 export function withLookSteps(source: SubmitPlan, looks: Step[]): SubmitPlan {
-  const plan = renameReusedIds(source, new Set(looks.map((l) => l.id)));
-  const defined = new Set((plan.steps ?? []).map((s) => s.id));
+  let plan = renameReusedIds(source, new Set(looks.map((l) => l.id)));
+  const roots = (s: Step) => [...JSON.stringify(s).matchAll(/\$([A-Za-z_]\w*)/g)].map((m) => m[1]!);
+  const own = new Set((plan.steps ?? []).map((s) => s.id));
   const wanted = new Set<string>();
-  const queue = [...(plan.steps ?? [])];
-  for (let s = queue.shift(); s; s = queue.shift())
-    for (const [, root] of JSON.stringify(s).matchAll(/\$([A-Za-z_]\w*)/g)) {
-      const look = looks.find((l) => l.id === root);
-      if (look && !defined.has(root!)) (defined.add(root!), wanted.add(root!), queue.push(look));
-    }
-  return wanted.size ? { ...plan, steps: [...looks.filter((l) => wanted.has(l.id)), ...(plan.steps ?? [])] } : plan;
+  // A look step's own references always mean look steps, even where the plan reuses one of their ids.
+  const queue = (plan.steps ?? []).flatMap(roots).filter((r) => !own.has(r));
+  for (let root = queue.shift(); root; root = queue.shift()) {
+    const look = looks.find((l) => l.id === root);
+    if (look && !wanted.has(root)) (wanted.add(root), queue.push(...roots(look)));
+  }
+  if (!wanted.size) return plan;
+  // The plan's own step that took a needed look id (the look's s1 beside the plan's s1) gets a fresh id.
+  const taken = new Set([...own, ...looks.map((l) => l.id)]);
+  for (const id of [...own].filter((id) => wanted.has(id))) {
+    let n = 2, fresh: string;
+    do { fresh = `${id}_${n++}`; } while (taken.has(fresh));
+    taken.add(fresh);
+    const ref = new RegExp(`\\$${id}(?!\\w)`, "g");
+    plan = { ...plan, steps: (plan.steps ?? []).map((s) => JSON.parse(JSON.stringify(s.id === id ? { ...s, id: fresh } : s).replace(ref, `$${fresh}`)) as Step) };
+  }
+  return { ...plan, steps: [...looks.filter((l) => wanted.has(l.id)), ...(plan.steps ?? [])] };
 }
 
 /**

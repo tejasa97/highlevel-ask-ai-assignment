@@ -4,7 +4,8 @@ import { ActionError, type ActionContext } from "../registry/define.js";
 import { DEFAULT_ACTOR, invoke } from "../registry/invoke.js";
 import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
-import { parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
+import { norm } from "../registry/helpers.js";
+import { collectRefs, parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
 
 // Stage 2: run a compiled plan.
 // - Refs are substituted, then the concrete args are parsed with the action's Zod schema.
@@ -97,6 +98,9 @@ export interface ExecOptions {
 
 export async function execute(plan: CompiledPlan, registry: Registry, ctx: ActionContext, opts: ExecOptions): Promise<RunResult> {
   const outputs = new Map<string, unknown>();
+  // What each search was asked for by name, and how long each filter's input was: for the guards below.
+  const searched = new Map<string, { query: string; entity: string }>();
+  const filteredFrom = new Map<string, number>();
   const results: StepResult[] = [];
   const bad = new Set<string>(); // failed or skipped: dependents are skipped
   // Consecutive independent preflight-capable sends share one approval, including known exclusions.
@@ -120,6 +124,37 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
       return valueAt(outputs.get(ref.root), ref.path, label);
     };
   const refValue = (raw: string, scope?: { item?: unknown; rr?: unknown }) => lookup(scope)(parseRef(raw)!);
+
+  /** A name search that found several records, used as if it found one: ask which, never take the first. */
+  const several = (raw: string): Clarification | undefined => {
+    const ref = parseRef(raw);
+    const search = ref && searched.get(ref.root);
+    const items = (outputs.get(ref?.root ?? "") as { items?: unknown[] } | undefined)?.items;
+    if (!search || !Array.isArray(items) || items.length < 2) return undefined;
+    const candidates = items.slice(0, 20).map((x, i) => ({ id: itemKey(x, i), name: labelOf(x) ?? itemKey(x, i), ...(detailOf(x) ? { detail: detailOf(x) } : {}) }));
+    return { stepId: ref!.root, entity: search.entity, name: search.query, candidates };
+  };
+  const pickedFirst = (step: CStep & { kind: "action" }) => {
+    for (const { ref } of collectRefs(step.call.args)) {
+      const r = parseRef(ref);
+      if (r?.path[0] && "field" in r.path[0] && r.path[0].field === "items" && r.path[1] && "index" in r.path[1]) {
+        const c = several(ref);
+        if (c) return c;
+      }
+    }
+    return undefined;
+  };
+  // Looping a change over a search for one name that found several records with exactly that name.
+  const sameNamed = (raw: string, list: unknown[]) => {
+    const c = several(raw);
+    if (!c || !/\.items$/.test(raw)) return undefined;
+    return list.filter((x) => norm(labelOf(x) ?? "") === norm(c.name)).length >= 2 ? c : undefined;
+  };
+  const ask = (step: CStep, clarification: Clarification) => {
+    results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });
+    emit({ type: "clarify.required", clarification });
+    return finish("needs_clarification", { clarification });
+  };
 
   for (const step of plan.steps) {
     if (step.deps.some((d) => bad.has(d))) {
@@ -175,6 +210,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         case "filter": {
           const list = asList(refValue(step.in), step.in);
           const where = substitute(step.where, lookup()) as Record<string, unknown>;
+          filteredFrom.set(step.id, list.length);
           done(list.filter((x) => matches(x, where)));
           break;
         }
@@ -192,6 +228,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             fail(args.error);
             break;
           }
+          const picked = step.call.action.risk === "read" ? undefined : pickedFirst(step);
+          if (picked) return ask(step, picked);
           if (step.call.action.preflight && !checkedActions.has(step.id)) {
             const group: { step: CStep; calls: ConcreteCall[]; error?: StepError }[] = [];
             for (const next of plan.steps.slice(plan.steps.indexOf(step))) {
@@ -219,7 +257,11 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           }
           const r = runItem(ctx, opts.executionId, step.id, "-", [{ call: step.call, args: args.value }]);
           if (r.status === "failed") fail(r.error!);
-          else done(r.results![0], r.replayed ? { items: [r] } : {});
+          else {
+            const query = args.value.query ?? args.value.name;
+            if (step.call.action.risk === "read" && typeof query === "string" && query.trim()) searched.set(step.id, { query, entity: step.call.action.entities?.produces ?? "record" });
+            done(r.results![0], r.replayed ? { items: [r] } : {});
+          }
           break;
         }
 
@@ -228,6 +270,14 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           const rr = step.roundRobin ? asList(refValue(step.roundRobin), step.roundRobin) : null;
           if (rr && rr.length === 0 && list.length > 0) {
             fail({ code: "INVALID", message: `round-robin list ${step.roundRobin} is empty, so there is no one to assign to` });
+            break;
+          }
+          const writes = step.calls.some((c) => c.action.risk !== "read");
+          const duplicate = writes ? sameNamed(step.in, list) : undefined;
+          if (duplicate) return ask(step, duplicate);
+          const root = parseRef(step.in)?.root;
+          if (writes && list.length === 0 && root && filteredFrom.get(root)) {
+            fail({ code: "NOT_FOUND", message: `the filter ${root} kept none of the ${filteredFrom.get(root)} records found, so nothing was changed; check its conditions against the found records` });
             break;
           }
           // Resolve every item's args first: the preview shows exactly these, and the hash binds them.
@@ -422,6 +472,14 @@ function labelOf(item: unknown): string | undefined {
   const o = item as Record<string, unknown> | null;
   const name = o?.name ?? o?.title;
   return typeof name === "string" ? name : undefined;
+}
+
+/** A couple of short descriptive fields, so same-named records can be told apart: "Austin, active". */
+function detailOf(item: unknown): string | undefined {
+  const o = (item ?? {}) as Record<string, unknown>;
+  const skip = /^(id|name|title|createdAt|updatedAt)$|Id$|At$/;
+  const parts = Object.entries(o).filter(([k, v]) => !skip.test(k) && typeof v === "string" && v && v.length <= 40).map(([, v]) => v as string);
+  return parts.slice(0, 2).join(", ") || undefined;
 }
 
 function toError(e: unknown): StepError {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { failure, testWorld } from "../../testkit.js";
+import { failure, registry, testWorld } from "../../testkit.js";
 
 async function samePrice() {
   const w = await testWorld();
@@ -129,4 +129,16 @@ test("M26.A04 label is changed", async () => {
 test("M26.A06 currency is changed", async () => {
   const { w, price } = await monthlyPrice();
   assert.equal(w.call("M26.A06", { priceId: price.id, currency: "GBP" }).currency, "GBP");
+});
+
+test("a price is found by its product's name: the product alone picks its default, a shared label is ambiguous", async () => {
+  const w = await testWorld();
+  const resolve = (await registry()).resolver("price")!;
+  const pro = w.f.product({ name: "Pro Plan" });
+  const monthly = w.f.price({ productId: pro.id, label: "Monthly", interval: "month" });
+  const yearly = w.f.price({ productId: pro.id, label: "Yearly", interval: "year", isDefault: false });
+  w.f.price({ productId: w.f.product({ name: "Team" }).id, label: "Monthly", interval: "month" });
+  assert.deepEqual(resolve(w.store, "Pro Plan").map((c) => c.id), [monthly.id]);
+  assert.deepEqual(resolve(w.store, "Pro Plan Yearly").map((c) => c.id), [yearly.id]);
+  assert.equal(resolve(w.store, "Monthly").length, 2);
 });

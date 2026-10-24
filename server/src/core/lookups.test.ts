@@ -164,4 +164,21 @@ describe("model-independent named arguments", () => {
     const list = compiled(plan([action("l", "M06.A03", { relatedType: "contact", relatedId: lookup("contact", "Marco Patel") })]));
     assert.deepEqual(list.steps.map((s) => s.kind), ["resolve", "action"]);
   });
+
+  test("records that belong to a contact are found by number, or by whose they are", async () => {
+    const ctx = world();
+    const elena = ctx.f.contact({ name: "Elena Costa" });
+    const other = ctx.f.contact({ name: "Omar Haddad" });
+    const quote = ctx.f.quote({ number: "QT-9139", contactId: elena.id });
+    ctx.f.quote({ number: "QT-9140", contactId: other.id });
+    const resolve = registry.resolver("quote")!;
+    assert.deepEqual(resolve(ctx.store, "QT-9139").map((c) => c.id), [quote.id]);
+    assert.deepEqual(resolve(ctx.store, "Elena Costa's quote").map((c) => c.id), [quote.id]);
+    assert.deepEqual(resolve(ctx.store, "quote", { contact: "Elena Costa" }).map((c) => c.id), [quote.id]);
+    ctx.f.quote({ number: "QT-9141", contactId: elena.id });
+    assert.equal(resolve(ctx.store, "Elena Costa").length, 2);
+    // A number in an ID field becomes a lookup, never an invented id.
+    assert.deepEqual(compiled(plan([action("get", "M27.A02", { quoteId: "QT-9139" })])).steps.map((s) => s.kind), ["resolve", "action"]);
+  });
 });
+
