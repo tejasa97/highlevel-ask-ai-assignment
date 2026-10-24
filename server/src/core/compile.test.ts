@@ -86,6 +86,24 @@ describe("forEach over a literal list", () => {
   });
 });
 
+describe("action ids", () => {
+  test("an id followed by exactly its own name is that id; any other trailing words are not", () => {
+    const r = compile(plan([action("s1", "M06.A01 Create task", { title: "Prep" })]), registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    assert.equal(r.ok && r.plan.steps[0]!.kind === "action" ? r.plan.steps[0]!.call.action.id : "", "M06.A01");
+    const wrong = compile(plan([action("s1", "M06.A01 Delete everything", { title: "Prep" })]), registry);
+    assert.ok(!wrong.ok);
+    assert.match(wrong.errors.join("\n"), /unknown action M06\.A01 Delete everything/);
+  });
+
+  test("malformed argsJson says where the JSON breaks, including past the excerpt", () => {
+    const step: Step = { id: "s1", kind: "action", action: "M06.A01", argsJson: '{"title":"Call every lead from the spring campaign about the renewal pricing"}}' };
+    const r = compile(plan([step]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /not valid JSON: .*position \d+.*…"e renewal pricing\\"}}"/);
+  });
+});
+
 describe("ref errors name the legal steps", () => {
   test("resolve path errors explain the singleton output without broadening it", () => {
     for (const ref of ["$s1.items[0].id", "$s1.userId", "$s1.memberIds"]) {

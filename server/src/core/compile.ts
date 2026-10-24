@@ -250,17 +250,24 @@ function parseObject(s: string | null, what: string, err: (m: string) => void): 
     err(`${what} is required here`);
     return null;
   }
+  let why = "";
   try {
     const v = JSON.parse(s);
     if (v && typeof v === "object" && !Array.isArray(v)) return v as Record<string, unknown>;
-  } catch {
-    // fall through
+  } catch (e) {
+    // The parser's message names the position, which a stray brace past the 80-character excerpt needs.
+    why = ` (not valid JSON: ${(e as Error).message})`;
   }
-  err(`${what} must be a JSON object string, got ${JSON.stringify(s).slice(0, 80)}`);
+  const quoted = JSON.stringify(s);
+  err(`${what} must be a JSON object string${why}, got ${quoted.slice(0, 80)}${quoted.length > 80 ? `…${JSON.stringify(s.slice(-20))}` : ""}`);
   return null;
 }
 
 function compileCall(id: string, argsJson: string, registry: Registry, scope: Scope, err: (m: string) => void): Call | null {
+  // Small models copy the listing line, "M21.A03 Search appointments": the id followed by exactly its own name is the id.
+  const [head, ...rest] = id.trim().split(/\s+/);
+  const named = rest.length && registry.get(head!);
+  if (!registry.get(id) && named && rest.join(" ").toLowerCase() === named.name.toLowerCase()) id = head!;
   const action = registry.get(id);
   const known = CATALOG_ACTIONS.get(id);
   if (!action) {
