@@ -185,6 +185,28 @@ describe("planTurn", () => {
       assert.match(planner.requests[2]!.user, /you already looked/);
     });
 
+    test("an answer after looking still repairs an unfulfilled write request", async () => {
+      const planner = scripted(listTasks, reply({ type: "answer", text: "I found the existing task." }), createTask());
+      let looks = 0;
+      const { out, events } = await run("create a task like the Ana one", planner, {}, async () => (looks++, [{ id: "s1", output: { items: [{ title: "Call Ana" }], total: 1 } }]));
+      assert.equal(out.kind, "plan");
+      assert.equal(looks, 1);
+      assert.equal(planner.requests.length, 3);
+      assert.match(planner.requests[2]!.user, /the plan only finds records; add the action that does it/);
+      assert.match(planner.requests[2]!.user, /<looked>/);
+      assert.ok(events.some((e) => e.type === "compile.errors"));
+      assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A01"));
+    });
+
+    test("incomplete answers after a look share the one-repair budget", async () => {
+      const answer = reply({ type: "answer" as const, text: "I can create it if you want." });
+      const planner = scripted(listTasks, answer, answer);
+      const { out } = await run("create a task like the Ana one", planner, {}, async () => [{ id: "s1", output: { items: [], total: 0 } }]);
+      assert.ok(out.kind === "reply" && out.status === "failed");
+      assert.equal(planner.requests.length, 3);
+      assert.match(out.text, /still incomplete after one repair/);
+    });
+
     test("an answer after a look runs the look as the plan, so the reply is the summary of the reads", async () => {
       const planner = scripted(listTasks, reply({ type: "answer", text: "Ana has one task, owned by us_2." }));
       const { out } = await run("show me Ana's tasks", planner, {}, async () => [{ id: "s1", output: { items: [], total: 0 } }]);
