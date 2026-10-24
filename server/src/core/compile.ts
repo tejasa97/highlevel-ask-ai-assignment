@@ -67,7 +67,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
       continue;
     }
     const deps = new Set<string>();
-    const scope: Scope = { types, deps, at, item: null, rr: null, offered };
+    const scope: Scope = { types, deps, at, item: null, rr: null, prev: null, offered };
     const err = (m: string) => errors.push(`${at}: ${m}`);
 
     // A step with errors still gets its output type, so later steps are checked against it
@@ -134,9 +134,12 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
             rr = (unwrap(t).items ?? ANY) as JsonSchema;
           }
           const inner: Scope = { ...scope, item, rr };
-          const calls = s.do.map((c, i) =>
-            compileCall(c.action, c.argsJson, registry, { ...inner, at: `${at} do[${i}]` }, (m) => errors.push(`${at} do[${i}]: ${m}`)),
-          );
+          // $prev in a call is what the call before it in "do" returned for the same item.
+          const calls: (Call | null)[] = [];
+          s.do.forEach((c, i) => {
+            const prev = i > 0 ? (calls[i - 1]?.action.outputSchema ?? ANY) : null;
+            calls.push(compileCall(c.action, c.argsJson, registry, { ...inner, prev, at: `${at} do[${i}]` }, (m) => errors.push(`${at} do[${i}]: ${m}`)));
+          });
           if (calls.some((c) => !c)) continue;
           const out = arrayOf({ type: "object", properties: { item, results: arrayOf(ANY) } });
           steps.push({ id: s.id, kind: "forEach", in: s.in, roundRobin: s.roundRobin, calls: calls as Call[], deps: [...deps], type: out });
@@ -159,6 +162,7 @@ interface Scope {
   at: string;
   item: JsonSchema | null;
   rr: JsonSchema | null;
+  prev: JsonSchema | null;
   offered?: ReadonlySet<string>;
 }
 
@@ -166,7 +170,7 @@ interface Scope {
 function refType(raw: string, scope: Scope, err: (m: string) => void): JsonSchema | null {
   const ref = parseRef(raw);
   if (!ref) {
-    err(`"${raw}" is not a valid $ref (forms: $s1.items, $s1.items[*].id, $item.id, $rr.userId)`);
+    err(`"${raw}" is not a valid $ref (forms: $s1.items, $s1.items[*].id, $item.id, $rr.userId, $prev.id)`);
     return null;
   }
   const root = rootType(ref, scope, err);
@@ -184,6 +188,10 @@ function rootType(ref: Ref, scope: Scope, err: (m: string) => void): JsonSchema 
     const t = ref.root === "item" ? scope.item : scope.rr;
     if (!t) err(ref.root === "item" ? `$item only works inside forEach "do"` : `$rr needs "roundRobin" on the forEach`);
     return t;
+  }
+  if (ref.root === "prev") {
+    if (!scope.prev) err(`$prev is the previous call's output; it only works in the second or later call of a forEach "do"`);
+    return scope.prev;
   }
   if (ref.root === "ctx") {
     err(`$ctx is not available yet`);
