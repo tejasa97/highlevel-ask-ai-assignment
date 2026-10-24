@@ -7,7 +7,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { planTurn, type TurnDeps, type TurnEvent, withLookSteps } from "./turn.js";
+import { inventedIds, oneOfSameNamed, planTurn, type TurnDeps, type TurnEvent, withLookSteps } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -45,7 +45,7 @@ function scripted(...replies: SubmitPlan[]): Planner & { requests: PlanRequest[]
   };
 }
 
-async function run(message: string, planner: Planner, extra: { answering?: string } = {}, look?: TurnDeps["look"]) {
+async function run(message: string, planner: Planner, extra: { answering?: string; context?: string } = {}, look?: TurnDeps["look"]) {
   const events: TurnEvent[] = [];
   const out = await planTurn({ message, tier: "fast", ...extra }, { registry, retriever, planner, clock: frozenClock(), look }, (e) => events.push(e));
   return { out, events };
@@ -67,6 +67,45 @@ describe("compile against what was offered", () => {
 
   test("without an offered set, any implemented action compiles", () => {
     assert.ok(compile(createTask(), registry).ok);
+  });
+});
+
+describe("invented ids", () => {
+  const ids = (args: object, shown: string, exists?: (id: string) => boolean) => {
+    const r = compile(reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "Call", ...args }) }] }), registry);
+    assert.ok(r.ok, JSON.stringify(r));
+    return inventedIds(r.plan, shown, exists).map((e) => e.match(/^"([^"]+)"/)![1]);
+  };
+
+  test("an id-valued arg that was never shown and no record has is flagged", () => {
+    assert.deepEqual(ids({ assigneeId: "us_sarah_johnson_1" }, "create a task for Sarah"), ["us_sarah_johnson_1"]);
+  });
+
+  test("ids from the prompt or the store pass, and so do non-id values", () => {
+    assert.deepEqual(ids({ assigneeId: "us_2" }, "records: user us_2 \"Raj\""), []);
+    assert.deepEqual(ids({ assigneeId: "us_2" }, "", (id) => id === "us_2"), []);
+    assert.deepEqual(ids({ priority: "high" }, ""), []);
+  });
+});
+
+describe("a write by id to one of several same-named records", () => {
+  const sarahs = [{ name: "Sarah Johnson", entity: "contact", count: 2 }];
+  const owner = (contactIds: string[]) => {
+    const steps = contactIds.map((id, i) => ({ id: `s${i + 1}`, kind: "action" as const, action: "M01.A07", argsJson: JSON.stringify({ contactId: id, ownerId: "us_5" }) }));
+    const r = compile(reply({ steps }), registry);
+    assert.ok(r.ok, JSON.stringify(r));
+    return r.plan;
+  };
+
+  test("asks which one when the request doesn't say", () => {
+    const q = oneOfSameNamed(owner(["ct_31"]), sarahs, registry, world().store, "make Aisha the owner of Sarah Johnson");
+    assert.match(q?.text ?? "", /More than one contact matches "Sarah Johnson": .*Brightside.*Which one\?/);
+    assert.equal(q?.options.length, 2);
+  });
+
+  test("passes when the request picks one, or the plan writes to all of them", () => {
+    assert.equal(oneOfSameNamed(owner(["ct_31"]), sarahs, registry, world().store, "make Aisha the owner of Sarah Johnson\nthe one at Brightside"), undefined);
+    assert.equal(oneOfSameNamed(owner(["ct_31", "ct_32"]), sarahs, registry, world().store, "make Aisha the owner of both Sarah Johnsons"), undefined);
   });
 });
 
@@ -176,13 +215,22 @@ describe("planTurn", () => {
       assert.match(events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : [])).join("\n"), /M06\.A01 is a write action; a look may only read/);
     });
 
-    test("only one look per turn", async () => {
-      const planner = scripted(listTasks, listTasks, createTask());
+    test("at most two looks per turn, and the second sees the first's results", async () => {
+      const planner = scripted(listTasks, listTasks, listTasks, createTask());
       let looks = 0;
-      const { out } = await run("create a task like the Ana one", planner, {}, async () => (looks++, []));
+      const { out } = await run("create a task like the Ana one", planner, {}, async () => (looks++, [{ id: "s1", output: { items: [], total: looks } }]));
       assert.equal(out.kind, "plan");
-      assert.equal(looks, 1);
-      assert.match(planner.requests[2]!.user, /you already looked/);
+      assert.equal(looks, 2);
+      assert.match(planner.requests[1]!.user, /<looked>/);
+      assert.match(planner.requests[3]!.user, /You already looked twice/);
+    });
+
+    test("asking for a third look is nudged without spending the repair", async () => {
+      const bad = reply({ type: "plan", steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$s0" }) }] });
+      const planner = scripted(listTasks, listTasks, listTasks, bad, createTask());
+      const { out } = await run("create a task like the Ana one", planner, {}, async () => [{ id: "s1", output: { items: [], total: 0 } }]);
+      assert.equal(out.kind, "plan", JSON.stringify(out));
+      assert.equal(planner.requests.length, 5);
     });
 
     test("an answer after looking still repairs an unfulfilled write request", async () => {
@@ -316,6 +364,18 @@ describe("planTurn", () => {
     };
     assert.equal(await picked(), false, "the bare answer alone shouldn't find the task action");
     assert.equal(await picked("create a task to call her"), true);
+  });
+
+  test("an answer with nothing to answer from is nudged once to read; with <context> it stands", async () => {
+    const answer = reply({ type: "answer", text: "It has not breached." });
+    const nudged = scripted(answer, answer);
+    const { out } = await run("has task tk_1 gone overdue?", nudged);
+    assert.ok(out.kind === "reply" && out.status === "answer", JSON.stringify(out));
+    assert.equal(nudged.requests.length, 2);
+    assert.match(nudged.requests[1]!.user, /there is no <context> or <looked> to answer from/);
+    const told = scripted(answer);
+    await run("has task tk_1 gone overdue?", told, { context: "user: is tk_1 overdue?\nassistant: No, it's due Friday." });
+    assert.equal(told.requests.length, 1);
   });
 
   test("the prompt names built and unbuilt matches separately", async () => {
