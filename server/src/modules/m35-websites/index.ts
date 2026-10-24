@@ -116,7 +116,7 @@ const renameWebsite = defineAction({
 const addPage = defineAction({
   id: "M35.A05",
   description:
-    "Add a page to a website. The slug must be unique on that site (another site may reuse it). Optionally point the page at an existing landing page. To make it the home page, use M35.A06.",
+    "Add a page to a website. The slug must be unique on that site (another site may reuse it). Optionally point the page at an existing landing page. Returns the website with the new page last in pages. To make it the home page, use M35.A06.",
   risk: "write",
   input: z.strictObject({
     websiteId: WebsiteId,

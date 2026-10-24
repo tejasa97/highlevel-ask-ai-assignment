@@ -243,3 +243,20 @@ test("a new ticket in the bulk target set invalidates the old approval before an
   assert.equal(changed.pending!.count, first.pending!.count + 1);
   assert.equal(w.store.all("emails").length, before);
 });
+
+test("a page added to a new website is made its home page through pages[-1], then the site publishes", async () => {
+  const w = world();
+  const p = compiled([
+    action("s1", "M35.A01", { name: "Bakery Site" }),
+    action("s2", "M35.A05", { websiteId: "$s1.id", title: "Home", slug: "home" }),
+    action("s3", "M35.A06", { websiteId: "$s1.id", pageId: "$s2.pages[-1].id" }),
+    action("s4", "M35.A09", { websiteId: "$s1.id" }),
+  ]);
+  const first = await execute(p, registry, w, { executionId: "site" });
+  assert.equal(first.status, "awaiting_confirmation");
+  const r = await execute(p, registry, w, { executionId: "site", approvals: [first.pending!] });
+  assert.equal(r.status, "done", JSON.stringify(r));
+  const site = w.store.all<{ name: string; homePageId: string; pages: { id: string }[]; status: string }>("websites").find((x) => x.name === "Bakery Site")!;
+  assert.equal(site.homePageId, site.pages.at(-1)!.id);
+  assert.equal(site.status, "published");
+});

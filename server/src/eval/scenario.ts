@@ -18,7 +18,7 @@ const Match = z.record(z.string(), z.unknown());
 const Expect = z.strictObject({
   /** Allowed statuses of the last reply. */
   status: z.array(z.string()).optional(),
-  /** Planned action ids, over all turns. */
+  /** Planned action ids, over all turns. "M05.A02|M05.A03" in includes is met by either, for reads that answer equally well. */
   actions: z.strictObject({ includes: z.array(z.string()).default([]), excludes: z.array(z.string()).default([]) }).optional(),
   /** For each entry, some call of that action ran with args containing `match` (see matches()). */
   args: z.array(z.strictObject({ action: z.string(), match: Match })).default([]),
@@ -53,6 +53,8 @@ export const ScenarioSchema = z.strictObject({
         approve: z.boolean().default(true),
         /** Allowed statuses of this turn's last reply. */
         status: z.array(z.string()).optional(),
+        /** What this user says if the assistant asks a question here; without it they say to go ahead (DEFAULT_ANSWER). */
+        answer: z.string().optional(),
       }),
     )
     .min(1),
@@ -100,6 +102,8 @@ export interface TurnTrace {
   /** From sending the message to the first reply (the approval prompt, when there is one). */
   firstReplyMs: number;
   ms: number;
+  /** The one clarifying question the run answered, and the answer it got. */
+  clarified?: { question: string; answer: string };
 }
 
 export interface RunMetrics {
@@ -108,6 +112,8 @@ export interface RunMetrics {
   plannerMs: number;
   plannerRounds: number;
   calls: number;
+  /** Clarifying questions answered (at most one a run). */
+  clarifications?: number;
   usage: Usage;
 }
 
@@ -134,6 +140,13 @@ export interface RunDeps {
 }
 
 const MAX_APPROVALS = 5;
+/**
+ * A run may ask one clarifying question it wasn't scripted to ask: the user answers it and the run is graded
+ * on what happens next, as with a real user. A question for something the request already gave gets this reply,
+ * so it can still succeed, but costs a turn and is counted (metrics.clarifications).
+ */
+export const DEFAULT_ANSWER = "That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say.";
+
 
 export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioRun> {
   const w = world();
@@ -182,13 +195,23 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
         if (data.infra) trace.infra = data.infra;
       }
     };
-    try {
-      await chat.ask(t.user, deps.tier ?? "strong", "us_1", emit);
+    const approve = async () => {
       while (pendingTurn && trace.approvals < MAX_APPROVALS) {
         const id = pendingTurn;
         pendingTurn = undefined;
         trace.approvals++;
         await chat.confirm(id, t.approve, "us_1", emit);
+      }
+    };
+    const last = t === s.turns.at(-1);
+    const askedFor = (t.status ?? []).includes("clarify") || (last && (s.expect.status ?? []).includes("clarify"));
+    try {
+      await chat.ask(t.user, deps.tier ?? "strong", "us_1", emit);
+      await approve();
+      if (trace.status === "clarify" && !askedFor && !turns.some((x) => x.clarified)) {
+        trace.clarified = { question: trace.reply, answer: t.answer ?? DEFAULT_ANSWER };
+        await chat.ask(trace.clarified.answer, deps.tier ?? "strong", "us_1", emit);
+        await approve();
       }
     } catch (err) {
       trace.errors.push(err instanceof Error ? err.message : String(err));
@@ -212,6 +235,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       plannerMs,
       plannerRounds: turns.reduce((a, t) => a + t.plannerRounds, 0),
       calls: turns.reduce((a, t) => a + t.calls.length, 0),
+      clarifications: turns.filter((t) => t.clarified).length,
       usage,
     },
     models,
@@ -233,7 +257,7 @@ export function check(s: Scenario, turns: TurnTrace[], changes: number, query: (
   // A read the planner ran in a look round never reaches the final plan, but it did the work the scenario asks for.
   const executed = new Set(turns.flatMap((t) => t.calls.filter((c) => !c.error).map((c) => c.action)));
   for (const id of e.actions?.includes ?? []) {
-    if (!planned.has(id) && !executed.has(id)) out.push({ kind: "action-missing", detail: `${id} not planned (${offered.has(id) ? "was offered" : "not offered"}; planned: ${[...planned].join(", ") || "nothing"})` });
+    if (!id.split("|").some((x) => planned.has(x) || executed.has(x))) out.push({ kind: "action-missing", detail: `${id} not planned (${id.split("|").some((x) => offered.has(x)) ? "was offered" : "not offered"}; planned: ${[...planned].join(", ") || "nothing"})` });
   }
   for (const id of e.actions?.excludes ?? []) if (planned.has(id)) out.push({ kind: "action-unwanted", detail: `${id} was planned` });
 

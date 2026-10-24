@@ -73,7 +73,7 @@ const results = variants.map((v) => {
     return {
       id: s.id,
       need,
-      missing: need.filter((id) => !offered.has(id)),
+      missing: need.filter((id) => !id.split("|").some((x) => offered.has(x))),
       picks: picked.map((p) => p.length),
       chars: picked.map(
         (p) =>
