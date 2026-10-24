@@ -22,6 +22,12 @@ test("a product's line takes its name and its only price; several prices and no 
   assert.equal(failure(() => w.call("M28.A04", { invoiceId: inv.id, productId: pack.id })).code, "CONFLICT");
   assert.equal(w.call("M28.A04", { invoiceId: inv.id, productId: pack.id, unitPrice: 1800 }).total, 4200);
   assert.equal(failure(() => w.call("M28.A04", { invoiceId: inv.id, quantity: 1 })).code, "INVALID");
+  // An unpriced line named exactly like a product is that product's line.
+  const retainer = w.f.product({ name: "Retainer" });
+  w.f.price({ productId: retainer.id, label: "Monthly", amount: 500 });
+  const named = w.call("M28.A01", { contactId: "ct_31", lineItems: [{ description: "Retainers", quantity: 2 }] });
+  assert.deepEqual([named.total, named.lineItems[0]?.description], [1000, "Retainer"]);
+  assert.equal(failure(() => w.call("M28.A01", { contactId: "ct_31", lineItems: [{ description: "Audit" }] })).code, "INVALID");
 });
 
 test("only drafts take line items or edits; updating needs a field", async () => {

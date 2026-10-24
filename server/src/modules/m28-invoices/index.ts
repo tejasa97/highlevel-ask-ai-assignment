@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, contains, inDateRange, Limit, listOf, notPast, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { atLeastOne, contains, inDateRange, Limit, listOf, norm, notPast, page, requirePermission, requireState, singular } from "../../registry/helpers.js";
 import { ownedResolver } from "../../registry/lookup.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import { addDays, localDate } from "../../store/clock.js";
@@ -28,8 +28,13 @@ const LineInput = z.strictObject({
 });
 type LineInput = z.infer<typeof LineInput>;
 
-/** A line as given, or filled from its product: the product's name and its default (or only active) USD price. */
+/** A line as given, or filled from its product: the product's name and its default (or only active) USD price.
+ *  An unpriced line whose description is exactly one product's name ("Setup Packages") is that product's line. */
 function lineOf(store: Store, i: LineInput): LineItem {
+  if (!i.productId && i.description !== undefined && i.unitPrice === undefined) {
+    const named = store.find<Product>("products", (p) => singular(norm(p.name)) === singular(norm(i.description!)));
+    if (named.length === 1) return lineOf(store, { ...i, productId: named[0]!.id, description: undefined });
+  }
   if (!i.productId) {
     if (i.description === undefined || i.unitPrice === undefined) throw new ActionError("INVALID", "A line item needs a description and unitPrice, or a productId");
     return line({ description: i.description, quantity: i.quantity, unitPrice: i.unitPrice });
