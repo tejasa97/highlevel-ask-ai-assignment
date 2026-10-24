@@ -11,17 +11,22 @@ import type { Candidate } from "./registry.js";
 // A possessive is dropped before punctuation is, so "Sarah Johnson's walkthrough" names the same words as "Sarah Johnson walkthrough".
 export const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/['\u2019]s\b/gu, "").replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
 
+// Words that name the kind of record, not the record: dropped in the last-resort match.
+const TYPE_WORDS = new Set(["the", "my", "campaign", "pipeline", "funnel", "workflow", "form", "report", "tag", "calendar", "template", "segment", "list", "record", "page", "survey", "course", "deal", "task", "invoice"]);
+
 /**
  * Name matching for resolvers: exact (case-insensitive) beats a whole-word match, which beats a prefix.
  * Last, a name of two or more words that the request contains whole, with words of its own around it:
  * "Zoe Costa at Umbrella" names the contact "Zoe Costa"; "Mailbox delivery support" names "Mailbox delivery".
+ * Last of all, the request with its record-type words dropped ("fall webinar campaign" → "fall webinar"), whole-word matched.
  * Returns only the best tier, so "Jo" doesn't match "Jo Park" and "Joan Silva" equally when "Jo Park" is exact.
  */
 export function matchByName<T>(docs: T[], name: string, label: (d: T) => string): T[] {
   const q = norm(name);
   if (!q) return [];
   const qWords = new Set(q.split(" "));
-  const tiers: T[][] = [[], [], [], []];
+  const core = q.split(" ").filter((w) => !TYPE_WORDS.has(w));
+  const tiers: T[][] = [[], [], [], [], []];
   for (const d of docs) {
     const n = norm(label(d));
     const words = n.split(" ");
@@ -29,6 +34,7 @@ export function matchByName<T>(docs: T[], name: string, label: (d: T) => string)
     else if (words.includes(q) || q.split(" ").every((w) => words.includes(w))) tiers[1]!.push(d);
     else if (words.some((w) => w.startsWith(q))) tiers[2]!.push(d);
     else if (words.length >= 2 && words.every((w) => qWords.has(w))) tiers[3]!.push(d);
+    else if (core.length && core.length < qWords.size && core.every((w) => words.includes(w))) tiers[4]!.push(d);
   }
   return tiers.find((t) => t.length > 0) ?? [];
 }
@@ -54,8 +60,13 @@ export function inDateRange(iso: string, from?: string, to?: string): boolean {
   return (!from || day >= from) && (!to || day <= to);
 }
 
+/** A substring, or failing that every word of `needle` as a whole word of `hay`: "Soylent Pro" finds "Soylent - Pro plan". */
 export function contains(hay: unknown, needle: string): boolean {
-  return typeof hay === "string" && hay.toLowerCase().includes(needle.toLowerCase());
+  if (typeof hay !== "string") return false;
+  if (hay.toLowerCase().includes(needle.toLowerCase())) return true;
+  const have = new Set(norm(hay).split(" "));
+  const words = norm(needle).split(" ").filter(Boolean);
+  return words.length > 1 && words.every((w) => have.has(w));
 }
 
 /** Search output: `items` is capped at `limit`, `total` counts every match. */
