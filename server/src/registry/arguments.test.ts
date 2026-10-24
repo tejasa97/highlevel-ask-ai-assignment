@@ -19,9 +19,22 @@ test("all module argument bindings and input groups point at implemented schema 
         assert.ok(argumentEntities(action, parent).some((e) => registry.resolver(e)));
       }
     }
+    for (const [path, entities] of Object.entries(action.idTypes ?? {})) {
+      assert.equal(argumentAt(action, {}, path).schema.type, "string", `${action.id}: ${path}`);
+      for (const entity of entities) assert.ok(registry.resolver(entity), `${action.id}: ${path} → ${entity}`);
+    }
     for (const group of action.inputAlternatives ?? []) {
       assert.ok(group.length);
       for (const field of group) assert.ok(Object.hasOwn(action.inputSchema.properties as object, field), `${action.id}: ${field}`);
     }
   }
+});
+
+test("ID arguments named for their role (keepId, hostId) name their record type", async () => {
+  const registry = await loadRegistry();
+  assert.deepEqual(argumentEntities(registry.get("M01.A06")!, "keepId"), ["contact"]);
+  assert.deepEqual(argumentEntities(registry.get("M02.A09")!, "duplicateId"), ["company"]);
+  assert.deepEqual(argumentEntities(registry.get("M08.A09")!, "targetTagId"), ["tag"]);
+  assert.deepEqual(argumentEntities(registry.get("M21.A01")!, "hostId"), ["user"]);
+  assert.deepEqual(argumentEntities(registry.get("M07.A03")!, "recordId", { recordType: "lead" }), ["lead"]);
 });

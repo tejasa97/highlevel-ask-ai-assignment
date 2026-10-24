@@ -214,6 +214,7 @@ const removeAttendee = defineAction({
   description: "Remove an invited attendee (not the main contact or lead) from a booked appointment.",
   risk: "write",
   input: z.strictObject({ appointmentId: AppointmentId, attendeeId: z.string().describe("the attendee's contact, lead or user id") }),
+  idTypes: { attendeeId: ["contact", "lead", "user"] },
   output: Appointment,
   entities: { consumes: ["appointment"] },
   example: (f) => ({ appointmentId: f.appointment({ attendees: [{ kind: "contact", id: "ct_31", name: "Sarah Johnson", noShow: false }, { kind: "user", id: "us_4", name: "Tom", noShow: false }] }).id, attendeeId: "us_4" }),

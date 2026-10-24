@@ -6,6 +6,7 @@ import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
 import { norm } from "../registry/helpers.js";
 import { normalizeDateTimes } from "./datetimes.js";
+import { OTHER_THAN } from "./lookups.js";
 import { collectRefs, parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
 
 // Stage 2: run a compiled plan.
@@ -216,8 +217,9 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     try {
       switch (step.kind) {
         case "resolve": {
-          const where = substitute(step.where ?? {}, lookup()) as Record<string, string>;
-          const all = registry.resolver(step.entity)!(ctx.store, step.name, where);
+          const { [OTHER_THAN]: other, ...where } = substitute(step.where ?? {}, lookup()) as Record<string, string>;
+          // The same name in two arguments of one call (merge the two Sarah Johnsons) means two different records.
+          const all = registry.resolver(step.entity)!(ctx.store, step.name, where).filter((c) => c.id !== other);
           const found = all.filter((c) => !c.inactive);
           if (found.length === 0 && all.length > 0) {
             // Only unusable records match (a deactivated user, a closed deal): say so, rather than "no match".

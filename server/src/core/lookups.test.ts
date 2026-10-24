@@ -5,6 +5,7 @@ import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile } from "./compile.js";
 import { execute } from "./execute.js";
+import { summarize } from "./summarize.js";
 
 let registry: Registry;
 before(async () => { registry = await loadRegistry(); });
@@ -181,6 +182,25 @@ describe("model-independent named arguments", () => {
     assert.deepEqual(resolve(ctx.store, "Elena Costa's sent quote").map((c) => c.id), [sent.id]);
     // A number in an ID field becomes a lookup, never an invented id.
     assert.deepEqual(compiled(plan([action("get", "M27.A02", { quoteId: "QT-9139" })])).steps.map((s) => s.kind), ["resolve", "action"]);
+  });
+
+  test("one name in two arguments of a call is two records: the qualified one, then the other", async () => {
+    const ctx = world();
+    const sarahs = ctx.store.find<{ id: string; name: string; company: string | null }>("contacts", (c) => c.name === "Sarah Johnson");
+    const brightside = sarahs.find((c) => c.company === "Brightside")!, other = sarahs.find((c) => c !== brightside)!;
+    const p = compiled(plan([action("merge", "M01.A06", { keepId: lookup("contact", "Sarah Johnson"), duplicateId: lookup("contact", "Sarah Johnson", { company: "Brightside" }) })]));
+    const gate = await execute(p, registry, ctx, { executionId: "merge-sarahs" });
+    assert.equal(gate.status, "awaiting_confirmation");
+    assert.deepEqual(gate.pending?.preview[0]?.args, { keepId: other.id, duplicateId: brightside.id });
+  });
+
+  test("the same name twice with no qualifier asks which one fills the first argument, by its role", async () => {
+    const ctx = world();
+    const p = compiled(plan([action("merge", "M01.A06", { keepId: lookup("contact", "Sarah Johnson"), duplicateId: lookup("contact", "Sarah Johnson") })]));
+    const r = await execute(p, registry, ctx, { executionId: "merge-sarahs-ask" });
+    assert.equal(r.status, "needs_clarification");
+    assert.equal(r.clarification?.candidates.length, 2);
+    assert.match(summarize(p, r, registry), /Which one is the contact that stays\?$/);
   });
 });
 

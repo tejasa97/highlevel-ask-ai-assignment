@@ -5,7 +5,7 @@ import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import type { JsonSchema, RegisteredAction, Registry } from "../registry/registry.js";
 import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, parseRef, RESERVED_ROOTS, type Ref, typeAt, unwrap } from "./refs.js";
 import { normalizeDateTimes } from "./datetimes.js";
-import { lowerLookups } from "./lookups.js";
+import { lowerLookups, OTHER_THAN } from "./lookups.js";
 
 // Stage 1 of validation: everything that can be checked before anything runs.
 // - structure: unique step ids, known actions that were offered to the planner this turn, JSON in argsJson/whereJson
@@ -98,7 +98,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
         const parents = registry.resolver(s.entity)!.parentQualifiers;
         if (parents?.length && !parents.some((key) => where[key])) err(`child lookup ${s.entity} requires a parent qualifier: ${parents.join(" or ")}`);
         for (const [key, value] of Object.entries(where)) {
-          if (!allowed.includes(key)) err(`unknown ${s.entity} qualifier ${key}; allowed: ${allowed.join(", ") || "none"}`);
+          if (!allowed.includes(key) && key !== OTHER_THAN) err(`unknown ${s.entity} qualifier ${key}; allowed: ${allowed.join(", ") || "none"}`);
           if (typeof value !== "string" || !value.trim()) err(`qualifier ${key} must be a non-empty string`);
         }
         for (const ref of collectRefs(where)) {

@@ -176,6 +176,7 @@ const mergeContacts = defineAction({
     keepId: ContactId.describe("the contact that stays"),
     duplicateId: ContactId.describe("the contact that goes away"),
   }),
+  idTypes: { keepId: ["contact"], duplicateId: ["contact"] },
   output: z.object({
     contact: Contact,
     moved: z.object({ tasks: z.number(), opportunities: z.number(), leads: z.number() }),
@@ -274,6 +275,7 @@ const addRelationship = defineAction({
     relatedId: ContactId.describe("the other contact"),
     type: z.enum(RELATIONSHIPS).describe("what relatedId is to contactId"),
   }),
+  idTypes: { relatedId: ["contact"] },
   output: Contact,
   entities: { consumes: ["contact"] },
   example: () => ({ contactId: "ct_1", relatedId: "ct_2", type: "colleague" }),

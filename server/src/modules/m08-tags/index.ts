@@ -203,6 +203,7 @@ const mergeTags = defineAction({
   description: "Merge one tag into another: every contact and lead with the source tag gets the target tag instead, and the source tag is deleted.",
   risk: "destructive",
   input: z.strictObject({ sourceTagId: TagId.describe("the tag to merge away"), targetTagId: TagId.describe("the tag to keep") }),
+  idTypes: { sourceTagId: ["tag"], targetTagId: ["tag"] },
   output: Tag.extend({ recordsUpdated: z.number(), deleted: Tag }),
   entities: { consumes: ["tag"] },
   example: (f) => ({ sourceTagId: f.tag({ name: "V.I.P." }).id, targetTagId: "tg_1" }),
