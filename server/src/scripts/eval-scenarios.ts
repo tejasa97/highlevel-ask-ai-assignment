@@ -100,6 +100,10 @@ const kinds = new Map<string, number>();
 for (const r of clean) for (const k of new Set(r.failures.map((f) => f.kind))) kinds.set(k, (kinds.get(k) ?? 0) + 1);
 if (kinds.size) console.log(`\nfailing runs by check: ${[...kinds].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(", ")}`);
 
+const classes = new Map<string, number>();
+for (const r of clean) if (!r.pass && r.failureClass) classes.set(r.failureClass, (classes.get(r.failureClass) ?? 0) + 1);
+if (classes.size) console.log(`failing runs by class: ${[...classes].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(", ")}`);
+
 const passRate = clean.length ? clean.filter((r) => r.pass).length / clean.length : 0;
 const ms = clean.map((r) => r.metrics.ms);
 const first = clean.map((r) => r.metrics.firstReplyMs);
