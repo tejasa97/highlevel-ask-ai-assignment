@@ -37,7 +37,17 @@ export interface Pending extends Approval {
   blockedCount?: number;
 }
 
-type ConcreteCall = { call: Call; args: Record<string, unknown>; label?: string; binding?: Record<string, unknown> };
+type ConcreteCall = {
+  call: Call;
+  args: Record<string, unknown>;
+  label?: string;
+  binding?: Record<string, unknown>;
+  /** Args that use $prev: filled in from the previous call's result just before this call runs. */
+  late?: (prev: unknown) => Record<string, unknown>;
+};
+
+/** What $prev shows in a preview, before the call it refers to has run. */
+const LATER = (call: Call) => `(from ${call.action.name.toLowerCase()})`;
 
 export interface Clarification {
   stepId: string;
@@ -115,11 +125,12 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   });
 
   const lookup =
-    (scope: { item?: unknown; rr?: unknown } = {}) =>
+    (scope: { item?: unknown; rr?: unknown; prev?: unknown } = {}) =>
     (ref: Ref): unknown => {
       const label = `$${ref.root}`;
       if (ref.root === "item") return valueAt(scope.item, ref.path, label);
       if (ref.root === "rr") return valueAt(scope.rr, ref.path, label);
+      if (ref.root === "prev") return typeof scope.prev === "function" ? (scope.prev as () => string)() : valueAt(scope.prev, ref.path, label);
       if (!outputs.has(ref.root)) throw new RefError(`${label} has no output`);
       return valueAt(outputs.get(ref.root), ref.path, label);
     };
@@ -286,10 +297,18 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             const scope = { item, rr: rr ? rr[i % rr.length] : undefined };
             const key = itemKey(item, i);
             const calls: ConcreteCall[] = [];
-            for (const call of step.calls) {
-              const a = concreteArgs(call, lookup(scope));
+            for (const [n, call] of step.calls.entries()) {
+              const earlier = step.calls[n - 1];
+              const a = concreteArgs(call, lookup({ ...scope, ...(earlier ? { prev: () => LATER(earlier) } : {}) }));
               if (!a.ok) return prepared.push({ key, label: labelOf(item), item, calls, error: a.error });
-              calls.push({ call, args: a.value });
+              const late = collectRefs(call.args).some((r) => parseRef(r.ref)?.root === "prev")
+                ? (prev: unknown) => {
+                    const b = concreteArgs(call, lookup({ ...scope, prev }));
+                    if (!b.ok) throw new RefError(b.error.message);
+                    return b.value;
+                  }
+                : undefined;
+              calls.push({ call, args: a.value, ...(late ? { late } : {}) });
             }
             // Only a single call can be checked against the current state: earlier calls in a
             // transactional item may create/change prerequisites for later calls.
@@ -351,24 +370,22 @@ function concreteArgs(call: Call, lookup: (r: Ref) => unknown): { ok: true; valu
 }
 
 /** Runs one item's calls in one transaction, replaying any write the ledger already has. */
-function runItem(ctx: ActionContext, executionId: string, stepId: string, key: string, calls: { call: Call; args: Record<string, unknown> }[]): ItemResult {
+function runItem(ctx: ActionContext, executionId: string, stepId: string, key: string, calls: ConcreteCall[]): ItemResult {
   let replayed = 0;
   try {
     const results = ctx.store.tx(() =>
-      calls.map(({ call, args }, i) => {
+      calls.reduce<unknown[]>((done, { call, args, late }, i) => {
         const writes = call.action.risk !== "read";
         const ledgerKey = `${executionId}:${stepId}:${key}:${i}`;
-        if (writes) {
-          const prior = ctx.store.recordedWrite(ledgerKey);
-          if (prior !== undefined) {
-            replayed++;
-            return prior;
-          }
+        const prior = writes ? ctx.store.recordedWrite(ledgerKey) : undefined;
+        if (prior !== undefined) {
+          replayed++;
+          return [...done, prior];
         }
-        const value = invoke(call.action, args, ctx);
+        const value = invoke(call.action, late ? late(done[i - 1]) : args, ctx);
         if (writes) ctx.store.recordWrite(ledgerKey, call.action.id, value, ctx.clock.now());
-        return value;
-      }),
+        return [...done, value];
+      }, []),
     );
     return { key, status: "done", results, ...(replayed ? { replayed } : {}) };
   } catch (e) {

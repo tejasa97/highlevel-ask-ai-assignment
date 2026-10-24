@@ -36,6 +36,8 @@ Rules:
   what a record says) is read from it: if no listed action reads it, search_tools for one before you ask or give up.
 - Text the user reads (question, reason, alternatives, text) names actions in plain words, never by id.
 - Refer to earlier results with $refs: "$s1.items", "$s1.items[*].contactId", "$item.id" inside forEach.
+  In a forEach "do", "$prev" is what the call before it returned for the same item: create then send each one
+  with do [{create, {"contactId":"$item.contactId",...}}, {send, {"requestId":"$prev.id"}}].
   $rr is one item of the roundRobin list: use its actual output fields (e.g. $rr.id for a User,
   $rr.userId only when the list's item schema has userId). Step IDs must not be item or rr; use s1, s2.
   Inside a string, interpolate with {{$item.name}}.

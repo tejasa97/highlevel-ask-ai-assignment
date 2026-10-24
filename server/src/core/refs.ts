@@ -17,7 +17,7 @@ export interface Ref {
 
 const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)((?:\.[A-Za-z_][A-Za-z0-9_]*|\[\*\]|\[\d+\])*)$/;
 const TEMPLATE = /\{\{\s*(\$[^}\s]+)\s*\}\}/g;
-export const RESERVED_ROOTS = new Set(["item", "rr", "ctx"]);
+export const RESERVED_ROOTS = new Set(["item", "rr", "prev", "ctx"]);
 
 export function parseRef(s: string): Ref | null {
   const m = REF.exec(s);

@@ -23,9 +23,8 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: {
     for (const a of calls) {
       const made = a.risk === "read" ? undefined : a.entities?.produces;
       const sender = made && request.offered.find((o) => o.destination && !ids.has(o.id) && o.entities?.consumes?.includes(made));
-      // Calls in one forEach "do" can't see each other's output, so the send must loop over the create step's results.
       if (sender) errors.push(`${a.id} only creates the ${made.replace(/_/g, " ")}; the request asks to send it, which is ${sender.id} (${sender.name}). `
-        + `Send what was created: after a forEach that creates them (say s3), add a forEach over "$s3" calling ${sender.id} with the new ID "$item.results[0].id"; for a single create, use "$s3.id"`);
+        + `Send what was created: in the same forEach "do", call ${sender.id} after ${a.id} with the new ID "$prev.id"; for a single create step s3, use "$s3.id"`);
     }
   }
   return [...new Set(errors)];
