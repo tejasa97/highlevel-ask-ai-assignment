@@ -3,7 +3,7 @@ import { before, test } from "node:test";
 import { compile } from "../core/compile.js";
 import { loadRegistry, Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
-import { checkIdentity, outcomeErrors } from "./contracts.js";
+import { checkIdentity, emptyTargets, outcomeErrors } from "./contracts.js";
 import type { SubmitPlan } from "./submit-plan.js";
 
 let registry: Registry;
@@ -68,4 +68,20 @@ test("identity check preserves supported qualifiers and refuses invalid ones", (
   const lookup = { entity: "contact", name: "Sarah Johnson", whereJson: JSON.stringify({ company: "Brightside" }) };
   assert.equal(checkIdentity(lookup, registry, w.store).count, 1);
   for (const whereJson of ['{"madeUp":"Brightside"}', '[]', '{"company":3}', 'not JSON']) assert.throws(() => checkIdentity({ ...lookup, whereJson }, registry, w.store));
+});
+
+test("a change looped over a list that was already read and found empty is reported; reads and non-empty lists are not", () => {
+  const each = (act: string) => {
+    const r = compile({ type: "plan", steps: [
+      { id: "s1", kind: "action", action: "M06.A03", argsJson: "{}" },
+      { id: "each", kind: "op", op: "forEach", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: act, argsJson: JSON.stringify({ taskId: "$item.id", assigneeId: "us_5" }) }] },
+    ], question: null, options: null, reason: null, alternatives: null, query: null, text: null } satisfies SubmitPlan, registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    return r.plan;
+  };
+  const plan = each("M06.A05");
+  assert.deepEqual(emptyTargets(plan, [{ id: "s1", output: { items: [] } }]), [{ step: "each", list: "$s1.items" }]);
+  assert.deepEqual(emptyTargets(plan, [{ id: "s1", output: { items: [{ id: "tk_1" }] } }]), []);
+  assert.deepEqual(emptyTargets(plan, [{ id: "s1", error: "boom" }]), []);
+  assert.deepEqual(emptyTargets(plan, []), []);
 });

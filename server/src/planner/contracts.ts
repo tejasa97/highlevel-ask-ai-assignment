@@ -1,4 +1,5 @@
 import type { CompiledPlan } from "../core/compile.js";
+import { parseRef, valueAt } from "../core/refs.js";
 import type { Candidate, Registry } from "../registry/registry.js";
 import type { Store } from "../store/db.js";
 import type { SubmitPlan } from "./submit-plan.js";
@@ -18,6 +19,25 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome): string[] {
     if (a.destination && a.destination.id !== outcome.destination) errors.push(`${a.id} delivers to ${a.destination.label}, not the requested destination ${outcome.destination}`);
   }
   return errors;
+}
+
+/**
+ * A change that loops over a list the look round already found empty would end "done" with nothing changed.
+ * Only direct references to a looked step count: a filter between them may make the list longer or shorter.
+ */
+export function emptyTargets(plan: CompiledPlan, looked: { id: string; output?: unknown; error?: string }[]): { step: string; list: string }[] {
+  const byId = new Map(looked.filter((l) => !l.error && l.output !== undefined).map((l) => [l.id, l.output]));
+  const out: { step: string; list: string }[] = [];
+  for (const step of plan.steps) {
+    if (step.kind !== "forEach" || step.calls.every((c) => c.action.risk === "read")) continue;
+    const ref = parseRef(step.in);
+    if (!ref || !byId.has(ref.root)) continue;
+    try {
+      const list = valueAt(byId.get(ref.root), ref.path, ref.root);
+      if (Array.isArray(list) && list.length === 0) out.push({ step: step.id, list: step.in });
+    } catch { /* A path the look result doesn't have is the compiler's and executor's to report. */ }
+  }
+  return out;
 }
 
 /** Bounded, read-only identity check. Qualifiers are validated, never silently dropped. */

@@ -148,4 +148,20 @@ describe("model-independent named arguments", () => {
     assert.ok(!r.ok);
     assert.match(r.errors.join("\n"), /arguments: .*dueDate.*did you mean dueDate/);
   });
+  test("a polymorphic ID takes its entity from the sibling type, and executes", async () => {
+    const ctx = world();
+    const sarah = ctx.store.find<{ id: string; name: string }>("contacts", (r) => r.name === "Marco Patel")[0] ?? ctx.f.contact({ name: "Marco Patel" });
+    const task = (relatedTo: unknown) => plan([action("t", "M06.A01", { title: "Send the proposal", relatedTo })]);
+    const p = compiled(task({ type: "contact", id: lookup("contact", "Marco Patel") }));
+    assert.deepEqual(p.steps.map((s) => s.kind), ["resolve", "action"]);
+    const r = await execute(p, registry, ctx, { executionId: "typed-related" });
+    assert.equal(r.status, "done");
+    assert.deepEqual((r.steps.at(-1)?.output as { relatedTo: unknown }).relatedTo, { type: "contact", id: sarah.id });
+    // A bare name is a lookup too, and the entity must agree with the type.
+    assert.deepEqual(compiled(task({ type: "contact", id: "Marco Patel" })).steps.map((s) => s.kind), ["resolve", "action"]);
+    assert.equal(compile(task({ type: "lead", id: lookup("contact", "Marco Patel") }), registry).ok, false);
+    assert.equal(compile(task({ id: lookup("contact", "Marco Patel") }), registry).ok, false);
+    const list = compiled(plan([action("l", "M06.A03", { relatedType: "contact", relatedId: lookup("contact", "Marco Patel") })]));
+    assert.deepEqual(list.steps.map((s) => s.kind), ["resolve", "action"]);
+  });
 });

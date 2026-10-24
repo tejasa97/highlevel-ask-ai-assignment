@@ -45,6 +45,9 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   /** Entity types this action produces and consumes, for dependency expansion in retrieval. */
   entities?: { produces?: string; consumes?: string[]; optionalConsumes?: string[]; lookup?: string };
   argumentLookups?: Record<string, ArgumentLookup>;
+  /** Polymorphic IDs, which name different record types: ID argument path -> the sibling argument holding the type
+   *  ("relatedTo.id": "relatedTo.type"). A named lookup there uses that type as its entity. */
+  typedIds?: Record<string, string>;
   /** Alternative input groups for actions whose required inputs are conditional. */
   inputAlternatives?: string[][];
   /** Explicit delivery surface, not an inferred match on words like "post". */

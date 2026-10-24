@@ -4,7 +4,8 @@ import type { JsonSchema, RegisteredAction } from "./registry.js";
 //   M03.A03 Search leads: <description> args { source?: "facebook_ads"|… } → { items: Lead[] }
 
 export function card(a: RegisteredAction): string {
-  const lookups = a.argumentLookups ? ` named IDs ${JSON.stringify(a.argumentLookups)}` : "";
+  const lookups = (a.argumentLookups ? ` named IDs ${JSON.stringify(a.argumentLookups)}` : "") +
+    (a.typedIds ? ` named IDs by record type ${JSON.stringify(a.typedIds)}` : "");
   const alternatives = a.inputAlternatives ? ` requires one input group ${JSON.stringify(a.inputAlternatives)}` : "";
   return `${a.id} ${a.name}: ${a.description} args ${sig(a.inputSchema, 0, true)} → ${sig(a.outputSchema, 0, false)}${lookups}${alternatives}`;
 }

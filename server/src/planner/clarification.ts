@@ -40,7 +40,7 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
   if (inline && d.lookup && (inline.entity !== d.lookup.entity || inline.name !== d.lookup.name || !isDeepStrictEqual(JSON.parse(inline.whereJson ?? "{}"), JSON.parse(d.lookup.whereJson ?? "{}")))) throw new Error("Conflicting argument and clarification lookup selectors");
   let lookup = inline ?? d.lookup ?? undefined;
   if (present(field.value) && !inline) throw new Error(`${path} is already supplied; use plan/look to validate or inspect it, not clarify`);
-  const entities = argumentEntities(action, path).filter((e) => registry.resolver(e));
+  const entities = argumentEntities(action, path, args).filter((e) => registry.resolver(e));
   if (lookup && (!entities.includes(lookup.entity) || field.schema.type !== "string")) throw new Error(`Lookup entity does not match argument ${path}; expected ${entities.join(" or ") || "a non-identity input"}`);
   const alternatives = action.inputAlternatives ?? [];
   const has = (key: string) => present(args[key]);
@@ -53,7 +53,7 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
     const named = selector(value);
     if (named) {
       if (!store) throw new Error("Parent identity checking needs an account store");
-      if (!argumentEntities(action, parentPath).includes(named.entity)) throw new Error(`Invalid parent lookup entity for ${parentPath}`);
+      if (!argumentEntities(action, parentPath, args).includes(named.entity)) throw new Error(`Invalid parent lookup entity for ${parentPath}`);
       const checked = checkIdentity(named, registry, store);
       if (checked.count !== 1) throw new ParentChoice(named, checked);
       return checked.match!.id;

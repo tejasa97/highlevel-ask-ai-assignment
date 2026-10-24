@@ -9,7 +9,7 @@ import type { Store } from "../store/db.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
-import { outcomeErrors, type Outcome } from "./contracts.js";
+import { emptyTargets, outcomeErrors, type Outcome } from "./contracts.js";
 import { assessClarification } from "./clarification.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
@@ -161,6 +161,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let searched = false;
   let repaired = false;
   let clarifyRepaired = false;
+  let lookResults: Awaited<ReturnType<NonNullable<TurnDeps["look"]>>> = [];
+  let emptyChecked = false;
   let lookPlan: CompiledPlan | undefined;
   let lookSteps: Step[] = [];
   // Each reply is one of: search_tools (retrieve once more, re-plan), a plan (compile; repair once if invalid),
@@ -243,7 +245,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       // <looked> contains compiler-generated resolve IDs too. Preserve those exact read steps so
       // the next plan can reference them just like any explicit look step.
       lookSteps = lowerLookups(d.steps ?? [], registry).steps;
-      looked = JSON.stringify(await deps.look!(compiled.plan));
+      lookResults = await deps.look!(compiled.plan);
+      looked = JSON.stringify(lookResults);
       if (looked.length > LOOKED_MAX) looked = `${looked.slice(0, LOOKED_MAX)}…(cut)`;
       user = prompt();
       reply = await call(user, "plan after look");
@@ -252,7 +255,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
 
     // Answering from <looked> would put the planner's prose (and raw ids) where the summary of the reads belongs:
     // the reads were the plan.
-    if (d.type === "answer" && (lookPlan || outcome?.effect === "change")) {
+    if (d.type === "answer" && (lookPlan || outcome?.effect === "change") && !emptyChecked) {
       const errors = lookPlan ? outcomeErrors(lookPlan, outcome) : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
       if (!errors.length && lookPlan) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
       if (repaired) return failed(`The requested outcome is still incomplete:\n${errors.join("\n")}`);
@@ -287,7 +290,19 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       : compiled.plan.steps.some((s) => callsOf(s).length)
         ? outcomeErrors(compiled.plan, outcome)
         : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
-    if (compiled.ok && !errors.length) return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
+    if (compiled.ok && !errors.length) {
+      // The reads found nothing to change: say so (once the planner has had the chance to widen its search or answer),
+      // rather than run a loop over nothing.
+      const empty = outcome?.effect === "change" ? emptyTargets(compiled.plan, lookResults) : [];
+      if (!empty.length) return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
+      if (emptyChecked) return { kind: "reply", status: "answer", text: "Nothing matched, so nothing was changed." };
+      emptyChecked = true;
+      const errors = empty.map((e) => `${e.step}: ${e.list} was already read and is empty, so this changes nothing. If the search was too narrow, plan again with a wider search inside the plan; if nothing should match, reply with type answer saying so`);
+      emit({ type: "compile.errors", data: { errors } });
+      user = prompt();
+      reply = await call(repairBlock(user, reply.json, errors), "repair empty target");
+      continue;
+    }
     emit({ type: "compile.errors", data: { errors } });
     if (repaired) return failed(`The plan was still invalid after one repair:\n${errors.join("\n")}`);
     repaired = true;

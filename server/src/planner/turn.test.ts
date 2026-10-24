@@ -144,6 +144,24 @@ describe("grounded outcomes and clarifications", () => {
     assert.deepEqual(out.plan.steps.map((s) => s.id), ["s1", "s1_2"]);
   });
 
+  test("a change over a list the look found empty gets one chance to widen, then says nothing matched", async () => {
+    const read = { id: "s1", kind: "action" as const, action: "M06.A03", argsJson: "{}" };
+    const outcome = { effect: "change" as const, actions: ["M06.A05"], destination: null };
+    const each = reply({ steps: [read, { id: "each", kind: "op", op: "forEach", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M06.A05", argsJson: JSON.stringify({ taskId: "$item.id", assigneeId: "us_5" }) }] }], outcome });
+    const looking = reply({ type: "look", steps: [read], outcome });
+    const empty = async () => [{ id: "s1", output: { items: [] } }];
+    const answered = scripted(looking, each, reply({ type: "answer", text: "No tasks matched.", outcome }));
+    const a = await run("Reassign Ana's overdue tasks to Noah", answered, {}, empty);
+    assert.ok(a.out.kind === "reply" && a.out.status === "answer", JSON.stringify(a.out));
+    const stubborn = scripted(looking, each, each);
+    const b = await run("Reassign Ana's overdue tasks to Noah", stubborn, {}, empty);
+    assert.ok(b.out.kind === "reply" && b.out.status === "answer", JSON.stringify(b.out));
+    assert.match(b.out.text, /nothing was changed/i);
+    const found = scripted(looking, each);
+    const c = await run("Reassign Ana's overdue tasks to Noah", found, {}, async () => [{ id: "s1", output: { items: [{ id: "tk_1" }] } }]);
+    assert.ok(c.out.kind === "plan", JSON.stringify(c.out));
+  });
+
   test("a duplicated id inside one plan is renamed and later references follow the new step", () => {
     const step = (id: string, argsJson: string) => ({ id, kind: "action" as const, action: "M06.A03", argsJson });
     const fixed = renameReusedIds(reply({ steps: [step("s1", "{}"), step("s1", "{}"), step("s2", '{"q":"$s1.items"}')] }));
