@@ -26,6 +26,8 @@ export interface ConversationDeps {
 interface Turn {
   id: string;
   message: string;
+  /** The message with the ones it answers ("the one at Umbrella" after "move Zoe Costa…"), for telling names apart. */
+  request: string;
   plan: CompiledPlan;
   executionId: string;
   pending?: Pending;
@@ -61,17 +63,18 @@ export class Conversation {
     // A look runs reads only (planTurn checks), as this user, before the real plan.
     const look = async (plan: CompiledPlan) => {
       const onCall = (c: CallTrace) => emit("call", { ...c, ms: Math.round(c.ms * 10) / 10 });
-      const r = await execute(plan, registry, { ...this.world, actorId, onCall }, { executionId: `look_${turnId}` });
+      const r = await execute(plan, registry, { ...this.world, actorId, onCall }, { executionId: `look_${turnId}`, request });
       const steps = r.steps.map((s) => ({ id: s.id, ...(s.error ? { error: s.error.message } : { output: s.output }) }));
       const c = r.clarification;
       return c ? [...steps, { id: c.stepId, error: `more than one ${c.entity} matches "${c.name}": ${c.candidates.map((x) => x.name).join(", ")}` }] : steps;
     };
     const input = { message, tier, context, carry: this.carry, answering: this.answering };
+    const request = this.answering ? `${this.answering}\n${message}` : message;
     const planningDeps = { registry, retriever, planner, clock: this.world.clock, store: this.world.store, look };
     const outcome = await planTurn(input, planningDeps, (e) => emit(e.type, e.data));
     if (outcome.kind === "reply") return this.finish(message, outcome.status, outcome.text, emit, outcome.options, outcome.infra);
     this.carry = outcome.carry;
-    const turn: Turn = { id: turnId, message, plan: outcome.plan, executionId: `ex_${turnId}` };
+    const turn: Turn = { id: turnId, message, request, plan: outcome.plan, executionId: `ex_${turnId}` };
     this.turns.set(turnId, turn);
     emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
     await this.run(turn, actorId, emit, undefined, (fact) => planTurn(
@@ -105,7 +108,7 @@ export class Conversation {
       turn.plan,
       this.deps.registry,
       { ...this.world, actorId, onCall },
-      { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e) },
+      { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e), request: turn.request },
     );
     emit("run", { status: result.status, ms: Math.round(performance.now() - t), steps: result.steps });
     const audit = store.audit();

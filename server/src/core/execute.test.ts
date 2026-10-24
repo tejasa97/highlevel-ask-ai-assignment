@@ -4,7 +4,7 @@ import type { SubmitPlan } from "../planner/submit-plan.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile, type CompiledPlan } from "./compile.js";
-import { execute, matches } from "./execute.js";
+import { execute, matches, narrowByRequest } from "./execute.js";
 
 let registry: Registry;
 before(async () => {
@@ -318,6 +318,55 @@ describe("runtime outcomes", () => {
       r.steps.map((s) => s.status),
       ["failed", "skipped"],
     );
+  });
+
+  test("a name that finds nothing stops every write, even one that doesn't use it", async () => {
+    const ctx = fresh();
+    const before = ctx.store.all("tasks").length;
+    const p = compiled(plan([action("s1", "M06.A01", { title: "Prep" }), { id: "s2", kind: "resolve", entity: "contact", name: "Nobody Atall" }]));
+    const r = await execute(p, registry, ctx, { executionId: "name-first" });
+    assert.equal(r.status, "failed");
+    assert.equal(ctx.store.all("tasks").length, before);
+    const s1 = r.steps.find((s) => s.id === "s1")!;
+    assert.equal(s1.status, "skipped");
+    assert.match(s1.error!.message, /no contact matches "Nobody Atall", so nothing was changed/);
+  });
+
+  test("same names are told apart by what else the request says", async () => {
+    const ctx = fresh();
+    const p = compiled(plan([{ id: "s1", kind: "resolve", entity: "contact", name: "Sarah Johnson" }]));
+    const vague = await execute(p, registry, ctx, { executionId: "two-sarahs", request: "email Sarah Johnson" });
+    assert.equal(vague.status, "needs_clarification");
+    const r = await execute(p, registry, ctx, { executionId: "brightside-sarah", request: "email Sarah Johnson at Brightside" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps));
+    assert.equal((r.steps[0]!.output as { id: string }).id, "ct_31");
+  });
+
+  test("a write loop over a search for one shared name asks which one, or runs on the one the request picks", async () => {
+    const ctx = fresh();
+    const before = ctx.store.all("tasks").length;
+    const p = compiled(plan([
+      action("s1", "M01.A03", { query: "Sarah Johnson" }),
+      op("s2", "forEach", { in: "$s1.items", do: [{ action: "M06.A01", args: { title: "$item.name" } }] }),
+    ]));
+    const vague = await execute(p, registry, ctx, { executionId: "loop-sarahs", request: "make a call task for Sarah Johnson" });
+    assert.equal(vague.status, "needs_clarification", JSON.stringify(vague.steps));
+    assert.equal(vague.clarification?.candidates.length, 2);
+    assert.equal(ctx.store.all("tasks").length, before);
+    const r = await execute(p, registry, ctx, { executionId: "loop-brightside", request: "make a call task for Sarah Johnson\nthe one at Brightside" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps));
+    assert.equal(ctx.store.all("tasks").length, before + 1);
+    const bare = await execute(p, registry, fresh(), { executionId: "loop-no-request" });
+    assert.equal(bare.status, "done", "without the user's words there's nothing to check against");
+  });
+
+  test("narrowing needs exactly one candidate with a detail the request names and the others lack", () => {
+    const c = (id: string, detail: string) => ({ id, name: "Sarah Johnson", detail });
+    const two = [c("a", "Brightside, sarah@b.example"), c("b", "sj@gmail.example")];
+    assert.deepEqual(narrowByRequest(two, "email Sarah at brightside").map((x) => x.id), ["a"]);
+    assert.equal(narrowByRequest(two, "email Sarah").length, 2);
+    const shared = [c("a", "Acme, x"), c("b", "Acme, y")];
+    assert.equal(narrowByRequest(shared, "Sarah at Acme").length, 2);
   });
 
   test("one bad item doesn't stop the others", async () => {

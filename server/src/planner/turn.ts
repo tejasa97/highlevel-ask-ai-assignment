@@ -101,7 +101,8 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
 async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: TurnEvent) => void): Promise<TurnOutcome> {
   const { registry, retriever, planner, clock, store } = deps;
   const resolvable = registry.resolverEntities();
-  const named: Mention[] = store ? mentions(input.answering ? `${input.answering}\n${input.message}` : input.message, registry, store) : [];
+  const request = input.answering ? `${input.answering}\n${input.message}` : input.message;
+  const named: Mention[] = store ? mentions(request, registry, store) : [];
   const allChars = registry.list().map(card).join("\n").length;
 
   const offered: RegisteredAction[] = [];
@@ -148,7 +149,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     return r;
   };
 
-  await shortlist("retrieve", input.answering ? `${input.answering}\n${input.message}` : input.message, input.carry, named);
+  await shortlist("retrieve", request, input.carry, named);
   let user = prompt();
   let reply = await call(user, "plan");
   let searches = 0;

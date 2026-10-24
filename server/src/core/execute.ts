@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { z } from "zod";
 import { ActionError, type ActionContext } from "../registry/define.js";
+import { norm } from "../registry/helpers.js";
 import { DEFAULT_ACTOR, invoke } from "../registry/invoke.js";
 import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
@@ -14,6 +15,8 @@ import { parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
 // - Resume = run the same executionId again with approvals. Reads re-run; writes are deduped through the
 //   `writes` ledger (key executionId:stepId:itemKey:callIndex), so nothing is done twice.
 // - Each forEach item runs in one transaction: its calls all land or none do. Items fail independently.
+// - Names are resolved before anything else runs. A name that finds nothing stops every write, so a request
+//   is never left half-done because one of the records it names was misread (the turn can then replan).
 
 export const BULK_MIN = 3;
 const PREVIEW_MAX = 10;
@@ -95,6 +98,8 @@ export interface ExecOptions {
   executionId: string;
   approvals?: Approval[];
   onEvent?: (e: ExecEvent) => void;
+  /** The user's words. A name that matches several records is narrowed by what else the request says about it. */
+  request?: string;
 }
 
 export async function execute(plan: CompiledPlan, registry: Registry, ctx: ActionContext, opts: ExecOptions): Promise<RunResult> {
@@ -105,6 +110,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   const checkedActions = new Map<string, { error?: StepError; gate: Pending | null }>();
   const emit = opts.onEvent ?? (() => {});
   let writesAttempted = false;
+  let nameMissing: string | undefined;
   const finish = (status: RunStatus, extra: Partial<RunResult> = {}): RunResult => ({
     writesAttempted,
     executionId: opts.executionId,
@@ -125,7 +131,14 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     };
   const refValue = (raw: string, scope?: { item?: unknown; rr?: unknown }) => lookup(scope)(parseRef(raw)!);
 
-  for (const step of plan.steps) {
+  // Resolves have no deps, so running them first keeps every ref backward.
+  const ordered = [...plan.steps.filter((s) => s.kind === "resolve"), ...plan.steps.filter((s) => s.kind !== "resolve")];
+  for (const step of ordered) {
+    if (nameMissing && writes(step)) {
+      bad.add(step.id);
+      results.push({ id: step.id, kind: step.kind, status: "skipped", error: { code: "NOT_RUN", message: `${nameMissing}, so nothing was changed` } });
+      continue;
+    }
     if (step.deps.some((d) => bad.has(d))) {
       bad.add(step.id);
       results.push({
@@ -153,10 +166,12 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
       switch (step.kind) {
         case "resolve": {
           const all = registry.resolver(step.entity)!(ctx.store, step.name);
-          const found = all.filter((c) => !c.inactive);
+          const usable = all.filter((c) => !c.inactive);
+          const found = usable.length > 1 && opts.request ? narrowByRequest(usable, opts.request) : usable;
           if (found.length === 0 && all.length > 0) {
             // Only unusable records match (a deactivated user, a closed deal): say so, rather than "no match".
             fail({ code: "CONFLICT", message: all.map((c) => `${c.name} is ${c.inactive}`).join("; ") });
+            nameMissing = `"${step.name}" can't be used`;
           } else if (found.length === 0) {
             // The planner sometimes guesses the wrong record type for a name; say where the name does exist.
             const elsewhere = registry
@@ -164,6 +179,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
               .filter((e) => e !== step.entity && registry.resolver(e)!(ctx.store, step.name).some((c) => !c.inactive));
             const hint = elsewhere.length ? ` (but a ${elsewhere.join(" and a ")} does)` : "";
             fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"${hint}` });
+            nameMissing = `no ${step.entity} matches "${step.name}"`;
           } else if (found.length > 1) {
             const clarification = { stepId: step.id, entity: step.entity, name: step.name, candidates: found };
             results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });
@@ -228,7 +244,18 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         }
 
         case "forEach": {
-          const list = Array.isArray(step.in) ? step.in : asList(refValue(step.in), step.in);
+          let list = Array.isArray(step.in) ? step.in : asList(refValue(step.in), step.in);
+          const same = !writesAttempted && writes(step) ? sameNamed(plan, step, outputs, registry, ctx, opts.request) : undefined;
+          if (same) {
+            const picked = narrowByRequest(same.candidates, opts.request!);
+            if (picked.length > 1) {
+              const clarification = { stepId: step.id, ...same };
+              results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });
+              emit({ type: "clarify.required", clarification });
+              return finish("needs_clarification", { clarification });
+            }
+            list = list.filter((x) => x === picked[0]!.id || (x as { id?: unknown } | null)?.id === picked[0]!.id);
+          }
           const rr = Array.isArray(step.roundRobin) ? step.roundRobin : step.roundRobin ? asList(refValue(step.roundRobin), step.roundRobin) : null;
           if (rr && rr.length === 0 && list.length > 0) {
             fail({ code: "INVALID", message: `round-robin list ${step.roundRobin} is empty, so there is no one to assign to` });
@@ -289,6 +316,24 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   if (results.every((r) => r.status === "done")) return finish("done");
   if (finals.every((r) => r.status === "failed" || r.status === "skipped")) return finish("failed");
   return finish("partial");
+}
+
+const writes = (s: CStep) =>
+  (s.kind === "action" && s.call.action.risk !== "read") || (s.kind === "forEach" && s.calls.some((c) => c.action.risk !== "read"));
+
+/** norm drops line breaks outright, which would glue the lines of an answered question together. */
+const normText = (s: string) => norm(s.replace(/\s+/g, " "));
+
+/**
+ * Same-named records ("Sarah Johnson" twice) told apart by the request: a detail of exactly one of them (a company,
+ * an email) named in the user's words picks it. Details every candidate shares tell nothing apart, so they're ignored.
+ */
+export function narrowByRequest(found: Candidate[], request: string): Candidate[] {
+  const words = ` ${normText(request)} `;
+  const partsOf = (c: Candidate) => (c.detail ?? "").split(",").map((p) => norm(p)).filter((p) => p.length > 1);
+  const shared = (p: string) => found.every((c) => partsOf(c).includes(p));
+  const hit = found.filter((c) => partsOf(c).some((p) => !shared(p) && words.includes(` ${p} `)));
+  return hit.length === 1 ? hit : found;
 }
 
 function concreteArgs(call: Call, lookup: (r: Ref) => unknown): { ok: true; value: Record<string, unknown> } | { ok: false; error: StepError } {
@@ -426,6 +471,27 @@ function itemKey(item: unknown, i: number): string {
   if (typeof item === "string") return `#${i}:${item}`;
   const id = (item as Record<string, unknown> | null)?.id;
   return typeof id === "string" || typeof id === "number" ? String(id) : `#${i}`;
+}
+
+/**
+ * A write loop over a name search ("find Maple Dental", then update each) where the search found several records
+ * that all carry exactly the name the user wrote: the user meant one of them, so it's a clarification, not a fan-out.
+ */
+function sameNamed(plan: CompiledPlan, step: CStep & { kind: "forEach" }, outputs: Map<string, unknown>, registry: Registry, ctx: ActionContext, request?: string): Omit<Clarification, "stepId"> | undefined {
+  if (!request || typeof step.in !== "string") return undefined;
+  const src = plan.steps.find((s) => s.id === parseRef(step.in as string)?.root);
+  if (src?.kind !== "action" || src.call.action.risk !== "read") return undefined;
+  const query = (src.call.args as { query?: unknown }).query;
+  if (typeof query !== "string" || !` ${normText(request)} `.includes(` ${norm(query)} `)) return undefined;
+  const out = outputs.get(src.id) as { items?: unknown } | unknown[] | undefined;
+  const items = (Array.isArray(out) ? out : Array.isArray(out?.items) ? out.items : []) as Record<string, unknown>[];
+  if (items.length < 2 || !items.every((x) => typeof x?.id === "string" && labelOf(x) !== undefined && norm(labelOf(x)!) === norm(query))) return undefined;
+  const entity = src.call.action.entities?.produces ?? "record";
+  // The resolver says best what tells them apart; else the fields that differ between them ("Austin", "Denver").
+  const resolved = new Map((registry.resolver(entity)?.(ctx.store, query) ?? []).map((c) => [c.id, c]));
+  const fields = Object.keys(items[0]!).filter((k) => k !== "id" && typeof items[0]![k] === "string" && items.some((x) => x[k] !== items[0]![k]));
+  const candidates = items.map((x) => resolved.get(x.id as string) ?? { id: x.id as string, name: labelOf(x)!, detail: fields.map((k) => x[k]).filter((v) => typeof v === "string" && v).join(", ") || undefined });
+  return { entity, name: query, candidates };
 }
 
 function labelOf(item: unknown): string | undefined {

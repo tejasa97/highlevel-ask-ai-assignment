@@ -48,7 +48,7 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
 
 function describe(step: CStep, r: StepResult, registry: Registry): string | null {
   if (r.status === "awaiting_confirmation" || r.status === "needs_clarification") return null;
-  if (r.status === "skipped") return `Skipped ${what(step, registry)}: an earlier step didn't complete.`;
+  if (r.status === "skipped") return `Skipped ${what(step, registry)}: ${r.error?.code === "NOT_RUN" ? r.error.message : "an earlier step didn't complete"}.`;
   if (r.status === "failed" && !r.items) return `Couldn't ${what(step, registry)}: ${r.error!.message}.`;
 
   if (step.kind === "action") {
