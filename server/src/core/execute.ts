@@ -229,7 +229,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
 
         case "forEach": {
           const list = Array.isArray(step.in) ? step.in : asList(refValue(step.in), step.in);
-          const rr = step.roundRobin ? asList(refValue(step.roundRobin), step.roundRobin) : null;
+          const rr = Array.isArray(step.roundRobin) ? step.roundRobin : step.roundRobin ? asList(refValue(step.roundRobin), step.roundRobin) : null;
           if (rr && rr.length === 0 && list.length > 0) {
             fail({ code: "INVALID", message: `round-robin list ${step.roundRobin} is empty, so there is no one to assign to` });
             break;

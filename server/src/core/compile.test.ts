@@ -56,6 +56,12 @@ describe("forEach over a literal list", () => {
     assert.match(r.ok ? "" : r.errors.join("\n"), /not valid JSON; write a JSON array of strings/);
   });
 
+  test("a $ref inside a literal list is rejected with the two ways to write it", () => {
+    const r = compile(plan([action("s1", "M06.A03", {}), op("s2", "forEach", { in: ["$s1.items[0].id"], do: [{ action: "M06.A02", args: { taskId: "$item", priority: "high" } }] })]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /"\$s1\.items\[0\]\.id" is a \$ref inside a JSON array; give "in" the \$ref to a list itself/);
+  });
+
   test("empty arrays compile; mixed and empty-string literals do not", () => {
     assert.ok(compile(plan([op("s1", "forEach", { in: [], do: [{ action: "M06.A01", args: { title: "$item" } }] })]), registry).ok);
     for (const input of ['["a", 1]', '[""]', '[{"id":"a"}]']) {
@@ -63,6 +69,14 @@ describe("forEach over a literal list", () => {
       assert.ok(!r.ok);
       assert.match(r.errors.join("\n"), /JSON array of non-empty strings/);
     }
+  });
+
+  test("roundRobin takes a written-out list too, with $rr as the string", () => {
+    const r = compile(plan([action("s1", "M06.A03", {}), op("s2", "forEach", { in: "$s1.items", roundRobin: JSON.stringify(["us_2", "us_4"]), do: [{ action: "M06.A02", args: { taskId: "$item.id", assigneeId: "$rr" } }] })]), registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    assert.deepEqual(r.ok && r.plan.steps[1]!.kind === "forEach" ? r.plan.steps[1]!.roundRobin : null, ["us_2", "us_4"]);
+    const bad = compile(plan([action("s1", "M06.A03", {}), op("s2", "forEach", { in: "$s1.items", roundRobin: '["us_2",', do: [{ action: "M06.A02", args: { taskId: "$item.id", assigneeId: "$rr" } }] })]), registry);
+    assert.match(bad.ok ? "" : bad.errors.join("\n"), /"roundRobin" .* not valid JSON/);
   });
 
   test("a literal array is not a filter or exclude input", () => {

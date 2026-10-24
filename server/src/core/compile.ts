@@ -22,7 +22,7 @@ export type CStep = { id: string; deps: string[]; type: JsonSchema } & (
   | { kind: "resolve"; entity: string; name: string }
   | { kind: "filter"; in: string; where: Record<string, unknown> }
   | { kind: "exclude"; in: string; by: string; set: string }
-  | { kind: "forEach"; in: string | string[]; roundRobin: string | null; calls: Call[] }
+  | { kind: "forEach"; in: string | string[]; roundRobin: string | string[] | null; calls: Call[] }
 );
 
 export interface CompiledPlan {
@@ -118,8 +118,11 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
             continue;
           }
           let rr: JsonSchema | null = null;
+          // Like "in", the people to rotate through may be written out: ["us_2","us_4"].
+          const rrLiteral = s.roundRobin ? literalList(s.roundRobin, err, "roundRobin") : undefined;
+          if (rrLiteral === null) continue;
           if (s.roundRobin) {
-            const t = listRef(s.roundRobin, scope, `"roundRobin"`, err);
+            const t = rrLiteral ? arrayOf({ type: "string" }) : listRef(s.roundRobin, scope, `"roundRobin"`, err);
             if (!t) continue;
             rr = (unwrap(t).items ?? ANY) as JsonSchema;
           }
@@ -129,7 +132,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
           );
           if (calls.some((c) => !c)) continue;
           const out = arrayOf({ type: "object", properties: { item, results: arrayOf(ANY) } });
-          steps.push({ id: s.id, kind: "forEach", in: literal ?? (s.in as string), roundRobin: s.roundRobin, calls: calls as Call[], deps: [...deps], type: out });
+          steps.push({ id: s.id, kind: "forEach", in: literal ?? (s.in as string), roundRobin: rrLiteral ?? s.roundRobin, calls: calls as Call[], deps: [...deps], type: out });
           types.set(s.id, out);
         }
       }
@@ -179,7 +182,7 @@ function refType(raw: string, scope: Scope, err: (m: string) => void): JsonSchem
 function rootType(ref: Ref, scope: Scope, err: (m: string) => void): JsonSchema | null {
   if (ref.root === "item" || ref.root === "rr") {
     const t = ref.root === "item" ? scope.item : scope.rr;
-    if (!t) err(ref.root === "item" ? `$item only works inside forEach "do"` : `$rr needs "roundRobin" on the forEach`);
+    if (!t) err(ref.root === "item" ? `$item only works inside forEach "do"` : `$rr needs "roundRobin" on the forEach: set the forEach's "roundRobin" to the list to rotate through, a $ref ("$s2[*].userId") or a JSON array of ids`);
     return t;
   }
   if (ref.root === "ctx") {

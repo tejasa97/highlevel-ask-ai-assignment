@@ -20,19 +20,24 @@ const TEMPLATE = /\{\{\s*(\$[^}\s]+)\s*\}\}/g;
 export const RESERVED_ROOTS = new Set(["item", "rr", "ctx"]);
 
 /** A literal forEach input (array or JSON array string), undefined for a ref, null after an error. */
-export function literalList(raw: string | string[], err: (m: string) => void): string[] | null | undefined {
+export function literalList(raw: string | string[], err: (m: string) => void, field = "in"): string[] | null | undefined {
   let value: unknown = raw;
   if (typeof raw === "string") {
     if (!raw.trim().startsWith("[")) return undefined;
     try {
       value = JSON.parse(raw);
     } catch {
-      err(`"in" ${raw.slice(0, 80)} looks like a list but is not valid JSON; write a JSON array of strings, e.g. ["id_1","id_2"]`);
+      err(`"${field}" ${raw.slice(0, 80)} looks like a list but is not valid JSON; write a JSON array of strings, e.g. ["id_1","id_2"]`);
       return null;
     }
   }
   if (!Array.isArray(value) || value.some((x) => typeof x !== "string" || !x.length)) {
-    err(`"in" must be a JSON array of non-empty strings, e.g. ["id_1","id_2"]`);
+    err(`"${field}" must be a JSON array of non-empty strings, e.g. ["id_1","id_2"]`);
+    return null;
+  }
+  const ref = (value as string[]).find((x) => x.startsWith("$"));
+  if (ref) {
+    err(`"${field}" element "${ref}" is a $ref inside a JSON array; give "${field}" the $ref to a list itself ("$s1.items"), or call the action directly, without forEach, for one record`);
     return null;
   }
   return value as string[];
