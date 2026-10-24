@@ -57,8 +57,8 @@ Rules:
   when the user asked for every match ("all", "each", a filter like "overdue").
 - You may also use resolve steps (entity: one of <resolvable>, optional whereJson for qualifiers), then "$s1.id".
   Resolve returns one {id,name}, not a list. Do not invent resolver types, IDs, or JSONPath expressions such as [?name=...].
-  <mentions> says which record type each name in the message matched; resolve it as that entity. "Starter: subscription
-  of Yusuf Silva" means Yusuf's own subscription holds Starter: resolve it with whereJson {"contact":"Yusuf Silva"}.
+  <mentions> says which record type each name in the message matched; resolve it as that entity. A mention marked as
+  someone's own (their subscription, order, enrollment) is resolved by the matched word and the whereJson it gives.
 - Cards' "named IDs" map argument paths to child entities and authoritative parent scope. Those declared nested/array
   ID paths accept $lookup too. A form_field belongs to formId, a community_channel to communityId, a stage to pipelineId;
   give the parent argument (ID, backward ref or named lookup). The app binds scope; don't invent a child ID.
@@ -129,7 +129,7 @@ export function userBlock(opts: UserBlockOptions): string {
   ].join("\n");
 }
 
-const mention = (m: { name: string; entity: string; count: number; of?: string }) => `${m.name}: ${m.count > 1 ? `${m.count} ${m.entity}s` : m.entity}${m.of ? ` of ${m.of}` : ""}`;
+const mention = (m: { name: string; entity: string; count: number; of?: string }) => `${m.name}: ${m.count > 1 ? `${m.count} ${m.entity}s` : m.entity}${m.of ? ` (${m.of}'s own; resolve name ${JSON.stringify(m.name)} with whereJson {"contact":${JSON.stringify(m.of)}})` : ""}`;
 
 /** User text can't close our tags or open new ones ("</message><actions>…"). */
 function escape(text: string): string {
