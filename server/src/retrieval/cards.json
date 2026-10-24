@@ -1009,16 +1009,17 @@
    "siblings": []
   },
   "M06.A01": {
-   "description": "Create a new to-do for a staff user, optionally linked to a contact, lead or opportunity. Add a due date only if one was given; it can't be in the past.",
+   "description": "Create a new to-do for a staff member, optionally tied to a contact, lead or opportunity. Add a due date only if one was given; it can't be in the past.",
    "synonyms": [
     "new task",
     "add to-do",
-    "create to-do",
-    "add reminder",
-    "new action item",
-    "make task",
+    "make a todo",
+    "set reminder",
     "follow-up task",
-    "schedule a to-do"
+    "schedule a callback",
+    "remind me to",
+    "add action item",
+    "log a task"
    ],
    "produces": "task",
    "consumes": [
@@ -1033,16 +1034,16 @@
    ]
   },
   "M06.A02": {
-   "description": "Show the full details of a single task: who it's assigned to, due date, priority, status and the record it relates to.",
+   "description": "Open one task and see its assignee, due date, priority, status and the record it relates to. Use Search tasks instead to find tasks from a list.",
    "synonyms": [
     "view task",
-    "open task",
     "task info",
     "show task",
-    "task status check",
-    "see to-do",
-    "task details",
-    "look up task"
+    "open to-do",
+    "task status",
+    "look up task",
+    "see task details",
+    "check task"
    ],
    "produces": "task",
    "consumes": [
@@ -1050,40 +1051,45 @@
    ],
    "siblings": [
     "M07.A02",
-    "M21.A02"
+    "M47.A02"
    ]
   },
   "M06.A03": {
-   "description": "Find tasks by assignee, status, priority, due date range, overdue, linked record or title text. Returns open tasks unless a status is given.",
+   "description": "Find tasks by assignee, status, priority, due date range, overdue, linked record or title words. Without a status it returns only open tasks.",
    "synonyms": [
     "find tasks",
-    "list tasks",
+    "list to-dos",
     "overdue tasks",
     "my tasks",
-    "open to-dos",
-    "search to-dos",
-    "tasks due this week",
+    "tasks due today",
     "filter tasks",
-    "task list"
+    "look for task",
+    "open tasks",
+    "tasks for contact"
    ],
    "produces": "task",
-   "consumes": [],
+   "consumes": [
+    "user",
+    "contact",
+    "lead",
+    "opportunity"
+   ],
    "siblings": [
     "M07.A03",
-    "M21.A03"
+    "M47.A03"
    ]
   },
   "M06.A04": {
-   "description": "Rewrite the title and/or description text of an open task. Doesn't change owner, due date or priority.",
+   "description": "Rewrite the title and/or description text of a task that is still open. It does not change the owner, due date or priority.",
    "synonyms": [
     "edit task",
     "rename task",
     "change task title",
+    "reword to-do",
     "edit task text",
-    "reword task",
-    "update to-do",
-    "modify task notes",
-    "task wording"
+    "update task notes",
+    "change task details",
+    "modify task"
    ],
    "produces": "task",
    "consumes": [
@@ -1094,15 +1100,16 @@
    ]
   },
   "M06.A05": {
-   "description": "Give an open task to a staff user, or take it away from the current owner. Use it to reassign work.",
+   "description": "Give an open task to a staff user, or move it from its current owner to someone else. Does not change the task's text or due date.",
    "synonyms": [
     "reassign task",
-    "assign to-do",
-    "task owner",
-    "delegate task",
     "hand off task",
-    "change task assignee",
+    "delegate task",
     "give task to",
+    "take over task",
+    "assign to-do",
+    "change task owner",
+    "pass task on",
     "unassign task"
    ],
    "produces": "task",
@@ -1113,20 +1120,21 @@
    "siblings": [
     "M03.A05",
     "M04.A06",
-    "M11.A03"
+    "M47.A04"
    ]
   },
   "M06.A06": {
-   "description": "Set or change the deadline of an open task. The date can't be in the past.",
+   "description": "Set or change the date an open task is due. The new date can't be in the past.",
    "synonyms": [
+    "change deadline",
     "task deadline",
-    "change due date",
-    "reschedule task",
     "postpone task",
-    "move task deadline",
-    "task due",
+    "push back task",
+    "reschedule task",
+    "move due date",
     "extend deadline",
-    "push due date"
+    "task due by",
+    "set due"
    ],
    "produces": "task",
    "consumes": [
@@ -1141,13 +1149,13 @@
    "description": "Set how important an open task is: low, normal, high or urgent.",
    "synonyms": [
     "task urgency",
-    "prioritize task",
-    "raise priority",
     "mark urgent",
+    "make high priority",
+    "raise priority",
     "lower priority",
+    "prioritize task",
     "task importance",
-    "change task priority",
-    "high priority task"
+    "escalate task"
    ],
    "produces": "task",
    "consumes": [
@@ -1158,15 +1166,15 @@
    ]
   },
   "M06.A08": {
-   "description": "Mark an open task as done because the work is finished. For tasks no longer needed, use Cancel task instead.",
+   "description": "Mark an open task as done because the work was finished. If the task is no longer needed, use Cancel task instead.",
    "synonyms": [
-    "complete task",
     "finish task",
+    "complete to-do",
     "task done",
-    "close task",
     "check off task",
-    "tick off to-do",
-    "mark done",
+    "close out task",
+    "tick off",
+    "mark as done",
     "resolve task"
    ],
    "produces": "task",
@@ -1178,16 +1186,16 @@
    ]
   },
   "M06.A09": {
-   "description": "Bring a completed or cancelled task back to open. If its due date has passed, give a new date or it will show as overdue.",
+   "description": "Bring a completed or cancelled task back to open. If its due date has already passed, give a new date or it shows as overdue.",
    "synonyms": [
-    "reopen to-do",
     "undo complete",
-    "restore task",
-    "reactivate task",
-    "uncomplete task",
+    "reopen to-do",
+    "restart task",
     "revive task",
-    "reopen cancelled task",
-    "task back to open"
+    "bring back task",
+    "uncomplete task",
+    "reactivate task",
+    "reopen cancelled task"
    ],
    "produces": "task",
    "consumes": [
@@ -1199,16 +1207,17 @@
    ]
   },
   "M06.A10": {
-   "description": "Cancel an open task that is no longer needed; it stays on record as cancelled. For finished work use Mark task complete instead.",
+   "description": "Cancel an open task that isn't needed anymore; it stays on record as cancelled. For finished work use Mark task complete instead.",
    "synonyms": [
     "drop task",
     "abandon task",
-    "discard task",
     "call off task",
     "no longer needed",
-    "cancel to-do",
-    "scrap task",
-    "void task"
+    "scrap to-do",
+    "discard task",
+    "withdraw task",
+    "stop task",
+    "cancel to-do"
    ],
    "produces": "task",
    "consumes": [
@@ -5398,16 +5407,16 @@
    ]
   },
   "M28.A01": {
-   "description": "Start a new draft invoice for a contact, optionally with line items, a due date and a memo. Nothing is sent to the customer until it is issued.",
+   "description": "Start a new draft invoice for a contact, optionally with line items, a due date and a memo. Nothing is sent to the customer until you issue it.",
    "synonyms": [
     "new invoice",
-    "make invoice",
-    "draft invoice",
     "bill customer",
-    "create bill",
-    "start invoice",
-    "write invoice",
-    "invoice a contact"
+    "make invoice",
+    "raise invoice",
+    "draft bill",
+    "write up invoice",
+    "invoice a client",
+    "start billing"
    ],
    "produces": "invoice",
    "consumes": [
@@ -5415,20 +5424,20 @@
    ],
    "siblings": [
     "M27.A01",
-    "M29.A01"
+    "M32.A01"
    ]
   },
   "M28.A02": {
-   "description": "Open one invoice to see its contact, line items, total, amount paid and due, due date, days overdue, reminders sent and payments applied.",
+   "description": "Open one invoice to see its contact, line items, total, amount paid and still due, due date, days overdue, reminders sent and payments applied.",
    "synonyms": [
-    "invoice details",
     "view invoice",
+    "invoice details",
     "show invoice",
-    "invoice info",
-    "open invoice record",
-    "invoice balance",
     "check invoice",
-    "invoice payments applied"
+    "amount owed",
+    "invoice balance",
+    "payments on invoice",
+    "open invoice record"
    ],
    "produces": "invoice",
    "consumes": [
@@ -5436,20 +5445,20 @@
    ],
    "siblings": [
     "M27.A02",
-    "M29.A02"
+    "M32.A02"
    ]
   },
   "M28.A03": {
-   "description": "Find invoices by contact, status (draft, open, paid, void), date range, minimum amount due or invoice number. For just overdue ones ranked, use the overdue list instead.",
+   "description": "Find invoices by contact, status (draft, open, paid, void), date range, minimum amount due, or invoice number or name. For just the late ones, the overdue list is simpler.",
    "synonyms": [
     "find invoices",
     "look up invoice",
-    "invoice search",
     "filter invoices",
-    "invoices by status",
-    "invoice number lookup",
-    "unpaid invoices",
-    "bills for customer"
+    "invoice lookup",
+    "unpaid bills",
+    "bills for customer",
+    "invoice by number",
+    "paid invoices"
    ],
    "produces": "invoice",
    "consumes": [
@@ -5457,20 +5466,20 @@
    ],
    "siblings": [
     "M27.A03",
-    "M29.A06"
+    "M32.A03"
    ]
   },
   "M28.A04": {
-   "description": "Add a line item with description, quantity and unit price to a draft invoice; the total is recalculated automatically.",
+   "description": "Add a line item with description, quantity and unit price to a draft invoice, and the total is recalculated. Only works while the invoice is still a draft.",
    "synonyms": [
-    "add invoice item",
     "add charge",
-    "new invoice line",
-    "add product to invoice",
-    "append line item",
-    "add service to bill",
+    "add item to invoice",
     "invoice row",
-    "extra charge"
+    "extra charge",
+    "add product to bill",
+    "new line on invoice",
+    "bill for item",
+    "append line"
    ],
    "produces": "invoice",
    "consumes": [
@@ -5482,16 +5491,16 @@
    ]
   },
   "M28.A05": {
-   "description": "Edit a draft invoice: change its memo, switch which contact it is for, or replace all of its line items at once.",
+   "description": "Change a draft invoice's memo, switch which contact it is for, or replace all of its line items at once. Not for invoices already issued.",
    "synonyms": [
     "edit invoice",
-    "change draft invoice",
-    "modify invoice",
-    "edit invoice memo",
-    "change invoice customer",
+    "edit draft bill",
+    "change invoice memo",
+    "change bill recipient",
     "replace line items",
-    "revise draft",
-    "update invoice note"
+    "modify draft",
+    "correct invoice",
+    "revise draft"
    ],
    "produces": "invoice",
    "consumes": [
@@ -5501,16 +5510,16 @@
    "siblings": []
   },
   "M28.A06": {
-   "description": "Set or move the due date of a draft or open invoice, for example to give a customer more time to pay.",
+   "description": "Set or move the due date on a draft or open invoice, for example to give a customer more time to pay.",
    "synonyms": [
-    "change due date",
     "extend due date",
-    "invoice deadline",
-    "payment due date",
+    "payment deadline",
     "push back due date",
     "more time to pay",
-    "move due date",
-    "reschedule payment date"
+    "change pay-by date",
+    "invoice deadline",
+    "postpone payment",
+    "new due date"
    ],
    "produces": "invoice",
    "consumes": [
@@ -5521,16 +5530,16 @@
    ]
   },
   "M28.A07": {
-   "description": "Issue a draft invoice so it becomes open and is emailed to the contact; due date defaults to 30 days out. Different from just creating the draft.",
+   "description": "Issue a draft invoice so it becomes open and is emailed to the contact. Due date defaults to 30 days from today if none is set.",
    "synonyms": [
     "send invoice",
     "finalize invoice",
-    "approve invoice",
+    "bill the customer",
     "publish invoice",
-    "bill customer now",
-    "open invoice",
+    "make invoice official",
+    "approve invoice",
     "email invoice",
-    "release invoice"
+    "open invoice"
    ],
    "produces": "invoice",
    "consumes": [
@@ -5541,37 +5550,36 @@
    ]
   },
   "M28.A08": {
-   "description": "Email the contact a payment reminder for an open invoice right away, at most once per 24 hours. To review the wording first, draft an email instead.",
+   "description": "Email the contact a payment reminder for an open invoice right now, limited to one per invoice every 24 hours. To write a reminder without sending, draft an email instead.",
    "synonyms": [
-    "payment reminder",
-    "dun customer",
     "chase payment",
-    "nudge unpaid invoice",
+    "nudge customer",
+    "dunning",
+    "payment nag",
     "remind to pay",
-    "overdue notice",
-    "follow up on invoice",
-    "collections email"
+    "follow up unpaid",
+    "overdue reminder",
+    "ask for payment"
    ],
    "produces": null,
    "consumes": [
-    "invoice",
-    "contact"
+    "invoice"
    ],
    "siblings": [
     "M13.A03"
    ]
   },
   "M28.A09": {
-   "description": "Void a draft or open invoice that has no payments, recording a reason. This cannot be undone; it differs from cancelling a payment request.",
+   "description": "Void a draft or open invoice that has no payments, giving a reason. It cannot be undone. Different from cancelling a payment request or quote.",
    "synonyms": [
     "cancel invoice",
-    "void bill",
-    "invalidate invoice",
     "write off invoice",
+    "scrap invoice",
+    "invalidate bill",
+    "delete unpaid invoice",
     "annul invoice",
     "kill invoice",
-    "invoice made in error",
-    "delete unpaid invoice"
+    "void bill"
    ],
    "produces": "invoice",
    "consumes": [
@@ -5583,16 +5591,17 @@
    ]
   },
   "M28.A10": {
-   "description": "List open invoices past their due date, most overdue first, with days overdue, amount due and last reminder date. Simpler than a general invoice search.",
+   "description": "List open invoices past their due date, most overdue first, with days overdue, amount due and last reminder date. A minimum days overdue filter narrows it.",
    "synonyms": [
-    "overdue invoices",
-    "late payments",
-    "past due bills",
-    "unpaid overdue",
-    "delinquent invoices",
-    "aging report",
+    "late invoices",
+    "past due",
+    "overdue bills",
+    "unpaid late",
     "who owes us",
-    "outstanding balances"
+    "delinquent invoices",
+    "outstanding balances",
+    "collections list",
+    "arrears"
    ],
    "produces": "invoice",
    "consumes": [],
@@ -9119,77 +9128,84 @@
    "siblings": []
   },
   "M47.A01": {
-   "description": "Opens a new support ticket for a customer issue, with subject, details and requester. Use it to log a problem that needs resolution work.",
+   "description": "Open a new support ticket for a customer issue with a title and details. Needs a contact or requester email; can optionally set an owner. Starts as open with normal priority.",
    "synonyms": [
     "open ticket",
     "new ticket",
     "log issue",
     "raise ticket",
-    "submit support request",
-    "file ticket",
+    "file support case",
+    "customer complaint",
+    "submit ticket",
     "report problem",
     "new support case"
    ],
    "produces": "ticket",
    "consumes": [
-    "contact"
+    "contact",
+    "user"
    ],
    "siblings": [
-    "M06.A01",
-    "M01.A01"
+    "M03.A01",
+    "M06.A01"
    ]
   },
   "M47.A02": {
-   "description": "Shows the full details of one support ticket, including its subject, status, priority, owner and requester.",
+   "description": "Show everything about one support ticket: requester, description, owner, status, priority, internal notes and reply history. Use to read a single known ticket.",
    "synonyms": [
     "view ticket",
     "open ticket details",
     "ticket info",
     "show ticket",
-    "ticket lookup",
-    "support case details",
     "read ticket",
-    "ticket record"
+    "support case details",
+    "ticket history",
+    "look up ticket"
    ],
    "produces": "ticket",
    "consumes": [
     "ticket"
    ],
    "siblings": [
-    "M06.A02",
-    "M01.A02"
+    "M03.A02",
+    "M06.A02"
    ]
   },
   "M47.A03": {
-   "description": "Finds support tickets by keyword, status, priority, owner or requester. Use it to browse or filter many tickets rather than open a single known one.",
+   "description": "Find support tickets by words, contact, owner, priority or status, newest first. Includes resolved and closed tickets unless a status is chosen.",
    "synonyms": [
     "find tickets",
-    "ticket search",
+    "search support cases",
+    "look for ticket",
     "filter tickets",
     "list tickets",
-    "look up cases",
-    "open tickets list",
-    "support queue",
-    "search support requests"
+    "open tickets by owner",
+    "tickets for customer",
+    "urgent tickets",
+    "find issue"
    ],
    "produces": "ticket",
-   "consumes": [],
+   "consumes": [
+    "contact",
+    "user"
+   ],
    "siblings": [
-    "M06.A03",
-    "M11.A02"
+    "M03.A03",
+    "M06.A03"
    ]
   },
   "M47.A04": {
-   "description": "Assigns a support ticket to a user who will handle it, or changes the current owner to someone else.",
+   "description": "Give a support ticket to a different available support, manager or admin user. It assigns a ticket, not a task or contact; reopen resolved or closed tickets first.",
    "synonyms": [
     "assign ticket",
-    "ticket owner",
-    "reassign ticket",
     "hand off ticket",
+    "reassign ticket",
+    "change ticket owner",
     "give ticket to agent",
-    "change ticket agent",
-    "set ticket assignee",
-    "route ticket"
+    "take over ticket",
+    "route ticket",
+    "pass ticket on",
+    "ticket agent"
    ],
    "produces": "ticket",
    "consumes": [
@@ -9197,21 +9213,22 @@
     "user"
    ],
    "siblings": [
-    "M06.A05",
-    "M11.A03"
+    "M03.A05",
+    "M06.A05"
    ]
   },
   "M47.A05": {
-   "description": "Sets how urgent a support ticket is, such as low, normal, high or urgent. Does not change its status or owner.",
+   "description": "Change how urgent an open or in-progress ticket is: low, normal, high or urgent. Before the first response, this also resets the response deadline.",
    "synonyms": [
     "ticket urgency",
-    "ticket priority level",
     "escalate ticket",
-    "mark urgent",
     "raise priority",
-    "lower priority",
-    "ticket severity",
-    "prioritize ticket"
+    "make urgent",
+    "downgrade ticket",
+    "ticket importance",
+    "prioritize ticket",
+    "bump ticket",
+    "ticket severity"
    ],
    "produces": "ticket",
    "consumes": [
@@ -9222,39 +9239,42 @@
    ]
   },
   "M47.A06": {
-   "description": "Moves a support ticket to a new status such as open, pending, resolved or closed, to show where the work stands.",
+   "description": "Move a support ticket between open, in progress, resolved and closed, including reopening a closed one. Reopening keeps the original first-response deadline.",
    "synonyms": [
-    "change ticket status",
     "resolve ticket",
     "close ticket",
     "reopen ticket",
-    "ticket state",
-    "mark ticket in progress",
-    "set ticket resolved",
-    "update ticket progress"
+    "ticket status",
+    "mark ticket solved",
+    "change ticket state",
+    "start working ticket",
+    "finish ticket",
+    "ticket done"
    ],
    "produces": "ticket",
    "consumes": [
     "ticket"
    ],
    "siblings": [
-    "M11.A06",
-    "M06.A08"
+    "M06.A08",
+    "M06.A09",
+    "M11.A06"
    ]
   },
   "M47.A07": {
-   "description": "Adds a private note on a ticket visible only to staff, not the customer. Differs from replying to the requester, which sends a message.",
+   "description": "Add a private internal note to a ticket, even a closed one. It doesn't message the customer, create a contact note, reopen the ticket or count as a response.",
    "synonyms": [
     "private ticket note",
-    "internal comment",
-    "staff note on ticket",
-    "ticket comment",
-    "hidden note",
+    "internal comment on ticket",
+    "staff note",
+    "jot down on ticket",
     "agent note",
-    "note to team",
-    "internal remark"
+    "ticket comment internal",
+    "leave note for team",
+    "hidden note",
+    "ticket memo"
    ],
-   "produces": "note",
+   "produces": "ticket",
    "consumes": [
     "ticket"
    ],
@@ -9264,38 +9284,38 @@
    ]
   },
   "M47.A08": {
-   "description": "Sends a reply to the person who raised the ticket, visible to the customer. Differs from an internal note, which stays private.",
+   "description": "Email a reply to the ticket's requester. This is the only way to log replies and meet the first-response deadline; resolved or closed tickets must be reopened first.",
    "synonyms": [
-    "answer customer",
-    "respond to ticket",
-    "reply to requester",
-    "email ticket customer",
-    "public reply",
-    "message customer",
+    "respond to customer",
+    "answer ticket",
+    "email requester",
+    "reply to customer",
+    "send ticket response",
     "write back",
-    "ticket response"
+    "support reply",
+    "first response",
+    "message ticket requester"
    ],
-   "produces": "email",
+   "produces": "ticket",
    "consumes": [
-    "ticket",
-    "contact"
+    "ticket"
    ],
    "siblings": [
     "M13.A03",
-    "M45.A09"
+    "M12.A03"
    ]
   },
   "M47.A09": {
-   "description": "Connects a support ticket to a contact record so the issue appears under that customer, or changes the linked contact.",
+   "description": "Attach an open or in-progress ticket to a contact and use that contact's current email as the requester address. Reopen resolved or closed tickets first.",
    "synonyms": [
-    "attach contact to ticket",
-    "ticket requester link",
+    "connect ticket to contact",
     "associate customer",
-    "connect ticket to customer",
-    "set ticket contact",
-    "tie ticket to contact",
-    "link customer",
-    "add requester"
+    "set ticket requester",
+    "tie ticket to customer",
+    "attach contact to ticket",
+    "match ticket to contact",
+    "ticket customer link",
+    "add contact to ticket"
    ],
    "produces": "ticket",
    "consumes": [
@@ -9303,21 +9323,21 @@
     "contact"
    ],
    "siblings": [
-    "M02.A06",
-    "M07.A06"
+    "M02.A06"
    ]
   },
   "M47.A10": {
-   "description": "Checks a ticket's service level status: time left to first response or resolution, and whether the deadline is at risk or breached.",
+   "description": "Check a ticket's first-response deadline status (not resolution time), based on hours since creation and priority. Internal notes don't count and reopening doesn't reset it.",
    "synonyms": [
     "SLA check",
-    "ticket deadline",
-    "response time target",
+    "response deadline",
+    "is ticket overdue",
+    "time left to respond",
     "SLA breach",
-    "first response deadline",
-    "ticket SLA timer",
-    "overdue ticket",
-    "service level status"
+    "first response time",
+    "ticket timer",
+    "SLA status",
+    "late ticket"
    ],
    "produces": null,
    "consumes": [
@@ -9528,17 +9548,17 @@
    ]
   },
   "M49.A01": {
-   "description": "Creates a new team of staff users, such as 'EMEA Sales', optionally with starting members, a manager and a way of sharing out work.",
+   "description": "Create a new team of staff users, such as 'EMEA Sales'. You can optionally add members, pick a manager and choose how work is shared out at the same time.",
    "synonyms": [
     "new team",
-    "add team",
     "set up team",
-    "make team",
-    "start team",
-    "form group",
-    "new staff group",
-    "create department",
-    "team setup"
+    "start a team",
+    "form a team",
+    "make a group",
+    "create staff group",
+    "add team",
+    "build department",
+    "new department"
    ],
    "produces": "team",
    "consumes": [
@@ -9547,52 +9567,51 @@
    "siblings": []
   },
   "M49.A02": {
-   "description": "Shows one team's full details: members with roles and availability, manager and assignment strategy. For all teams at once, use List teams.",
+   "description": "Open one team to see its members with roles and availability, its manager and its assignment strategy. For the numbers on open work, use the workload action instead.",
    "synonyms": [
-    "view team",
     "team info",
-    "open team",
-    "show team",
-    "team members",
+    "view team",
     "team profile",
-    "see team",
-    "team overview"
+    "show team",
+    "team members list",
+    "who is on team",
+    "team overview",
+    "team settings",
+    "look up team"
    ],
    "produces": "team",
    "consumes": [
     "team"
    ],
-   "siblings": [
-    "M48.A02"
-   ]
+   "siblings": []
   },
   "M49.A03": {
-   "description": "Lists the teams of staff users (like Sales or Support) with their member ids. Archived teams appear only if requested.",
+   "description": "List all teams of staff users, like Sales or Support, with their member ids. Archived teams are left out unless you ask for them.",
    "synonyms": [
     "all teams",
     "show teams",
-    "team list",
     "browse teams",
-    "view teams",
-    "which teams",
-    "staff groups",
-    "departments list"
+    "team directory",
+    "list groups",
+    "view departments",
+    "find teams",
+    "team list",
+    "which teams exist"
    ],
    "produces": "team",
    "consumes": [],
-   "siblings": [
-    "M48.A03"
-   ]
+   "siblings": []
   },
   "M49.A04": {
-   "description": "Changes the name of a team, and optionally its description. Members and settings stay the same.",
+   "description": "Change the name of a team, and optionally its description. Members, manager and settings stay the same.",
    "synonyms": [
     "change team name",
+    "relabel team",
     "edit team name",
     "retitle team",
-    "relabel team",
     "update team description",
-    "team name change",
+    "rename group",
+    "rename department",
     "call team something else"
    ],
    "produces": "team",
@@ -9600,21 +9619,22 @@
     "team"
    ],
    "siblings": [
-    "M09.A04",
-    "M05.A04"
+    "M05.A04",
+    "M35.A04"
    ]
   },
   "M49.A05": {
-   "description": "Adds a staff user to a team so they can receive shared work. Use Assign team manager to make someone the manager.",
+   "description": "Put a staff user into a team so they can receive its shared work. Different from removing a member or making someone the manager.",
    "synonyms": [
     "add user to team",
     "join team",
-    "put in team",
+    "put on team",
     "include member",
-    "new team member",
     "add staff to team",
-    "team add",
-    "enroll member"
+    "assign user to team",
+    "onboard to team",
+    "add to group",
+    "new team member"
    ],
    "produces": "team",
    "consumes": [
@@ -9624,15 +9644,15 @@
    "siblings": []
   },
   "M49.A06": {
-   "description": "Takes a staff user out of a team. Records they own stay theirs; only future team assignment is affected.",
+   "description": "Take a staff user out of a team. Records they own stay with them; only future team assignments stop reaching them.",
    "synonyms": [
     "remove user from team",
-    "kick from team",
+    "kick off team",
     "drop member",
-    "take out of team",
-    "delete team member",
+    "take off team",
     "leave team",
-    "team removal",
+    "delete team member",
+    "remove staff from group",
     "unassign from team"
    ],
    "produces": "team",
@@ -9645,16 +9665,17 @@
    ]
   },
   "M49.A07": {
-   "description": "Makes a staff user the team's manager, replacing the current one, and adds them as a member if needed.",
+   "description": "Make a staff user the manager of a team, replacing any current manager. They are added as a member if they weren't one.",
    "synonyms": [
-    "set team lead",
-    "team leader",
-    "change manager",
+    "set team manager",
+    "team lead",
     "make manager",
+    "change team lead",
     "appoint manager",
+    "put in charge",
     "promote to manager",
-    "team head",
-    "new team lead"
+    "new team head",
+    "replace manager"
    ],
    "produces": "team",
    "consumes": [
@@ -9666,17 +9687,17 @@
    ]
   },
   "M49.A08": {
-   "description": "Chooses how new work is shared across a team: round robin (in turn), least busy (fewest open tasks) or manual.",
+   "description": "Choose how new work is shared across a team: round robin (in turn), least busy (fewest open tasks) or manual.",
    "synonyms": [
     "round robin",
-    "routing rule",
-    "distribution method",
-    "work allocation",
-    "auto assign rule",
+    "distribution rule",
+    "routing method",
+    "auto assign setting",
+    "work allocation mode",
     "least busy",
-    "assignment mode",
-    "lead routing",
-    "load balancing"
+    "how work is split",
+    "rotation setting",
+    "lead distribution"
    ],
    "produces": "team",
    "consumes": [
@@ -9685,16 +9706,18 @@
    "siblings": []
   },
   "M49.A09": {
-   "description": "Shows each active team member's availability, open and overdue tasks and owned open leads, to find who is free or least busy before assigning work.",
+   "description": "Show each active team member's availability, open and overdue tasks and open leads. Use it to see who is free or least busy before handing out work.",
    "synonyms": [
-    "team capacity",
     "who is free",
+    "team capacity",
+    "workload",
     "who is busy",
-    "member workload",
-    "open tasks per member",
     "team load",
     "staff availability",
-    "overdue by member"
+    "open tasks per person",
+    "find least busy",
+    "overdue by member",
+    "hand off to who"
    ],
    "produces": "report",
    "consumes": [
@@ -9703,24 +9726,25 @@
    "siblings": []
   },
   "M49.A10": {
-   "description": "Archives a team that is no longer used. Members keep their accounts and records; the team just stops receiving work.",
+   "description": "Archive a team that is no longer used. Members keep their accounts and records, but the team stops getting new work.",
    "synonyms": [
     "retire team",
-    "disband team",
     "close team",
-    "delete team",
+    "disband team",
     "deactivate team",
     "shut down team",
     "remove team",
-    "team archive"
+    "delete team",
+    "stop using team",
+    "hide team"
    ],
    "produces": "team",
    "consumes": [
     "team"
    ],
    "siblings": [
-    "M20.A10",
-    "M05.A05"
+    "M05.A05",
+    "M20.A10"
    ]
   },
   "M50.A01": {

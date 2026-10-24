@@ -10,11 +10,11 @@ import { SUBMIT_PLAN_SCHEMA, SubmitPlan, type Step } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
-//   retrieve a shortlist → prompt → plan, with at most one search_tools round (a second retrieval for what the
-//   planner says is missing), at most one look round (read-only steps run now, their results fed back, so a
-//   value can be worked out from a record: "same time, on Monday") and at most one repair round (compile errors
-//   fed back), in any order → a compiled plan or a reply. At most four planner calls. The plan may only use
-//   actions the planner was shown.
+//   retrieve a shortlist → prompt → plan, with at most two search_tools rounds (the second only when the
+//   first added new actions), at most one look round (read-only steps run now, their results fed back, so a
+//   value can be worked out from a record) and at most one repair round, in any order. An exhausted search
+//   budget gets one instruction to plan with the offered cards. At most six planner calls; only offered
+//   actions may be used.
 
 /** How long one planner call may take before the turn gives up on it. */
 export const PLANNER_TIMEOUT_MS = 120_000;
@@ -148,12 +148,13 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   await shortlist("retrieve", input.answering ? `${input.answering}\n${input.message}` : input.message, input.carry, named);
   let user = prompt();
   let reply = await call(user, "plan");
-  let searched = false;
+  let searches = 0;
+  let searchAdded = false;
+  let searchClosed = false;
   let repaired = false;
   let lookPlan: CompiledPlan | undefined;
   let lookSteps: Step[] = [];
-  // Each reply is one of: search_tools (retrieve once more, re-plan), a plan (compile; repair once if invalid),
-  // or a reply for the user. The repair prompt may itself say "reply search_tools" or "reply unsupported".
+  // Search and repair have independent, bounded budgets.
   for (;;) {
     const parsed = SubmitPlan.safeParse(reply.json);
     if (!parsed.success) {
@@ -167,10 +168,17 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     const d = parsed.data;
 
     if (d.type === "search_tools") {
-      if (searched) return { kind: "reply", status: "unsupported", text: `I couldn't find an action for that${d.query ? ` (${d.query})` : ""}.` };
-      searched = true;
-      // Retrieve again on the planner's own description of what's missing; the new cards join the old ones.
+      if (searches >= 2 || (searches > 0 && !searchAdded)) {
+        if (searchClosed) return { kind: "reply", status: "unsupported", text: "No further tool search is available for this request." };
+        searchClosed = true;
+        reply = await call(`${prompt()}\n<errors>Tool search is exhausted; plan with the actions already listed, or reply unsupported if none does it.</errors>`, "plan after search limit");
+        continue;
+      }
+      searches++;
+      const before = offered.length;
+      // Retrieve again on the planner's own description; only progress allows another search.
       await shortlist("search_tools", d.query || input.message);
+      searchAdded = offered.length > before;
       user = prompt();
       reply = await call(user, "plan after search_tools");
       continue;
@@ -210,11 +218,12 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       const text = [d.question ?? d.reason ?? d.text ?? "", d.alternatives?.length ? `Alternatives: ${d.alternatives.join("; ")}` : ""].filter(Boolean).join("\n");
       // "Unsupported" only means nothing on the shortlist fits, and the shortlist came from the user's loose wording.
       // Before believing it, retrieve once more on the planner's own description; re-plan only if that finds new cards.
-      if (d.type === "unsupported" && !searched) {
-        searched = true;
+      if (d.type === "unsupported" && searches === 0) {
+        searches++;
         const before = offered.length;
         await shortlist("search_tools", `${text}\n${input.message}`);
-        if (offered.length > before) {
+        searchAdded = offered.length > before;
+        if (searchAdded) {
           user = prompt();
           reply = await call(user, "plan after search_tools");
           continue;

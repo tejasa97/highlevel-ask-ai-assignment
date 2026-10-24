@@ -20,7 +20,9 @@ For each action return:
 - description: one or two plain English sentences in everyday words, 15-35 words. Say what it does and, where a
   look-alike exists, how it differs (e.g. "Cancel" vs "Mark complete"). No API words (endpoint, payload, CRUD).
 - synonyms: 8-12 short words or phrases (1-4 words) a user might type for this action: informal verbs,
-  everyday nouns, abbreviations and alternative phrasings. Spell them correctly; typos are handled by fuzzy matching. Include the record noun in some of them.
+  everyday nouns, abbreviations and alternative phrasings. Include indirect, non-expert wording where it fits
+  the action (e.g. "cover for", "take over", "help out", "pick up", "chase", "loop in", "hand off");
+  don't attach a phrase to an action that cannot do it. Spell them correctly; typos are handled by fuzzy matching. Include the record noun in some of them.
   Avoid words that would equally describe the module's other actions (e.g. don't put "lead" alone in every
   lead action). Don't repeat the action name itself.
 - produces: the entity type this action returns or creates, or null. consumes: entity types whose ids it needs.

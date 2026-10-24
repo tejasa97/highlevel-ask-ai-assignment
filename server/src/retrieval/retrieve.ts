@@ -198,6 +198,13 @@ export class Retriever {
     const taken = new Set<string>();
     const perModule = new Map<string, number>();
     const floor = o.floor * Math.max(...merged.map(([, f]) => bm25(f)), 0);
+    const mentioned = new Set((input.mentions ?? []).map((m) => m.entity));
+    const mentionExempt = (id: string) => {
+      const c = this.byId.get(id)!;
+      const types = [...c.consumes, ...(c.produces ? [c.produces] : [])];
+      // Empty metadata cannot make a card exempt; every input/output type must be linked in the message.
+      return types.length > 0 && types.every((t) => mentioned.has(t));
+    };
     const capped: typeof merged = [];
     const take = ([id, f]: (typeof merged)[number]) => {
       const rank = ranking.find((r) => r.id === id)!.rank;
@@ -209,7 +216,7 @@ export class Retriever {
       const [id, f] = entry;
       if (bm25(f) < floor && !floorExempt.has(id)) continue;
       const mod = id.slice(0, 3);
-      if ((perModule.get(mod) ?? 0) >= o.moduleCap) {
+      if ((perModule.get(mod) ?? 0) >= o.moduleCap && !mentionExempt(id)) {
         capped.push(entry);
         continue;
       }

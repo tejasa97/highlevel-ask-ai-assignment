@@ -94,15 +94,23 @@ describe("planTurn", () => {
     assert.ok(offeredIn(planner.requests[1]!).length > offeredIn(planner.requests[0]!).length);
   });
 
-  test("a second search_tools gives up as unsupported", async () => {
-    const planner = scripted(reply({ type: "search_tools", query: "book a flight" }), reply({ type: "search_tools", query: "airline booking" }));
-    const { out } = await run("book me a flight to Austin", planner);
-    assert.equal(out.kind, "reply");
-    if (out.kind === "reply") {
-      assert.equal(out.status, "unsupported");
-      assert.match(out.text, /airline booking/);
-    }
-    assert.equal(planner.requests.length, 2);
+  test("a second search without new cards gets one plan-with-what-you-have instruction", async () => {
+    const planner = scripted(reply({ type: "search_tools", query: "cook risotto" }), reply({ type: "search_tools", query: "airline booking" }), reply({ type: "unsupported", reason: "No flight tools." }));
+    const { out, events } = await run("book me a flight to Austin", planner);
+    assert.ok(out.kind === "reply" && out.status === "unsupported");
+    assert.equal(planner.requests.length, 3);
+    assert.match(planner.requests[2]!.user, /Tool search is exhausted; plan with the actions already listed/);
+    assert.equal(events.filter((e) => e.type === "retrieval").length, 2);
+  });
+
+  test("a productive search permits one extra search, but repeated searches cannot run away", async () => {
+    const search = reply({ type: "search_tools", query: "create a task" });
+    const planner = scripted(search, reply({ type: "search_tools", query: "send email" }), search, search);
+    const { out, events } = await run("cook risotto", planner);
+    assert.ok(out.kind === "reply" && out.status === "unsupported");
+    assert.equal(planner.requests.length, 4);
+    assert.equal(events.filter((e) => e.type === "retrieval").length, 3);
+    assert.match(planner.requests[3]!.user, /Tool search is exhausted/);
   });
 
   test("an unsupported reply is checked with one more retrieval on its own words, and re-planned if that finds actions", async () => {
