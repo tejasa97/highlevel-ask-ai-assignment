@@ -299,11 +299,21 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
     for (const issue of parsed.error.issues) {
       const p = issue.path.join(".");
       if (refPaths.some((rp) => p === rp || p.startsWith(`${rp}.`))) continue;
-      err(`${id} arg ${p || "(args)"}: ${issue.message}`);
+      err(`${id} arg ${p || "(args)"}: ${issue.message}${hint(issue, p, action.inputSchema)}`);
       ok = false;
     }
   }
   return ok ? { action, args } : null;
+}
+
+/** For an unknown argument name: the action's real argument names, and the closest one. */
+function hint(issue: z.core.$ZodIssue, at: string, schema: JsonSchema): string {
+  if (issue.code !== "unrecognized_keys") return "";
+  const parent = at ? schemaAt(schema, at.split(".").map((k) => (/^\d+$/.test(k) ? Number(k) : k))) : schema;
+  const names = parent ? fieldsOf(parent) : [];
+  if (!names.length) return "";
+  const close = issue.keys.map((k) => names.find((n) => n.toLowerCase() === k.toLowerCase() || n.toLowerCase().startsWith(k.toLowerCase()) || k.toLowerCase().startsWith(n.toLowerCase()))).filter((n): n is string => !!n);
+  return `; arguments: ${names.join(", ")}${close.length ? `; did you mean ${[...new Set(close)].join(" or ")}?` : ""}`;
 }
 
 function schemaAt(s: JsonSchema, at: (string | number)[]): JsonSchema | null {

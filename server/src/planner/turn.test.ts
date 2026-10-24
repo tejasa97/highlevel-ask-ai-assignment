@@ -7,7 +7,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { planTurn, type TurnDeps, type TurnEvent } from "./turn.js";
+import { planTurn, renameReusedIds, type TurnDeps, type TurnEvent } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -132,6 +132,34 @@ describe("grounded outcomes and clarifications", () => {
     const { out } = await run("Show my tasks", planner, {}, async () => []);
     assert.ok(out.kind === "plan");
     assert.equal(planner.requests.length, 2);
+  });
+
+  test("a plan step that reuses a looked step's id keeps the read and refers to it, with no repair round", async () => {
+    const read = { id: "s1", kind: "action" as const, action: "M06.A03", argsJson: "{}" };
+    const reuse = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A05", argsJson: JSON.stringify({ taskId: "$s1.items[0].id", assigneeId: "us_5" }) }], outcome: { effect: "change", actions: ["M06.A05"], destination: null } });
+    const planner = scripted(reply({ type: "look", steps: [read], outcome: { effect: "change", actions: ["M06.A05"], destination: null } }), reuse);
+    const { out } = await run("Reassign my first task to Noah", planner, {}, async () => []);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+    assert.deepEqual(out.plan.steps.map((s) => s.id), ["s1", "s1_2"]);
+  });
+
+  test("a duplicated id inside one plan is renamed and later references follow the new step", () => {
+    const step = (id: string, argsJson: string) => ({ id, kind: "action" as const, action: "M06.A03", argsJson });
+    const fixed = renameReusedIds(reply({ steps: [step("s1", "{}"), step("s1", "{}"), step("s2", '{"q":"$s1.items"}')] }));
+    assert.deepEqual(fixed.steps!.map((s) => s.id), ["s1", "s1_2", "s2"]);
+    assert.match((fixed.steps![2] as { argsJson: string }).argsJson, /\$s1_2\.items/);
+    const same = reply({ steps: [step("s1", "{}"), step("s2", '{"q":"$s1.items"}')] });
+    assert.equal(renameReusedIds(same), same);
+  });
+
+  test("repairing a malformed clarification does not use up the plan's repair", async () => {
+    const planner = scripted(reply({ type: "clarify", clarification: "content", question: "Which task?", outcome: change }), { ...tasks("plan"), outcome: change }, { ...createTask(), outcome: change });
+    const { out } = await run("Create a task like my other tasks", planner);
+    assert.ok(out.kind === "plan");
+    assert.equal(planner.requests.length, 3);
+    assert.match(planner.requests[1]!.user, /missing \{action, argument, argsJson\}/);
+    assert.match(planner.requests[2]!.user, /only reads/);
   });
 
   test("a search can discover final operation IDs without losing its original effect", async () => {
