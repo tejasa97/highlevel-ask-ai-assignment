@@ -57,4 +57,39 @@ describe("typed session identities", () => {
     const failed = { ...run, steps: run.steps.map((s) => ({ ...s, status: "failed" as const })) };
     assert.deepEqual(rememberRecords([], c.plan, failed), []);
   });
+
+  test("a record read by a Get action is remembered, by its number when it has no name", async () => {
+    const ctx = world();
+    const quote = ctx.f.quote({ number: "QT-9139" });
+    const c = compile(response([action("get", "M27.A02", { quoteId: quote.id })]), registry);
+    assert.ok(c.ok);
+    const run = await execute(c.plan, registry, ctx, { executionId: "remember-get" });
+    assert.deepEqual(rememberRecords([], c.plan, run), [{ entity: "quote", id: quote.id, name: "QT-9139" }]);
+  });
+
+  test("a plan that fails on a fixable error before changing anything is planned again, once, with the errors", async () => {
+    const requests: PlanRequest[] = [];
+    const wrong = response([action("get", "M50.A07", { reportId: { $lookup: { entity: "report", name: "Monthly Revnue" } } })]);
+    const right = response([action("get", "M50.A07", { reportId: { $lookup: { entity: "report", name: "Monthly Revenue" } } })]);
+    const replies = [wrong, right, wrong, wrong];
+    const planner: Planner = { name: "scripted", async plan(req) {
+      requests.push(req);
+      const json = replies.shift()!;
+      return { model: "scripted-provider", json, text: JSON.stringify(json), usage: { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0, billing: "none" }, latencyMs: 0 };
+    } };
+    const ctx = world();
+    ctx.f.savedReport({ name: "Monthly Revenue" });
+    const chat = new Conversation({ registry, planner, retriever: new Retriever(buildCards(registry)) }, ctx);
+    const replies1: { status: string }[] = [];
+    await chat.ask("Run the Monthly Revenue report", "fast", "us_1", (e, d) => { if (e === "reply") replies1.push(d as { status: string }); });
+    assert.equal(requests.length, 2);
+    assert.match(requests[1]!.user, /<failed_attempt>.*no report matches/);
+    assert.equal(replies1.at(-1)?.status, "done");
+    // A second failure is the answer: no third plan.
+    const replies2: { status: string }[] = [];
+    await chat.ask("Run the Monthly Revnue report", "fast", "us_1", (e, d) => { if (e === "reply") replies2.push(d as { status: string }); });
+    assert.equal(requests.length, 4);
+    assert.deepEqual(replies2.map((r) => r.status), ["failed"]);
+  });
 });
+

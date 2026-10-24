@@ -2,6 +2,7 @@ import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { Limit, listOf, page, person, requireState } from "../../registry/helpers.js";
+import { ownedResolver } from "../../registry/lookup.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Course } from "../m40-courses/schema.js";
@@ -269,4 +270,13 @@ const certificate = defineAction({
 
 export default {
   actions: [enroll, getEnrollment, searchEnrollments, setExpiry, suspend, resume, revoke, completeLesson, progress, certificate],
+  resolvers: {
+    enrollment: ownedResolver<Enrollment>({
+      table: "enrollments",
+      noun: "enrollment",
+      label: (store, e) => store.get<Course>("courses", e.courseId)?.title ?? "",
+      detail: (e) => e.status,
+      inactive: (e) => (e.status === "revoked" ? "revoked" : undefined),
+    }),
+  },
 } satisfies ModuleExports;

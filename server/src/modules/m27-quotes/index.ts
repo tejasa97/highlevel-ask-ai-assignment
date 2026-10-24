@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { atLeastOne, cents, contains, inDateRange, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { ownedResolver } from "../../registry/lookup.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import { localDate } from "../../store/clock.js";
 import type { Store } from "../../store/db.js";
@@ -377,4 +378,5 @@ const convertQuote = defineAction({
 
 export default {
   actions: [createQuote, getQuote, searchQuotes, addLine, updateLine, setExpiry, applyDiscount, sendQuote, acceptQuote, convertQuote],
+  resolvers: { quote: ownedResolver<Quote>({ table: "quotes", noun: "quote", label: (_, q) => q.number, detail: (q) => `${q.status}, $${q.total}` }) },
 } satisfies ModuleExports;

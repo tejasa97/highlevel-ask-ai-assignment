@@ -12,7 +12,7 @@ import type { Candidate } from "./registry.js";
 export const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/['\u2019]s\b/gu, "").replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
 
 // Words that name the kind of record, not the record: dropped in the last-resort match.
-const TYPE_WORDS = new Set(["the", "my", "campaign", "pipeline", "funnel", "workflow", "form", "report", "tag", "calendar", "template", "segment", "list", "record", "page", "survey", "course", "deal", "task", "invoice"]);
+const TYPE_WORDS = new Set(["the", "my", "campaign", "pipeline", "funnel", "workflow", "form", "report", "tag", "calendar", "template", "segment", "list", "record", "page", "survey", "course", "deal", "task", "invoice", "quote", "order", "subscription", "enrollment"]);
 
 /**
  * Name matching for resolvers: exact (case-insensitive) beats a whole-word match, which beats a prefix.

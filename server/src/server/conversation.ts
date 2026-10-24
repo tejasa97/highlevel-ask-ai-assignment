@@ -68,17 +68,26 @@ export class Conversation {
       const c = r.clarification;
       return c ? [...steps, { id: c.stepId, error: `more than one ${c.entity} matches "${c.name}": ${c.candidates.map((x) => x.name).join(", ")}` }] : steps;
     };
-    const outcome = await planTurn(
-      { message, tier, context, carry: this.carry, answering: this.answering, records: this.records },
-      { registry, retriever, planner, clock: this.world.clock, store: this.world.store, look },
-      (e) => emit(e.type, e.data),
-    );
-    if (outcome.kind === "reply") return this.finish(message, outcome.status, outcome.text, emit, outcome.options, outcome.infra);
-    this.carry = outcome.carry;
-    const turn: Turn = { id: turnId, message, plan: outcome.plan, executionId: `ex_${turnId}` };
-    this.turns.set(turnId, turn);
-    emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
-    await this.run(turn, actorId, emit);
+    const answering = this.answering;
+    // A plan that fails on something the planner can fix (a record not found, a bad argument) before changing
+    // anything gets one more try, with what went wrong.
+    let failed: string | undefined;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const outcome = await planTurn(
+        { message, tier, context, carry: this.carry, answering, records: this.records, failed },
+        { registry, retriever, planner, clock: this.world.clock, store: this.world.store, look },
+        (e) => emit(e.type, e.data),
+      );
+      if (outcome.kind === "reply") return this.finish(message, outcome.status, outcome.text, emit, outcome.options, outcome.infra);
+      this.carry = outcome.carry;
+      const id = attempt ? `${turnId}_retry` : turnId;
+      const turn: Turn = { id, message, plan: outcome.plan, executionId: `ex_${id}` };
+      this.turns.set(id, turn);
+      emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
+      failed = await this.run(turn, actorId, emit, undefined, attempt === 0);
+      if (!failed) return;
+      emit("retry", { turnId: id, failed });
+    }
   }
 
   async confirm(turnId: string, approve: boolean, actorId: string, emit: Emit): Promise<void> {
@@ -96,7 +105,8 @@ export class Conversation {
     await this.run(turn, actorId, emit, turn.approvals);
   }
 
-  private async run(turn: Turn, actorId: string, emit: Emit, approvals?: Approval[]): Promise<void> {
+  /** Runs a turn's plan and replies, or with `mayRetry`, returns what went wrong instead when another plan could fix it. */
+  private async run(turn: Turn, actorId: string, emit: Emit, approvals?: Approval[], mayRetry = false): Promise<string | undefined> {
     const { store } = this.world;
     const before = snapshot(store);
     const auditBefore = store.audit().length;
@@ -114,6 +124,10 @@ export class Conversation {
     emit("diff", { changes: diff(before, store), audit: audit.slice(0, audit.length - auditBefore) });
 
     turn.pending = result.pending;
+    if (mayRetry && audit.length === auditBefore) {
+      const failed = retryable(turn.plan, result);
+      if (failed) return failed;
+    }
     const text = summarize(turn.plan, result, this.deps.registry);
     if (result.status === "awaiting_confirmation") {
       emit("confirm", { turnId: turn.id, pending: result.pending });
@@ -129,6 +143,20 @@ export class Conversation {
     this.answering = asked ? (this.answering ? `${this.answering}\n${message}` : message) : undefined;
     emit("reply", { status, text, options, ...(infra ? { infra } : {}) });
   }
+}
+
+const FIXABLE = new Set(["NOT_FOUND", "INVALID"]);
+
+/** The failed plan and its errors, when the run failed only on errors a different plan could fix. */
+function retryable(plan: CompiledPlan, result: RunResult): string | undefined {
+  if (result.status !== "failed") return undefined;
+  const errors = result.steps.flatMap((s) => {
+    if (s.status !== "failed" || !s.error) return [];
+    if (s.error.code === "ALL_FAILED") return (s.items ?? []).filter((i) => i.error).slice(0, 3).map((i) => ({ step: s.id, ...i.error! }));
+    return [{ step: s.id, ...s.error }];
+  });
+  if (!errors.length || !errors.every((e) => FIXABLE.has(e.code))) return undefined;
+  return JSON.stringify({ steps: plan.steps.map(describeStep), errors: errors.map((e) => `${e.step}: ${e.message}`) });
 }
 
 function describeStep(s: CStep) {

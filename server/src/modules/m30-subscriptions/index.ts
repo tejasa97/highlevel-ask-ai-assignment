@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { cents, inDateRange, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { ownedResolver } from "../../registry/lookup.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Fixtures } from "../../store/fixtures.js";
@@ -334,4 +335,13 @@ const previewInvoice = defineAction({
 
 export default {
   actions: [createSubscription, getSubscription, searchSubscriptions, changePlan, updateQuantity, setTrialEnd, pauseSubscription, resumeSubscription, cancelSubscription, previewInvoice],
+  resolvers: {
+    subscription: ownedResolver<Subscription>({
+      table: "subscriptions",
+      noun: "subscription",
+      label: (store, s) => [store.get<Product>("products", s.productId)?.name, store.get<Price>("prices", s.priceId)?.label].filter(Boolean).join(" "),
+      detail: (s) => s.status,
+      inactive: (s) => (s.status === "canceled" ? "canceled" : undefined),
+    }),
+  },
 } satisfies ModuleExports;

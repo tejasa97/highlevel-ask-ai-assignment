@@ -1,13 +1,13 @@
 import type { CompiledPlan } from "../core/compile.js";
 import { parseRef, valueAt } from "../core/refs.js";
-import type { Candidate, Registry } from "../registry/registry.js";
+import type { Candidate, RegisteredAction, Registry } from "../registry/registry.js";
 import type { Store } from "../store/db.js";
 import type { SubmitPlan } from "./submit-plan.js";
 
 export type Outcome = NonNullable<SubmitPlan["outcome"]>;
 
 /** Checks declared task coverage, not the truth of the model's interpretation of the request. */
-export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome): string[] {
+export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: { message: string; offered: RegisteredAction[] }): string[] {
   if (!outcome) return []; // historical saved replies predate the contract
   const calls = plan.steps.flatMap((s) => s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []);
   const ids = new Set(calls.map((a) => a.id));
@@ -18,8 +18,21 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome): string[] {
   if (outcome.destination) for (const a of calls) {
     if (a.destination && a.destination.id !== outcome.destination) errors.push(`${a.id} delivers to ${a.destination.label}, not the requested destination ${outcome.destination}`);
   }
-  return errors;
+  if (request && (outcome.destination || (SEND.test(request.message) && !HOLD.test(request.message))) && !calls.some((a) => a.destination)) {
+    // "Send a review request" planned as only creating one: the record exists, but nothing went out.
+    for (const a of calls) {
+      const made = a.risk === "read" ? undefined : a.entities?.produces;
+      const sender = made && request.offered.find((o) => o.destination && !ids.has(o.id) && o.entities?.consumes?.includes(made));
+      // Calls in one forEach "do" can't see each other's output, so the send must loop over the create step's results.
+      if (sender) errors.push(`${a.id} only creates the ${made.replace(/_/g, " ")}; the request asks to send it, which is ${sender.id} (${sender.name}). `
+        + `Send what was created: after a forEach that creates them (say s3), add a forEach over "$s3" calling ${sender.id} with the new ID "$item.results[0].id"; for a single create, use "$s3.id"`);
+    }
+  }
+  return [...new Set(errors)];
 }
+
+const SEND = /\bsend\b/i;
+const HOLD = /\b(don'?t|do not|not|without|never|before|later|until)\b.{0,20}\bsend/i;
 
 /**
  * A change that loops over a list the look round already found empty would end "done" with nothing changed.

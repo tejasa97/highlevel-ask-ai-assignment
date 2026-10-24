@@ -41,3 +41,29 @@ export function tableResolver(table: string, label = "name", fields: Record<stri
     qualifiers: Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, (row: Doc) => typeof row[field] === "string" ? row[field] as string : null])),
   });
 }
+
+/** Records that belong to a contact and have no name of their own (quotes, orders, subscriptions, enrollments).
+ *  They are named by whose they are, what they are and their own label: "Elena Costa's quote QT-1001", so
+ *  "QT-1001", "Elena Costa's quote" and "the quote" with a contact qualifier all find it.
+ *  The contact qualifier narrows to one person's records, by name or id. */
+export function ownedResolver<T extends { id: string; contactId: string }>(options: {
+  table: string;
+  /** The record type's word: "quote". */
+  noun: string;
+  label: (store: Store, row: T) => string;
+  detail?: (row: T) => string;
+  inactive?: (row: T) => string | undefined;
+}): Resolver {
+  type Owned = T & { owner: string; named: string };
+  return namedResolver<Owned>({
+    exactMention: true,
+    records: (store) => store.all<T>(options.table).map((row) => {
+      const owner = store.get<{ name: string }>("contacts", row.contactId)?.name ?? "";
+      return { ...row, owner, named: [owner && `${owner}'s`, options.noun, options.label(store, row)].filter(Boolean).join(" ") };
+    }),
+    name: (row) => row.named,
+    detail: options.detail,
+    inactive: options.inactive,
+    qualifiers: { contact: (row) => row.owner, contactId: (row) => row.contactId },
+  });
+}

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { cents, contains, inDateRange, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { ownedResolver } from "../../registry/lookup.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import { localDate } from "../../store/clock.js";
 import type { Store } from "../../store/db.js";
@@ -541,4 +542,5 @@ const fulfillOrder = defineAction({
 
 export default {
   actions: [createOrder, getOrder, searchOrders, addLine, updateQuantity, setAddress, applyCoupon, submitOrder, cancelOrder, fulfillOrder],
+  resolvers: { order: ownedResolver<Order>({ table: "orders", noun: "order", label: (_, o) => o.number, detail: (o) => `${o.status}, $${o.total}`, inactive: (o) => (o.status === "cancelled" ? "cancelled" : undefined) }) },
 } satisfies ModuleExports;

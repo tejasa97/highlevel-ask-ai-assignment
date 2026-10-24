@@ -85,3 +85,12 @@ test("a change looped over a list that was already read and found empty is repor
   assert.deepEqual(emptyTargets(plan, [{ id: "s1", error: "boom" }]), []);
   assert.deepEqual(emptyTargets(plan, []), []);
 });
+
+test("a request to send is not done by only creating the draft that would be sent", () => {
+  const plan = compiled("M45.A01", { contactId: "ct_1", subject: "Visit feedback", body: "Please review your visit." });
+  const outcome = { effect: "change" as const, actions: ["M45.A01"], destination: null };
+  const offered = ["M45.A01", "M45.A02"].map((id) => registry.get(id)!);
+  assert.match(outcomeErrors(plan, outcome, { message: "Send a review request to Ana", offered }).join("\n"), /M45.A02/);
+  assert.deepEqual(outcomeErrors(plan, outcome, { message: "Draft a review request for Ana, don't send it yet", offered }), []);
+  assert.deepEqual(outcomeErrors(plan, outcome, { message: "Create a review request for Ana", offered }), []);
+});
