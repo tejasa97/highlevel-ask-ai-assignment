@@ -43,19 +43,19 @@ export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; 
       // ID-shaped string, a $ref or a template, one unambiguous entity with a resolver, and no parent needed: look it up.
       if (typeof value === "string" && schema.type === "string" && !rule && value.trim() && !value.includes("$") && !value.includes("{{") &&
           !ID_SHAPE.test(value.trim()) && !AMBIGUOUS.has(path.split(".").at(-1)!)) {
-        const entities = argumentEntities(def, path);
+        const entities = argumentEntities(def, path, parsedArgs);
         if (entities.length === 1 && registry.resolver(entities[0]!)) {
           const id = nextId();
           steps.push({ id, kind: "resolve", entity: entities[0]!, name: value.trim(), whereJson: null });
           return `$${id}.id`;
         }
       }
-      if (object(value) && Object.hasOwn(value, "$lookup") && schema.type === "string" && argumentEntities(def, path).length) {
+      if (object(value) && Object.hasOwn(value, "$lookup") && schema.type === "string" && argumentEntities(def, path, parsedArgs).length) {
         if (!!rule !== children) return value;
         const lookup = value.$lookup;
         if (Object.keys(value).length !== 1 || !object(lookup) || Object.keys(lookup).some((k) => !["entity", "name", "where"].includes(k)) ||
             typeof lookup.entity !== "string" || typeof lookup.name !== "string" || !lookup.name.trim() ||
-            !argumentEntities(def, path).includes(lookup.entity) ||
+            !argumentEntities(def, path, parsedArgs).includes(lookup.entity) ||
             (lookup.where !== undefined && (!object(lookup.where) || Object.values(lookup.where).some((v) => typeof v !== "string" || !v.trim())))) {
           errors.push(`${at} arg ${path}: invalid $lookup; use a matching entity and name for an ID field, with optional string-valued where qualifiers`);
           return value;

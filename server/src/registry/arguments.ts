@@ -8,9 +8,20 @@ const ALIASES: Record<string, string[]> = {
   postId: ["blog_post", "community_post"], pageId: ["landing_page"],
 };
 
-export function argumentEntities(action: RegisteredAction, path: string): string[] {
+/** Entities an ID argument can name. `args` are the arguments around it: a polymorphic ID takes its entity from the sibling that holds the record type. */
+export function argumentEntities(action: RegisteredAction, path: string, args?: Record<string, unknown>): string[] {
   const binding = action.argumentLookups?.[path.replace(/\[\d+\]/g, "[]")];
   if (binding) return [binding.entity];
+  const typePath = action.typedIds?.[path.replace(/\[\d+\]/g, "[]")];
+  if (typePath) {
+    if (!args) return [];
+    try {
+      const type = argumentAt(action, args, typePath).value;
+      return typeof type === "string" && type ? [type] : [];
+    } catch {
+      return [];
+    }
+  }
   const key = path.split(".").at(-1)!;
   return key.endsWith("Id") ? ALIASES[key] ?? [key.replace(/Id$/, "").replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)] : [];
 }
