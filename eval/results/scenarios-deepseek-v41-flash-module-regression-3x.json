@@ -1,0 +1,6119 @@
+{
+ "summary": {
+  "label": "deepseek-v41-flash-module-regression-3x",
+  "planner": "qwen",
+  "model": "deepseek-v4.1-flash-1017",
+  "scenarioDir": "eval/scenarios",
+  "set": "fcc7ddef4615",
+  "tier": "strong",
+  "scenarios": 23,
+  "repeat": 3,
+  "runs": 69,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 75.4,
+  "allPass": 14,
+  "measured": 23,
+  "flaky": 6,
+  "e2eMs": {
+   "p50": 1855,
+   "p95": 5623
+  },
+  "firstReplyMs": {
+   "p50": 1721,
+   "p95": 3556
+  },
+  "plannerRoundsPerRun": 1.67,
+  "callsPerRun": 1.8,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 44097
+ },
+ "runs": [
+  {
+   "id": "ambiguous-two-sarahs",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Text Sarah Johnson that we're running 10 minutes late",
+     "status": "clarify",
+     "reply": "There are two contacts named Sarah Johnson. Which one should I text?",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M28.A10",
+      "M12.A03",
+      "M47.A05",
+      "M12.A06",
+      "M12.A01",
+      "M12.A07",
+      "M11.A10",
+      "M47.A10",
+      "M21.A04",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1195,
+     "ms": 1195
+    }
+   ],
+   "metrics": {
+    "ms": 1195,
+    "firstReplyMs": 1195,
+    "plannerMs": 1121,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 4858,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 49,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ambiguous-two-sarahs",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Text Sarah Johnson that we're running 10 minutes late",
+     "status": "clarify",
+     "reply": "Which Sarah Johnson should I text? I found two contacts by that name — please tell me which one (e.g. by company or email).",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M28.A10",
+      "M12.A03",
+      "M47.A05",
+      "M12.A06",
+      "M12.A01",
+      "M12.A07",
+      "M11.A10",
+      "M47.A10",
+      "M21.A04",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1590,
+     "ms": 1590
+    }
+   ],
+   "metrics": {
+    "ms": 1590,
+    "firstReplyMs": 1590,
+    "plannerMs": 1550,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 4858,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 88,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ambiguous-two-sarahs",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "done, wanted clarify|needs_clarification"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM sms WHERE json_extract(data,'$.contactId') IN ('ct_31','ct_32') → 2, wanted 0"
+    },
+    {
+     "kind": "changes",
+     "detail": "4 records changed"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Text Sarah Johnson that we're running 10 minutes late",
+     "status": "done",
+     "reply": "Send SMS for 2 of 2: Sarah Johnson, Sarah Johnson.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M28.A10",
+      "M12.A03",
+      "M47.A05",
+      "M12.A06",
+      "M12.A01",
+      "M12.A07",
+      "M11.A10",
+      "M47.A10",
+      "M21.A04",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05"
+     ],
+     "planned": [
+      "M01.A03",
+      "M12.A03"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Sarah Johnson"
+       }
+      },
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Sarah Johnson"
+       }
+      },
+      {
+       "action": "M12.A03",
+       "args": {
+        "contactId": "ct_31",
+        "body": "Hi Sarah, just a quick heads up — we're running about 10 minutes late. Thanks for your patience!"
+       }
+      },
+      {
+       "action": "M12.A03",
+       "args": {
+        "contactId": "ct_32",
+        "body": "Hi Sarah, just a quick heads up — we're running about 10 minutes late. Thanks for your patience!"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 2236,
+     "ms": 2240,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "ae418012d483473e",
+       "targetsHash": "045e9af53b5436c0",
+       "reason": "sends something outside the account",
+       "count": 2,
+       "preview": [
+        {
+         "action": "M12.A03",
+         "name": "Send SMS",
+         "args": {
+          "contactId": "ct_31",
+          "body": "Hi Sarah, just a quick heads up — we're running about 10 minutes late. Thanks for your patience!"
+         },
+         "label": "Sarah Johnson"
+        },
+        {
+         "action": "M12.A03",
+         "name": "Send SMS",
+         "args": {
+          "contactId": "ct_32",
+          "body": "Hi Sarah, just a quick heads up — we're running about 10 minutes late. Thanks for your patience!"
+         },
+         "label": "Sarah Johnson"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 2240,
+    "firstReplyMs": 2236,
+    "plannerMs": 2165,
+    "plannerRounds": 1,
+    "calls": 4,
+    "usage": {
+     "input": 4858,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 209,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ambiguous-zoe-then-answer",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Make Aisha the owner of Zoe Costa",
+     "status": "needs_clarification",
+     "reply": "More than one contact matches \"Zoe Costa\": Zoe Costa (zoe.costa@wayne.example, +15558243603, Wayne), Zoe Costa (zoe.costa@umbrella.example, +15558782163, Umbrella). Which one?",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M11.A03",
+      "M47.A04",
+      "M06.A05",
+      "M21.A06",
+      "M47.A01",
+      "M49.A06",
+      "M03.A10",
+      "M03.A03",
+      "M04.A03",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M01.A07"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1706,
+     "ms": 1706
+    },
+    {
+     "user": "the one at Umbrella",
+     "status": "done",
+     "reply": "Done: Assign contact owner (Zoe Costa).",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M47.A04",
+      "M11.A03",
+      "M06.A05",
+      "M04.A03",
+      "M03.A10",
+      "M47.A01",
+      "M21.A06",
+      "M49.A06",
+      "M45.A07",
+      "M03.A03",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A07"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Zoe Costa"
+       }
+      },
+      {
+       "action": "M01.A07",
+       "args": {
+        "contactId": "ct_30",
+        "ownerId": "us_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "step s3: $s1 has no field \"items\"; fields: id, name"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4126,
+     "ms": 4126
+    }
+   ],
+   "metrics": {
+    "ms": 5832,
+    "firstReplyMs": 1706,
+    "plannerMs": 5724,
+    "plannerRounds": 3,
+    "calls": 2,
+    "usage": {
+     "input": 15351,
+     "cachedRead": 13824,
+     "cacheWrite": 0,
+     "output": 474,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ambiguous-zoe-then-answer",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "needs_clarification, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.ownerId') FROM contacts WHERE id='ct_30' → \"us_4\", wanted \"us_5\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Make Aisha the owner of Zoe Costa",
+     "status": "clarify",
+     "reply": "There are two contacts named Zoe Costa — one at Wayne (zoe.costa@wayne.example) and one at Umbrella (zoe.costa@umbrella.example). Which one should Aisha own?",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M11.A03",
+      "M47.A04",
+      "M06.A05",
+      "M21.A06",
+      "M47.A01",
+      "M49.A06",
+      "M03.A10",
+      "M03.A03",
+      "M04.A03",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Zoe Costa"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step s2: $contacts is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3556,
+     "ms": 3556
+    },
+    {
+     "user": "the one at Umbrella",
+     "status": "needs_clarification",
+     "reply": "More than one contact matches \"Zoe Costa\": Zoe Costa (zoe.costa@wayne.example, +15558243603, Wayne), Zoe Costa (zoe.costa@umbrella.example, +15558782163, Umbrella). Which one?",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M47.A04",
+      "M11.A03",
+      "M06.A05",
+      "M04.A03",
+      "M03.A10",
+      "M47.A01",
+      "M21.A06",
+      "M49.A06",
+      "M45.A07",
+      "M03.A03",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A07"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1734,
+     "ms": 1734
+    }
+   ],
+   "metrics": {
+    "ms": 5290,
+    "firstReplyMs": 3556,
+    "plannerMs": 5173,
+    "plannerRounds": 4,
+    "calls": 1,
+    "usage": {
+     "input": 20366,
+     "cachedRead": 14848,
+     "cacheWrite": 0,
+     "output": 436,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ambiguous-zoe-then-answer",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "turn 1: done, wanted clarify|needs_clarification"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.ownerId') FROM contacts WHERE id='ct_26' → \"us_5\", wanted \"us_4\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Make Aisha the owner of Zoe Costa",
+     "status": "done",
+     "reply": "Assign contact owner for 2 of 2: Zoe Costa, Zoe Costa.",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M11.A03",
+      "M47.A04",
+      "M06.A05",
+      "M21.A06",
+      "M47.A01",
+      "M49.A06",
+      "M03.A10",
+      "M03.A03",
+      "M04.A03",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A07"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Zoe Costa"
+       }
+      },
+      {
+       "action": "M01.A07",
+       "args": {
+        "contactId": "ct_26",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M01.A07",
+       "args": {
+        "contactId": "ct_30",
+        "ownerId": "us_5"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1733,
+     "ms": 1733
+    },
+    {
+     "user": "the one at Umbrella",
+     "status": "done",
+     "reply": "Done: Assign contact owner (Zoe Costa).",
+     "offered": [
+      "M01.A02",
+      "M01.A01",
+      "M01.A05",
+      "M01.A09",
+      "M01.A07",
+      "M01.A06",
+      "M47.A09",
+      "M46.A06",
+      "M11.A10",
+      "M12.A03",
+      "M01.A03",
+      "M03.A02",
+      "M03.A01"
+     ],
+     "planned": [
+      "M01.A07"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Zoe Costa"
+       }
+      },
+      {
+       "action": "M01.A07",
+       "args": {
+        "contactId": "ct_30",
+        "ownerId": "us_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4667,
+     "ms": 4667
+    }
+   ],
+   "metrics": {
+    "ms": 6400,
+    "firstReplyMs": 1733,
+    "plannerMs": 6351,
+    "plannerRounds": 3,
+    "calls": 5,
+    "usage": {
+     "input": 14511,
+     "cachedRead": 10240,
+     "cacheWrite": 0,
+     "output": 372,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-appointment-reschedule",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Push Sarah Johnson's Agency plan walkthrough to Monday, same time",
+     "status": "done",
+     "reply": "Done: Reschedule appointment (Agency plan walkthrough).",
+     "offered": [
+      "M21.A04",
+      "M12.A04",
+      "M15.A06",
+      "M13.A04",
+      "M46.A07",
+      "M47.A05",
+      "M06.A01",
+      "M07.A01",
+      "M21.A02",
+      "M21.A03"
+     ],
+     "planned": [
+      "M21.A04"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M21.A04",
+       "args": {
+        "appointmentId": "ap_1",
+        "date": "2026-10-26"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1983,
+     "ms": 1983
+    }
+   ],
+   "metrics": {
+    "ms": 1983,
+    "firstReplyMs": 1983,
+    "plannerMs": 1925,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 8145,
+     "cachedRead": 7680,
+     "cacheWrite": 0,
+     "output": 161,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-appointment-reschedule",
+   "category": "direct",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.startAt') FROM appointments WHERE id='ap_1' → \"2026-10-23T15:00:00.000Z\", wanted \"2026-10-26T15:00:00.000Z\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Push Sarah Johnson's Agency plan walkthrough to Monday, same time",
+     "status": "done",
+     "reply": "Reschedule appointment: nothing matched, so nothing was changed.",
+     "offered": [
+      "M21.A04",
+      "M12.A04",
+      "M15.A06",
+      "M13.A04",
+      "M46.A07",
+      "M47.A05",
+      "M06.A01",
+      "M07.A01",
+      "M21.A02",
+      "M21.A03"
+     ],
+     "planned": [
+      "M21.A03",
+      "M21.A04"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "limit": 50
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1645,
+     "ms": 1645
+    }
+   ],
+   "metrics": {
+    "ms": 1645,
+    "firstReplyMs": 1645,
+    "plannerMs": 1610,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3912,
+     "cachedRead": 3584,
+     "cacheWrite": 0,
+     "output": 197,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-appointment-reschedule",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Push Sarah Johnson's Agency plan walkthrough to Monday, same time",
+     "status": "done",
+     "reply": "Done: Reschedule appointment (Agency plan walkthrough).",
+     "offered": [
+      "M21.A04",
+      "M12.A04",
+      "M15.A06",
+      "M13.A04",
+      "M46.A07",
+      "M47.A05",
+      "M06.A01",
+      "M07.A01",
+      "M21.A02",
+      "M21.A03"
+     ],
+     "planned": [
+      "M21.A04"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M21.A04",
+       "args": {
+        "appointmentId": "ap_1",
+        "date": "2026-10-26"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step s1: $mentions is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3504,
+     "ms": 3504
+    }
+   ],
+   "metrics": {
+    "ms": 3504,
+    "firstReplyMs": 3504,
+    "plannerMs": 3461,
+    "plannerRounds": 3,
+    "calls": 2,
+    "usage": {
+     "input": 12181,
+     "cachedRead": 10240,
+     "cacheWrite": 0,
+     "output": 267,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-campaign-pause",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Pause the fall webinar campaign",
+     "status": "done",
+     "reply": "Done: Pause campaign (Fall Webinar Series).",
+     "offered": [
+      "M15.A08",
+      "M15.A09",
+      "M15.A07",
+      "M15.A01",
+      "M15.A05",
+      "M15.A03",
+      "M15.A02",
+      "M15.A10"
+     ],
+     "planned": [
+      "M15.A08"
+     ],
+     "calls": [
+      {
+       "action": "M15.A03",
+       "args": {
+        "query": "fall webinar"
+       }
+      },
+      {
+       "action": "M15.A08",
+       "args": {
+        "campaignId": "cp_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2001,
+     "ms": 2001
+    }
+   ],
+   "metrics": {
+    "ms": 2001,
+    "firstReplyMs": 2001,
+    "plannerMs": 1980,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 5863,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 131,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-campaign-pause",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Pause the fall webinar campaign",
+     "status": "done",
+     "reply": "Done: Pause campaign (Fall Webinar Series).",
+     "offered": [
+      "M15.A08",
+      "M15.A09",
+      "M15.A07",
+      "M15.A01",
+      "M15.A05",
+      "M15.A03",
+      "M15.A02",
+      "M15.A10"
+     ],
+     "planned": [
+      "M15.A08"
+     ],
+     "calls": [
+      {
+       "action": "M15.A03",
+       "args": {
+        "query": "fall webinar"
+       }
+      },
+      {
+       "action": "M15.A08",
+       "args": {
+        "campaignId": "cp_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1783,
+     "ms": 1783
+    }
+   ],
+   "metrics": {
+    "ms": 1783,
+    "firstReplyMs": 1783,
+    "plannerMs": 1766,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 5863,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 131,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-campaign-pause",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Pause the fall webinar campaign",
+     "status": "done",
+     "reply": "Done: Pause campaign (Fall Webinar Series).",
+     "offered": [
+      "M15.A08",
+      "M15.A09",
+      "M15.A07",
+      "M15.A01",
+      "M15.A05",
+      "M15.A03",
+      "M15.A02",
+      "M15.A10"
+     ],
+     "planned": [
+      "M15.A08"
+     ],
+     "calls": [
+      {
+       "action": "M15.A03",
+       "args": {
+        "query": "fall webinar"
+       }
+      },
+      {
+       "action": "M15.A08",
+       "args": {
+        "campaignId": "cp_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1859,
+     "ms": 1859
+    }
+   ],
+   "metrics": {
+    "ms": 1859,
+    "firstReplyMs": 1859,
+    "plannerMs": 1810,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 5863,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 131,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-opportunity-stage",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Move the Hooli deal back to Proposal",
+     "status": "done",
+     "reply": "Done: Move opportunity to stage (Hooli - Agency plan).",
+     "offered": [
+      "M04.A05",
+      "M04.A10",
+      "M04.A04",
+      "M21.A04",
+      "M04.A01",
+      "M04.A09",
+      "M04.A06",
+      "M29.A08",
+      "M46.A05",
+      "M28.A06",
+      "M04.A02",
+      "M04.A03",
+      "M06.A09"
+     ],
+     "planned": [
+      "M04.A05"
+     ],
+     "calls": [
+      {
+       "action": "M04.A05",
+       "args": {
+        "opportunityId": "op_7",
+        "stage": "Proposal"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1240,
+     "ms": 1240
+    }
+   ],
+   "metrics": {
+    "ms": 1240,
+    "firstReplyMs": 1240,
+    "plannerMs": 1212,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3815,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 96,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-opportunity-stage",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Move the Hooli deal back to Proposal",
+     "status": "done",
+     "reply": "Move opportunity to stage for 1 of 1: Hooli - Agency plan.",
+     "offered": [
+      "M04.A05",
+      "M04.A10",
+      "M04.A04",
+      "M21.A04",
+      "M04.A01",
+      "M04.A09",
+      "M04.A06",
+      "M29.A08",
+      "M46.A05",
+      "M28.A06",
+      "M04.A02",
+      "M04.A03",
+      "M06.A09"
+     ],
+     "planned": [
+      "M04.A03",
+      "M04.A05"
+     ],
+     "calls": [
+      {
+       "action": "M04.A03",
+       "args": {
+        "query": "Hooli"
+       }
+      },
+      {
+       "action": "M04.A05",
+       "args": {
+        "opportunityId": "op_7",
+        "stage": "Proposal"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1493,
+     "ms": 1493
+    }
+   ],
+   "metrics": {
+    "ms": 1493,
+    "firstReplyMs": 1493,
+    "plannerMs": 1473,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 3815,
+     "cachedRead": 3072,
+     "cacheWrite": 0,
+     "output": 137,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-opportunity-stage",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Move the Hooli deal back to Proposal",
+     "status": "done",
+     "reply": "Done: Move opportunity to stage (Hooli - Agency plan).",
+     "offered": [
+      "M04.A05",
+      "M04.A10",
+      "M04.A04",
+      "M21.A04",
+      "M04.A01",
+      "M04.A09",
+      "M04.A06",
+      "M29.A08",
+      "M46.A05",
+      "M28.A06",
+      "M04.A02",
+      "M04.A03",
+      "M06.A09"
+     ],
+     "planned": [
+      "M04.A05"
+     ],
+     "calls": [
+      {
+       "action": "M04.A05",
+       "args": {
+        "opportunityId": "op_7",
+        "stage": "Proposal"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1284,
+     "ms": 1284
+    }
+   ],
+   "metrics": {
+    "ms": 1284,
+    "firstReplyMs": 1284,
+    "plannerMs": 1267,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3815,
+     "cachedRead": 3072,
+     "cacheWrite": 0,
+     "output": 96,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-payment-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a payment request for Marcus Lee's overdue invoice",
+     "status": "done",
+     "reply": "Done: Create payment request.",
+     "offered": [
+      "M29.A01",
+      "M28.A10",
+      "M28.A08",
+      "M29.A02",
+      "M29.A04",
+      "M28.A01",
+      "M29.A07",
+      "M28.A02",
+      "M28.A03",
+      "M29.A03",
+      "M29.A06",
+      "M28.A07",
+      "M45.A01",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03"
+     ],
+     "planned": [
+      "M28.A03",
+      "M29.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_33",
+        "overdue": true
+       }
+      },
+      {
+       "action": "M29.A01",
+       "args": {
+        "contactId": "ct_33",
+        "invoiceId": "inv_9",
+        "description": "Payment for invoice INV-1009"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1736,
+     "ms": 1736
+    }
+   ],
+   "metrics": {
+    "ms": 1736,
+    "firstReplyMs": 1736,
+    "plannerMs": 1709,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 5071,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 155,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-payment-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a payment request for Marcus Lee's overdue invoice",
+     "status": "done",
+     "reply": "Done: Create payment request.",
+     "offered": [
+      "M29.A01",
+      "M28.A10",
+      "M28.A08",
+      "M29.A02",
+      "M29.A04",
+      "M28.A01",
+      "M29.A07",
+      "M28.A02",
+      "M28.A03",
+      "M29.A03",
+      "M29.A06",
+      "M28.A07",
+      "M45.A01",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03"
+     ],
+     "planned": [
+      "M29.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 1,
+        "contactId": "ct_33"
+       }
+      },
+      {
+       "action": "M29.A01",
+       "args": {
+        "contactId": "ct_33",
+        "invoiceId": "inv_9",
+        "description": "Payment for invoice INV-1009"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2375,
+     "ms": 2375
+    }
+   ],
+   "metrics": {
+    "ms": 2375,
+    "firstReplyMs": 2375,
+    "plannerMs": 2354,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 10253,
+     "cachedRead": 5632,
+     "cacheWrite": 0,
+     "output": 180,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-payment-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a payment request for Marcus Lee's overdue invoice",
+     "status": "done",
+     "reply": "Done: Create payment request.",
+     "offered": [
+      "M29.A01",
+      "M28.A10",
+      "M28.A08",
+      "M29.A02",
+      "M29.A04",
+      "M28.A01",
+      "M29.A07",
+      "M28.A02",
+      "M28.A03",
+      "M29.A03",
+      "M29.A06",
+      "M28.A07",
+      "M45.A01",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03"
+     ],
+     "planned": [
+      "M29.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "contactId": "ct_33",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M29.A01",
+       "args": {
+        "contactId": "ct_33",
+        "invoiceId": "inv_9"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2645,
+     "ms": 2645
+    }
+   ],
+   "metrics": {
+    "ms": 2645,
+    "firstReplyMs": 2645,
+    "plannerMs": 2623,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 10253,
+     "cachedRead": 9216,
+     "cacheWrite": 0,
+     "output": 165,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-tag-rename",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Rename the partner tag to referral-partner",
+     "status": "done",
+     "reply": "Done: Rename tag (referral-partner).",
+     "offered": [
+      "M08.A03",
+      "M08.A09",
+      "M08.A01",
+      "M08.A06",
+      "M08.A08",
+      "M08.A05",
+      "M49.A04",
+      "M01.A09",
+      "M03.A04"
+     ],
+     "planned": [
+      "M08.A03"
+     ],
+     "calls": [
+      {
+       "action": "M08.A03",
+       "args": {
+        "tagId": "tg_4",
+        "name": "referral-partner"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1141,
+     "ms": 1141
+    }
+   ],
+   "metrics": {
+    "ms": 1141,
+    "firstReplyMs": 1141,
+    "plannerMs": 1122,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 2890,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 94,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-tag-rename",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Rename the partner tag to referral-partner",
+     "status": "done",
+     "reply": "Done: Rename tag (referral-partner).",
+     "offered": [
+      "M08.A03",
+      "M08.A09",
+      "M08.A01",
+      "M08.A06",
+      "M08.A08",
+      "M08.A05",
+      "M49.A04",
+      "M01.A09",
+      "M03.A04"
+     ],
+     "planned": [
+      "M08.A03"
+     ],
+     "calls": [
+      {
+       "action": "M08.A03",
+       "args": {
+        "tagId": "tg_4",
+        "name": "referral-partner"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1418,
+     "ms": 1418
+    }
+   ],
+   "metrics": {
+    "ms": 1418,
+    "firstReplyMs": 1418,
+    "plannerMs": 1388,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 2890,
+     "cachedRead": 2048,
+     "cacheWrite": 0,
+     "output": 94,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-tag-rename",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Rename the partner tag to referral-partner",
+     "status": "done",
+     "reply": "Done: Rename tag (referral-partner).",
+     "offered": [
+      "M08.A03",
+      "M08.A09",
+      "M08.A01",
+      "M08.A06",
+      "M08.A08",
+      "M08.A05",
+      "M49.A04",
+      "M01.A09",
+      "M03.A04",
+      "M08.A02",
+      "M46.A03",
+      "M08.A10",
+      "M01.A03",
+      "M15.A03",
+      "M08.A04",
+      "M08.A07",
+      "M46.A04",
+      "M47.A03"
+     ],
+     "planned": [
+      "M08.A03"
+     ],
+     "calls": [
+      {
+       "action": "M08.A03",
+       "args": {
+        "tagId": "tg_4",
+        "name": "referral-partner"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2388,
+     "ms": 2388
+    }
+   ],
+   "metrics": {
+    "ms": 2388,
+    "firstReplyMs": 2388,
+    "plannerMs": 2351,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 7500,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 138,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-task-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a high priority task for Tom to call Rosa Ito tomorrow",
+     "status": "done",
+     "reply": "Done: Create task (Call Rosa Ito).",
+     "offered": [
+      "M06.A07",
+      "M06.A01",
+      "M47.A05",
+      "M07.A01",
+      "M06.A03",
+      "M06.A09",
+      "M06.A02",
+      "M06.A06",
+      "M21.A01",
+      "M03.A01",
+      "M15.A07",
+      "M06.A10",
+      "M06.A05",
+      "M06.A08",
+      "M06.A04",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Call Rosa Ito",
+        "assigneeId": "us_4",
+        "dueDate": "2026-10-22",
+        "priority": "high",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_1"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1430,
+     "ms": 1430
+    }
+   ],
+   "metrics": {
+    "ms": 1430,
+    "firstReplyMs": 1430,
+    "plannerMs": 1403,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5042,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 152,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-task-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a high priority task for Tom to call Rosa Ito tomorrow",
+     "status": "done",
+     "reply": "Done: Create task (Call Rosa Ito).",
+     "offered": [
+      "M06.A07",
+      "M06.A01",
+      "M47.A05",
+      "M07.A01",
+      "M06.A03",
+      "M06.A09",
+      "M06.A02",
+      "M06.A06",
+      "M21.A01",
+      "M03.A01",
+      "M15.A07",
+      "M06.A10",
+      "M06.A05",
+      "M06.A08",
+      "M06.A04",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Call Rosa Ito",
+        "assigneeId": "us_4",
+        "dueDate": "2026-10-22",
+        "priority": "high",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_1"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1254,
+     "ms": 1254
+    }
+   ],
+   "metrics": {
+    "ms": 1254,
+    "firstReplyMs": 1254,
+    "plannerMs": 1223,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5042,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 152,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "direct-task-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a high priority task for Tom to call Rosa Ito tomorrow",
+     "status": "done",
+     "reply": "Done: Create task (Call Rosa Ito).",
+     "offered": [
+      "M06.A07",
+      "M06.A01",
+      "M47.A05",
+      "M07.A01",
+      "M06.A03",
+      "M06.A09",
+      "M06.A02",
+      "M06.A06",
+      "M21.A01",
+      "M03.A01",
+      "M15.A07",
+      "M06.A10",
+      "M06.A05",
+      "M06.A08",
+      "M06.A04",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Call Rosa Ito",
+        "assigneeId": "us_4",
+        "dueDate": "2026-10-22",
+        "priority": "high",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_1"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1308,
+     "ms": 1308
+    }
+   ],
+   "metrics": {
+    "ms": 1308,
+    "firstReplyMs": 1308,
+    "plannerMs": 1279,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5042,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 152,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "failure-deactivated-assignee",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task for Dan Ortiz to prepare the Q4 forecast",
+     "status": "failed",
+     "reply": "Couldn't find user \"Dan Ortiz\": Dan Ortiz is deactivated.\nSkipped create task: an earlier step didn't complete.",
+     "offered": [
+      "M06.A01",
+      "M06.A03",
+      "M07.A01",
+      "M06.A06",
+      "M06.A09",
+      "M06.A07",
+      "M04.A01",
+      "M49.A01",
+      "M04.A07",
+      "M28.A01",
+      "M03.A01",
+      "M13.A01",
+      "M15.A01",
+      "M21.A01",
+      "M07.A03",
+      "M21.A03",
+      "M11.A08"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1464,
+     "ms": 1464
+    }
+   ],
+   "metrics": {
+    "ms": 1464,
+    "firstReplyMs": 1464,
+    "plannerMs": 1445,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 5059,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 97,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "failure-deactivated-assignee",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task for Dan Ortiz to prepare the Q4 forecast",
+     "status": "failed",
+     "reply": "Couldn't find user \"Dan Ortiz\": Dan Ortiz is deactivated.\nSkipped create task: an earlier step didn't complete.",
+     "offered": [
+      "M06.A01",
+      "M06.A03",
+      "M07.A01",
+      "M06.A06",
+      "M06.A09",
+      "M06.A07",
+      "M04.A01",
+      "M49.A01",
+      "M04.A07",
+      "M28.A01",
+      "M03.A01",
+      "M13.A01",
+      "M15.A01",
+      "M21.A01",
+      "M07.A03",
+      "M21.A03",
+      "M11.A08"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1158,
+     "ms": 1158
+    }
+   ],
+   "metrics": {
+    "ms": 1158,
+    "firstReplyMs": 1158,
+    "plannerMs": 1141,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 5059,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 97,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "failure-deactivated-assignee",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task for Dan Ortiz to prepare the Q4 forecast",
+     "status": "failed",
+     "reply": "Couldn't find user \"Dan Ortiz\": Dan Ortiz is deactivated.\nSkipped create task: an earlier step didn't complete.",
+     "offered": [
+      "M06.A01",
+      "M06.A03",
+      "M07.A01",
+      "M06.A06",
+      "M06.A09",
+      "M06.A07",
+      "M04.A01",
+      "M49.A01",
+      "M04.A07",
+      "M28.A01",
+      "M03.A01",
+      "M13.A01",
+      "M15.A01",
+      "M21.A01",
+      "M07.A03",
+      "M21.A03",
+      "M11.A08"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1285,
+     "ms": 1285
+    }
+   ],
+   "metrics": {
+    "ms": 1285,
+    "firstReplyMs": 1285,
+    "plannerMs": 1267,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 5059,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 97,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "failure-dnd-contact",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Marcus Lee that his onboarding call is confirmed for Monday",
+     "status": "failed",
+     "reply": "Couldn't send email: Marcus Lee is on do-not-disturb.",
+     "offered": [
+      "M13.A01",
+      "M13.A04",
+      "M48.A01",
+      "M13.A03",
+      "M28.A07",
+      "M15.A05",
+      "M28.A08",
+      "M45.A02",
+      "M07.A01",
+      "M13.A05",
+      "M01.A08",
+      "M15.A07",
+      "M03.A01",
+      "M13.A10",
+      "M01.A02",
+      "M01.A03",
+      "M12.A01",
+      "M12.A04",
+      "M15.A06",
+      "M01.A01",
+      "M49.A05"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_33",
+        "subject": "Your onboarding call is confirmed",
+        "body": "Hi Marcus,\n\nGreat news — your onboarding call is confirmed for Monday. We look forward to speaking with you.\n\nBest regards"
+       },
+       "error": "CONFLICT: Marcus Lee is on do-not-disturb"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1487,
+     "ms": 1491,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "1dcf02b4a69037a1",
+       "targetsHash": "5371104044dba362",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_33",
+          "subject": "Your onboarding call is confirmed",
+          "body": "Hi Marcus,\n\nGreat news — your onboarding call is confirmed for Monday. We look forward to speaking with you.\n\nBest regards"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1491,
+    "firstReplyMs": 1487,
+    "plannerMs": 1466,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6037,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 133,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "failure-dnd-contact",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Marcus Lee that his onboarding call is confirmed for Monday",
+     "status": "failed",
+     "reply": "Couldn't send email: Marcus Lee is on do-not-disturb.",
+     "offered": [
+      "M13.A01",
+      "M13.A04",
+      "M48.A01",
+      "M13.A03",
+      "M28.A07",
+      "M15.A05",
+      "M28.A08",
+      "M45.A02",
+      "M07.A01",
+      "M13.A05",
+      "M01.A08",
+      "M15.A07",
+      "M03.A01",
+      "M13.A10",
+      "M01.A02",
+      "M01.A03",
+      "M12.A01",
+      "M12.A04",
+      "M15.A06",
+      "M01.A01",
+      "M49.A05"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_33",
+        "subject": "Your onboarding call is confirmed",
+        "body": "Hi Marcus,\n\nJust confirming that your onboarding call is booked for Monday.\n\nTalk soon!"
+       },
+       "error": "CONFLICT: Marcus Lee is on do-not-disturb"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1289,
+     "ms": 1291,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "85a902bb1885d996",
+       "targetsHash": "f6c4cd6e01d5c832",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_33",
+          "subject": "Your onboarding call is confirmed",
+          "body": "Hi Marcus,\n\nJust confirming that your onboarding call is booked for Monday.\n\nTalk soon!"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1291,
+    "firstReplyMs": 1289,
+    "plannerMs": 1270,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6037,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 126,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "failure-dnd-contact",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Marcus Lee that his onboarding call is confirmed for Monday",
+     "status": "failed",
+     "reply": "Couldn't send email: Marcus Lee is on do-not-disturb.",
+     "offered": [
+      "M13.A01",
+      "M13.A04",
+      "M48.A01",
+      "M13.A03",
+      "M28.A07",
+      "M15.A05",
+      "M28.A08",
+      "M45.A02",
+      "M07.A01",
+      "M13.A05",
+      "M01.A08",
+      "M15.A07",
+      "M03.A01",
+      "M13.A10",
+      "M01.A02",
+      "M01.A03",
+      "M12.A01",
+      "M12.A04",
+      "M15.A06",
+      "M01.A01",
+      "M49.A05"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_33",
+        "subject": "Your onboarding call is confirmed",
+        "body": "Hi Marcus,\n\nGood news — your onboarding call is confirmed for Monday. We look forward to speaking with you then.\n\nBest regards"
+       },
+       "error": "CONFLICT: Marcus Lee is on do-not-disturb"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1567,
+     "ms": 1570,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "f1dc198502ab3473",
+       "targetsHash": "17b482747dabe898",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_33",
+          "subject": "Your onboarding call is confirmed",
+          "body": "Hi Marcus,\n\nGood news — your onboarding call is confirmed for Monday. We look forward to speaking with you then.\n\nBest regards"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1570,
+    "firstReplyMs": 1567,
+    "plannerMs": 1546,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6037,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 134,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "failure-email-provider-down",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Rosa Ito to thank her for renewing",
+     "status": "failed",
+     "reply": "Couldn't send email: The email provider is not responding.",
+     "offered": [
+      "M13.A03",
+      "M13.A01",
+      "M13.A10",
+      "M45.A02",
+      "M47.A08",
+      "M28.A08",
+      "M47.A09",
+      "M13.A04",
+      "M48.A08",
+      "M13.A05",
+      "M13.A02",
+      "M03.A01",
+      "M01.A02",
+      "M01.A03",
+      "M12.A03",
+      "M12.A01",
+      "M12.A10",
+      "M01.A08"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_1",
+        "subject": "Thank you for renewing",
+        "body": "Hi Rosa,\n\nThank you for renewing with us — we really appreciate your continued trust and loyalty. If there's anything you need, just let us know.\n\nWarm regards"
+       },
+       "error": "UNAVAILABLE: The email provider is not responding"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1689,
+     "ms": 1691,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "d620d12ca50e8aed",
+       "targetsHash": "34d926f8bb834cf5",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_1",
+          "subject": "Thank you for renewing",
+          "body": "Hi Rosa,\n\nThank you for renewing with us — we really appreciate your continued trust and loyalty. If there's anything you need, just let us know.\n\nWarm regards"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1691,
+    "firstReplyMs": 1689,
+    "plannerMs": 1662,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5594,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 145,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "failure-email-provider-down",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Rosa Ito to thank her for renewing",
+     "status": "failed",
+     "reply": "Couldn't send email: The email provider is not responding.",
+     "offered": [
+      "M13.A03",
+      "M13.A01",
+      "M13.A10",
+      "M45.A02",
+      "M47.A08",
+      "M28.A08",
+      "M47.A09",
+      "M13.A04",
+      "M48.A08",
+      "M13.A05",
+      "M13.A02",
+      "M03.A01",
+      "M01.A02",
+      "M01.A03",
+      "M12.A03",
+      "M12.A01",
+      "M12.A10",
+      "M01.A08"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_1",
+        "subject": "Thank you for renewing",
+        "body": "Hi Rosa,\n\nThank you for renewing your membership with us. We truly appreciate your continued trust and support.\n\nIf there is anything we can do for you, just let us know.\n\nWarm regards"
+       },
+       "error": "UNAVAILABLE: The email provider is not responding"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1587,
+     "ms": 1589,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "f5028c4edd7d09ec",
+       "targetsHash": "a95f420d257ba0d9",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_1",
+          "subject": "Thank you for renewing",
+          "body": "Hi Rosa,\n\nThank you for renewing your membership with us. We truly appreciate your continued trust and support.\n\nIf there is anything we can do for you, just let us know.\n\nWarm regards"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1589,
+    "firstReplyMs": 1587,
+    "plannerMs": 1568,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5594,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 154,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "failure-email-provider-down",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Rosa Ito to thank her for renewing",
+     "status": "failed",
+     "reply": "Done: Draft email, already done earlier.\nCouldn't send email: The email provider is not responding.",
+     "offered": [
+      "M13.A03",
+      "M13.A01",
+      "M13.A10",
+      "M45.A02",
+      "M47.A08",
+      "M28.A08",
+      "M47.A09",
+      "M13.A04",
+      "M48.A08",
+      "M13.A05",
+      "M13.A02",
+      "M03.A01",
+      "M01.A02",
+      "M01.A03",
+      "M12.A03",
+      "M12.A01",
+      "M12.A10",
+      "M01.A08"
+     ],
+     "planned": [
+      "M13.A01",
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A01",
+       "args": {
+        "contactId": "ct_1",
+        "subject": "Thank you for renewing",
+        "body": "Hi Rosa,\n\nThank you for renewing with us — we really appreciate your continued trust and support. If there's anything you need, just let us know.\n\nWarm regards"
+       }
+      },
+      {
+       "action": "M13.A03",
+       "args": {
+        "emailId": "em_46"
+       },
+       "error": "UNAVAILABLE: The email provider is not responding"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1777,
+     "ms": 1779,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "6a728a6a6716a688",
+       "targetsHash": "90c6e5e957708908",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "emailId": "em_46"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1779,
+    "firstReplyMs": 1777,
+    "plannerMs": 1755,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 5594,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 177,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "followup-task-amend",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task to send the proposal to Marco Patel, due Friday",
+     "status": "done",
+     "reply": "Done: Create task (Send the proposal to Marco Patel).",
+     "offered": [
+      "M28.A06",
+      "M06.A01",
+      "M06.A06",
+      "M28.A01",
+      "M06.A03",
+      "M29.A01",
+      "M28.A07",
+      "M45.A02",
+      "M07.A01",
+      "M06.A02",
+      "M45.A01",
+      "M06.A07",
+      "M06.A05",
+      "M01.A02",
+      "M01.A03",
+      "M21.A01"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Send the proposal to Marco Patel",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_4"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1453,
+     "ms": 1453
+    },
+    {
+     "user": "Actually give it to Aisha and make it high priority",
+     "status": "done",
+     "reply": "Assign task owner + Set task priority for 1 of 1: Send the proposal to Marco Patel.",
+     "offered": [
+      "M06.A05",
+      "M06.A07",
+      "M47.A05",
+      "M47.A01",
+      "M06.A03",
+      "M11.A03",
+      "M45.A05",
+      "M06.A01",
+      "M06.A02",
+      "M06.A06",
+      "M45.A02",
+      "M47.A03",
+      "M21.A06",
+      "M13.A09",
+      "M48.A02",
+      "M03.A05",
+      "M04.A06"
+     ],
+     "planned": [
+      "M06.A03",
+      "M06.A05",
+      "M06.A07"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "status": "open",
+        "query": "Send the proposal to Marco Patel"
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_20",
+        "assigneeId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A07",
+       "args": {
+        "taskId": "tk_20",
+        "priority": "high"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "step s1: $ctx is not available yet"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3520,
+     "ms": 3520
+    }
+   ],
+   "metrics": {
+    "ms": 4973,
+    "firstReplyMs": 1453,
+    "plannerMs": 4894,
+    "plannerRounds": 3,
+    "calls": 4,
+    "usage": {
+     "input": 14756,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 539,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "followup-task-amend",
+   "category": "followup",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.title') LIKE '%Marco Patel%' AND json_extract(data,'$.assigneeId')='us_5' AND json_extract(data,'$.priority')='high' AND json_extract(data,'$.dueDate')='2026-10-23' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Create a task to send the proposal to Marco Patel, due Friday",
+     "status": "done",
+     "reply": "Done: Create task (Send the proposal to Marco Patel).",
+     "offered": [
+      "M28.A06",
+      "M06.A01",
+      "M06.A06",
+      "M28.A01",
+      "M06.A03",
+      "M29.A01",
+      "M28.A07",
+      "M45.A02",
+      "M07.A01",
+      "M06.A02",
+      "M45.A01",
+      "M06.A07",
+      "M06.A05",
+      "M01.A02",
+      "M01.A03",
+      "M21.A01"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Send the proposal to Marco Patel",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_4"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1290,
+     "ms": 1290
+    },
+    {
+     "user": "Actually give it to Aisha and make it high priority",
+     "status": "failed",
+     "reply": "The plan was still invalid after one repair:\nstep s1: $s2 is not an earlier step (refs can only point back)",
+     "offered": [
+      "M06.A05",
+      "M06.A07",
+      "M47.A05",
+      "M47.A01",
+      "M06.A03",
+      "M11.A03",
+      "M45.A05",
+      "M06.A01",
+      "M06.A02",
+      "M06.A06",
+      "M45.A02",
+      "M47.A03",
+      "M21.A06",
+      "M13.A09",
+      "M48.A02",
+      "M03.A05",
+      "M04.A06"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "step s1: $m0 is not an earlier step (refs can only point back)",
+      "step s1: $s2 is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3528,
+     "ms": 3528
+    }
+   ],
+   "metrics": {
+    "ms": 4818,
+    "firstReplyMs": 1290,
+    "plannerMs": 4761,
+    "plannerRounds": 3,
+    "calls": 1,
+    "usage": {
+     "input": 14651,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 483,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "followup-task-amend",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a task to send the proposal to Marco Patel, due Friday",
+     "status": "done",
+     "reply": "Done: Create task (Send the proposal to Marco Patel).",
+     "offered": [
+      "M28.A06",
+      "M06.A01",
+      "M06.A06",
+      "M28.A01",
+      "M06.A03",
+      "M29.A01",
+      "M28.A07",
+      "M45.A02",
+      "M07.A01",
+      "M06.A02",
+      "M45.A01",
+      "M06.A07",
+      "M06.A05",
+      "M01.A02",
+      "M01.A03",
+      "M21.A01"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Send the proposal to Marco Patel",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_4"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1343,
+     "ms": 1343
+    },
+    {
+     "user": "Actually give it to Aisha and make it high priority",
+     "status": "done",
+     "reply": "Assign task owner + Set task priority for 1 of 1: Send the proposal to Marco Patel.",
+     "offered": [
+      "M06.A05",
+      "M06.A07",
+      "M47.A05",
+      "M47.A01",
+      "M06.A03",
+      "M11.A03",
+      "M45.A05",
+      "M06.A01",
+      "M06.A02",
+      "M06.A06",
+      "M45.A02",
+      "M47.A03",
+      "M21.A06",
+      "M13.A09",
+      "M48.A02",
+      "M03.A05",
+      "M04.A06"
+     ],
+     "planned": [
+      "M06.A03",
+      "M06.A05",
+      "M06.A07"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "query": "Send the proposal to Marco Patel"
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_20",
+        "assigneeId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A07",
+       "args": {
+        "taskId": "tk_20",
+        "priority": "high"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "step s1: $s0 is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3568,
+     "ms": 3568
+    }
+   ],
+   "metrics": {
+    "ms": 4911,
+    "firstReplyMs": 1343,
+    "plannerMs": 4756,
+    "plannerRounds": 3,
+    "calls": 4,
+    "usage": {
+     "input": 14758,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 583,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "followup-void-draft-invoice",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "What's the status of Omar Larsen's invoice?",
+     "status": "done",
+     "reply": "Found 1 invoice: Omar Larsen: number INV-1007, status draft, total 1200, amount paid 0, amount due 1200, currency USD.",
+     "offered": [
+      "M28.A07",
+      "M28.A03",
+      "M28.A02",
+      "M28.A01",
+      "M28.A08",
+      "M28.A10",
+      "M29.A02",
+      "M29.A06",
+      "M46.A10",
+      "M47.A06",
+      "M47.A10",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A01"
+     ],
+     "planned": [
+      "M28.A03"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_7"
+       }
+      },
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_7"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3034,
+     "ms": 3034
+    },
+    {
+     "user": "Void it, they cancelled the order",
+     "status": "done",
+     "reply": "Done: Void unpaid invoice.",
+     "offered": [
+      "M28.A09",
+      "M29.A03",
+      "M06.A10",
+      "M13.A05",
+      "M12.A05",
+      "M21.A05",
+      "M45.A03",
+      "M29.A08",
+      "M28.A03",
+      "M06.A08",
+      "M21.A10"
+     ],
+     "planned": [
+      "M28.A09"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "query": "Omar Larsen",
+        "limit": 5
+       }
+      },
+      {
+       "action": "M28.A09",
+       "args": {
+        "invoiceId": "inv_7",
+        "reason": "Customer cancelled the order"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step s1: $lookup is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 2705,
+     "ms": 2708,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "5d5ef6066368d8ab",
+       "targetsHash": "89e07965575d9548",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M28.A09",
+         "name": "Void unpaid invoice",
+         "args": {
+          "invoiceId": "inv_7",
+          "reason": "Customer cancelled the order"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5742,
+    "firstReplyMs": 3034,
+    "plannerMs": 5609,
+    "plannerRounds": 5,
+    "calls": 4,
+    "usage": {
+     "input": 20043,
+     "cachedRead": 12800,
+     "cacheWrite": 0,
+     "output": 425,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "followup-void-draft-invoice",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "What's the status of Omar Larsen's invoice?",
+     "status": "done",
+     "reply": "Found 1 invoice: Omar Larsen: number INV-1007, status draft, total 1200, amount paid 0, amount due 1200, currency USD.",
+     "offered": [
+      "M28.A07",
+      "M28.A03",
+      "M28.A02",
+      "M28.A01",
+      "M28.A08",
+      "M28.A10",
+      "M29.A02",
+      "M29.A06",
+      "M46.A10",
+      "M47.A06",
+      "M47.A10",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A01"
+     ],
+     "planned": [
+      "M28.A03"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_7"
+       }
+      },
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_7"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2650,
+     "ms": 2650
+    },
+    {
+     "user": "Void it, they cancelled the order",
+     "status": "done",
+     "reply": "Done: Void unpaid invoice.",
+     "offered": [
+      "M28.A09",
+      "M29.A03",
+      "M06.A10",
+      "M13.A05",
+      "M12.A05",
+      "M21.A05",
+      "M45.A03",
+      "M29.A08",
+      "M28.A03",
+      "M06.A08",
+      "M21.A10"
+     ],
+     "planned": [
+      "M28.A03",
+      "M28.A09"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "status": "draft",
+        "query": "Omar Larsen"
+       }
+      },
+      {
+       "action": "M28.A03",
+       "args": {
+        "status": "draft",
+        "query": "Omar Larsen"
+       }
+      },
+      {
+       "action": "M28.A09",
+       "args": {
+        "invoiceId": "inv_7",
+        "reason": "Customer cancelled the order"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1143,
+     "ms": 1146,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "a6ad72d6fea8c44b",
+       "targetsHash": "89e07965575d9548",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M28.A09",
+         "name": "Void unpaid invoice",
+         "args": {
+          "invoiceId": "inv_7",
+          "reason": "Customer cancelled the order"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3796,
+    "firstReplyMs": 2650,
+    "plannerMs": 3725,
+    "plannerRounds": 3,
+    "calls": 5,
+    "usage": {
+     "input": 12910,
+     "cachedRead": 11776,
+     "cacheWrite": 0,
+     "output": 318,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "followup-void-draft-invoice",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "What's the status of Omar Larsen's invoice?",
+     "status": "done",
+     "reply": "Found 1 invoice: Omar Larsen: number INV-1007, status draft, total 1200, amount paid 0, amount due 1200, currency USD.",
+     "offered": [
+      "M28.A07",
+      "M28.A03",
+      "M28.A02",
+      "M28.A01",
+      "M28.A08",
+      "M28.A10",
+      "M29.A02",
+      "M29.A06",
+      "M46.A10",
+      "M47.A06",
+      "M47.A10",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A01"
+     ],
+     "planned": [
+      "M28.A03"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_7",
+        "limit": 10
+       }
+      },
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_7",
+        "limit": 10
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2778,
+     "ms": 2778
+    },
+    {
+     "user": "Void it, they cancelled the order",
+     "status": "done",
+     "reply": "Done: Void unpaid invoice.",
+     "offered": [
+      "M28.A09",
+      "M29.A03",
+      "M06.A10",
+      "M13.A05",
+      "M12.A05",
+      "M21.A05",
+      "M45.A03",
+      "M29.A08",
+      "M28.A03",
+      "M06.A08",
+      "M21.A10"
+     ],
+     "planned": [
+      "M28.A03",
+      "M28.A09"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "status": "draft",
+        "query": "Omar Larsen"
+       }
+      },
+      {
+       "action": "M28.A03",
+       "args": {
+        "status": "draft",
+        "query": "Omar Larsen"
+       }
+      },
+      {
+       "action": "M28.A09",
+       "args": {
+        "invoiceId": "inv_7",
+        "reason": "Customer cancelled the order"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1236,
+     "ms": 1238,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "a6ad72d6fea8c44b",
+       "targetsHash": "89e07965575d9548",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M28.A09",
+         "name": "Void unpaid invoice",
+         "args": {
+          "invoiceId": "inv_7",
+          "reason": "Customer cancelled the order"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4016,
+    "firstReplyMs": 2778,
+    "plannerMs": 3954,
+    "plannerRounds": 3,
+    "calls": 5,
+    "usage": {
+     "input": 12910,
+     "cachedRead": 11776,
+     "cacheWrite": 0,
+     "output": 327,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-chase-late-payers",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_9' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Chase everyone who's more than two weeks late paying, but skip anyone we already reminded this week",
+     "status": "done",
+     "reply": "Send invoice reminder for 2 of 2: #0, #1.",
+     "offered": [
+      "M28.A10",
+      "M28.A08",
+      "M28.A06",
+      "M21.A03",
+      "M06.A03",
+      "M06.A01",
+      "M29.A03",
+      "M21.A09",
+      "M03.A03",
+      "M21.A04",
+      "M21.A08",
+      "M47.A05",
+      "M13.A01",
+      "M28.A03",
+      "M13.A03",
+      "M06.A06"
+     ],
+     "planned": [
+      "M28.A10",
+      "M28.A08"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 16,
+        "limit": 50
+       }
+      },
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 16,
+        "limit": 50
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_6"
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_5"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1848,
+     "ms": 1855,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "426146dfb7f3d968",
+       "targetsHash": "5fc090fa5c2a21da",
+       "reason": "sends something outside the account",
+       "count": 2,
+       "preview": [
+        {
+         "action": "M28.A08",
+         "name": "Send invoice reminder",
+         "args": {
+          "invoiceId": "inv_6"
+         }
+        },
+        {
+         "action": "M28.A08",
+         "name": "Send invoice reminder",
+         "args": {
+          "invoiceId": "inv_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1855,
+    "firstReplyMs": 1848,
+    "plannerMs": 1804,
+    "plannerRounds": 1,
+    "calls": 4,
+    "usage": {
+     "input": 5183,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 198,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-chase-late-payers",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M28.A08 not planned (was offered; planned: M28.A10)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_5' → 1, wanted 2"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_6' → 1, wanted 2"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_9' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Chase everyone who's more than two weeks late paying, but skip anyone we already reminded this week",
+     "status": "done",
+     "reply": "Found 4 invoices: Sarah Johnson, Yusuf Silva, Marco Patel, Marcus Lee.",
+     "offered": [
+      "M28.A10",
+      "M28.A08",
+      "M28.A06",
+      "M21.A03",
+      "M06.A03",
+      "M06.A01",
+      "M29.A03",
+      "M21.A09",
+      "M03.A03",
+      "M21.A04",
+      "M21.A08",
+      "M47.A05",
+      "M13.A01",
+      "M28.A03",
+      "M13.A03",
+      "M06.A06"
+     ],
+     "planned": [
+      "M28.A10"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 50
+       }
+      },
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 50
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2641,
+     "ms": 2641
+    }
+   ],
+   "metrics": {
+    "ms": 2641,
+    "firstReplyMs": 2641,
+    "plannerMs": 2597,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 10702,
+     "cachedRead": 10240,
+     "cacheWrite": 0,
+     "output": 215,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-chase-late-payers",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_4' → 2, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Chase everyone who's more than two weeks late paying, but skip anyone we already reminded this week",
+     "status": "done",
+     "reply": "Send invoice reminder for 4 of 4: #0, #1, #2, #3.",
+     "offered": [
+      "M28.A10",
+      "M28.A08",
+      "M28.A06",
+      "M21.A03",
+      "M06.A03",
+      "M06.A01",
+      "M29.A03",
+      "M21.A09",
+      "M03.A03",
+      "M21.A04",
+      "M21.A08",
+      "M47.A05",
+      "M13.A01",
+      "M28.A03",
+      "M13.A03",
+      "M06.A06"
+     ],
+     "planned": [
+      "M28.A10",
+      "M28.A08"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 50
+       }
+      },
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 50
+       }
+      },
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 15,
+        "limit": 50
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_6"
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_5"
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_4"
+       }
+      },
+      {
+       "action": "M28.A08",
+       "args": {
+        "invoiceId": "inv_9"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3320,
+     "ms": 3325,
+     "confirmations": [
+      {
+       "stepId": "loop1",
+       "planHash": "df410028ebca2927",
+       "targetsHash": "e75fb7f1f6d86fd3",
+       "reason": "sends something outside the account",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M28.A08",
+         "name": "Send invoice reminder",
+         "args": {
+          "invoiceId": "inv_6"
+         }
+        },
+        {
+         "action": "M28.A08",
+         "name": "Send invoice reminder",
+         "args": {
+          "invoiceId": "inv_5"
+         }
+        },
+        {
+         "action": "M28.A08",
+         "name": "Send invoice reminder",
+         "args": {
+          "invoiceId": "inv_4"
+         }
+        },
+        {
+         "action": "M28.A08",
+         "name": "Send invoice reminder",
+         "args": {
+          "invoiceId": "inv_9"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3325,
+    "firstReplyMs": 3320,
+    "plannerMs": 3275,
+    "plannerRounds": 2,
+    "calls": 7,
+    "usage": {
+     "input": 10702,
+     "cachedRead": 10240,
+     "cacheWrite": 0,
+     "output": 282,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-cover-for-lucia",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M06.A05 not planned (not offered; planned: M06.A03)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.assigneeId') FROM tasks WHERE id='tk_19' → \"us_3\", wanted \"us_2\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_3' AND json_extract(data,'$.status')='open' → 1, wanted 0"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Lucia is out this week, have Raj cover her open tasks",
+     "status": "done",
+     "reply": "Found 1 task: Follow up on old quote: due date 2026-10-17, priority high, status open.",
+     "offered": [
+      "M06.A03",
+      "M03.A03",
+      "M06.A09",
+      "M06.A04",
+      "M06.A08",
+      "M06.A07",
+      "M06.A10",
+      "M46.A07",
+      "M04.A07",
+      "M47.A05",
+      "M49.A09",
+      "M48.A02",
+      "M07.A03",
+      "M21.A03",
+      "M01.A03",
+      "M04.A10",
+      "M11.A07"
+     ],
+     "planned": [
+      "M06.A03"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "assigneeId": "us_3",
+        "status": "open",
+        "limit": 100
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1561,
+     "ms": 1561
+    }
+   ],
+   "metrics": {
+    "ms": 1561,
+    "firstReplyMs": 1561,
+    "plannerMs": 1483,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5036,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 115,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-cover-for-lucia",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M06.A05 not planned (not offered; planned: M06.A03)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.assigneeId') FROM tasks WHERE id='tk_19' → \"us_3\", wanted \"us_2\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_3' AND json_extract(data,'$.status')='open' → 1, wanted 0"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Lucia is out this week, have Raj cover her open tasks",
+     "status": "done",
+     "reply": "Found 1 task: Follow up on old quote: due date 2026-10-17, priority high, status open.",
+     "offered": [
+      "M06.A03",
+      "M03.A03",
+      "M06.A09",
+      "M06.A04",
+      "M06.A08",
+      "M06.A07",
+      "M06.A10",
+      "M46.A07",
+      "M04.A07",
+      "M47.A05",
+      "M49.A09",
+      "M48.A02",
+      "M07.A03",
+      "M21.A03",
+      "M01.A03",
+      "M04.A10",
+      "M11.A07"
+     ],
+     "planned": [
+      "M06.A03"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "assigneeId": "us_3",
+        "status": "open"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1070,
+     "ms": 1070
+    }
+   ],
+   "metrics": {
+    "ms": 1070,
+    "firstReplyMs": 1070,
+    "plannerMs": 1029,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5036,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 111,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-cover-for-lucia",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M06.A05 not planned (not offered; planned: M06.A03, M06.A04)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.assigneeId') FROM tasks WHERE id='tk_19' → \"us_3\", wanted \"us_2\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_3' AND json_extract(data,'$.status')='open' → 1, wanted 0"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Lucia is out this week, have Raj cover her open tasks",
+     "status": "done",
+     "reply": "Update task description for 1 of 1: Follow up on old quote.",
+     "offered": [
+      "M06.A03",
+      "M03.A03",
+      "M06.A09",
+      "M06.A04",
+      "M06.A08",
+      "M06.A07",
+      "M06.A10",
+      "M46.A07",
+      "M04.A07",
+      "M47.A05",
+      "M49.A09",
+      "M48.A02",
+      "M07.A03",
+      "M21.A03",
+      "M01.A03",
+      "M04.A10",
+      "M11.A07"
+     ],
+     "planned": [
+      "M06.A03",
+      "M06.A04"
+     ],
+     "calls": [
+      {
+       "action": "M06.A03",
+       "args": {
+        "assigneeId": "us_3",
+        "status": "open",
+        "limit": 200
+       }
+      },
+      {
+       "action": "M06.A03",
+       "args": {
+        "assigneeId": "us_3",
+        "status": "open"
+       }
+      },
+      {
+       "action": "M06.A04",
+       "args": {
+        "taskId": "tk_19",
+        "description": "Covering for Lucia Gomez, who is out this week. Original assignee: Lucia."
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step s3: M06.A03 arg assigneeId needs a single value, but $s1 is a object"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5623,
+     "ms": 5623
+    }
+   ],
+   "metrics": {
+    "ms": 5623,
+    "firstReplyMs": 5623,
+    "plannerMs": 5572,
+    "plannerRounds": 3,
+    "calls": 3,
+    "usage": {
+     "input": 15662,
+     "cachedRead": 14336,
+     "cacheWrite": 0,
+     "output": 510,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-noah-helps-sales",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "clarify, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M49.A05 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM teams, json_each(json_extract(teams.data,'$.memberIds')) m WHERE teams.id='tm_1' AND m.value='us_6' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Noah is going to help out on the sales team for a while",
+     "status": "clarify",
+     "reply": "Should I add Noah to the existing sales team, or create a new one? And which sales team do you mean — is he helping out on the team named something like \"Sales\"?",
+     "offered": [
+      "M49.A01",
+      "M49.A03",
+      "M49.A07",
+      "M04.A01",
+      "M49.A06",
+      "M49.A08",
+      "M49.A04",
+      "M04.A06",
+      "M03.A10",
+      "M21.A06",
+      "M48.A02",
+      "M48.A03",
+      "M49.A05",
+      "M48.A01",
+      "M48.A08",
+      "M49.A02",
+      "M48.A05",
+      "M21.A07",
+      "M48.A07",
+      "M11.A08",
+      "M49.A10",
+      "M49.A09",
+      "M47.A07",
+      "M48.A09",
+      "M48.A06",
+      "M48.A10",
+      "M01.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2087,
+     "ms": 2087
+    }
+   ],
+   "metrics": {
+    "ms": 2087,
+    "firstReplyMs": 2087,
+    "plannerMs": 2050,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 9611,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 115,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-noah-helps-sales",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M49.A05 not planned (not offered; planned: M49.A03)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM teams, json_each(json_extract(teams.data,'$.memberIds')) m WHERE teams.id='tm_1' AND m.value='us_6' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Noah is going to help out on the sales team for a while",
+     "status": "done",
+     "reply": "Found 1 team: Support: description Customer support, member ids us_6, us_7, strategy least_busy, status active.\nFound 1 team: Sales: description Inbound and outbound sales, member ids us_2, us_3, us_4, us_5, us_9, strategy round_robin, status active.",
+     "offered": [
+      "M49.A01",
+      "M49.A03",
+      "M49.A07",
+      "M04.A01",
+      "M49.A06",
+      "M49.A08",
+      "M49.A04",
+      "M04.A06",
+      "M03.A10",
+      "M21.A06",
+      "M48.A02",
+      "M48.A03"
+     ],
+     "planned": [
+      "M49.A03",
+      "M49.A03"
+     ],
+     "calls": [
+      {
+       "action": "M49.A03",
+       "args": {
+        "query": "Sales",
+        "includeArchived": false
+       }
+      },
+      {
+       "action": "M49.A03",
+       "args": {
+        "memberId": "us_6"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1516,
+     "ms": 1516
+    }
+   ],
+   "metrics": {
+    "ms": 1516,
+    "firstReplyMs": 1516,
+    "plannerMs": 1493,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 3583,
+     "cachedRead": 3072,
+     "cacheWrite": 0,
+     "output": 173,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-noah-helps-sales",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "clarify, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M49.A05 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM teams, json_each(json_extract(teams.data,'$.memberIds')) m WHERE teams.id='tm_1' AND m.value='us_6' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Noah is going to help out on the sales team for a while",
+     "status": "clarify",
+     "reply": "Should I add Noah to an existing sales team, or create a new team for him?",
+     "offered": [
+      "M49.A01",
+      "M49.A03",
+      "M49.A07",
+      "M04.A01",
+      "M49.A06",
+      "M49.A08",
+      "M49.A04",
+      "M04.A06",
+      "M03.A10",
+      "M21.A06",
+      "M48.A02",
+      "M48.A03",
+      "M01.A02",
+      "M49.A05",
+      "M49.A09",
+      "M47.A04",
+      "M49.A10",
+      "M49.A02",
+      "M48.A01",
+      "M48.A08",
+      "M01.A01",
+      "M48.A04",
+      "M48.A05",
+      "M03.A02"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3362,
+     "ms": 3362
+    }
+   ],
+   "metrics": {
+    "ms": 3362,
+    "firstReplyMs": 3362,
+    "plannerMs": 3188,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 9251,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 218,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-who-is-waiting",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Who's still waiting on a reply from us?",
+     "status": "done",
+     "reply": "Found 11 conversations matching waiting on team: Tara Silva, Nina Novak, Grace Patel, Wen Patel, Victor Reyes and 6 more.",
+     "offered": [
+      "M11.A10",
+      "M11.A02",
+      "M47.A08",
+      "M45.A09",
+      "M13.A09",
+      "M45.A08",
+      "M12.A09",
+      "M45.A02",
+      "M47.A10",
+      "M11.A09",
+      "M15.A10",
+      "M11.A08",
+      "M12.A07",
+      "M13.A07",
+      "M13.A03"
+     ],
+     "planned": [
+      "M11.A10"
+     ],
+     "calls": [
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "team"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1053,
+     "ms": 1053
+    }
+   ],
+   "metrics": {
+    "ms": 1053,
+    "firstReplyMs": 1053,
+    "plannerMs": 1033,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4758,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 65,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-who-is-waiting",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Who's still waiting on a reply from us?",
+     "status": "done",
+     "reply": "Found 11 conversations matching waiting on team: Tara Silva, Nina Novak, Grace Patel, Wen Patel, Victor Reyes and 6 more.",
+     "offered": [
+      "M11.A10",
+      "M11.A02",
+      "M47.A08",
+      "M45.A09",
+      "M13.A09",
+      "M45.A08",
+      "M12.A09",
+      "M45.A02",
+      "M47.A10",
+      "M11.A09",
+      "M15.A10",
+      "M11.A08",
+      "M12.A07",
+      "M13.A07",
+      "M13.A03"
+     ],
+     "planned": [
+      "M11.A10"
+     ],
+     "calls": [
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "team",
+        "limit": 50
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1360,
+     "ms": 1360
+    }
+   ],
+   "metrics": {
+    "ms": 1360,
+    "firstReplyMs": 1360,
+    "plannerMs": 1333,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4758,
+     "cachedRead": 4096,
+     "cacheWrite": 0,
+     "output": 69,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "indirect-who-is-waiting",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Who's still waiting on a reply from us?",
+     "status": "done",
+     "reply": "Found 11 conversations matching waiting on team: Tara Silva, Nina Novak, Grace Patel, Wen Patel, Victor Reyes and 6 more.",
+     "offered": [
+      "M11.A10",
+      "M11.A02",
+      "M47.A08",
+      "M45.A09",
+      "M13.A09",
+      "M45.A08",
+      "M12.A09",
+      "M45.A02",
+      "M47.A10",
+      "M11.A09",
+      "M15.A10",
+      "M11.A08",
+      "M12.A07",
+      "M13.A07",
+      "M13.A03"
+     ],
+     "planned": [
+      "M11.A10"
+     ],
+     "calls": [
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "team",
+        "limit": 50
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1170,
+     "ms": 1170
+    }
+   ],
+   "metrics": {
+    "ms": 1170,
+    "firstReplyMs": 1170,
+    "plannerMs": 1139,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4758,
+     "cachedRead": 4096,
+     "cacheWrite": 0,
+     "output": 69,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M01.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A09",
+      "M49.A10",
+      "M01.A10",
+      "M01.A03",
+      "M47.A09",
+      "M45.A02",
+      "M03.A02",
+      "M08.A09"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A05"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "limit": 100
+       }
+      },
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "limit": 100
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1885,
+     "ms": 1885,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "c4e206348601f4d2",
+       "targetsHash": "8afb3e2213c04eab",
+       "reason": "deletes or cancels records",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_20"
+         },
+         "label": "Lena Larsen"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_21"
+         },
+         "label": "Ana Okafor"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_24"
+         },
+         "label": "Nina Novak"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_26"
+         },
+         "label": "Zoe Costa"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_27"
+         },
+         "label": "Ben Patel"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1885,
+    "firstReplyMs": 1885,
+    "plannerMs": 1871,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 8130,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 167,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M01.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A09",
+      "M49.A10",
+      "M01.A10",
+      "M01.A03",
+      "M47.A09",
+      "M45.A02",
+      "M03.A02",
+      "M08.A09"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A05"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "status": "active",
+        "limit": 200
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1486,
+     "ms": 1486,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "702f8176fba78c37",
+       "targetsHash": "8afb3e2213c04eab",
+       "reason": "deletes or cancels records",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_20"
+         },
+         "label": "Lena Larsen"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_21"
+         },
+         "label": "Ana Okafor"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_24"
+         },
+         "label": "Nina Novak"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_26"
+         },
+         "label": "Zoe Costa"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_27"
+         },
+         "label": "Ben Patel"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1486,
+    "firstReplyMs": 1486,
+    "plannerMs": 1470,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3721,
+     "cachedRead": 3584,
+     "cacheWrite": 0,
+     "output": 140,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M01.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A09",
+      "M49.A10",
+      "M01.A10",
+      "M01.A03",
+      "M47.A09",
+      "M45.A02",
+      "M03.A02",
+      "M08.A09"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A05"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "limit": 50
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1984,
+     "ms": 1984,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "81545174098036b7",
+       "targetsHash": "8afb3e2213c04eab",
+       "reason": "deletes or cancels records",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_20"
+         },
+         "label": "Lena Larsen"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_21"
+         },
+         "label": "Ana Okafor"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_24"
+         },
+         "label": "Nina Novak"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_26"
+         },
+         "label": "Zoe Costa"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_27"
+         },
+         "label": "Ben Patel"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1984,
+    "firstReplyMs": 1984,
+    "plannerMs": 1968,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 8130,
+     "cachedRead": 7680,
+     "cacheWrite": 0,
+     "output": 167,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-email-and-task",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "needs_clarification, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M06.A01 not planned (was offered; planned: M13.A03)"
+    },
+    {
+     "kind": "args",
+     "detail": "M13.A03 {\"contactId\":\"ct_31\"}; ran with no calls"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM emails WHERE json_extract(data,'$.contactId')='ct_31' AND json_extract(data,'$.direction')='outbound' AND json_extract(data,'$.body') LIKE '%297%' AND json_extract(data,'$.status')<>'draft' → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_2' AND json_extract(data,'$.dueDate')='2026-10-23' AND json_extract(data,'$.title') LIKE '%Sarah%' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Email Sarah Johnson at Brightside that the Agency plan is $297 a month, and create a task for Raj to follow up with her on Friday",
+     "status": "needs_clarification",
+     "reply": "More than one contact matches \"Sarah Johnson\": Sarah Johnson (sarah.johnson@brightside.example, +15550100001, Brightside), Sarah Johnson (sjohnson@gmail.example, +15550100001). Which one?",
+     "offered": [
+      "M13.A03",
+      "M06.A01",
+      "M13.A04",
+      "M06.A03",
+      "M28.A08",
+      "M15.A05",
+      "M45.A02",
+      "M13.A01",
+      "M07.A01",
+      "M04.A01",
+      "M15.A01",
+      "M28.A07",
+      "M01.A02",
+      "M01.A03",
+      "M21.A02",
+      "M21.A03",
+      "M04.A02",
+      "M04.A03",
+      "M48.A02",
+      "M12.A03",
+      "M21.A01",
+      "M12.A04",
+      "M15.A06"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1632,
+     "ms": 1632
+    }
+   ],
+   "metrics": {
+    "ms": 1632,
+    "firstReplyMs": 1632,
+    "plannerMs": 1576,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 6645,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 166,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-email-and-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Sarah Johnson at Brightside that the Agency plan is $297 a month, and create a task for Raj to follow up with her on Friday",
+     "status": "done",
+     "reply": "Done: Send email.\nDone: Create task (Follow up with Sarah Johnson about the Agency plan ($297/month)).",
+     "offered": [
+      "M13.A03",
+      "M06.A01",
+      "M13.A04",
+      "M06.A03",
+      "M28.A08",
+      "M15.A05",
+      "M45.A02",
+      "M13.A01",
+      "M07.A01",
+      "M04.A01",
+      "M15.A01",
+      "M28.A07",
+      "M01.A02",
+      "M01.A03",
+      "M21.A02",
+      "M21.A03",
+      "M04.A02",
+      "M04.A03",
+      "M48.A02",
+      "M12.A03",
+      "M21.A01",
+      "M12.A04",
+      "M15.A06"
+     ],
+     "planned": [
+      "M13.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Sarah Johnson"
+       }
+      },
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Sarah Johnson",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_31",
+        "subject": "Agency plan pricing",
+        "body": "Hi Sarah,\n\nJust wanted to let you know that the Agency plan is $297 a month. Let me know if you'd like to move forward or have any questions.\n\nBest,\nRaj"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sarah Johnson about the Agency plan ($297/month)",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_31"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3237,
+     "ms": 3239,
+     "confirmations": [
+      {
+       "stepId": "s4",
+       "planHash": "c706f397b74bce10",
+       "targetsHash": "0a64741adbce4e03",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_31",
+          "subject": "Agency plan pricing",
+          "body": "Hi Sarah,\n\nJust wanted to let you know that the Agency plan is $297 a month. Let me know if you'd like to move forward or have any questions.\n\nBest,\nRaj"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3239,
+    "firstReplyMs": 3237,
+    "plannerMs": 3200,
+    "plannerRounds": 2,
+    "calls": 4,
+    "usage": {
+     "input": 13835,
+     "cachedRead": 12288,
+     "cacheWrite": 0,
+     "output": 324,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-email-and-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Email Sarah Johnson at Brightside that the Agency plan is $297 a month, and create a task for Raj to follow up with her on Friday",
+     "status": "done",
+     "reply": "Done: Send email.\nDone: Create task (Follow up with Sarah Johnson about the Agency plan).",
+     "offered": [
+      "M13.A03",
+      "M06.A01",
+      "M13.A04",
+      "M06.A03",
+      "M28.A08",
+      "M15.A05",
+      "M45.A02",
+      "M13.A01",
+      "M07.A01",
+      "M04.A01",
+      "M15.A01",
+      "M28.A07",
+      "M01.A02",
+      "M01.A03",
+      "M21.A02",
+      "M21.A03",
+      "M04.A02",
+      "M04.A03",
+      "M48.A02",
+      "M12.A03",
+      "M21.A01",
+      "M12.A04",
+      "M15.A06"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A02",
+      "M13.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Sarah Johnson"
+       }
+      },
+      {
+       "action": "M01.A02",
+       "args": {
+        "contactId": "ct_31"
+       }
+      },
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Sarah Johnson"
+       }
+      },
+      {
+       "action": "M01.A02",
+       "args": {
+        "contactId": "ct_31"
+       }
+      },
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_31",
+        "subject": "Agency plan pricing",
+        "body": "Hi Sarah, thanks for your interest in the Agency plan — it's $297 a month. Let me know if you'd like to get started and I'll walk you through next steps."
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sarah Johnson about the Agency plan",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_31"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 2336,
+     "ms": 2339,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "325c3a91ff3aa36a",
+       "targetsHash": "8b58a8e1b16d6d83",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_31",
+          "subject": "Agency plan pricing",
+          "body": "Hi Sarah, thanks for your interest in the Agency plan — it's $297 a month. Let me know if you'd like to get started and I'll walk you through next steps."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 2339,
+    "firstReplyMs": 2336,
+    "plannerMs": 2295,
+    "plannerRounds": 1,
+    "calls": 6,
+    "usage": {
+     "input": 6645,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 286,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-facebook-leads",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "partial, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M03.A05 not planned (was offered; planned: M03.A03)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM leads WHERE id IN ('ld_41','ld_42','ld_43','ld_44') AND json_extract(data,'$.ownerId') IN ('us_2','us_4','us_5') → 0, wanted 4"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(DISTINCT json_extract(data,'$.ownerId')) FROM leads WHERE id IN ('ld_41','ld_42','ld_43','ld_44') → 0, wanted 3"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Assign last week's Facebook leads to the available sales reps, round robin",
+     "status": "partial",
+     "reply": "Found 4 leads matching source facebook_ads, created from 2026-10-12, created to 2026-10-18: Victor Larsen (new), Marco Brown (new), Femi Silva (new), Dev Kim (new).\nCouldn't find user \"available sales reps\": no user matches \"available sales reps\".",
+     "offered": [
+      "M03.A05",
+      "M49.A08",
+      "M04.A06",
+      "M01.A07",
+      "M03.A03",
+      "M11.A03",
+      "M21.A07",
+      "M21.A06",
+      "M21.A03",
+      "M46.A07",
+      "M03.A06"
+     ],
+     "planned": [
+      "M03.A03"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 50
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1909,
+     "ms": 1909
+    }
+   ],
+   "metrics": {
+    "ms": 1909,
+    "firstReplyMs": 1909,
+    "plannerMs": 1865,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4091,
+     "cachedRead": 3584,
+     "cacheWrite": 0,
+     "output": 162,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-facebook-leads",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M03.A05 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM leads WHERE id IN ('ld_41','ld_42','ld_43','ld_44') AND json_extract(data,'$.ownerId') IN ('us_2','us_4','us_5') → 0, wanted 4"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(DISTINCT json_extract(data,'$.ownerId')) FROM leads WHERE id IN ('ld_41','ld_42','ld_43','ld_44') → 0, wanted 3"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Assign last week's Facebook leads to the available sales reps, round robin",
+     "status": "failed",
+     "reply": "The planner's reply didn't match submit_plan: [\n  {\n    \"code\": \"invalid_union\",\n    \"errors\": [],\n    \"note\": \"No matching discriminator\",\n    \"discriminator\": \"kind\",\n    \"options\": [\n      \"action\",\n      \"resolve\",\n      \"op\"\n    ],\n    \"path\": [\n      \"steps\",\n      2,\n      \"kind\"\n    ],\n    \"message\": \"Invalid discriminator value. Expected 'action' | 'resolve' | 'op'\"\n  }\n]",
+     "offered": [
+      "M03.A05",
+      "M49.A08",
+      "M04.A06",
+      "M01.A07",
+      "M03.A03",
+      "M11.A03",
+      "M21.A07",
+      "M21.A06",
+      "M21.A03",
+      "M46.A07",
+      "M03.A06"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1415,
+     "ms": 1415
+    }
+   ],
+   "metrics": {
+    "ms": 1415,
+    "firstReplyMs": 1415,
+    "plannerMs": 1350,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 4091,
+     "cachedRead": 3584,
+     "cacheWrite": 0,
+     "output": 133,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-facebook-leads",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Assign last week's Facebook leads to the available sales reps, round robin",
+     "status": "done",
+     "reply": "Assign lead owner for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A05",
+      "M49.A08",
+      "M04.A06",
+      "M01.A07",
+      "M03.A03",
+      "M11.A03",
+      "M21.A07",
+      "M21.A06",
+      "M21.A03",
+      "M46.A07",
+      "M03.A06",
+      "M49.A03",
+      "M48.A03",
+      "M49.A05",
+      "M49.A09",
+      "M49.A02",
+      "M48.A02",
+      "M49.A06",
+      "M49.A01",
+      "M48.A01",
+      "M48.A08",
+      "M08.A02",
+      "M48.A07",
+      "M01.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M49.A09",
+      "M03.A05"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M49.A09",
+       "args": {
+        "teamId": "tm_1"
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M49.A09",
+       "args": {
+        "teamId": "tm_1"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5360,
+     "ms": 5363,
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "1b16eecffb05454d",
+       "targetsHash": "8f5f103f8713d82b",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5363,
+    "firstReplyMs": 5360,
+    "plannerMs": 5289,
+    "plannerRounds": 2,
+    "calls": 8,
+    "usage": {
+     "input": 10356,
+     "cachedRead": 7168,
+     "cacheWrite": 0,
+     "output": 316,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-lost-deal-with-note",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Mark the Soylent Pro plan deal as lost, they went with a competitor, and add a note on it that we should revisit in Q2",
+     "status": "done",
+     "reply": "Done: Mark opportunity lost (Soylent - Pro plan).\nDone: Create note.",
+     "offered": [
+      "M04.A09",
+      "M07.A06",
+      "M04.A05",
+      "M03.A09",
+      "M07.A01",
+      "M04.A08",
+      "M47.A07",
+      "M04.A10",
+      "M04.A03",
+      "M04.A01",
+      "M28.A04",
+      "M28.A08",
+      "M07.A04",
+      "M04.A02"
+     ],
+     "planned": [
+      "M04.A09",
+      "M07.A01"
+     ],
+     "calls": [
+      {
+       "action": "M04.A09",
+       "args": {
+        "opportunityId": "op_5",
+        "reason": "Went with a competitor"
+       }
+      },
+      {
+       "action": "M07.A01",
+       "args": {
+        "body": "Revisit in Q2.",
+        "attachTo": {
+         "type": "opportunity",
+         "id": "op_5"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1694,
+     "ms": 1694
+    }
+   ],
+   "metrics": {
+    "ms": 1694,
+    "firstReplyMs": 1694,
+    "plannerMs": 1649,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 4144,
+     "cachedRead": 4096,
+     "cacheWrite": 0,
+     "output": 154,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-lost-deal-with-note",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Mark the Soylent Pro plan deal as lost, they went with a competitor, and add a note on it that we should revisit in Q2",
+     "status": "done",
+     "reply": "Done: Mark opportunity lost (Soylent - Pro plan).\nDone: Create note.",
+     "offered": [
+      "M04.A09",
+      "M07.A06",
+      "M04.A05",
+      "M03.A09",
+      "M07.A01",
+      "M04.A08",
+      "M47.A07",
+      "M04.A10",
+      "M04.A03",
+      "M04.A01",
+      "M28.A04",
+      "M28.A08",
+      "M07.A04",
+      "M04.A02"
+     ],
+     "planned": [
+      "M04.A09",
+      "M07.A01"
+     ],
+     "calls": [
+      {
+       "action": "M04.A09",
+       "args": {
+        "opportunityId": "op_5",
+        "reason": "went with a competitor"
+       }
+      },
+      {
+       "action": "M07.A01",
+       "args": {
+        "body": "Revisit in Q2.",
+        "attachTo": {
+         "type": "opportunity",
+         "id": "op_5"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1496,
+     "ms": 1496
+    }
+   ],
+   "metrics": {
+    "ms": 1496,
+    "firstReplyMs": 1496,
+    "plannerMs": 1446,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 4144,
+     "cachedRead": 4096,
+     "cacheWrite": 0,
+     "output": 153,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "multi-lost-deal-with-note",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Mark the Soylent Pro plan deal as lost, they went with a competitor, and add a note on it that we should revisit in Q2",
+     "status": "done",
+     "reply": "Done: Mark opportunity lost (Soylent - Pro plan).\nDone: Create note.",
+     "offered": [
+      "M04.A09",
+      "M07.A06",
+      "M04.A05",
+      "M03.A09",
+      "M07.A01",
+      "M04.A08",
+      "M47.A07",
+      "M04.A10",
+      "M04.A03",
+      "M04.A01",
+      "M28.A04",
+      "M28.A08",
+      "M07.A04",
+      "M04.A02"
+     ],
+     "planned": [
+      "M04.A09",
+      "M07.A01"
+     ],
+     "calls": [
+      {
+       "action": "M04.A09",
+       "args": {
+        "opportunityId": "op_5",
+        "reason": "Went with a competitor"
+       }
+      },
+      {
+       "action": "M07.A01",
+       "args": {
+        "body": "Revisit in Q2.",
+        "attachTo": {
+         "type": "opportunity",
+         "id": "op_5"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1721,
+     "ms": 1721
+    }
+   ],
+   "metrics": {
+    "ms": 1721,
+    "firstReplyMs": 1721,
+    "plannerMs": 1668,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 4144,
+     "cachedRead": 4096,
+     "cacheWrite": 0,
+     "output": 154,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "unsupported-card-refund",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "unsupported",
+     "reply": "Refunding a payment isn't available in this version — the refund actions (create refund request, check refundable balance, execute simulated refund, and so on) are not in the current toolset.\nAlternatives: Find Rosa Ito's recent payments and confirm which one she means; Record a new payment on an invoice, or take a payment off an invoice if it was applied to the wrong one; Void an unpaid invoice",
+     "offered": [
+      "M29.A08",
+      "M29.A03",
+      "M29.A04",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M28.A06",
+      "M28.A10",
+      "M01.A02",
+      "M01.A03",
+      "M29.A02",
+      "M29.A05",
+      "M29.A06",
+      "M28.A09",
+      "M29.A09",
+      "M28.A08",
+      "M28.A02",
+      "M13.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2994,
+     "ms": 2994
+    }
+   ],
+   "metrics": {
+    "ms": 2994,
+    "firstReplyMs": 2994,
+    "plannerMs": 2889,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 8299,
+     "cachedRead": 4096,
+     "cacheWrite": 0,
+     "output": 232,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "unsupported-card-refund",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "unsupported",
+     "reply": "Refunding a payment back to a card needs the refund actions (create a refund request, check the refundable balance, and execute the simulated refund), which aren't available in this version. Payments can be recorded and reallocated here, but money can't be sent back to a card.\nAlternatives: Look up Rosa Ito's last payment and its details; Remove a payment allocation so the invoice reopens and the money goes back to unallocated; Record a new simulated payment for her",
+     "offered": [
+      "M29.A08",
+      "M29.A03",
+      "M29.A04",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M28.A06",
+      "M28.A10",
+      "M01.A02",
+      "M01.A03",
+      "M29.A06",
+      "M29.A02",
+      "M29.A05",
+      "M28.A08",
+      "M28.A02",
+      "M28.A03",
+      "M29.A09",
+      "M45.A02",
+      "M12.A08",
+      "M12.A09"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3298,
+     "ms": 3298
+    }
+   ],
+   "metrics": {
+    "ms": 3298,
+    "firstReplyMs": 3298,
+    "plannerMs": 3166,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 8643,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 243,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "unsupported-card-refund",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "unsupported",
+     "reply": "Issuing a refund back to a card isn't available in this version — the refund actions (create refund request, set refund amount/reason, approve, execute simulated refund) exist in the catalog but aren't enabled here.\nAlternatives: Look up Rosa Ito's payments and show the details of her last one; Create a payment request link for her (e.g. to correct a charge); Cancel an unpaid payment request",
+     "offered": [
+      "M29.A08",
+      "M29.A03",
+      "M29.A04",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M28.A06",
+      "M28.A10",
+      "M01.A02",
+      "M01.A03",
+      "M29.A06",
+      "M48.A08",
+      "M29.A02",
+      "M29.A05",
+      "M28.A02",
+      "M28.A08"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3758,
+     "ms": 3758
+    }
+   ],
+   "metrics": {
+    "ms": 3758,
+    "firstReplyMs": 3758,
+    "plannerMs": 3583,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 7867,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 247,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "unsupported-linkedin-post",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Post our fall webinar announcement on LinkedIn",
+     "status": "unsupported",
+     "reply": "Publishing or scheduling a post to LinkedIn isn't something the available actions can do — no social post or publish action is in this version (the post-scheduling and publish actions that fit aren't available here).\nAlternatives: Create an email campaign for the fall webinar and add a message step, then launch it to an audience; Draft the announcement copy as a note or task for whoever manages the LinkedIn page; Have me schedule emails or SMS to invite contacts to the webinar",
+     "offered": [
+      "M04.A05",
+      "M04.A01",
+      "M15.A05",
+      "M07.A08",
+      "M21.A01",
+      "M15.A01",
+      "M21.A03",
+      "M06.A01",
+      "M13.A04",
+      "M15.A07",
+      "M03.A01",
+      "M12.A04",
+      "M07.A10",
+      "M07.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3153,
+     "ms": 3153
+    }
+   ],
+   "metrics": {
+    "ms": 3153,
+    "firstReplyMs": 3153,
+    "plannerMs": 3023,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 7008,
+     "cachedRead": 3072,
+     "cacheWrite": 0,
+     "output": 253,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "unsupported-linkedin-post",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Post our fall webinar announcement on LinkedIn",
+     "status": "unsupported",
+     "reply": "Posting a social media update like a LinkedIn announcement isn't something this CRM version can do — the social publishing action (Publish post) exists in the catalog but isn't available here, and no listed action posts to LinkedIn.\nAlternatives: Create an email or SMS campaign to announce the fall webinar and add its message steps; Create tasks for your team to draft and post the announcement; Create notes to track the announcement copy and status",
+     "offered": [
+      "M04.A05",
+      "M04.A01",
+      "M15.A05",
+      "M07.A08",
+      "M21.A01",
+      "M15.A01",
+      "M45.A09",
+      "M06.A01",
+      "M46.A09",
+      "M07.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3110,
+     "ms": 3110
+    }
+   ],
+   "metrics": {
+    "ms": 3110,
+    "firstReplyMs": 3110,
+    "plannerMs": 3001,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 5995,
+     "cachedRead": 4096,
+     "cacheWrite": 0,
+     "output": 241,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "unsupported-linkedin-post",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Post our fall webinar announcement on LinkedIn",
+     "status": "unsupported",
+     "reply": "Posting to LinkedIn requires creating and publishing a social post, which isn't available in this version.\nAlternatives: Draft and schedule an email announcing the fall webinar; Launch an SMS or email campaign for the fall webinar",
+     "offered": [
+      "M04.A05",
+      "M04.A01",
+      "M15.A05",
+      "M07.A08",
+      "M21.A01",
+      "M12.A06",
+      "M15.A01",
+      "M12.A07",
+      "M13.A10",
+      "M12.A04",
+      "M12.A01",
+      "M12.A03",
+      "M13.A04",
+      "M12.A10",
+      "M13.A03",
+      "M15.A07",
+      "M13.A01",
+      "M13.A06"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3286,
+     "ms": 3286
+    }
+   ],
+   "metrics": {
+    "ms": 3286,
+    "firstReplyMs": 3286,
+    "plannerMs": 3180,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 7959,
+     "cachedRead": 4096,
+     "cacheWrite": 0,
+     "output": 208,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  }
+ ]
+}

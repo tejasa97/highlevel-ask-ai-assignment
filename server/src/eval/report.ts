@@ -331,7 +331,7 @@ function pricingNote(planner: string): string {
     return "**Pricing and test conditions:** this planner uses Codex CLI with ChatGPT subscription access. Token counts include runtime context and latency includes process startup. Subscription USD cost is unavailable; cost cells show –. See docs/CODEX-PROVIDER-CAPTURE.md for the measured prompt and tool framing.";
   }
   if (planner === "qwen") {
-    return "**Pricing and test conditions:** this planner calls a Qwen Token Plan's OpenAI-compatible endpoint directly (strict `json_schema` output, thinking off unless `QWEN_THINKING` is set). Token Plan usage is prepaid, so USD cost is unavailable; cost cells show –. Latency is a direct HTTPS call with no process startup.";
+    return "**Pricing and test conditions:** this planner calls a Qwen Token Plan's OpenAI-compatible endpoint directly (strict `json_schema` output, or `json_object` with the schema in the prompt when `QWEN_RESPONSE_FORMAT=json_object`; thinking off unless `QWEN_THINKING` is set). Token Plan usage is prepaid, so USD cost is unavailable; cost cells show –. Latency is a direct HTTPS call with no process startup.";
   }
   return `**Pricing and test conditions:** cost is computed by the \`${planner}\` adapter from the tokens the provider reports and the list prices in \`server/src/planner/index.ts\`.`;
 }

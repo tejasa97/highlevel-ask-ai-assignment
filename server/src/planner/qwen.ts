@@ -16,6 +16,8 @@ interface Options {
   timeoutMs?: number;
   /** Qwen3 hybrid models think by default; planning doesn't need it and it costs latency and tokens. */
   thinking?: boolean;
+  /** "json_schema" (default) enforces the schema; "json_object" is for models that lack it (DeepSeek on the Token Plan), with the schema in the prompt. */
+  responseFormat?: "json_schema" | "json_object";
 }
 
 /** Raw, tool-free calls to an OpenAI-compatible endpoint (Qwen Token Plan by default). */
@@ -45,16 +47,16 @@ export class QwenPlanner implements Planner {
     if (signal.aborted) throw failure("request cancelled", "timeout");
 
     const started = performance.now();
+    const strict = (this.options.responseFormat ?? "json_schema") === "json_schema";
     const payload = JSON.stringify({
       model,
       messages: [
-        { role: "system", content: req.system },
+        { role: "system", content: strict ? req.system : `${req.system}\n\nReply with one JSON object that matches this JSON Schema:\n${JSON.stringify(req.schema)}` },
         { role: "user", content: req.user },
       ],
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: "submit_plan", strict: true, schema: req.schema },
-      },
+      response_format: strict
+        ? { type: "json_schema", json_schema: { name: "submit_plan", strict: true, schema: req.schema } }
+        : { type: "json_object" },
       max_tokens: MAX_TOKENS,
       enable_thinking: this.options.thinking ?? false,
     });

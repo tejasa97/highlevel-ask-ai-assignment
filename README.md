@@ -133,6 +133,18 @@ quota error fails at once. A reply cut off at the token limit or blocked by the 
 reported as such.
 Token Plan usage is prepaid, so USD cost stays unknown in the UI and reports.
 
+The same Token Plan serves DeepSeek, which doesn't accept `json_schema` there. Set
+`QWEN_RESPONSE_FORMAT=json_object` with it: the request asks for a JSON object and the system
+message carries the schema; the app still validates and repairs every plan.
+
+```sh
+QWEN_MODEL=deepseek-v4.1-flash-1017 QWEN_FAST_MODEL=deepseek-v4.1-flash-1017 QWEN_RESPONSE_FORMAT=json_object npm run serve
+```
+
+Measured on the three suites (3 repeats, clean runs): deepseek-v4.1-flash-1017 passed 75.4%
+regression, 93.3% development and 94.4% reporting at a 1.2–1.9 s median turn; qwen3.8-flash
+62.3%, 86.7% and 55.6%. Results are in `eval/results/scenarios-{deepseek-v41,qwen}-flash-module-*-3x.json`.
+
 ## Layout
 
 ```

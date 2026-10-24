@@ -206,6 +206,12 @@ describe("QwenPlanner", () => {
     assert.equal(captured[1]!.body.enable_thinking, true);
   });
 
+  it("falls back to json_object with the schema in the prompt when asked", async () => {
+    await new QwenPlanner({ apiKey: "k", baseUrl, models: { fast: "f", strong: "s" }, responseFormat: "json_object" }).plan(req());
+    assert.deepEqual(captured[0]!.body.response_format, { type: "json_object" });
+    assert.match(captured[0]!.body.messages[0].content, /^Planner instructions\n\nReply with one JSON object.*"properties"/s);
+  });
+
   it("times out a stalled request and never sends a pre-aborted one", async () => {
     respond = () => {};
     await assert.rejects(planner(50).plan(req()), kind("timeout"));

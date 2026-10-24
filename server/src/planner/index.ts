@@ -39,6 +39,7 @@ export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner
       models: { strong, fast: process.env.QWEN_FAST_MODEL || strong },
       timeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : undefined,
       thinking: process.env.QWEN_THINKING === "1" || process.env.QWEN_THINKING === "true",
+      responseFormat: process.env.QWEN_RESPONSE_FORMAT === "json_object" ? "json_object" : undefined,
     });
   }
   throw new Error(`unknown PLANNER "${kind}"; supported: claude-cli, codex-cli, qwen`);
