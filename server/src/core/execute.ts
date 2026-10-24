@@ -368,13 +368,17 @@ function gateFor(
   };
 }
 
-function matches(x: unknown, where: Record<string, unknown>): boolean {
+export function matches(x: unknown, where: Record<string, unknown>): boolean {
   const obj = (x ?? {}) as Record<string, unknown>;
   return Object.entries(where).every(([field, cond]) => {
     const v = obj[field];
     const conds = cond && typeof cond === "object" && !Array.isArray(cond) ? Object.entries(cond) : [["eq", cond] as const];
+    // orNull admits null/missing for this field only; non-null values must still meet every condition.
+    if ((v === null || v === undefined) && conds.some(([op, want]) => op === "orNull" && want === true)) return true;
     return conds.every(([op, want]) => {
       switch (op) {
+        case "orNull":
+          return true;
         case "eq":
           return v === want;
         case "ne":

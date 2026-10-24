@@ -33,7 +33,7 @@ export interface CompiledPlan {
 
 export type CompileResult = { ok: true; plan: CompiledPlan } | { ok: false; errors: string[] };
 
-export const WHERE_OPS = ["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin", "contains", "exists"] as const;
+export const WHERE_OPS = ["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin", "contains", "exists", "orNull"] as const;
 const RESOLVED: JsonSchema = {
   type: "object",
   properties: { id: { type: "string" }, name: { type: "string" } },
@@ -221,6 +221,10 @@ function checkWhere(where: Record<string, unknown>, item: JsonSchema, scope: Sco
     for (const [op, val] of conds) {
       if (!(WHERE_OPS as readonly string[]).includes(op)) {
         err(`whereJson.${field}: unknown operator "${op}"; use ${WHERE_OPS.join(", ")}`);
+        continue;
+      }
+      if (op === "orNull" && typeof val !== "boolean") {
+        err(`whereJson.${field}.orNull must be a boolean`);
         continue;
       }
       if (typeof val === "string" && val.startsWith("$")) {

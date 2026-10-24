@@ -36,7 +36,8 @@ Rules:
 Ops (kind "op"):
 - filter:  keep items of "in" matching whereJson, a JSON object of field conditions:
            {"available": true}  {"score": {"gt": 80}}  {"contactId": {"in": "$s2.items[*].contactId"}}
-           operators: eq ne gt gte lt lte in nin contains exists
+           operators: eq ne gt gte lt lte in nin contains exists; {"date": {"lt": "YYYY-MM-DD", "orNull": true}}
+           also admits null/missing for that field; other field conditions still apply
 - exclude: drop items of "in" whose field "by" is in the list "set"
 - forEach: run each call in "do" once per item of "in"; "in" is a $ref to a list or a JSON array of strings
            (["id_1","id_2"]); the output is [{"item": …, "results": […]}] and calls in "do" cannot use an

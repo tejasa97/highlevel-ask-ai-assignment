@@ -218,6 +218,17 @@ describe("planTurn", () => {
     assert.ok(again.out.kind === "reply" && again.out.status === "failed");
   });
 
+  test("a listed write verb repairs an all-read plan, but a pure question uses it directly", async () => {
+    const reads = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A03", argsJson: "{}" }] });
+    const planner = scripted(reads, createTask());
+    const result = await run("create a task", planner);
+    assert.equal(result.out.kind, "plan");
+    assert.match(planner.requests[1]!.user, /the plan only finds records; add the action that does it/);
+    const question = scripted(reads);
+    assert.equal((await run("which tasks are overdue?", question)).out.kind, "plan");
+    assert.equal(question.requests.length, 1);
+  });
+
   test("a plan still invalid after the repair fails the turn", async () => {
     const planner = scripted(createTask("M48.A01"), createTask("M48.A01"));
     const { out } = await run("create a task to call Ana", planner);

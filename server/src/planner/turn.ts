@@ -5,6 +5,7 @@ import { type Mention, mentions } from "../retrieval/mentions.js";
 import type { Retrieval, Retriever } from "../retrieval/retrieve.js";
 import type { Clock } from "../store/clock.js";
 import type { Store } from "../store/db.js";
+import { readOnlyIntentError } from "./completion.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan, type Step } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
@@ -237,7 +238,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     const errors = !compiled.ok
       ? compiled.errors
       : compiled.plan.steps.some((s) => callsOf(s).length)
-        ? []
+        ? readOnlyIntentError(input.message, compiled.plan, offered)
         : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
     if (compiled.ok && !errors.length) return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
     emit({ type: "compile.errors", data: { errors } });

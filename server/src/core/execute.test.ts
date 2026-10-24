@@ -4,7 +4,7 @@ import type { SubmitPlan } from "../planner/submit-plan.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile, type CompiledPlan } from "./compile.js";
-import { execute } from "./execute.js";
+import { execute, matches } from "./execute.js";
 
 let registry: Registry;
 before(async () => {
@@ -245,6 +245,31 @@ describe("forEach over a literal list of ids", () => {
     assert.deepEqual(r.steps[0]!.items!.map((i) => i.label), ["literal_alpha", "literal_beta"]);
     assert.deepEqual((r.steps[0]!.output as { item: string }[]).map((x) => x.item), ["literal_alpha", "literal_beta"]);
     assert.deepEqual(ctx.store.all<{ title: string }>("tasks").filter((t) => t.title === "literal_alpha" || t.title === "literal_beta").map((t) => t.title).sort(), ["literal_alpha", "literal_beta"]);
+  });
+});
+
+describe("null-aware filters", () => {
+  test("orNull admits null and missing values but preserves bounds and other fields", async () => {
+    const ctx = fresh();
+    const empty = ctx.f.task({ title: "Nullfilter fixture", dueDate: null });
+    const early = ctx.f.task({ title: "Nullfilter fixture", dueDate: "2026-01-01" });
+    ctx.f.task({ title: "Nullfilter fixture", dueDate: "2027-01-01" });
+    ctx.f.task({ title: "Nullfilter fixture", dueDate: null, status: "completed" });
+    assert.equal(matches({}, { dueDate: { lt: "2026-06-01", orNull: true } }), true);
+    assert.equal(matches({}, { dueDate: { lt: "2026-06-01" } }), false);
+    const run = async (orNull: boolean) => execute(compiled(plan([
+      action("s1", "M06.A03", { query: "Nullfilter fixture" }),
+      op("s2", "filter", { in: "$s1.items", where: { dueDate: { lt: "2026-06-01", orNull }, status: "open" } }),
+    ])), registry, ctx, { executionId: `null-${orNull}` });
+    const yes = await run(true), no = await run(false);
+    assert.deepEqual((yes.steps[1]!.output as { id: string }[]).map((x) => x.id).sort(), [empty.id, early.id].sort());
+    assert.deepEqual((no.steps[1]!.output as { id: string }[]).map((x) => x.id), [early.id]);
+  });
+
+  test("orNull must be a literal boolean", () => {
+    const r = compile(plan([action("s1", "M06.A03", {}), op("s2", "filter", { in: "$s1.items", where: { dueDate: { lt: "2026-06-01", orNull: "yes" } } })]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /orNull must be a boolean/);
   });
 });
 
