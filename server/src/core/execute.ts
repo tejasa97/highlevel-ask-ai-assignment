@@ -9,7 +9,7 @@ import { parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
 // Stage 2: run a compiled plan.
 // - Refs are substituted, then the concrete args are parsed with the action's Zod schema.
 // - Risk is decided here, never by the model: destructive/external actions, and writes repeated over
-//   BULK_MIN or more items, pause for confirmation. The approval is bound to the plan hash and to a hash of
+//   BULK_MIN or more items (or two or more from a name-query search), pause for confirmation. The approval is bound to the plan hash and to a hash of
 //   the exact targets, so if the data changed between preview and approval, the user is asked again.
 // - Resume = run the same executionId again with approvals. Reads re-run; writes are deduped through the
 //   `writes` ledger (key executionId:stepId:itemKey:callIndex), so nothing is done twice.
@@ -99,6 +99,9 @@ export interface ExecOptions {
 
 export async function execute(plan: CompiledPlan, registry: Registry, ctx: ActionContext, opts: ExecOptions): Promise<RunResult> {
   const outputs = new Map<string, unknown>();
+  // Preserve name-query provenance through list operations, not through unrelated reads or roundRobin.
+  const nameQueries = new Set<string>();
+  const inheritsNameQuery = (input: string) => nameQueries.has(parseRef(input)!.root);
   const results: StepResult[] = [];
   const bad = new Set<string>(); // failed or skipped: dependents are skipped
   // Consecutive independent preflight-capable sends share one approval, including known exclusions.
@@ -179,6 +182,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           const list = asList(refValue(step.in), step.in);
           const where = substitute(step.where, lookup()) as Record<string, unknown>;
           done(list.filter((x) => matches(x, where)));
+          if (inheritsNameQuery(step.in)) nameQueries.add(step.id);
           break;
         }
 
@@ -186,6 +190,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           const list = asList(refValue(step.in), step.in);
           const set = new Set(asList(refValue(step.set), step.set).map(String));
           done(list.filter((x) => !set.has(String((x as Record<string, unknown>)?.[step.by]))));
+          if (inheritsNameQuery(step.in)) nameQueries.add(step.id);
           break;
         }
 
@@ -223,7 +228,17 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           if (step.call.action.risk !== "read") writesAttempted = true;
           const r = runItem(ctx, opts.executionId, step.id, "-", [{ call: step.call, args: args.value }]);
           if (r.status === "failed") fail(r.error!);
-          else done(r.results![0], r.replayed ? { items: [r] } : {});
+          else {
+            const output = r.results![0];
+            done(output, r.replayed ? { items: [r] } : {});
+            const query = args.value.query;
+            const items = (output as { items?: unknown[] } | null)?.items;
+            // Only classify a query as a name search when the returned names prove it. Email/company
+            // queries and broad status searches do not acquire this special gate.
+            if (step.call.action.risk === "read" && typeof query === "string" && query.trim() && Array.isArray(items) &&
+              items.filter((item) => typeof (item as { name?: unknown })?.name === "string" &&
+                (item as { name: string }).name.toLowerCase().includes(query.trim().toLowerCase())).length >= 2) nameQueries.add(step.id);
+          }
           break;
         }
 
@@ -258,6 +273,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             opts.approvals,
             prepared.filter((p) => !p.error).length,
             prepared.filter((p) => p.error).map((p) => ({ label: p.label ?? p.key, error: p.error! })),
+            !Array.isArray(step.in) && list.length >= 2 && inheritsNameQuery(step.in),
           );
           if (gate) {
             results.push({ id: step.id, kind: step.kind, status: "awaiting_confirmation" });
@@ -347,12 +363,14 @@ function gateFor(
   approvals: Approval[] = [],
   count = calls.length,
   blocked: { label: string; error: StepError }[] = [],
+  nameFanout = false,
 ): Pending | null {
   const risks = new Set(calls.map((c) => c.call.action.risk));
   const writes = calls.filter((c) => c.call.action.risk !== "read");
   let reason: string | null = null;
   if (risks.has("destructive")) reason = "deletes or cancels records";
   else if (risks.has("external")) reason = "sends something outside the account";
+  else if (step.kind === "forEach" && writes.length > 0 && nameFanout) reason = "changes multiple records matching a name query";
   else if (step.kind === "forEach" && writes.length > 0 && count >= BULK_MIN) reason = `changes ${count} records at once`;
   if (!reason) return null;
 

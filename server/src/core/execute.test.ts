@@ -336,3 +336,44 @@ describe("runtime outcomes", () => {
     assert.ok(r.steps.at(-1)!.items!.every((i) => i.error?.code === "NOT_FOUND"));
   });
 });
+
+
+describe("name-query fanout confirmation", () => {
+  const setup = () => {
+    const ctx = fresh();
+    const a = ctx.f.contact({ firstName: "Avery", lastName: "Lane", company: "Generic company" });
+    const b = ctx.f.contact({ firstName: "Avery", lastName: "Lane", company: "Generic company" });
+    return { ctx, a, b };
+  };
+  const workflow = (query: string, filtered = false, read = false) => compiled(plan([
+    action("s", "M01.A03", { query }),
+    ...(filtered ? [op("f", "filter", { in: "$s.items", where: { status: "active" } })] : []),
+    op("w", "forEach", { in: filtered ? "$f" : "$s.items", do: [{ action: read ? "M01.A02" : "M01.A08", args: read ? { contactId: "$item.id" } : { contactId: "$item.id", sms: false } }] }),
+  ]));
+  test("two name matches pause below BULK_MIN, including through a filter; approval is target-bound and replay-safe", async () => {
+    for (const filtered of [false, true]) {
+      const { ctx, a, b } = setup(), p = workflow("Avery Lane", filtered);
+      const first = await execute(p, registry, ctx, { executionId: "name-gate" });
+      assert.equal(first.status, "awaiting_confirmation");
+      assert.equal(first.pending?.count, 2);
+      assert.match(first.pending!.reason, /name query/);
+      assert.equal(first.writesAttempted, false);
+      const replacement = ctx.f.contact({ firstName: "Avery", lastName: "Lane" });
+      ctx.store.update("contacts", b.id, { name: "Different Person" });
+      const changed = await execute(p, registry, ctx, { executionId: "name-gate", approvals: [first.pending!] });
+      assert.equal(changed.pending?.changed, true);
+      const done = await execute(p, registry, ctx, { executionId: "name-gate", approvals: [changed.pending!] });
+      assert.equal(done.status, "done");
+      const replay = await execute(p, registry, ctx, { executionId: "name-gate", approvals: [changed.pending!] });
+      assert.ok(replay.steps.at(-1)!.items!.every((i) => i.replayed === 1));
+      for (const id of [a.id, replacement.id]) assert.equal(ctx.store.get<{ preferences: { sms: boolean } }>("contacts", id)!.preferences.sms, false);
+    }
+  });
+  test("company queries, literal targets and reads retain the existing policy", async () => {
+    const { ctx, a, b } = setup();
+    assert.equal((await execute(workflow("Generic company"), registry, ctx, { executionId: "company" })).status, "done");
+    assert.equal((await execute(workflow("Avery Lane", false, true), registry, ctx, { executionId: "read" })).status, "done");
+    const literal = compiled(plan([op("w", "forEach", { in: [a.id, b.id], do: [{ action: "M01.A08", args: { contactId: "$item", sms: true } }] })]));
+    assert.equal((await execute(literal, registry, ctx, { executionId: "literal" })).status, "done");
+  });
+});

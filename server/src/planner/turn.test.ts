@@ -361,3 +361,14 @@ describe("names in the message", () => {
     assert.doesNotMatch(planner.requests[0]!.user, /<mentions>/);
   });
 });
+
+
+test("linked ambiguity is sent through the one-repair path", async () => {
+  const ctx = world();
+  ctx.f.contact({ firstName: "Avery", lastName: "Lane" });
+  ctx.f.contact({ firstName: "Avery", lastName: "Lane" });
+  const planner = scripted(reply({ steps: [{ id: "s", kind: "action", action: "M01.A08", argsJson: JSON.stringify({ contactId: "ct_generic", sms: false }) }] }), reply({ type: "clarify", question: "Which matching contact?" }));
+  const out = await planTurn({ message: "Set SMS preferences off for Avery Lane", tier: "fast" }, { registry, retriever, planner, clock: ctx.clock, store: ctx.store });
+  assert.ok(out.kind === "reply" && out.status === "clarify");
+  assert.match(planner.requests[1]!.user, /Avery Lane matches 2 contacts; use resolve/);
+});
