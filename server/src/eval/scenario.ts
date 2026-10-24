@@ -147,7 +147,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
   }
   const chat = deps.agent === "baseline" ? new BaselineConversation(deps, w) : new Conversation(deps, w);
   const turns: TurnTrace[] = [];
-  const subscription = deps.planner.name === "codex-cli";
+  const subscription = deps.planner.billing === "subscription";
   const usage: Usage = { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: subscription ? null : 0, billing: subscription ? "subscription" : "none" };
   let plannerMs = 0;
   let changes = 0;

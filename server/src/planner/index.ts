@@ -26,19 +26,19 @@ export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner
     });
   }
   if (kind === "qwen" || kind === "qwen-token-plan") {
-    const apiKey = process.env.QWEN_API_KEY ?? process.env.ALIBABA_TOKEN_PLAN_API_KEY;
-    if (!apiKey) {
+    // `||`, not `??`: a blank `QWEN_BASE_URL=` line in .env must fall back to the default, not post to "/chat/completions".
+    const apiKey = process.env.QWEN_API_KEY || process.env.ALIBABA_TOKEN_PLAN_API_KEY;
+    if (!apiKey?.trim()) {
       throw new Error("PLANNER=qwen needs QWEN_API_KEY (or ALIBABA_TOKEN_PLAN_API_KEY) in the environment");
     }
     const timeout = Number(process.env.QWEN_TIMEOUT_MS);
+    const strong = process.env.QWEN_MODEL || "qwen3.8-flash";
     return new QwenPlanner({
       apiKey,
-      baseUrl: process.env.QWEN_BASE_URL,
-      models: {
-        strong: process.env.QWEN_MODEL ?? "qwen3.8-flash",
-        fast: process.env.QWEN_FAST_MODEL ?? "qwen3.8-flash",
-      },
+      baseUrl: process.env.QWEN_BASE_URL || undefined,
+      models: { strong, fast: process.env.QWEN_FAST_MODEL || strong },
       timeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : undefined,
+      thinking: process.env.QWEN_THINKING === "1" || process.env.QWEN_THINKING === "true",
     });
   }
   throw new Error(`unknown PLANNER "${kind}"; supported: claude-cli, codex-cli, qwen`);

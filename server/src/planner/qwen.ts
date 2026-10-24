@@ -5,17 +5,24 @@ export const QWEN_DEFAULT_BASE_URL = "https://token-plan.ap-southeast-1.maas.ali
 const DEFAULT_TIMEOUT_MS = 120_000;
 const MAX_BYTES = 4 * 1024 * 1024;
 const MAX_TOKENS = 8192;
+const RETRIES = 1;
+const RETRY_MS = 1000;
+const MAX_RETRY_AFTER_MS = 10_000;
 
 interface Options {
   apiKey: string;
   baseUrl?: string;
   models: Record<Tier, string>;
   timeoutMs?: number;
+  /** Qwen3 hybrid models think by default; planning doesn't need it and it costs latency and tokens. */
+  thinking?: boolean;
 }
 
 /** Raw, tool-free calls to an OpenAI-compatible endpoint (Qwen Token Plan by default). */
 export class QwenPlanner implements Planner {
   readonly name = "qwen";
+  readonly billing = "subscription";
+  readonly models: Record<Tier, string>;
   private readonly endpoint: string;
   private readonly apiKey: string;
   private readonly timeoutMs: number;
@@ -24,6 +31,7 @@ export class QwenPlanner implements Planner {
     const apiKey = options.apiKey.trim();
     if (!apiKey) throw new Error("Qwen: an API key is required");
     this.apiKey = apiKey;
+    this.models = options.models;
     this.endpoint = `${(options.baseUrl ?? QWEN_DEFAULT_BASE_URL).replace(/\/+$/, "")}/chat/completions`;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
@@ -37,28 +45,48 @@ export class QwenPlanner implements Planner {
     if (signal.aborted) throw failure("request cancelled", "timeout");
 
     const started = performance.now();
-    let response: Response;
-    try {
-      response = await fetch(this.endpoint, {
-        method: "POST",
-        headers: { authorization: `Bearer ${this.apiKey}`, "content-type": "application/json" },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: req.system },
-            { role: "user", content: req.user },
-          ],
-          response_format: {
-            type: "json_schema",
-            json_schema: { name: "submit_plan", strict: true, schema: req.schema },
-          },
-          max_tokens: MAX_TOKENS,
-        }),
-        signal,
-      });
-    } catch (err) {
-      if (signal.aborted) throw failure("request cancelled or timed out", "timeout");
-      throw failure(`request failed: ${(err as Error).message}`);
+    const payload = JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: req.system },
+        { role: "user", content: req.user },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "submit_plan", strict: true, schema: req.schema },
+      },
+      max_tokens: MAX_TOKENS,
+      enable_thinking: this.options.thinking ?? false,
+    });
+    // One retry for a dropped connection, a gateway error or a short rate-limit wait;
+    // a quota or a bad request fails at once, so the caller sees it.
+    let response: Response | undefined;
+    for (let attempt = 0; !response; attempt++) {
+      let retryIn: number;
+      try {
+        const reply = await fetch(this.endpoint, {
+          method: "POST",
+          headers: { authorization: `Bearer ${this.apiKey}`, "content-type": "application/json" },
+          body: payload,
+          signal,
+        });
+        const delay = attempt < RETRIES ? retryDelay(reply) : undefined;
+        if (delay === undefined) {
+          response = reply;
+          break;
+        }
+        await reply.body?.cancel().catch(() => {});
+        retryIn = delay;
+      } catch (err) {
+        if (signal.aborted) throw failure("request cancelled or timed out", "timeout");
+        if (attempt >= RETRIES) throw failure(`request failed: ${(err as Error).message}`);
+        retryIn = RETRY_MS;
+      }
+      try {
+        await sleep(retryIn, signal);
+      } catch {
+        throw failure("request cancelled or timed out", "timeout");
+      }
     }
 
     let raw: string;
@@ -83,7 +111,10 @@ export class QwenPlanner implements Planner {
     }
     if (body === undefined) throw failure("reply is not JSON", "provider");
 
-    const message = record(record(choiceAt(body))?.message);
+    const choice = record(choiceAt(body));
+    const finish = choice?.finish_reason;
+    if (finish === "content_filter") throw failure("the reply was blocked by the content filter");
+    const message = record(choice?.message);
     const content = typeof message?.content === "string" ? message.content : "";
     if (!content.trim()) throw new PlannerError("Qwen returned no message content", "bad_json", raw.slice(0, 500));
 
@@ -91,7 +122,8 @@ export class QwenPlanner implements Planner {
     try {
       json = JSON.parse(unfence(content));
     } catch {
-      throw new PlannerError("Qwen returned invalid JSON", "bad_json", content);
+      const why = finish === "length" ? `the reply was cut off at ${MAX_TOKENS} tokens` : "invalid JSON";
+      throw new PlannerError(`Qwen returned ${why}`, "bad_json", content);
     }
 
     return {
@@ -102,6 +134,25 @@ export class QwenPlanner implements Planner {
       usage: { ...parseUsage(record(body)?.usage), billing: "subscription", costUsd: null },
     };
   }
+}
+
+/** How long to wait before retrying this response, or undefined when it shouldn't be retried. */
+function retryDelay(response: Response): number | undefined {
+  if ([500, 502, 503, 504].includes(response.status)) return RETRY_MS;
+  if (response.status !== 429) return undefined;
+  // Only a short, explicit Retry-After (seconds) is a burst limit; anything else may be the plan's quota.
+  const header = response.headers.get("retry-after")?.trim();
+  const seconds = header ? Number(header) : NaN;
+  return Number.isFinite(seconds) && seconds >= 0 && seconds * 1000 <= MAX_RETRY_AFTER_MS ? seconds * 1000 : undefined;
+}
+
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) return reject(signal.reason);
+    const timer = setTimeout(() => { signal.removeEventListener("abort", stop); resolve(); }, ms);
+    const stop = () => { clearTimeout(timer); reject(signal.reason); };
+    signal.addEventListener("abort", stop, { once: true });
+  });
 }
 
 function choiceAt(body: unknown): unknown {
@@ -115,25 +166,20 @@ function unfence(text: string): string {
   return (fenced?.[1] ?? trimmed).trim();
 }
 
+/** Usage is bookkeeping: a missing or odd count reads as 0 rather than discarding a valid plan. */
 function parseUsage(value: unknown) {
   const u = record(value);
   const prompt = record(u?.prompt_tokens_details);
   const completion = record(u?.completion_tokens_details);
-  const input = count(u?.prompt_tokens, "prompt_tokens");
-  const outputTotal = count(u?.completion_tokens, "completion_tokens");
-  const cachedRead = count(prompt?.cached_tokens, "cached_tokens", 0);
-  const thinking = count(completion?.reasoning_tokens, "reasoning_tokens", 0);
-  if (cachedRead > input) throw failure("cached tokens exceed total input");
-  if (thinking > outputTotal) throw failure("reasoning tokens exceed total output");
+  const input = count(u?.prompt_tokens);
+  const outputTotal = count(u?.completion_tokens);
+  const cachedRead = Math.min(count(prompt?.cached_tokens), input);
+  const thinking = Math.min(count(completion?.reasoning_tokens), outputTotal);
   return { input, cachedRead, cacheWrite: 0, output: outputTotal - thinking, thinking };
 }
 
-function count(value: unknown, name: string, fallback?: number): number {
-  if (value === undefined && fallback !== undefined) return fallback;
-  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
-    throw failure(`invalid or missing ${name} usage`);
-  }
-  return value;
+function count(value: unknown): number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : 0;
 }
 
 function errorMessage(body: unknown): string | undefined {

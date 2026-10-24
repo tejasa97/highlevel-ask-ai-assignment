@@ -24,10 +24,11 @@ const DISABLED = [
 /** Local development only: use the CLI's ChatGPT login, never inherited API credentials. */
 export class CodexCliPlanner implements Planner {
   readonly name = "codex-cli";
+  readonly billing = "subscription";
   /** Set once the ChatGPT login check has passed, so later calls skip the extra process. */
   private signedIn = false;
 
-  constructor(private readonly models: Record<Tier, string>, private readonly options: Options = {}) {
+  constructor(readonly models: Record<Tier, string>, private readonly options: Options = {}) {
     for (const effort of Object.values(options.reasoning ?? {})) {
       if (!["low", "medium", "high", "xhigh"].includes(effort)) throw new Error(`invalid Codex reasoning effort: ${effort}`);
     }

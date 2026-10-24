@@ -138,23 +138,72 @@ describe("QwenPlanner", () => {
     respond = (res) => send(res, 200, { choices: [] });
     await assert.rejects(planner().plan(req()), kind("bad_json"));
 
-    respond = (res, body) => send(res, 200, { choices: reply(body.model, "{}").choices });
+    respond = (res, body) => {
+      const r = reply(body.model, '{"type":"pl');
+      r.choices[0]!.finish_reason = "length";
+      send(res, 200, r);
+    };
     await assert.rejects(planner().plan(req()), (err) => {
-      assert.ok(kind("provider")(err));
-      assert.match((err as Error).message, /prompt_tokens/);
+      assert.ok(kind("bad_json")(err));
+      assert.match((err as Error).message, /cut off at 8192 tokens/);
       return true;
     });
+
+    respond = (res, body) => {
+      const r = reply(body.model, "");
+      r.choices[0]!.finish_reason = "content_filter";
+      send(res, 200, r);
+    };
+    await assert.rejects(planner().plan(req()), (err) => {
+      assert.ok(kind("provider")(err));
+      assert.match((err as Error).message, /content filter/);
+      return true;
+    });
+  });
+
+  it("keeps a valid plan when usage is missing or inconsistent", async () => {
+    respond = (res, body) => send(res, 200, { choices: reply(body.model, "{}").choices });
+    const bare = await planner().plan(req());
+    assert.deepEqual(bare.json, {});
+    assert.deepEqual([bare.usage.input, bare.usage.output, bare.usage.thinking], [0, 0, 0]);
 
     respond = (res, body) =>
       send(res, 200, {
         ...reply(body.model, "{}"),
         usage: { prompt_tokens: 10, completion_tokens: 2, completion_tokens_details: { reasoning_tokens: 3 } },
       });
-    await assert.rejects(planner().plan(req()), (err) => {
-      assert.ok(kind("provider")(err));
-      assert.match((err as Error).message, /reasoning tokens exceed total output/);
-      return true;
-    });
+    const odd = await planner().plan(req());
+    assert.deepEqual([odd.usage.output, odd.usage.thinking], [0, 2]);
+  });
+
+  it("retries a gateway error or a short rate-limit wait once, but not a quota", async () => {
+    let calls = 0;
+    respond = (res, body) => (++calls === 1 ? send(res, 503, { error: { message: "busy" } }) : send(res, 200, reply(body.model, "{}")));
+    assert.deepEqual((await planner().plan(req())).json, {});
+    assert.equal(captured.length, 2);
+
+    captured = [];
+    respond = (res) => send(res, 502, { error: { message: "bad gateway" } });
+    await assert.rejects(planner().plan(req()), kind("provider"));
+    assert.equal(captured.length, 2);
+
+    captured = [];
+    calls = 0;
+    respond = (res, body) => (++calls === 1 ? send(res, 429, { error: { message: "slow down" } }, { "retry-after": "0" }) : send(res, 200, reply(body.model, "{}")));
+    assert.deepEqual((await planner().plan(req())).json, {});
+    assert.equal(captured.length, 2);
+
+    captured = [];
+    respond = (res) => send(res, 429, { error: { message: "quota exceeded" } });
+    await assert.rejects(planner().plan(req()), kind("rate_limited"));
+    assert.equal(captured.length, 1);
+  });
+
+  it("turns thinking off unless asked", async () => {
+    await planner().plan(req());
+    assert.equal(captured[0]!.body.enable_thinking, false);
+    await new QwenPlanner({ apiKey: "k", baseUrl, models: { fast: "f", strong: "s" }, thinking: true }).plan(req());
+    assert.equal(captured[1]!.body.enable_thinking, true);
   });
 
   it("times out a stalled request and never sends a pre-aborted one", async () => {
@@ -184,7 +233,7 @@ function reply(model: string, content: string) {
   };
 }
 
-function send(res: ServerResponse, status: number, body: unknown) {
-  res.writeHead(status, { "content-type": "application/json", connection: "close" });
+function send(res: ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}) {
+  res.writeHead(status, { "content-type": "application/json", connection: "close", ...headers });
   res.end(JSON.stringify(body));
 }

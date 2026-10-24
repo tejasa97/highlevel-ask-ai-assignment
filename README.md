@@ -120,14 +120,18 @@ PLANNER=qwen npm run serve
 PLANNER=qwen npm run ask -- "create a task to call Jo"
 ```
 
-`QWEN_MODEL` and `QWEN_FAST_MODEL` select the strong/fast models (both default to
-`qwen3.8-flash`). `QWEN_BASE_URL` defaults to
+`QWEN_MODEL` and `QWEN_FAST_MODEL` select the strong/fast models (`QWEN_MODEL` defaults to
+`qwen3.8-flash`, `QWEN_FAST_MODEL` to `QWEN_MODEL`). Thinking is off (`enable_thinking: false`);
+set `QWEN_THINKING=1` to turn it on. `QWEN_BASE_URL` defaults to
 `https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1`; use
 `QWEN_BASE_URL=https://token-plan.maas.qwencloudapi.com/compatible-mode/v1` for QwenCloud.
 Token Plan keys must not be pointed at a pay-as-you-go endpoint. The adapter sends the planner
 system/user messages and the `submit_plan` JSON Schema with `response_format: json_schema`, and
 leaves tools out. Calls have a 120-second deadline (`QWEN_TIMEOUT_MS`), cancellation and a 4 MiB
-reply cap. Token Plan usage is prepaid, so USD cost stays unknown in the UI and reports.
+reply cap. A dropped connection, a 5xx or a 429 with a short `Retry-After` is retried once; a
+quota error fails at once. A reply cut off at the token limit or blocked by the content filter is
+reported as such.
+Token Plan usage is prepaid, so USD cost stays unknown in the UI and reports.
 
 ## Layout
 

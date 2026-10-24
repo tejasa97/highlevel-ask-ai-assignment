@@ -27,7 +27,9 @@ export class ClaudeCliPlanner implements Planner {
   readonly name = "claude-cli";
   private readonly cwd = mkdtempSync(join(tmpdir(), "ask-ai-claude-"));
 
-  constructor(private readonly models: Record<Tier, string>) {}
+  readonly billing = "api_estimate";
+
+  constructor(readonly models: Record<Tier, string>) {}
 
   async plan(req: PlanRequest): Promise<PlanResult> {
     const model = this.models[req.tier];

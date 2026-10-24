@@ -44,7 +44,9 @@ const cards = buildCards(registry);
 const retriever = new Retriever(cards, {}, await loadDense(cards, () => {}));
 const live = makePlanner();
 const useCache = args.includes("--cache") || args.includes("--refresh");
-const planner = useCache ? replayPlanner(live, `${EVAL}cache/${live.name}-${process.env.CLAUDE_MODEL ?? "default"}-${tier}.jsonl`, { refresh: args.includes("--refresh") }) : live;
+const cacheModel = live.models?.[tier] ?? process.env.CLAUDE_MODEL ?? "default";
+const planner = useCache ? replayPlanner(live, `${EVAL}cache/${live.name}-${cacheModel}-${tier}.jsonl`, { refresh: args.includes("--refresh") }) : live;
+const subscription = planner.billing === "subscription";
 
 const jobs = scenarios.flatMap((s) => Array.from({ length: repeat }, () => s));
 const runs: ScenarioRun[] = [];
@@ -105,11 +107,11 @@ const measured = scenarios.filter((s) => byId.has(s.id));
 const cost = runs.map((r) => r.metrics.usage.costUsd);
 const cleanCost = clean.map((r) => r.metrics.usage.costUsd);
 const totalCost = sumUsd(cost);
-const totalCleanCost = planner.name === "codex-cli" ? null : sumUsd(cleanCost);
+const totalCleanCost = subscription ? null : sumUsd(cleanCost);
 const summary = {
   label,
   planner: planner.name,
-  model: planner.name === "codex-cli" ? (tier === "fast" ? process.env.CODEX_FAST_MODEL ?? process.env.CODEX_MODEL ?? "gpt-6.1-sol" : process.env.CODEX_MODEL ?? "gpt-6.1-sol") : undefined,
+  model: planner.models?.[tier],
   scenarioDir,
   set: fingerprint(JSON.stringify(scenarios)),
   tier,
@@ -143,8 +145,7 @@ const summary = {
 console.log(`\npass ${summary.passRate}% of clean runs · ${summary.allPass}/${summary.measured} scenarios pass every run · ${summary.flaky} flaky`);
 if (summary.infraRuns || summary.notRun) console.log(`NOT A CLEAN RUN: ${summary.infraRuns} runs failed outside the app, ${summary.notRun} not started; ${scenarios.length - summary.measured} scenarios unmeasured`);
 console.log(`e2e p50 ${summary.e2eMs.p50} ms, p95 ${summary.e2eMs.p95} ms · first reply p50 ${summary.firstReplyMs.p50} ms, p95 ${summary.firstReplyMs.p95} ms`);
-const planBilling = planner.name === "codex-cli" || planner.name === "qwen" ? "subscription" : "api_estimate";
-console.log(`planner rounds/run ${summary.plannerRoundsPerRun} · calls/run ${summary.callsPerRun} · cost/run ${formatCost(summary.costUsd.perRun, planBilling)} (total ${formatCost(summary.costUsd.total)}) · wall ${Math.round(summary.wallMs / 1000)} s`);
+console.log(`planner rounds/run ${summary.plannerRoundsPerRun} · calls/run ${summary.callsPerRun} · cost/run ${formatCost(summary.costUsd.perRun, planner.billing ?? "api_estimate")} (total ${formatCost(summary.costUsd.total)}) · wall ${Math.round(summary.wallMs / 1000)} s`);
 
 mkdirSync(`${EVAL}results`, { recursive: true });
 const file = `${EVAL}results/scenarios-${label}.json`;
@@ -165,7 +166,7 @@ else {
     label,
     git: gitState(ROOT),
     set: fingerprint(JSON.stringify(scenarios)),
-    config: { planner: planner.name, tier, repeat, scenarioDir, ...(agent === "baseline" ? { agent } : {}), ...(planner.name === "codex-cli" ? { model: summary.model, reasoning: process.env.CODEX_REASONING ?? "low" } : {}) },
+    config: { planner: planner.name, tier, repeat, scenarioDir, ...(agent === "baseline" ? { agent } : {}), ...(summary.model ? { model: summary.model } : {}), ...(planner.name === "codex-cli" ? { reasoning: process.env.CODEX_REASONING ?? "low" } : {}) },
     metrics: {
       scenarios: scenarios.length,
       runs: summary.runs,
