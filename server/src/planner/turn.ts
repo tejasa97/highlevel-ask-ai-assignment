@@ -162,6 +162,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let user = prompt();
   let reply = await call(user, "plan");
   let searched = false;
+  let searchedAgain = false;
   let repaired = false;
   let clarifyRepaired = false;
   let lookResults: Awaited<ReturnType<NonNullable<TurnDeps["look"]>>> = [];
@@ -220,7 +221,19 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     }
 
     if (d.type === "search_tools") {
-      if (searched) return { kind: "reply", status: "unsupported", text: `I couldn't find an action for that${d.query ? ` (${d.query})` : ""}.` };
+      const gaveUp = { kind: "reply" as const, status: "unsupported" as const, text: `I couldn't find an action for that${d.query ? ` (${d.query})` : ""}.` };
+      if (searched && searchedAgain) return gaveUp;
+      if (searched) {
+        // A second search is often for something no action does because ops do it (matching or de-duplicating lists).
+        // Search once more, then give one last round that says so, instead of ending the turn.
+        searchedAgain = true;
+        await shortlist("search_tools", d.query || input.message);
+        user = prompt();
+        const errors = [`search_tools ran again for "${d.query ?? ""}"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability`];
+        emit({ type: "compile.errors", data: { errors } });
+        reply = await call(repairBlock(user, reply.json, errors), "plan after second search_tools");
+        continue;
+      }
       searched = true;
       // Retrieve again on the planner's own description of what's missing; the new cards join the old ones.
       await shortlist("search_tools", d.query || input.message);
