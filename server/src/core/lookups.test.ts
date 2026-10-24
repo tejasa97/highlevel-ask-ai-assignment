@@ -129,4 +129,23 @@ describe("model-independent named arguments", () => {
     const resolved = c.steps.find((s) => s.kind === "resolve")!;
     assert.ok(resolved.deps.includes("find"));
   });
+
+  test("a name written in an ID field becomes a lookup; IDs, refs and ambiguous fields are left alone", () => {
+    const named = compiled(plan([action("run", "M50.A07", { reportId: "Monthly Revenue" })]));
+    assert.deepEqual(named.steps.map((s) => s.kind), ["resolve", "action"]);
+    assert.equal((named.steps[0] as { name: string }).name, "Monthly Revenue");
+    const id = compiled(plan([action("run", "M50.A07", { reportId: "rpt_1" })]));
+    assert.deepEqual(id.steps.map((s) => s.kind), ["action"]);
+    const ref = compiled(plan([action("find", "M01.A03", {}), action("run", "M50.A07", { reportId: "$find.items[0].id" })]));
+    assert.equal(ref.steps.filter((s) => s.kind === "resolve").length, 0);
+    // fieldId means a custom field in one module and a form field in another: never guessed from a label.
+    const label = compile(plan([action("sim", "M18.A09", { formId: "fm_1", values: {}, fieldId: "email" })]), registry);
+    assert.ok(!label.ok || label.plan.steps.every((s) => s.kind !== "resolve"));
+  });
+
+  test("an unknown argument name is reported with the real names and the nearest one", () => {
+    const r = compile(plan([action("s1", "M06.A01", { title: "Call Ana", dueDat: "2026-10-30" })]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /arguments: .*dueDate.*did you mean dueDate/);
+  });
 });

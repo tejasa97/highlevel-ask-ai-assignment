@@ -16,7 +16,8 @@ import { assessClarification } from "./clarification.js";
 //   retrieve a shortlist → prompt → plan, with at most one search_tools round (a second retrieval for what the
 //   planner says is missing), at most one look round (read-only steps run now, their results fed back, so a
 //   value can be worked out from a record: "same time, on Monday") and at most one repair round (compile errors
-//   fed back), plus at most one grounded identity clarification retry → a compiled plan or a reply. At most five calls. The plan may only use
+//   fed back), plus at most one repair of a malformed clarification (its own allowance, so it can't use up the plan's) and at most
+//   one grounded identity clarification retry → a compiled plan or a reply. At most six calls. The plan may only use
 //   actions the planner was shown.
 
 /** How long one planner call may take before the turn gives up on it. */
@@ -159,6 +160,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let reply = await call(user, "plan");
   let searched = false;
   let repaired = false;
+  let clarifyRepaired = false;
   let lookPlan: CompiledPlan | undefined;
   let lookSteps: Step[] = [];
   // Each reply is one of: search_tools (retrieve once more, re-plan), a plan (compile; repair once if invalid),
@@ -183,8 +185,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         if (!(err instanceof Error)) throw err;
         const errors = [err.message];
         emit({ type: "compile.errors", data: { errors } });
-        if (repaired) return failed(`The clarification was still invalid after one repair: ${err.message}. Nothing was changed.`);
-        repaired = true;
+        if (clarifyRepaired) return failed(`The clarification was still invalid after one repair: ${err.message}. Nothing was changed.`);
+        clarifyRepaired = true;
         user = prompt();
         reply = await call(repairBlock(user, reply.json, errors), "repair clarification binding");
         continue;
@@ -298,7 +300,8 @@ type Step = NonNullable<SubmitPlan["steps"]>[number];
  * the read can simply run again as part of the plan: look steps the plan refers to, and doesn't define itself,
  * are put in front of it (with the look steps they in turn refer to).
  */
-export function withLookSteps(plan: SubmitPlan, looks: Step[]): SubmitPlan {
+export function withLookSteps(source: SubmitPlan, looks: Step[]): SubmitPlan {
+  const plan = renameReusedIds(source, new Set(looks.map((l) => l.id)));
   const defined = new Set((plan.steps ?? []).map((s) => s.id));
   const wanted = new Set<string>();
   const queue = [...(plan.steps ?? [])];
@@ -308,6 +311,40 @@ export function withLookSteps(plan: SubmitPlan, looks: Step[]): SubmitPlan {
       if (look && !defined.has(root!)) (defined.add(root!), wanted.add(root!), queue.push(look));
     }
   return wanted.size ? { ...plan, steps: [...looks.filter((l) => wanted.has(l.id)), ...(plan.steps ?? [])] } : plan;
+}
+
+/**
+ * A model that has seen `$s1` in <looked> (or just wrote s1 twice) often defines another step s1 that refers to the
+ * earlier one: a self or forward reference, which the compiler can only reject. Which step each reference means is
+ * not in doubt: a reference at or before the redefinition means the earlier step, one after it the new step. So the
+ * new step gets a fresh id and later references follow it.
+ */
+export function renameReusedIds(plan: SubmitPlan, lookIds: ReadonlySet<string> = new Set()): SubmitPlan {
+  const steps = plan.steps ?? [];
+  const taken = new Set([...steps.map((s) => s.id), ...lookIds]);
+  const seen = new Set<string>(), referenced = new Set<string>(), env = new Map<string, string>();
+  let changed = false;
+  const out = steps.map((step) => {
+    const text = JSON.stringify(step);
+    const roots = [...text.matchAll(/\$([A-Za-z_]\w*)/g)].map((m) => m[1]!);
+    for (const root of roots) referenced.add(root);
+    let next = env.size ? text.replace(/\$([A-Za-z_]\w*)/g, (all, root: string) => (env.has(root) ? `$${env.get(root)}` : all)) : text;
+    const rewritten = JSON.parse(next) as Step;
+    const id = step.id;
+    if (seen.has(id) || (lookIds.has(id) && referenced.has(id))) {
+      let n = 2, fresh: string;
+      do { fresh = `${id}_${n++}`; } while (taken.has(fresh));
+      taken.add(fresh);
+      env.set(id, fresh);
+      changed = true;
+      return { ...rewritten, id: fresh };
+    }
+    seen.add(id);
+    env.delete(id);
+    if (rewritten !== step && next !== text) changed = true;
+    return rewritten;
+  });
+  return changed ? { ...plan, steps: out } : plan;
 }
 
 /** Characters of look results shown to the planner. */

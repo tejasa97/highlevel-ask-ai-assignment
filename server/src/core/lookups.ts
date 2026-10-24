@@ -7,6 +7,9 @@ import { collectRefs, parseRef, unwrap } from "./refs.js";
 // No reads or writes here, and no picking [0] from a list. The normal executor handles 0/1/many matches.
 // { reportId: { $lookup: { entity: "report", name: "Monthly Revenue" } } }
 
+// ID fields that more than one module uses for different records: a name there can't be mapped to one entity.
+const AMBIGUOUS = new Set(["fieldId", "postId", "pageId"]);
+const ID_SHAPE = /^[a-z]{1,6}_\d+(_\d+)*$/i;
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
 export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; errors: string[] } {
@@ -36,6 +39,17 @@ export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; 
     const walk = (value: unknown, schema: JsonSchema, path: string, children: boolean): unknown => {
       schema = unwrap(schema);
       const rule = def.argumentLookups?.[path.replace(/\[\d+\]/g, "[]")];
+      // A name written where an ID belongs ("stageId": "Negotiation") is a lookup the model forgot to ask for. Not an
+      // ID-shaped string, a $ref or a template, one unambiguous entity with a resolver, and no parent needed: look it up.
+      if (typeof value === "string" && schema.type === "string" && !rule && value.trim() && !value.includes("$") && !value.includes("{{") &&
+          !ID_SHAPE.test(value.trim()) && !AMBIGUOUS.has(path.split(".").at(-1)!)) {
+        const entities = argumentEntities(def, path);
+        if (entities.length === 1 && registry.resolver(entities[0]!)) {
+          const id = nextId();
+          steps.push({ id, kind: "resolve", entity: entities[0]!, name: value.trim(), whereJson: null });
+          return `$${id}.id`;
+        }
+      }
       if (object(value) && Object.hasOwn(value, "$lookup") && schema.type === "string" && argumentEntities(def, path).length) {
         if (!!rule !== children) return value;
         const lookup = value.$lookup;
