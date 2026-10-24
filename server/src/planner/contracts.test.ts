@@ -49,6 +49,8 @@ test("delivery metadata distinguishes similarly named posting actions", () => {
   const surfaces = registry.deliverySurfaces();
   assert.ok(surfaces.some((s) => s.id === "community" && s.actions.includes("M43.A07")));
   assert.ok(surfaces.some((s) => s.id === "blog" && s.actions.includes("M38.A09")));
+  // Scheduling a draft is how it reaches the blog later; publishing now refuses drafts.
+  assert.deepEqual(outcomeErrors(compiled("M38.A08", { postId: "bp_1", publishAt: "2026-12-01T15:00:00.000Z" }), { effect: "change", actions: ["M38.A08"], destination: "blog" }), []);
   assert.ok(!surfaces.some((s) => s.id === "linkedin"));
   assert.match(outcomeErrors(compiled("M38.A09", { postId: "bp_1" }), { effect: "change", actions: ["M38.A09"], destination: "community" }).join("\n"), /not the requested destination/);
 });

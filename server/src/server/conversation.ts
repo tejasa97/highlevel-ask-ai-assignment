@@ -146,6 +146,8 @@ export class Conversation {
 }
 
 const FIXABLE = new Set(["NOT_FOUND", "INVALID"]);
+/** "isn't a current member; join the community first": a conflict a plan can fix by doing the named step before. */
+const prerequisite = (e: { code: string; message: string }) => e.code === "CONFLICT" && /\bfirst\b/i.test(e.message);
 
 /** The failed plan and its errors, when the run failed only on errors a different plan could fix. */
 function retryable(plan: CompiledPlan, result: RunResult): string | undefined {
@@ -155,7 +157,7 @@ function retryable(plan: CompiledPlan, result: RunResult): string | undefined {
     if (s.error.code === "ALL_FAILED") return (s.items ?? []).filter((i) => i.error).slice(0, 3).map((i) => ({ step: s.id, ...i.error! }));
     return [{ step: s.id, ...s.error }];
   });
-  if (!errors.length || !errors.every((e) => FIXABLE.has(e.code))) return undefined;
+  if (!errors.length || !errors.every((e) => FIXABLE.has(e.code) || prerequisite(e))) return undefined;
   return JSON.stringify({ steps: plan.steps.map(describeStep), errors: errors.map((e) => `${e.step}: ${e.message}`) });
 }
 

@@ -170,7 +170,7 @@ const createPost = defineAction({
   id: "M43.A07",
   argumentLookups: { channelId: { entity: "community_channel", scope: { communityId: "communityId" } } },
   destination: { id: "community", label: "CRM community" },
-  description: "Start a top-level post in a channel. Pass contactId for a member post, or omit it to post as the acting staff user. Unlike Reply to community post, this is not nested under another post and it can be pinned.",
+  description: "Start a top-level post in a channel. Pass contactId for a member post (they must be a current member: join them with M43.A05 first), or omit it to post as the acting staff user. Unlike Reply to community post, this is not nested under another post and it can be pinned.",
   risk: "write",
   input: z.strictObject({
     communityId: CommunityId,
@@ -179,6 +179,7 @@ const createPost = defineAction({
     contactId: ContactId.optional(),
   }),
   output: CommunityPost,
+  siblings: ["M43.A05"],
   entities: { produces: "community_post", consumes: ["community"] },
   example: (f) => {
     const c = f.community();

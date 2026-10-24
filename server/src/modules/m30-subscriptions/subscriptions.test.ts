@@ -147,6 +147,17 @@ test("M30.A04 change price moves to a recurring price and refuses a one-time one
   assert.equal(failure(() => w.call("M30.A04", { subscriptionId: sub.id, priceId: other.id })).code, "CONFLICT");
 });
 
+test("M30.A04 given only the new plan's product, takes its price billed like the current one", async () => {
+  const { w, sub } = await liveSubscription();
+  const pro = catalog(w, { label: "Pro monthly", amount: 99 });
+  const { id: _, ...monthly } = pro.price;
+  w.f.make("prices", "prc", Price, { ...monthly, label: "Pro yearly", interval: "year" });
+  const moved = w.call("M30.A04", { subscriptionId: sub.id, productId: pro.product.id });
+  assert.equal(moved.priceId, pro.price.id);
+  assert.equal(moved.productId, pro.product.id);
+  assert.equal(failure(() => w.call("M30.A04", { subscriptionId: sub.id })).code, "INVALID");
+});
+
 test("M30.A08 resume while the trial is still running shifts both period bounds by the paused duration", async () => {
   const w = await testWorld();
   const trialing = w.f.subscription({
