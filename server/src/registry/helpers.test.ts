@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { matchByName, norm } from "./helpers.js";
+import { contains, matchByName, norm } from "./helpers.js";
 
 describe("name matching", () => {
   test("a possessive names the same words as without it", () => {
@@ -22,5 +22,22 @@ describe("name matching", () => {
     assert.deepEqual(matchByName(docs, "Ana Smith", (d) => d.l), []);
     // A closer tier wins: the exact name, not the longer request it sits in.
     assert.deepEqual(matchByName([...docs, { l: "Zoe Costa at Umbrella" }], "Zoe Costa at Umbrella", (d) => d.l), [{ l: "Zoe Costa at Umbrella" }]);
+  });
+
+  test("words naming the record type are ignored only when nothing closer matches", () => {
+    const docs = [{ l: "Fall Webinar Series" }, { l: "Spring Promo" }];
+    assert.deepEqual(matchByName(docs, "fall webinar campaign", (d) => d.l), [docs[0]]);
+    assert.deepEqual(matchByName(docs, "the Spring Promo campaign", (d) => d.l), [docs[1]]);
+    assert.deepEqual(matchByName(docs, "summer campaign", (d) => d.l), []);
+    assert.deepEqual(matchByName(docs, "campaign", (d) => d.l), [], "a bare type word names nothing");
+    assert.deepEqual(matchByName([...docs, { l: "Fall Webinar Recap" }], "fall webinar campaign", (d) => d.l), [docs[0], { l: "Fall Webinar Recap" }], "still ambiguous: both are returned");
+  });
+
+  test("a search term matches a name across punctuation, but a lone word still needs to be a substring", () => {
+    assert.ok(contains("Soylent - Pro plan", "Soylent Pro"));
+    assert.ok(contains("Pro plan - Soylent", "soylent pro"));
+    assert.ok(!contains("Soylent - Agency plan", "Soylent Pro"));
+    assert.ok(!contains("Soylent - Pro plan", "Acme Pro"));
+    assert.ok(!contains(3, "x"));
   });
 });
