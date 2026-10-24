@@ -196,6 +196,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         const { check, lookup } = assessed;
         identityCheck = check.digest;
         if (check.count > 1) return { kind: "reply", status: "clarify", text: `I found ${check.count} matching ${lookup.entity.replaceAll("_", " ")} records. ${check.options ? "Which one do you mean?" : "Please give a more specific name or qualifier."}`, options: check.options };
+        // The only match can't be used (e.g. a deactivated user): that is the answer, whatever the planner asks next.
+        if (check.match?.inactive) return { kind: "reply", status: "clarify", text: `${check.match.name} is ${check.match.inactive}, so I can't use ${lookup.entity.replaceAll("_", " ")} ${check.match.name}. Nothing was changed. Who should I use instead?` };
         if (checkedIdentity) {
           if (!check.count) return { kind: "reply", status: "clarify", text: `I couldn't find a matching ${lookup.entity.replaceAll("_", " ")}. Please give a fuller name or qualifier.` };
           return failed("The account lookup found one matching record, but the planner still asked which one. Nothing was changed; please try again.");
