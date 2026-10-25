@@ -350,7 +350,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
           continue;
         }
       }
-      return { kind: "reply", status: d.type, text, options: d.options ?? undefined };
+      return { kind: "reply", status: d.type, text, options: d.options ?? (d.alternatives?.length ? d.alternatives : undefined) };
     }
 
     const compiled = compile(withLookSteps(d, lookSteps), registry, new Set(offered.map((a) => a.id)));

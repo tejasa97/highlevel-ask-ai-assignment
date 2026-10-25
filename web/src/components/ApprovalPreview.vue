@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { describeStep, STEP_DONE } from "../steps.js";
 import Json from "./Json.vue";
 
 // What an approval will do, laid out for a person to check: who it goes to, what it says, and what runs after.
@@ -32,19 +33,12 @@ const items = computed(() =>
 );
 
 // Steps the approval lets run: everything in the plan not run yet, besides the step being approved.
-const DONE = new Set(["done", "failed", "skipped"]);
 const later = computed(() => {
   const plan = props.turn?.plan;
   if (!plan) return [];
-  const calls = (cs) => cs.map((c) => `${c.name}${c.args?.title || c.args?.name ? `: ${c.args.title ?? c.args.name}` : ""}`).join(" + ");
   return plan.steps
-    .filter((s) => !(props.pending.covers ?? [props.pending.stepId]).includes(s.id) && !DONE.has(props.turn.steps[s.id]?.status))
-    .map((s) =>
-      s.kind === "action" ? calls(s.calls)
-      : s.kind === "forEach" ? `For each: ${calls(s.calls)}`
-      : s.kind === "resolve" ? `Find ${s.entity} "${s.name}"`
-      : null,
-    )
+    .filter((s) => !(props.pending.covers ?? [props.pending.stepId]).includes(s.id) && !STEP_DONE.has(props.turn.steps[s.id]?.status))
+    .map(describeStep)
     .filter(Boolean);
 });
 </script>
