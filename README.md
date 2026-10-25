@@ -27,6 +27,26 @@ Each turn is one planner call wrapped in code. The full design is in [docs/PLAN.
 
 **Baseline.** `server/src/server/baseline.ts` makes one model call per step, with tools. It runs on the same handlers and gates and is the comparison in BENCHMARK.md.
 
+## Module catalog, action schemas and registration
+
+- **Catalog.** `server/src/registry/catalog.json` holds HighLevel's 50 modules × 10 actions, with ids `M01.A01` to `M50.A10` and their names. `npm run catalog` generated it from the assignment PDF, and it's committed, so nothing reads the PDF at runtime. Display names always come from this file, so an id and its name can't drift apart.
+- **Modules.** Each module is a folder, such as `server/src/modules/m01-contacts/`. It has an `index.ts` that exports its actions (and any name resolvers), a `schema.ts`, and tests. `loadRegistry()` registers every folder that has an index file. Adding a capability means adding a folder; the core agent doesn't change.
+- **Action definition.** An action is an `ActionDef` (`server/src/registry/define.ts`) with these fields:
+  - `id`
+  - a user-language `description`, including how it differs from look-alike actions
+  - `synonyms`
+  - `risk` (`read`, `write`, `destructive` or `external`)
+  - Zod `input` and `output` schemas. Inputs are strict, so a made-up param is rejected.
+  - `entities` it produces and consumes, for retrieval dependencies
+  - `siblings`, the look-alike actions in other modules
+  - an optional `preflight`, bound to approval
+  - the `handler`, which runs inside a transaction and throws an `ActionError` for expected failures
+  - an `example` call for the smoke test
+- **Checks at registration.** Registering an id twice fails, and so does marking a destructive or external action as a side-effect-free query. The smoke test (below) fails a module that registers only some of its catalog actions.
+- **Search cards.** `npm run cards` has a model rewrite the retrieval cards from these definitions. That overwrites any hand edits.
+
+How to add a module, step by step: [docs/ADDING-A-MODULE.md](docs/ADDING-A-MODULE.md). The module contract: [docs/MODULE-CONTRACT.md](docs/MODULE-CONTRACT.md).
+
 ## How the tool list is narrowed
 
 The planner never sees all 500 actions. Retrieval starts with 15 ranked slots, then adds selected lookup/dependency/look-alike helpers; the latest combined evaluation averages 21.8 final cards ([evidence](docs/PLANNER-OUTCOMES-VALIDATION.md)). See [docs/PLAN.md](docs/PLAN.md), section "Retrieval". It combines two rankings over a search card per action, with no LLM call:
@@ -70,7 +90,7 @@ All messages, payments, review publications and directory syncs are **simulated*
 
 ## Run locally
 
-Use a Node release supporting `node:sqlite` (this branch was tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Configure the planner using the existing environment settings; `claude-cli` requires an authenticated Claude CLI with available quota, and `qwen` needs a Qwen Token Plan key (see below). `claude-cli` is the default provider and runs `claude-haiku-5-5` for both tiers; set `CLAUDE_MODEL` (and optionally `CLAUDE_FAST_MODEL`) for another model. Give the full id, not the `haiku` alias: Claude CLI 2.1.284 maps the alias to `claude-haiku-4-5-20251001`, which scored 91.3% on the 23-scenario regression suite at a 23.9 s median turn, against 100% over 8 repeats at 7.2 s for `claude-haiku-5-5`. The CLI logs `claude-haiku-5-5` as `unrecognized_model` but serves it.
+Use a Node release supporting `node:sqlite` (tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Copy `.env.example` to `.env` at the repository root (it is gitignored) and pick the planner with `PLANNER`; `claude-cli` requires an authenticated Claude CLI with available quota, and `qwen` needs a Qwen Token Plan key (see below). `claude-cli` is the default provider and runs `claude-haiku-5-5` for both tiers; set `CLAUDE_MODEL` (and optionally `CLAUDE_FAST_MODEL`) for another model. Give the full id, not the `haiku` alias: Claude CLI 2.1.284 maps the alias to `claude-haiku-4-5-20251001`, which scored 91.3% on the 23-scenario regression suite at a 23.9 s median turn, against 100% over 8 repeats at 7.2 s for `claude-haiku-5-5`. The CLI logs `claude-haiku-5-5` as `unrecognized_model` but serves it.
 
 In `server/`, run `npm run db:reset` to recreate **this checkout's** demo database, then `npm run serve`. In `web/`, run `npm run dev`. Defaults: API 8787, web 5173. For isolated concurrent work, set `PORT` for the API and matching `API_PORT` for Vite. Reset erases the local demo database; it is not a migration of saved user data.
 
@@ -78,7 +98,37 @@ Try “Show Elodie Mercer's reviews”, “Show Maple Dental's listing” (asks 
 
 ## Verify and evaluate
 
-Run `npm run typecheck` and `npm test` in `server/`; run `npm run build` in `web/`. The baseline regression has 23 scenarios; new module sets are kept separate:
+Run `npm run typecheck` and `npm test` in `server/`; run `npm run build` in `web/`.
+
+**Handler smoke test.** `npm test` includes `server/src/registry/smoke.test.ts`, which runs every one of the 500 actions on its own, without the planner. For each action:
+- Its example call has to succeed, and writes have to be audited.
+- A made-up param has to fail with `INVALID`.
+- An unknown id has to fail with `NOT_FOUND`.
+
+It also fails if a module registers only some of its catalog actions.
+
+**Reproduce the benchmark.** From `server/` (the planner comes from `PLANNER` in `.env`):
+
+```sh
+npm run eval:scenarios -- --repeat 3 --label haiku-final-planner-3x
+npm run eval:scenarios -- --repeat 3 --label haiku-final-baseline-3x --agent baseline
+npm run report -- --label haiku-final-planner-3x --compare haiku-final-baseline-3x
+```
+
+**Planner against baseline.** Both ran on Haiku 5.5, on the same 23 scenarios × 3, the same shortlist and the same gates (details in [BENCHMARK.md](BENCHMARK.md)).
+
+| | Planner (whole plan per call) | Baseline (one call per step) |
+| --- | --- | --- |
+| Task success | 98.6% | 91.3% |
+| Model calls per complex task (median) | 2 | 4 |
+| Complex end-to-end p50 | 12.1 s | 16.9 s |
+| Cost per successful task | $0.0496 | $0.11 |
+
+The planner wins on all four because it writes the whole plan in one call, and ids flow from one step to the next as `$refs`. The baseline spends a model call on every step and copies each id from the step before by hand. The cost of this design is that a plan can't react to what a step returns. Looks and the one retry cover that, within the per-turn limits listed under [Known limitations](#known-limitations).
+
+**Execution traces.** In the web UI, the Trace tab on each reply shows the retrieval shortlist, the planner's raw reply, the compiled plan and every handler call with its args, result, error and timing. Eval runs save the same data per turn in `eval/results/scenarios-<label>.json`: what was offered and planned, the calls made, planner rounds, compile errors, approvals and timings.
+
+The baseline regression has 23 scenarios; new module sets are kept separate:
 
 ```sh
 # From server/; scenario directories are relative to the repository root.
@@ -108,7 +158,7 @@ The repository has 205 scenarios across all 50 modules. The other 182 are scored
 
 The models, commits and repeat counts differ from row to row, so the rows can't be compared with each other or added into one score.
 
-Codex integration is available in this branch: explicitly select `PLANNER=codex-cli` (Claude is otherwise still the inherited default). Full GPT-6.1 Sol low-reasoning evaluations score 91.9% development, 91.3% original regression and 83.3% reporting, versus Luna's 85.2%, 56.5% and 72.2%. Sol improves overall quality but still misses acceptance. See the [delivery and evaluation report](docs/M45-M47-FINAL-REPORT.md) for counts, test conditions, test-set revisions and remaining planner gaps. Do not substitute adapter tests or retrieval recall for AI task success.
+Codex is an optional planner: select it with `PLANNER=codex-cli` (`claude-cli` is the default). Full GPT-6.1 Sol low-reasoning evaluations score 91.9% development, 91.3% original regression and 83.3% reporting, versus Luna's 85.2%, 56.5% and 72.2%. Sol improves overall quality but still misses acceptance. See the [delivery and evaluation report](docs/M45-M47-FINAL-REPORT.md) for counts, test conditions, test-set revisions and remaining planner gaps. Do not substitute adapter tests or retrieval recall for AI task success.
 
 
 ## Use a Codex subscription locally
@@ -232,10 +282,10 @@ The prompt doesn't grow with the catalog. The planner sees a fixed shortlist of 
 ## Layout
 
 ```
-server/   Node + TypeScript backend (registry, modules, store, agent core)
-eval/     scenarios, runner, smoke tests, benchmark report
+server/   Node + TypeScript backend (registry, modules, store, agent core, eval runner, report)
+eval/     scenarios, targets, retrieval questions, results
 web/      Vue 3 chat UI
-docs/     assignment, plan, module contract, verification reports
+docs/     plan, module contract, design notes, verification reports
 ```
 
 Reports from the two later waves are at the repository root: [WAVE1-REPORT.md](WAVE1-REPORT.md), [WAVE1-HARDENING-REPORT.md](WAVE1-HARDENING-REPORT.md) and [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md). Raw eval runs are in `eval/results/`; `docs/trajectory.html` charts them.
