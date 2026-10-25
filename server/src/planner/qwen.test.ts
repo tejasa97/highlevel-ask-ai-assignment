@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createServer, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, beforeEach, describe, it } from "node:test";
-import { QwenPlanner } from "./qwen.js";
+import { needsJsonObject, QwenPlanner } from "./qwen.js";
 import { PlannerError, type PlanRequest } from "./types.js";
 
 interface Captured {
@@ -210,6 +210,53 @@ describe("QwenPlanner", () => {
     await new QwenPlanner({ apiKey: "k", baseUrl, models: { fast: "f", strong: "s" }, responseFormat: "json_object" }).plan(req());
     assert.deepEqual(captured[0]!.body.response_format, { type: "json_object" });
     assert.match(captured[0]!.body.messages[0].content, /^Planner instructions\n\nReply with one JSON object.*"properties"/s);
+  });
+
+  it("picks the format from the model: json_object for one without json_schema", async () => {
+    const ds = new QwenPlanner({ apiKey: "k", baseUrl, models: { fast: "deepseek-v4.1-flash-1017", strong: "deepseek-v4.1-flash-1017" } });
+    await ds.plan(req());
+    assert.deepEqual(captured[0]!.body.response_format, { type: "json_object" });
+    assert.match(captured[0]!.body.messages[0].content, /Reply with one JSON object.*"properties"/s);
+
+    assert.equal(needsJsonObject("deepseek-v4.1-flash-1017"), true);
+    assert.equal(needsJsonObject(" DeepSeek-V5 "), true);
+    assert.equal(needsJsonObject("qwen3.8-flash"), false);
+
+    // An explicit setting still wins over what the model name says.
+    const pinned = new QwenPlanner({ apiKey: "k", baseUrl, models: { fast: "deepseek-v4.1-flash-1017", strong: "x" }, responseFormat: "json_schema" });
+    await pinned.plan(req());
+    assert.equal(captured[1]!.body.response_format.type, "json_schema");
+  });
+
+  it("retries a rejected response format as json_object, then remembers the model", async () => {
+    // The fallback covers a model whose name doesn't advertise the limitation (qwen3.6 rejected the schema
+    // keyword the plan needs): one wasted call, then the process stops asking.
+    let calls = 0;
+    respond = (res, body) =>
+      ++calls === 1
+        ? send(res, 400, { error: { code: "invalid_parameter_error", message: "This response_format type is unavailable now" } })
+        : send(res, 200, reply(body.model, "{}"));
+    const ds = planner();
+
+    assert.deepEqual((await ds.plan(req())).json, {});
+    assert.equal(captured.length, 2);
+    assert.equal(captured[0]!.body.response_format.type, "json_schema");
+    assert.deepEqual(captured[1]!.body.response_format, { type: "json_object" });
+
+    // The model is remembered, so the next turn doesn't pay for the same 400.
+    assert.deepEqual((await ds.plan(req())).json, {});
+    assert.equal(captured.length, 3);
+    assert.deepEqual(captured[2]!.body.response_format, { type: "json_object" });
+  });
+
+  it("does not retry a 400 that isn't about the response format", async () => {
+    respond = (res) => send(res, 400, { error: { message: "invalid messages" } });
+    await assert.rejects(planner().plan(req()), (err) => {
+      assert.ok(kind("provider")(err));
+      assert.match((err as Error).message, /qwen-fast: HTTP 400: invalid messages/);
+      return true;
+    });
+    assert.equal(captured.length, 1);
   });
 
   it("times out a stalled request and never sends a pre-aborted one", async () => {

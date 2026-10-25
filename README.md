@@ -121,29 +121,41 @@ PLANNER=qwen npm run ask -- "create a task to call Jo"
 ```
 
 `QWEN_MODEL` and `QWEN_FAST_MODEL` select the strong/fast models (`QWEN_MODEL` defaults to
-`qwen3.8-flash`, `QWEN_FAST_MODEL` to `QWEN_MODEL`). Thinking is off (`enable_thinking: false`);
+`deepseek-v4.1-flash-1017`, `QWEN_FAST_MODEL` to `QWEN_MODEL`). Thinking is off (`enable_thinking: false`);
 set `QWEN_THINKING=1` to turn it on. `QWEN_BASE_URL` defaults to
 `https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1`; use
 `QWEN_BASE_URL=https://token-plan.maas.qwencloudapi.com/compatible-mode/v1` for QwenCloud.
 Token Plan keys must not be pointed at a pay-as-you-go endpoint. The adapter sends the planner
-system/user messages and the `submit_plan` JSON Schema with `response_format: json_schema`, and
-leaves tools out. Calls have a 120-second deadline (`QWEN_TIMEOUT_MS`), cancellation and a 4 MiB
-reply cap. A dropped connection, a 5xx or a 429 with a short `Retry-After` is retried once; a
-quota error fails at once. A reply cut off at the token limit or blocked by the content filter is
-reported as such.
+system/user messages plus the `submit_plan` JSON Schema and leaves tools out. Calls have a
+120-second deadline (`QWEN_TIMEOUT_MS`), cancellation and a 4 MiB reply cap. A dropped connection,
+a 5xx or a 429 with a short `Retry-After` is retried once; a quota error fails at once. A reply cut
+off at the token limit or blocked by the content filter is reported as such.
 Token Plan usage is prepaid, so USD cost stays unknown in the UI and reports.
 
-The same Token Plan serves DeepSeek, which doesn't accept `json_schema` there. Set
-`QWEN_RESPONSE_FORMAT=json_object` with it: the request asks for a JSON object and the system
-message carries the schema; the app still validates and repairs every plan.
+The reply format follows the model. Where the endpoint takes it, the request carries
+`response_format: json_schema`; where it doesn't, it asks for a JSON object and puts the schema in
+the system message. DeepSeek has no `json_schema` on the Token Plan and answers HTTP 400 "This
+response_format type is unavailable now", so the model picks the format before the first call, and a
+400 that blames the format is retried once as `json_object` and that model is remembered for the
+rest of the process. `QWEN_RESPONSE_FORMAT=json_schema|json_object` pins the choice; leave it unset.
+Plans are validated and repaired either way.
 
 ```sh
-QWEN_MODEL=deepseek-v4.1-flash-1017 QWEN_FAST_MODEL=deepseek-v4.1-flash-1017 QWEN_RESPONSE_FORMAT=json_object npm run serve
+QWEN_MODEL=qwen3.8-flash QWEN_FAST_MODEL=qwen3.8-flash npm run serve   # the alternative
 ```
 
-Measured on the three suites (3 repeats, clean runs): deepseek-v4.1-flash-1017 passed 75.4%
-regression, 93.3% development and 94.4% reporting at a 1.2–1.9 s median turn; qwen3.8-flash
-62.3%, 86.7% and 55.6%. Results are in `eval/results/scenarios-{deepseek-v41,qwen}-flash-module-*-3x.json`.
+Measured 2026-10-25 on the module scenarios with real list rates (regression: 23 scenarios x 3
+repeats; development: 45 scenarios):
+
+| model | regression | development | median turn | $/turn |
+| --- | --- | --- | --- | --- |
+| deepseek-v4.1-flash-1017 (default) | 95.7% | 97.8% | 1.9 s / 1.1 s | 0.00048 / 0.00065 |
+| qwen3.8-flash | 90.9% | 97.8% | 5.0 s / 3.2 s | 0.00044 / 0.00063 |
+
+DeepSeek's regression figure is the lower of two batches (the other was 98.6%) and Qwen's is a
+four-batch mean; a single batch moves by 1-3 points, so read gaps under ~5 points as noise. Batches:
+`eval/results/scenarios-ds-default-check-*.json`, `scenarios-base-ds-reg-3x-jo.json`,
+`scenarios-reg-fix{4,5,6,7}-qf-3x.json`, `scenarios-dev-smoke-compilerfix.json`.
 
 ## Layout
 
