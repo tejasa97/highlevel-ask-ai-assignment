@@ -1,0 +1,159 @@
+{
+ "summary": {
+  "label": "q36-smoke2",
+  "planner": "qwen",
+  "model": "qwen3.6-flash",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "d7af8cb3b6ea",
+  "tier": "strong",
+  "scenarios": 1,
+  "repeat": 1,
+  "runs": 1,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 1,
+  "measured": 1,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 2197,
+   "p95": 2197
+  },
+  "firstReplyMs": {
+   "p50": 2193,
+   "p95": 2193
+  },
+  "plannerRoundsPerRun": 1,
+  "callsPerRun": 2,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 2284
+ },
+ "runs": [
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M21.A02",
+      "M21.A03",
+      "M45.A08",
+      "M45.A06",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Your feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Dorian Vale"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A01 Create review request",
+          "argsJson": "{\"contactId\": \"$s1.id\", \"subject\": \"Your feedback\", \"body\": \"Please review your visit.\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M45.A02 Send review request",
+          "argsJson": "{\"requestId\": \"$s2.id\"}"
+         }
+        ]
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 2193,
+     "ms": 2197,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "b9221ecfd72b309c",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 2197,
+    "firstReplyMs": 2193,
+    "plannerMs": 2114,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 4620,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 187,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.6-flash"
+   ]
+  }
+ ]
+}

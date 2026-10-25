@@ -1,0 +1,4656 @@
+{
+ "summary": {
+  "label": "ds-tp-dev-1x",
+  "planner": "qwen",
+  "model": "deepseek-v4.1-flash-1017",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "51f56e2dbc48",
+  "tier": "strong",
+  "scenarios": 45,
+  "repeat": 1,
+  "runs": 45,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 93.3,
+  "allPass": 42,
+  "measured": 45,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 1072,
+   "p95": 2210
+  },
+  "firstReplyMs": {
+   "p50": 1072,
+   "p95": 2065
+  },
+  "plannerRoundsPerRun": 1.07,
+  "callsPerRun": 1,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 14660
+ },
+ "runs": [
+  {
+   "id": "listing-ambiguous",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Change Maple Dental's listing phone to +15550987654",
+     "status": "needs_clarification",
+     "reply": "More than one listing matches \"Maple Dental\": Maple Dental google (10 Cedar Road), Maple Dental yelp (10 Cedar Road). Which one?",
+     "offered": [
+      "M46.A06",
+      "M46.A05",
+      "M01.A04",
+      "M46.A07",
+      "M46.A04",
+      "M03.A04",
+      "M48.A04",
+      "M04.A04",
+      "M46.A08",
+      "M12.A10",
+      "M46.A02",
+      "M46.A10",
+      "M46.A03"
+     ],
+     "planned": [
+      "M46.A03",
+      "M46.A06"
+     ],
+     "calls": [
+      {
+       "action": "M46.A03",
+       "args": {
+        "query": "Maple Dental"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A03",
+          "argsJson": "{\"query\":\"Maple Dental\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M46.A06",
+            "argsJson": "{\"listingId\":\"{{$item.id}}\",\"phone\":\"+15550987654\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1280,
+     "ms": 1280
+    }
+   ],
+   "metrics": {
+    "ms": 1280,
+    "firstReplyMs": 1280,
+    "plannerMs": 1264,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4757,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 141,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "listing-provider-down",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Publish listing bl_3",
+     "status": "failed",
+     "reply": "Couldn't publish listing to simulated directory: Directory unavailable.",
+     "offered": [
+      "M46.A09",
+      "M46.A08",
+      "M46.A10",
+      "M46.A05",
+      "M46.A06",
+      "M46.A04",
+      "M45.A09"
+     ],
+     "planned": [
+      "M46.A09"
+     ],
+     "calls": [
+      {
+       "action": "M46.A09",
+       "args": {
+        "listingId": "bl_3"
+       },
+       "error": "UNAVAILABLE: Directory unavailable"
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A09",
+          "argsJson": "{\"listingId\":\"bl_3\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 898,
+     "ms": 900,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "4da5cf4d1325118c",
+       "targetsHash": "d75831d40456f872",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M46.A09",
+         "name": "Publish listing to simulated directory",
+         "args": {
+          "listingId": "bl_3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 900,
+    "firstReplyMs": 898,
+    "plannerMs": 887,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3443,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 66,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m45-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a review request for Elodie Mercer with subject 'Visit feedback' and body 'How was your visit?'",
+     "status": "done",
+     "reply": "Done: Create review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A02",
+      "M45.A05",
+      "M45.A07",
+      "M45.A04",
+      "M45.A09",
+      "M21.A01",
+      "M29.A01",
+      "M21.A02",
+      "M01.A02",
+      "M01.A03",
+      "M29.A04"
+     ],
+     "planned": [
+      "M45.A01"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "How was your visit?"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Elodie Mercer"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"subject\":\"Visit feedback\",\"body\":\"How was your visit?\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2492,
+     "ms": 2492
+    }
+   ],
+   "metrics": {
+    "ms": 2492,
+    "firstReplyMs": 2492,
+    "plannerMs": 2387,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4162,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 104,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M21.A02",
+      "M21.A03",
+      "M45.A08",
+      "M45.A06",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Your feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Dorian Vale"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"subject\":\"Your feedback\",\"body\":\"Please review your visit.\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M45.A02",
+          "argsJson": "{\"requestId\":\"$s2.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 2065,
+     "ms": 2068,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "008e3b32ddcbfdf3",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 2068,
+    "firstReplyMs": 2065,
+    "plannerMs": 1918,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 4717,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 136,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m45-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Cancel Elodie Mercer's unsent review request rrq_1",
+     "status": "done",
+     "reply": "Done: Cancel unsent review request.",
+     "offered": [
+      "M45.A03",
+      "M29.A03",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A01",
+      "M13.A05",
+      "M12.A05",
+      "M29.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [
+      {
+       "action": "M45.A03",
+       "args": {
+        "requestId": "rrq_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A03",
+          "argsJson": "{\"requestId\":\"rrq_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1571,
+     "ms": 1574,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "3e416562c4a8d83f",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1574,
+    "firstReplyMs": 1571,
+    "plannerMs": 1412,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3841,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 67,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m45-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "List the draft review requests",
+     "status": "done",
+     "reply": "Found 1 review_request: Elodie Mercer: status draft, subject How was your visit?, body Please tell us about your experience..",
+     "offered": [
+      "M45.A04",
+      "M45.A02",
+      "M45.A01",
+      "M45.A03",
+      "M45.A08",
+      "M45.A07",
+      "M13.A02",
+      "M28.A05",
+      "M28.A01",
+      "M46.A01",
+      "M46.A09",
+      "M15.A03"
+     ],
+     "planned": [
+      "M45.A04"
+     ],
+     "calls": [
+      {
+       "action": "M45.A04",
+       "args": {
+        "status": "draft"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A04",
+          "argsJson": "{\"status\":\"draft\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1621,
+     "ms": 1621
+    }
+   ],
+   "metrics": {
+    "ms": 1621,
+    "firstReplyMs": 1621,
+    "plannerMs": 1454,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4217,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 64,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m45-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Record a 4-star customer review from Dorian Vale for request rrq_2: 'Friendly service.'",
+     "status": "done",
+     "reply": "Done: Record simulated customer review.",
+     "offered": [
+      "M45.A05",
+      "M45.A06",
+      "M45.A01",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M47.A07",
+      "M47.A01",
+      "M47.A08",
+      "M47.A06",
+      "M47.A03",
+      "M01.A02",
+      "M01.A03",
+      "M29.A04"
+     ],
+     "planned": [
+      "M45.A05"
+     ],
+     "calls": [
+      {
+       "action": "M45.A05",
+       "args": {
+        "requestId": "rrq_2",
+        "rating": 4,
+        "body": "Friendly service."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A05",
+          "argsJson": "{\"requestId\":\"rrq_2\",\"rating\":4,\"body\":\"Friendly service.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 941,
+     "ms": 941
+    }
+   ],
+   "metrics": {
+    "ms": 941,
+    "firstReplyMs": 941,
+    "plannerMs": 896,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5161,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 81,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m45-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Find customer reviews rated two stars",
+     "status": "done",
+     "reply": "Found 1 review: Elodie Mercer: rating 2, body The wait was too long..",
+     "offered": [
+      "M45.A06",
+      "M45.A05",
+      "M45.A10",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M45.A02",
+      "M45.A09",
+      "M45.A03",
+      "M45.A08"
+     ],
+     "planned": [
+      "M45.A06"
+     ],
+     "calls": [
+      {
+       "action": "M45.A06",
+       "args": {
+        "minRating": 2,
+        "maxRating": 2
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A06",
+          "argsJson": "{\"minRating\":2,\"maxRating\":2}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 803,
+     "ms": 803
+    }
+   ],
+   "metrics": {
+    "ms": 803,
+    "firstReplyMs": 803,
+    "plannerMs": 786,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3269,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 68,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m45-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show review rv_1 in full",
+     "status": "done",
+     "reply": "Nisha Khatri (review_request): rating 5, body Helpful staff and a smooth appointment..",
+     "offered": [
+      "M45.A07",
+      "M45.A04",
+      "M45.A05",
+      "M45.A08",
+      "M45.A06",
+      "M45.A02"
+     ],
+     "planned": [
+      "M45.A07"
+     ],
+     "calls": [
+      {
+       "action": "M45.A07",
+       "args": {
+        "reviewId": "rv_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A07",
+          "argsJson": "{\"reviewId\":\"rv_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 769,
+     "ms": 769
+    }
+   ],
+   "metrics": {
+    "ms": 769,
+    "firstReplyMs": 769,
+    "plannerMs": 752,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 2863,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 66,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m45-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Draft this response to review rv_2: 'Thank you. We will improve our waiting times.'",
+     "status": "done",
+     "reply": "Done: Draft review response.",
+     "offered": [
+      "M45.A08",
+      "M45.A09",
+      "M11.A10",
+      "M45.A01",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M47.A05",
+      "M47.A10",
+      "M28.A06"
+     ],
+     "planned": [
+      "M45.A08"
+     ],
+     "calls": [
+      {
+       "action": "M45.A08",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you. We will improve our waiting times."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A08",
+          "argsJson": "{\"reviewId\":\"rv_2\",\"body\":\"Thank you. We will improve our waiting times.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 961,
+     "ms": 961
+    }
+   ],
+   "metrics": {
+    "ms": 961,
+    "firstReplyMs": 961,
+    "plannerMs": 926,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3649,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 81,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m45-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Publish this response to review rv_2: 'We appreciate your feedback.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M45.A08",
+      "M45.A02",
+      "M45.A01",
+      "M45.A07",
+      "M45.A05",
+      "M47.A08"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "We appreciate your feedback."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A09",
+          "argsJson": "{\"reviewId\":\"rv_2\",\"body\":\"We appreciate your feedback.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1032,
+     "ms": 1035,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "0515e4b5608edd4c",
+       "targetsHash": "a96afee2e72f516c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "We appreciate your feedback."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1035,
+    "firstReplyMs": 1032,
+    "plannerMs": 990,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3104,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 76,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m45-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "What is our average customer review rating and how many reviews do we have?",
+     "status": "done",
+     "reply": "Review_request: count 2, average rating 3.5.",
+     "offered": [
+      "M45.A10",
+      "M45.A06",
+      "M45.A05",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M08.A10",
+      "M45.A02",
+      "M45.A08",
+      "M45.A09",
+      "M45.A03"
+     ],
+     "planned": [
+      "M45.A10"
+     ],
+     "calls": [
+      {
+       "action": "M45.A10",
+       "args": {}
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A10",
+          "argsJson": "{}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 847,
+     "ms": 847
+    }
+   ],
+   "metrics": {
+    "ms": 847,
+    "firstReplyMs": 847,
+    "plannerMs": 814,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3356,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 56,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m46-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a business listing for Pine Studio on google at 30 Forest Lane with phone +15550123457",
+     "status": "done",
+     "reply": "Done: Create business listing (Pine Studio).",
+     "offered": [
+      "M46.A06",
+      "M46.A01",
+      "M46.A02",
+      "M46.A07",
+      "M46.A05",
+      "M46.A04",
+      "M45.A01",
+      "M08.A01",
+      "M07.A01",
+      "M47.A02"
+     ],
+     "planned": [
+      "M46.A01"
+     ],
+     "calls": [
+      {
+       "action": "M46.A01",
+       "args": {
+        "name": "Pine Studio",
+        "directory": "google",
+        "address": "30 Forest Lane",
+        "phone": "+15550123457"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A01",
+          "argsJson": "{\"name\":\"Pine Studio\",\"directory\":\"google\",\"address\":\"30 Forest Lane\",\"phone\":\"+15550123457\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1201,
+     "ms": 1201
+    }
+   ],
+   "metrics": {
+    "ms": 1201,
+    "firstReplyMs": 1201,
+    "plannerMs": 1176,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4344,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 89,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m46-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show the details of listing bl_3",
+     "status": "done",
+     "reply": "Harbor Optics (listing): directory google, address 20 Bay Street, phone +15550123456, categories professional_services, timezone America/New_York, version 1.",
+     "offered": [
+      "M46.A02",
+      "M04.A02",
+      "M03.A02",
+      "M46.A08",
+      "M08.A08",
+      "M46.A06",
+      "M47.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M46.A02"
+     ],
+     "calls": [
+      {
+       "action": "M46.A02",
+       "args": {
+        "listingId": "bl_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A02",
+          "argsJson": "{\"listingId\":\"bl_3\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 879,
+     "ms": 879
+    }
+   ],
+   "metrics": {
+    "ms": 879,
+    "firstReplyMs": 879,
+    "plannerMs": 855,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3667,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 66,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m46-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Find all Maple Dental business listings",
+     "status": "done",
+     "reply": "Found 2 listings matching query Maple Dental: Maple Dental, +15550123456, Maple Dental, +15550123456.",
+     "offered": [
+      "M46.A03",
+      "M46.A01",
+      "M46.A02",
+      "M46.A07",
+      "M46.A05",
+      "M46.A06",
+      "M46.A04",
+      "M08.A08",
+      "M01.A03",
+      "M04.A03",
+      "M28.A03",
+      "M12.A07",
+      "M11.A02",
+      "M47.A03",
+      "M47.A02"
+     ],
+     "planned": [
+      "M46.A03"
+     ],
+     "calls": [
+      {
+       "action": "M46.A03",
+       "args": {
+        "query": "Maple Dental"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A03",
+          "argsJson": "{\"query\":\"Maple Dental\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 752,
+     "ms": 752
+    }
+   ],
+   "metrics": {
+    "ms": 752,
+    "firstReplyMs": 752,
+    "plannerMs": 725,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5969,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 65,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m46-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Rename listing bl_3 to Harbor Eyecare",
+     "status": "done",
+     "reply": "Done: Update listing name (Harbor Eyecare).",
+     "offered": [
+      "M46.A04",
+      "M46.A08",
+      "M49.A04",
+      "M46.A01",
+      "M46.A05",
+      "M08.A03",
+      "M46.A06",
+      "M46.A07"
+     ],
+     "planned": [
+      "M46.A04"
+     ],
+     "calls": [
+      {
+       "action": "M46.A04",
+       "args": {
+        "listingId": "bl_3",
+        "name": "Harbor Eyecare"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A04",
+          "argsJson": "{\"listingId\":\"bl_3\",\"name\":\"Harbor Eyecare\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1041,
+     "ms": 1041
+    }
+   ],
+   "metrics": {
+    "ms": 1041,
+    "firstReplyMs": 1041,
+    "plannerMs": 1020,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3847,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 77,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m46-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Change listing bl_3's address to 21 Bay Street",
+     "status": "done",
+     "reply": "Done: Update listing address (Harbor Optics).",
+     "offered": [
+      "M46.A05",
+      "M46.A06",
+      "M46.A04",
+      "M46.A08",
+      "M46.A01",
+      "M46.A07",
+      "M46.A02"
+     ],
+     "planned": [
+      "M46.A05"
+     ],
+     "calls": [
+      {
+       "action": "M46.A05",
+       "args": {
+        "listingId": "bl_3",
+        "address": "21 Bay Street"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A05",
+          "argsJson": "{\"listingId\":\"bl_3\",\"address\":\"21 Bay Street\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 823,
+     "ms": 823
+    }
+   ],
+   "metrics": {
+    "ms": 823,
+    "firstReplyMs": 823,
+    "plannerMs": 796,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3877,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 74,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m46-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Change listing bl_3's phone to +15550987654",
+     "status": "done",
+     "reply": "Done: Update listing phone (Harbor Optics).",
+     "offered": [
+      "M46.A06",
+      "M46.A04",
+      "M46.A05",
+      "M01.A04",
+      "M46.A08",
+      "M03.A04",
+      "M46.A07",
+      "M47.A06",
+      "M01.A07",
+      "M11.A03",
+      "M46.A02",
+      "M12.A10"
+     ],
+     "planned": [
+      "M46.A06"
+     ],
+     "calls": [
+      {
+       "action": "M46.A06",
+       "args": {
+        "listingId": "bl_3",
+        "phone": "+15550987654"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A06",
+          "argsJson": "{\"listingId\":\"bl_3\",\"phone\":\"+15550987654\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 938,
+     "ms": 938
+    }
+   ],
+   "metrics": {
+    "ms": 938,
+    "firstReplyMs": 938,
+    "plannerMs": 905,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4799,
+     "cachedRead": 2048,
+     "cacheWrite": 0,
+     "output": 76,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m46-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Set listing bl_3's business hours to Monday through Friday 10am to 6pm, closed Saturday and Sunday",
+     "status": "done",
+     "reply": "Done: Set listing business hours (Harbor Optics).",
+     "offered": [
+      "M46.A07",
+      "M04.A07",
+      "M46.A08",
+      "M46.A06",
+      "M46.A02",
+      "M04.A09",
+      "M04.A10",
+      "M46.A05",
+      "M47.A05",
+      "M06.A06"
+     ],
+     "planned": [
+      "M46.A07"
+     ],
+     "calls": [
+      {
+       "action": "M46.A07",
+       "args": {
+        "listingId": "bl_3",
+        "hours": {
+         "monday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "tuesday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "wednesday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "thursday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "friday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "saturday": null,
+         "sunday": null
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A07",
+          "argsJson": "{\"listingId\":\"bl_3\",\"hours\":{\"monday\":{\"open\":\"10:00\",\"close\":\"18:00\"},\"tuesday\":{\"open\":\"10:00\",\"close\":\"18:00\"},\"wednesday\":{\"open\":\"10:00\",\"close\":\"18:00\"},\"thursday\":{\"open\":\"10:00\",\"close\":\"18:00\"},\"friday\":{\"open\":\"10:00\",\"close\":\"18:00\"},\"saturday\":null,\"sunday\":null}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1689,
+     "ms": 1689
+    }
+   ],
+   "metrics": {
+    "ms": 1689,
+    "firstReplyMs": 1689,
+    "plannerMs": 1628,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4119,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 191,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m46-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Set listing bl_3's categories to optician and eyewear",
+     "status": "done",
+     "reply": "Done: Set listing categories (Harbor Optics).",
+     "offered": [
+      "M46.A08",
+      "M46.A02",
+      "M46.A07",
+      "M08.A08",
+      "M01.A03",
+      "M46.A03",
+      "M46.A06",
+      "M04.A03",
+      "M47.A02"
+     ],
+     "planned": [
+      "M46.A08"
+     ],
+     "calls": [
+      {
+       "action": "M46.A08",
+       "args": {
+        "listingId": "bl_3",
+        "categories": [
+         "optician",
+         "eyewear"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A08",
+          "argsJson": "{\"listingId\":\"bl_3\",\"categories\":[\"optician\",\"eyewear\"]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1357,
+     "ms": 1357
+    }
+   ],
+   "metrics": {
+    "ms": 1357,
+    "firstReplyMs": 1357,
+    "plannerMs": 1311,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4172,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 80,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m46-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Publish the Harbor Optics listing bl_3 to its simulated directory",
+     "status": "done",
+     "reply": "Done: Publish listing to simulated directory (Harbor Optics).",
+     "offered": [
+      "M46.A09",
+      "M46.A01",
+      "M46.A08",
+      "M46.A10",
+      "M46.A04",
+      "M46.A05",
+      "M46.A06",
+      "M46.A02",
+      "M45.A09",
+      "M46.A03",
+      "M46.A07",
+      "M48.A03",
+      "M49.A03"
+     ],
+     "planned": [
+      "M46.A09"
+     ],
+     "calls": [
+      {
+       "action": "M46.A09",
+       "args": {
+        "listingId": "bl_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A09",
+          "argsJson": "{\"listingId\":\"bl_3\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1128,
+     "ms": 1131,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "4da5cf4d1325118c",
+       "targetsHash": "d75831d40456f872",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M46.A09",
+         "name": "Publish listing to simulated directory",
+         "args": {
+          "listingId": "bl_3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1131,
+    "firstReplyMs": 1128,
+    "plannerMs": 1109,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4942,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 66,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m46-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Check the directory sync status of listing bl_3",
+     "status": "done",
+     "reply": "Harbor Optics (listing): directory google, status never_published, version 1.",
+     "offered": [
+      "M46.A10",
+      "M46.A09",
+      "M46.A04",
+      "M46.A02",
+      "M46.A06",
+      "M46.A08",
+      "M47.A10",
+      "M29.A06",
+      "M48.A03",
+      "M12.A08",
+      "M12.A07"
+     ],
+     "planned": [
+      "M46.A10"
+     ],
+     "calls": [
+      {
+       "action": "M46.A10",
+       "args": {
+        "listingId": "bl_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A10",
+          "argsJson": "{\"listingId\":\"bl_3\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 870,
+     "ms": 870
+    }
+   ],
+   "metrics": {
+    "ms": 870,
+    "firstReplyMs": 870,
+    "plannerMs": 843,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4384,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 66,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m47-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Open a support ticket for Elodie Mercer titled 'Billing screen blank' with description 'The billing screen is blank.'",
+     "status": "done",
+     "reply": "Done: Create support ticket (Billing screen blank).",
+     "offered": [
+      "M47.A01",
+      "M47.A02",
+      "M47.A03",
+      "M47.A05",
+      "M47.A08",
+      "M47.A09",
+      "M29.A01",
+      "M06.A04",
+      "M01.A02",
+      "M01.A03",
+      "M03.A01",
+      "M06.A01",
+      "M03.A02",
+      "M06.A02",
+      "M03.A03",
+      "M06.A03"
+     ],
+     "planned": [
+      "M47.A01"
+     ],
+     "calls": [
+      {
+       "action": "M47.A01",
+       "args": {
+        "title": "Billing screen blank",
+        "body": "The billing screen is blank.",
+        "contactId": "ct_35"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Elodie Mercer"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A01",
+          "argsJson": "{\"title\":\"Billing screen blank\",\"body\":\"The billing screen is blank.\",\"contactId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1051,
+     "ms": 1051
+    }
+   ],
+   "metrics": {
+    "ms": 1051,
+    "firstReplyMs": 1051,
+    "plannerMs": 1019,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6177,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 107,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m47-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show support ticket tic_1",
+     "status": "done",
+     "reply": "Portal export fails (ticket): body Please investigate this issue., requester email elodie@cedar.example, priority normal, status open, person name Elodie Mercer.",
+     "offered": [
+      "M47.A01",
+      "M47.A08",
+      "M47.A02",
+      "M47.A10",
+      "M47.A03",
+      "M47.A06",
+      "M21.A09",
+      "M47.A09",
+      "M47.A05",
+      "M47.A04",
+      "M47.A07",
+      "M03.A01",
+      "M06.A01",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A02"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A02",
+          "argsJson": "{\"ticketId\":\"tic_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 876,
+     "ms": 876
+    }
+   ],
+   "metrics": {
+    "ms": 876,
+    "firstReplyMs": 876,
+    "plannerMs": 858,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6315,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 67,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m47-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "List open high-priority support tickets",
+     "status": "done",
+     "reply": "Found 1 ticket: Workspace login: body Please investigate this issue., requester email nisha@cedar.example, priority high, status open, person name Nisha Khatri.",
+     "offered": [
+      "M47.A05",
+      "M47.A01",
+      "M47.A03",
+      "M47.A02",
+      "M47.A06",
+      "M47.A10",
+      "M06.A07",
+      "M06.A03",
+      "M46.A07",
+      "M46.A02",
+      "M47.A09",
+      "M47.A08",
+      "M47.A07",
+      "M47.A04",
+      "M03.A01",
+      "M06.A01",
+      "M03.A03"
+     ],
+     "planned": [
+      "M47.A03"
+     ],
+     "calls": [
+      {
+       "action": "M47.A03",
+       "args": {
+        "priority": "high",
+        "status": "open",
+        "limit": 50
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A03",
+          "argsJson": "{\"priority\":\"high\",\"status\":\"open\",\"limit\":50}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1052,
+     "ms": 1052
+    }
+   ],
+   "metrics": {
+    "ms": 1052,
+    "firstReplyMs": 1052,
+    "plannerMs": 1032,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6664,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 73,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m47-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Assign support ticket tic_1 to Raj Iyer",
+     "status": "done",
+     "reply": "Done: Assign ticket owner (Portal export fails).",
+     "offered": [
+      "M47.A04",
+      "M47.A01",
+      "M47.A05",
+      "M47.A08",
+      "M47.A02",
+      "M47.A06",
+      "M06.A05",
+      "M48.A05",
+      "M03.A05",
+      "M47.A10",
+      "M47.A09",
+      "M47.A03",
+      "M48.A02",
+      "M03.A01",
+      "M06.A01",
+      "M06.A07"
+     ],
+     "planned": [
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A04",
+       "args": {
+        "ticketId": "tic_1",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Raj Iyer"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A04",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"ownerId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1120,
+     "ms": 1120
+    }
+   ],
+   "metrics": {
+    "ms": 1120,
+    "firstReplyMs": 1120,
+    "plannerMs": 1011,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5885,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 97,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m47-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Make support ticket tic_1 urgent",
+     "status": "done",
+     "reply": "Done: Set ticket priority (Portal export fails).",
+     "offered": [
+      "M47.A05",
+      "M47.A10",
+      "M47.A01",
+      "M47.A03",
+      "M47.A08",
+      "M47.A02",
+      "M06.A07",
+      "M47.A06",
+      "M47.A09",
+      "M47.A04",
+      "M47.A07",
+      "M03.A01",
+      "M06.A01"
+     ],
+     "planned": [
+      "M47.A05"
+     ],
+     "calls": [
+      {
+       "action": "M47.A05",
+       "args": {
+        "ticketId": "tic_1",
+        "priority": "urgent"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A05",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"priority\":\"urgent\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1013,
+     "ms": 1013
+    }
+   ],
+   "metrics": {
+    "ms": 1013,
+    "firstReplyMs": 1013,
+    "plannerMs": 991,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5361,
+     "cachedRead": 2048,
+     "cacheWrite": 0,
+     "output": 74,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m47-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Resolve the Portal export fails support ticket tic_1",
+     "status": "done",
+     "reply": "Done: Update ticket status (Portal export fails).",
+     "offered": [
+      "M47.A06",
+      "M47.A08",
+      "M47.A01",
+      "M47.A03",
+      "M47.A09",
+      "M47.A10",
+      "M47.A05",
+      "M47.A07",
+      "M47.A02",
+      "M47.A04",
+      "M06.A08",
+      "M06.A09",
+      "M11.A06",
+      "M13.A03",
+      "M12.A03",
+      "M03.A01",
+      "M06.A01"
+     ],
+     "planned": [
+      "M47.A06"
+     ],
+     "calls": [
+      {
+       "action": "M47.A06",
+       "args": {
+        "ticketId": "tic_1",
+        "status": "resolved"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A06",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"status\":\"resolved\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1373,
+     "ms": 1373
+    }
+   ],
+   "metrics": {
+    "ms": 1373,
+    "firstReplyMs": 1373,
+    "plannerMs": 1333,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6253,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 74,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m47-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Add an internal note to support ticket tic_1: 'Reproduced on Safari.'",
+     "status": "done",
+     "reply": "Done: Add internal ticket note (Portal export fails).",
+     "offered": [
+      "M47.A07",
+      "M47.A02",
+      "M47.A01",
+      "M47.A09",
+      "M47.A10",
+      "M47.A08",
+      "M11.A08",
+      "M07.A06",
+      "M07.A01",
+      "M29.A04",
+      "M46.A09",
+      "M03.A02",
+      "M06.A02",
+      "M03.A01",
+      "M06.A01",
+      "M29.A01"
+     ],
+     "planned": [
+      "M47.A07"
+     ],
+     "calls": [
+      {
+       "action": "M47.A07",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "Reproduced on Safari."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A07",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"body\":\"Reproduced on Safari.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1236,
+     "ms": 1236
+    }
+   ],
+   "metrics": {
+    "ms": 1236,
+    "firstReplyMs": 1236,
+    "plannerMs": 1001,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5713,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 77,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m47-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reply to support ticket tic_1: 'We are investigating the export issue.'",
+     "status": "done",
+     "reply": "Done: Reply to ticket requester (Portal export fails).",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M47.A01",
+      "M47.A06",
+      "M47.A10",
+      "M11.A02",
+      "M28.A07",
+      "M04.A01",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We are investigating the export issue."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"body\":\"We are investigating the export issue.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1064,
+     "ms": 1067,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "f6c6a5e2f4fbcc5b",
+       "targetsHash": "43e1b68e750cf3cd",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We are investigating the export issue."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1067,
+    "firstReplyMs": 1064,
+    "plannerMs": 852,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5306,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 79,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m47-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Link support ticket tic_1 to Dorian Vale",
+     "status": "done",
+     "reply": "Done: Link ticket to contact (Portal export fails).",
+     "offered": [
+      "M47.A09",
+      "M47.A01",
+      "M47.A06",
+      "M47.A08",
+      "M47.A02",
+      "M47.A10",
+      "M47.A03",
+      "M47.A05",
+      "M47.A07",
+      "M47.A04",
+      "M01.A02",
+      "M01.A03",
+      "M03.A01",
+      "M06.A01",
+      "M06.A08",
+      "M06.A09",
+      "M11.A06"
+     ],
+     "planned": [
+      "M47.A09"
+     ],
+     "calls": [
+      {
+       "action": "M47.A09",
+       "args": {
+        "ticketId": "tic_1",
+        "contactId": "ct_36"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Dorian Vale"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A09",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"contactId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1005,
+     "ms": 1005
+    }
+   ],
+   "metrics": {
+    "ms": 1005,
+    "firstReplyMs": 1005,
+    "plannerMs": 983,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6170,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 97,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "m47-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Has support ticket tic_1 breached its first-response SLA?",
+     "status": "done",
+     "reply": "Portal export fails (ticket): status breached, policy first_response, time basis elapsed, priority normal, target hours 24, due at 2026-10-20T14:00:00.000Z.",
+     "offered": [
+      "M47.A10",
+      "M47.A08",
+      "M47.A06",
+      "M47.A05",
+      "M47.A07",
+      "M47.A03",
+      "M47.A01",
+      "M47.A04",
+      "M47.A02",
+      "M47.A09",
+      "M13.A03",
+      "M12.A03",
+      "M06.A08",
+      "M06.A09",
+      "M11.A06"
+     ],
+     "planned": [
+      "M47.A10"
+     ],
+     "calls": [
+      {
+       "action": "M47.A10",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      },
+      {
+       "action": "M47.A10",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "look",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A10",
+          "argsJson": "{\"ticketId\":\"tic_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after look",
+       "reply": {
+        "type": "answer",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": "Yes — ticket tic_1 (\"Portal export fails\") has breached its first-response SLA. It's a normal-priority ticket with a 24-hour first-response target, created 2026-10-19 14:00 UTC, so the deadline was 2026-10-20 14:00 UTC, and no first response has been recorded yet."
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2009,
+     "ms": 2009
+    }
+   ],
+   "metrics": {
+    "ms": 2009,
+    "firstReplyMs": 2009,
+    "plannerMs": 1979,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 11451,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 178,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "partial-ticket-replies",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "partial",
+     "reply": "Reply to ticket requester for 1 of 2: tic_1. Failed for 1: tic_4 (Owen Hale has no email address).",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A03",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We received your report."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "op",
+          "op": "forEach",
+          "in": [
+           "tic_1",
+           "tic_4"
+          ],
+          "do": [
+           {
+            "action": "M47.A08",
+            "argsJson": "{\"ticketId\":\"$item\",\"body\":\"We received your report.\"}"
+           }
+          ],
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1306,
+     "ms": 1309,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "dd6bf85dbc0ae849",
+       "targetsHash": "1f04232c43b59344",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "label": "tic_1",
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "tic_4",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1309,
+    "firstReplyMs": 1306,
+    "plannerMs": 1273,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5066,
+     "cachedRead": 2048,
+     "cacheWrite": 0,
+     "output": 114,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "review-cancel-declined",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Cancel review request rrq_1",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M45.A03",
+      "M45.A04",
+      "M45.A02",
+      "M29.A03",
+      "M45.A01",
+      "M45.A05",
+      "M45.A07",
+      "M13.A05",
+      "M06.A10",
+      "M21.A05",
+      "M29.A02",
+      "M29.A04"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A03",
+          "argsJson": "{\"requestId\":\"rrq_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 905,
+     "ms": 905,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "3e416562c4a8d83f",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 905,
+    "firstReplyMs": 905,
+    "plannerMs": 890,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 3869,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 67,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "review-publish-not-listing",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Make this response public on the two-star review rv_2: 'Thank you for telling us.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M45.A08",
+      "M47.A08",
+      "M45.A05",
+      "M45.A07",
+      "M45.A01",
+      "M45.A02",
+      "M47.A07",
+      "M11.A10",
+      "M13.A03",
+      "M12.A03"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you for telling us."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A09",
+          "argsJson": "{\"reviewId\":\"rv_2\",\"body\":\"Thank you for telling us.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1143,
+     "ms": 1146,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "4ba63806d5f78235",
+       "targetsHash": "9c1003ce540c374e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "Thank you for telling us."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1146,
+    "firstReplyMs": 1143,
+    "plannerMs": 1108,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4120,
+     "cachedRead": 2048,
+     "cacheWrite": 0,
+     "output": 77,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M45.A02 not planned (was offered; planned: M21.A03, M45.A01)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.subject')='Visit feedback' AND json_extract(data,'$.body')='Please review your visit.' AND json_extract(data,'$.status')='sent' → 0, wanted 2"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(DISTINCT json_extract(data,'$.contactId')) FROM review_requests WHERE json_extract(data,'$.subject')='Visit feedback' AND json_extract(data,'$.body')='Please review your visit.' AND json_extract(data,'$.status')='sent' → 0, wanted 2"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Create review request for 2 of 2: Cedar onboarding 7, Cedar onboarding 8.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M21.A03",
+      "M45.A01"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 100
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\":\"completed\",\"from\":\"2026-10-19\",\"to\":\"2026-10-25\",\"limit\":100}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"exists\":true}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s2",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A01",
+            "argsJson": "{\"contactId\":\"{{$item.contactId}}\",\"subject\":\"Visit feedback\",\"body\":\"Please review your visit.\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1791,
+     "ms": 1791
+    }
+   ],
+   "metrics": {
+    "ms": 1791,
+    "firstReplyMs": 1791,
+    "plannerMs": 1696,
+    "plannerRounds": 1,
+    "calls": 3,
+    "usage": {
+     "input": 5064,
+     "cachedRead": 4608,
+     "cacheWrite": 0,
+     "output": 225,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ticket-followup-priority",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show support ticket tic_1",
+     "status": "done",
+     "reply": "Portal export fails (ticket): body Please investigate this issue., requester email elodie@cedar.example, priority normal, status open, person name Elodie Mercer.",
+     "offered": [
+      "M47.A01",
+      "M47.A08",
+      "M47.A02",
+      "M47.A10",
+      "M47.A03",
+      "M47.A06",
+      "M21.A09",
+      "M47.A09",
+      "M47.A05",
+      "M47.A04",
+      "M47.A07",
+      "M03.A01",
+      "M06.A01",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A02"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A02",
+          "argsJson": "{\"ticketId\":\"tic_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1351,
+     "ms": 1351
+    },
+    {
+     "user": "Make that urgent",
+     "status": "done",
+     "reply": "Done: Set ticket priority (Portal export fails).",
+     "offered": [
+      "M06.A07",
+      "M47.A05",
+      "M47.A10",
+      "M47.A03",
+      "M06.A06",
+      "M06.A01",
+      "M06.A09",
+      "M15.A07",
+      "M21.A04",
+      "M06.A03",
+      "M28.A06",
+      "M12.A04",
+      "M47.A02"
+     ],
+     "planned": [
+      "M47.A05"
+     ],
+     "calls": [
+      {
+       "action": "M47.A05",
+       "args": {
+        "ticketId": "tic_1",
+        "priority": "urgent"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A05",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"priority\":\"urgent\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 859,
+     "ms": 859
+    }
+   ],
+   "metrics": {
+    "ms": 2210,
+    "firstReplyMs": 1351,
+    "plannerMs": 2177,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 11195,
+     "cachedRead": 7168,
+     "cacheWrite": 0,
+     "output": 141,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ticket-note-not-contact",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Keep this private on the Portal export fails support ticket: 'Customer prefers an afternoon call.'",
+     "status": "done",
+     "reply": "Done: Add internal ticket note (Portal export fails).",
+     "offered": [
+      "M47.A07",
+      "M01.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A05",
+      "M47.A08",
+      "M47.A03",
+      "M45.A08",
+      "M45.A02",
+      "M47.A06",
+      "M47.A10",
+      "M47.A02",
+      "M21.A01",
+      "M07.A01",
+      "M11.A08",
+      "M12.A10",
+      "M13.A10",
+      "M03.A01",
+      "M06.A01"
+     ],
+     "planned": [
+      "M47.A07"
+     ],
+     "calls": [
+      {
+       "action": "M47.A07",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "Customer prefers an afternoon call."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "Portal export fails"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A07",
+          "argsJson": "{\"ticketId\":\"$s1.id\",\"body\":\"Customer prefers an afternoon call.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1124,
+     "ms": 1124
+    }
+   ],
+   "metrics": {
+    "ms": 1124,
+    "firstReplyMs": 1124,
+    "plannerMs": 1073,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6374,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 100,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ticket-owner-not-task",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Raj should take over the Portal export fails support issue.",
+     "status": "done",
+     "reply": "Done: Assign ticket owner (Portal export fails).",
+     "offered": [
+      "M47.A01",
+      "M47.A04",
+      "M47.A08",
+      "M47.A06",
+      "M47.A02",
+      "M47.A07",
+      "M47.A10",
+      "M47.A05",
+      "M48.A05",
+      "M28.A07",
+      "M12.A08",
+      "M29.A10",
+      "M48.A02",
+      "M47.A03",
+      "M03.A01",
+      "M06.A01",
+      "M03.A05",
+      "M06.A05",
+      "M13.A03",
+      "M12.A03",
+      "M29.A06"
+     ],
+     "planned": [
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A04",
+       "args": {
+        "ticketId": "tic_1",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Raj"
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "Portal export fails"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M47.A04",
+          "argsJson": "{\"ticketId\":\"$s2.id\",\"ownerId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1114,
+     "ms": 1114
+    }
+   ],
+   "metrics": {
+    "ms": 1114,
+    "firstReplyMs": 1114,
+    "plannerMs": 1091,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6936,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 117,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ticket-owner-unavailable",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Assign support ticket tic_1 to Eva Rossi",
+     "status": "failed",
+     "reply": "Couldn't assign ticket owner: Eva Rossi must be available and have tickets.manage to own support tickets.",
+     "offered": [
+      "M47.A04",
+      "M47.A01",
+      "M47.A08",
+      "M47.A02",
+      "M47.A05",
+      "M47.A06",
+      "M21.A06",
+      "M48.A05",
+      "M06.A05",
+      "M03.A05",
+      "M47.A09",
+      "M47.A03",
+      "M48.A02",
+      "M03.A01",
+      "M06.A01",
+      "M13.A03",
+      "M12.A03"
+     ],
+     "planned": [
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A04",
+       "args": {
+        "ticketId": "tic_1",
+        "ownerId": "us_7"
+       },
+       "error": "CONFLICT: Eva Rossi must be available and have tickets.manage to own support tickets"
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Eva Rossi"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A04",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"ownerId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1122,
+     "ms": 1122
+    }
+   ],
+   "metrics": {
+    "ms": 1122,
+    "firstReplyMs": 1122,
+    "plannerMs": 1108,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6275,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 97,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ticket-reply-declined",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reply to ticket tic_1: 'We have your report.'",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A04",
+      "M47.A06",
+      "M47.A03",
+      "M11.A10",
+      "M45.A09",
+      "M15.A10",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"body\":\"We have your report.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1057,
+     "ms": 1057,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "04f53464d134ea16",
+       "targetsHash": "168c6b85c6d50cd9",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We have your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1057,
+    "firstReplyMs": 1057,
+    "plannerMs": 1029,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 5143,
+     "cachedRead": 2048,
+     "cacheWrite": 0,
+     "output": 77,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M47.A10",
+      "M47.A07",
+      "M47.A05",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02",
+      "M03.A03",
+      "M06.A03"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "Owen Hale Mailbox delivery"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\":\"$s1.id\",\"body\":\"We are investigating.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 1072,
+     "ms": 1072
+    }
+   ],
+   "metrics": {
+    "ms": 1072,
+    "firstReplyMs": 1072,
+    "plannerMs": 1025,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 6911,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 101,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "ticket-reply-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reply to Elodie Mercer's Portal export fails ticket: 'We are investigating.' Then create a task for Noah Park titled 'Follow up on Elodie export' due tomorrow.",
+     "status": "done",
+     "reply": "Done: Reply to ticket requester (Portal export fails).\nDone: Create task (Follow up on Elodie export).",
+     "offered": [
+      "M47.A08",
+      "M06.A01",
+      "M47.A02",
+      "M06.A03",
+      "M47.A03",
+      "M47.A01",
+      "M45.A02",
+      "M47.A06",
+      "M47.A09",
+      "M47.A07",
+      "M47.A10",
+      "M47.A05",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03",
+      "M12.A03",
+      "M07.A01",
+      "M21.A01",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We are investigating."
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up on Elodie export",
+        "assigneeId": "us_6",
+        "dueDate": "2026-10-22"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "Portal export fails"
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Noah Park"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\": \"$s1.id\", \"body\": \"We are investigating.\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M06.A01",
+          "argsJson": "{\"title\": \"Follow up on Elodie export\", \"assigneeId\": \"$s2.id\", \"dueDate\": \"2026-10-22\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 1537,
+     "ms": 1540,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "9262fc1c48064a61",
+       "targetsHash": "ac6bbefd7837584f",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We are investigating."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 1540,
+    "firstReplyMs": 1537,
+    "plannerMs": 1428,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 7154,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 174,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "tickets-from-invoices-messages",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M28.A10 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M47.A01 not planned (not offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.title')='Overdue invoice follow-up' AND json_extract(data,'$.contactId')='ct_31' → 0, wanted 1"
+    }
+   ],
+   "failureClass": "read-only-plan",
+   "turns": [
+    {
+     "user": "For contacts who have an overdue invoice and an inbound reply in the last 7 days, open one support ticket per contact titled 'Overdue invoice follow-up' with description 'Check the invoice and recent reply.'",
+     "status": "failed",
+     "reply": "The plan was still invalid after one repair:\nthe plan only finds records; add the action that does it, or reply unsupported if no listed action does",
+     "offered": [
+      "M28.A03",
+      "M13.A09",
+      "M28.A08",
+      "M28.A10",
+      "M12.A09",
+      "M28.A02",
+      "M47.A08",
+      "M11.A10",
+      "M28.A07",
+      "M28.A01",
+      "M47.A09",
+      "M47.A10",
+      "M47.A02",
+      "M11.A02",
+      "M13.A01",
+      "M13.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{\"minDaysOverdue\":1,\"limit\":50}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"team\",\"personType\":\"contact\",\"limit\":50}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2.items",
+          "whereJson": "{\"hoursWaiting\":{\"lte\":168}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"in\":\"$s3.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{\"minDaysOverdue\":1,\"limit\":50}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"team\",\"personType\":\"contact\",\"minHours\":0,\"limit\":50}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2.items",
+          "whereJson": "{\"hoursWaiting\":{\"lte\":168}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"in\":\"$s3.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": [
+         "Create tickets one at a time from the tickets page, since no listed action creates a support ticket."
+        ],
+        "query": "create support ticket",
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "the plan only finds records; add the action that does it, or reply unsupported if no listed action does",
+      "the plan only finds records; add the action that does it, or reply unsupported if no listed action does"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3749,
+     "ms": 3749
+    }
+   ],
+   "metrics": {
+    "ms": 3749,
+    "firstReplyMs": 3749,
+    "plannerMs": 3656,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 11919,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 476,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  },
+  {
+   "id": "unsupported-delete-review",
+   "category": "unsupported",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted unsupported"
+    }
+   ],
+   "failureClass": "runtime-no-match",
+   "turns": [
+    {
+     "user": "Permanently delete customer review rv_2",
+     "status": "failed",
+     "reply": "Couldn't delete note: No note with id rv_2.",
+     "offered": [
+      "M45.A03",
+      "M45.A05",
+      "M45.A06",
+      "M45.A01",
+      "M45.A04",
+      "M07.A05",
+      "M45.A07",
+      "M07.A03"
+     ],
+     "planned": [
+      "M07.A05"
+     ],
+     "calls": [
+      {
+       "action": "M07.A05",
+       "args": {
+        "noteId": "rv_2"
+       },
+       "error": "NOT_FOUND: No note with id rv_2"
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M07.A05",
+          "argsJson": "{\"noteId\":\"rv_2\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 949,
+     "ms": 951,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "7e6f7ed89663bacb",
+       "targetsHash": "78e7740ee682b24e",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M07.A05",
+         "name": "Delete note",
+         "args": {
+          "noteId": "rv_2"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 951,
+    "firstReplyMs": 949,
+    "plannerMs": 936,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3183,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 66,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4.1-flash-1017"
+   ]
+  }
+ ]
+}

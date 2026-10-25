@@ -1,0 +1,554 @@
+{
+ "summary": {
+  "label": "dv4-mini-dev-1x",
+  "planner": "qwen",
+  "model": "deepseek-v4-flash-0731",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "304c0a9819bc",
+  "tier": "strong",
+  "scenarios": 3,
+  "repeat": 1,
+  "runs": 3,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 66.7,
+  "allPass": 2,
+  "measured": 3,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 4143,
+   "p95": 8179
+  },
+  "firstReplyMs": {
+   "p50": 4139,
+   "p95": 8179
+  },
+  "plannerRoundsPerRun": 1.33,
+  "callsPerRun": 2.7,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 8295
+ },
+ "runs": [
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M21.A02",
+      "M21.A03",
+      "M45.A08",
+      "M45.A06",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Your feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Dorian Vale"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\": \"$s1.id\", \"subject\": \"Your feedback\", \"body\": \"Please review your visit.\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M45.A02",
+          "argsJson": "{\"requestId\": \"$s2.id\"}"
+         }
+        ],
+        "look": null,
+        "question": null,
+        "options": null,
+        "reason": "Create the draft review request for Dorian Vale with the requested subject and body, then send it via email as M45.A02 is the only send path.",
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3190,
+     "ms": 3199,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "eb72a5840712254e",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3199,
+    "firstReplyMs": 3190,
+    "plannerMs": 3084,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 4716,
+     "cachedRead": 4096,
+     "cacheWrite": 0,
+     "output": 236,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4-flash-0731"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Create review request for 2 of 2: ct_35, ct_36.\nSend review request for 2 of 2: rrq_4, rrq_5.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M21.A03",
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 100
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 100
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\":\"completed\",\"from\":\"2026-10-19\",\"to\":\"2026-10-25\",\"limit\":100}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items[*].contactId",
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A01",
+            "argsJson": "{\"contactId\":\"$item\",\"subject\":\"Visit feedback\",\"body\":\"Please review your visit.\"}"
+           }
+          ]
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s2[*].results[0].id",
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A02",
+            "argsJson": "{\"requestId\":\"$item\"}"
+           }
+          ]
+         }
+        ],
+        "look": null,
+        "clarify": null,
+        "options": null,
+        "reason": "Found completed appointments this week, created a draft review request for each unique contact, and sent each draft.",
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "question": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4139,
+     "ms": 4143,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "9812e5a0fd5863ef",
+       "targetsHash": "00b7d72ba17be50b",
+       "reason": "sends something outside the account",
+       "count": 2,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         },
+         "label": "rrq_4"
+        },
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         },
+         "label": "rrq_5"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4143,
+    "firstReplyMs": 4139,
+    "plannerMs": 3955,
+    "plannerRounds": 1,
+    "calls": 6,
+    "usage": {
+     "input": 5063,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 340,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4-flash-0731"
+   ]
+  },
+  {
+   "id": "tickets-from-invoices-messages",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M28.A10 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M47.A01 not planned (not offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.title')='Overdue invoice follow-up' AND json_extract(data,'$.contactId')='ct_31' → 0, wanted 1"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "For contacts who have an overdue invoice and an inbound reply in the last 7 days, open one support ticket per contact titled 'Overdue invoice follow-up' with description 'Check the invoice and recent reply.'",
+     "status": "failed",
+     "reply": "The plan was still invalid after one repair:\nstep s4 do[0]: M47.A01 was not in <actions>; use a listed action, or reply search_tools with a query for what's missing",
+     "offered": [
+      "M28.A03",
+      "M13.A09",
+      "M28.A08",
+      "M28.A10",
+      "M12.A09",
+      "M28.A02",
+      "M47.A08",
+      "M11.A10",
+      "M28.A07",
+      "M28.A01",
+      "M47.A09",
+      "M47.A10",
+      "M47.A02",
+      "M11.A02",
+      "M13.A01",
+      "M13.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{\"minDaysOverdue\":1}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items[*].contactId",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M11.A02",
+            "argsJson": "{\"contactId\":\"$item\",\"lastMessageFrom\":\"2026-10-15\",\"lastDirection\":\"inbound\"}"
+           }
+          ]
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2[*].results[0].items",
+          "whereJson": "{\"lastInboundAt\":{\"gte\":\"2026-10-15\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3[*].contactId",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A02",
+            "argsJson": "{\"ticketId\":\"\"}"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{\"minDaysOverdue\":1}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items[*].contactId",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M11.A02",
+            "argsJson": "{\"contactId\":\"$item\",\"lastMessageFrom\":\"2026-10-15\"}"
+           }
+          ]
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2[*].results[0].items",
+          "whereJson": "{\"lastInboundAt\":{\"gte\":\"2026-10-15\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3[*].contactId",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A01",
+            "argsJson": "{\"contactId\":\"$item\",\"title\":\"Overdue invoice follow-up\",\"body\":\"Check the invoice and recent reply.\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": "Planned to find overdue invoices, then check each contact for recent inbound replies, then create one ticket per qualifying contact.",
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s2 do[0]: M11.A02 arg (args): Unrecognized key: \"lastDirection\"",
+      "step s4 do[0]: M47.A02 arg ticketId: Too small: expected string to have >=1 characters",
+      "step s4 do[0]: M47.A01 was not in <actions>; use a listed action, or reply search_tools with a query for what's missing"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8179,
+     "ms": 8179
+    }
+   ],
+   "metrics": {
+    "ms": 8179,
+    "firstReplyMs": 8179,
+    "plannerMs": 7941,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 11979,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 709,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "deepseek-v4-flash-0731"
+   ]
+  }
+ ]
+}

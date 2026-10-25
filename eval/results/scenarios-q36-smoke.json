@@ -1,0 +1,170 @@
+{
+ "summary": {
+  "label": "q36-smoke",
+  "planner": "qwen",
+  "model": "qwen3.6-flash",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "d7af8cb3b6ea",
+  "tier": "strong",
+  "scenarios": 1,
+  "repeat": 1,
+  "runs": 1,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 0,
+  "allPass": 0,
+  "measured": 1,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 3864,
+   "p95": 3864
+  },
+  "firstReplyMs": {
+   "p50": 3863,
+   "p95": 3863
+  },
+  "plannerRoundsPerRun": 2,
+  "callsPerRun": 0,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 3939
+ },
+ "runs": [
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M45.A02 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.contactId')='ct_36' AND json_extract(data,'$.subject')='Your feedback' AND json_extract(data,'$.status')='sent' → 0, wanted 1"
+    }
+   ],
+   "failureClass": "schema",
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "failed",
+     "reply": "The planner's reply still didn't match submit_plan after one repair:\nsubmit_plan type: Invalid option: expected one of \"plan\"|\"look\"|\"clarify\"|\"unsupported\"|\"answer\"|\"search_tools\"",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M21.A02",
+      "M21.A03",
+      "M45.A08",
+      "M45.A06",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "plan": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Dorian Vale"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "action": "filter",
+          "in": "$s1",
+          "whereJson": {
+           "status": "active"
+          }
+         },
+         {
+          "id": "s3",
+          "kind": "unsupported",
+          "reason": "No active contact found for 'Dorian Vale'. The user must clarify which contact to use or provide an ID.",
+          "alternatives": "If you have the contact ID, please provide it. Otherwise, check if the name is spelled differently in the system."
+         }
+        ]
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "plan": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Dorian Vale"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "action": "filter",
+          "in": "$s1",
+          "whereJson": {
+           "status": "active"
+          }
+         },
+         {
+          "id": "s3",
+          "kind": "unsupported",
+          "reason": "No active contact found for 'Dorian Vale'. The user must clarify which contact to use or provide an ID.",
+          "alternatives": "If you have the contact ID, please provide it. Otherwise, check if the name is spelled differently in the system."
+         }
+        ]
+       }
+      }
+     ],
+     "compileErrors": [
+      "submit_plan type: Invalid option: expected one of \"plan\"|\"look\"|\"clarify\"|\"unsupported\"|\"answer\"|\"search_tools\"",
+      "submit_plan type: Invalid option: expected one of \"plan\"|\"look\"|\"clarify\"|\"unsupported\"|\"answer\"|\"search_tools\""
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3863,
+     "ms": 3864
+    }
+   ],
+   "metrics": {
+    "ms": 3864,
+    "firstReplyMs": 3863,
+    "plannerMs": 3812,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 8438,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 388,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.6-flash"
+   ]
+  }
+ ]
+}
