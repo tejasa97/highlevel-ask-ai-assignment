@@ -11,21 +11,47 @@ import type { Candidate } from "./registry.js";
 // A possessive is dropped before punctuation is, so "Sarah Johnson's walkthrough" names the same words as "Sarah Johnson walkthrough".
 export const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/['\u2019]s\b/gu, "").replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
 
+// The last word of a reference often names the kind of record rather than the record ("the fall webinar
+// campaign" for a campaign called "Fall Webinar Series"), and a leading article never belongs to a name.
+const TYPE_NOUNS = new Set([
+  "campaign", "team", "invoice", "task", "deal", "opportunity", "ticket", "appointment",
+  "contact", "lead", "tag", "listing", "user", "staff",
+]);
+const ARTICLES = new Set(["the", "a", "an", "my", "our"]);
+
+const singular = (w: string) => (w.endsWith("ies") ? `${w.slice(0, -3)}y` : w.endsWith("s") ? w.slice(0, -1) : w);
+
+/** "the fall webinar campaigns" → "fall webinar": only the trailing type noun and a leading article go. */
+export function withoutTypeNoun(name: string): string {
+  const words = norm(name).split(" ").filter(Boolean);
+  while (words.length > 1 && TYPE_NOUNS.has(singular(words.at(-1)!))) words.pop();
+  if (words.length > 1 && ARTICLES.has(words[0]!)) words.shift();
+  return words.join(" ");
+}
+
 /**
  * Name matching for resolvers: exact (case-insensitive) beats a whole-word match, which beats a prefix.
  * Returns only the best tier, so "Jo" doesn't match "Jo Park" and "Joan Silva" equally when "Jo Park" is exact.
+ * A phrase that names its record type finds nothing, so it is retried without that word — as a fallback, so it
+ * can add a match but never take one away.
  */
 export function matchByName<T>(docs: T[], name: string, label: (d: T) => string): T[] {
   const q = norm(name);
   if (!q) return [];
-  const tiers: T[][] = [[], [], []];
-  for (const d of docs) {
-    const n = norm(label(d));
-    if (n === q) tiers[0]!.push(d);
-    else if (n.split(" ").includes(q) || q.split(" ").every((w) => n.split(" ").includes(w))) tiers[1]!.push(d);
-    else if (n.split(" ").some((w) => w.startsWith(q))) tiers[2]!.push(d);
-  }
-  return tiers.find((t) => t.length > 0) ?? [];
+  const match = (query: string): T[] => {
+    const tiers: T[][] = [[], [], []];
+    for (const d of docs) {
+      const n = norm(label(d));
+      if (n === query) tiers[0]!.push(d);
+      else if (n.split(" ").includes(query) || query.split(" ").every((w) => n.split(" ").includes(w))) tiers[1]!.push(d);
+      else if (n.split(" ").some((w) => w.startsWith(query))) tiers[2]!.push(d);
+    }
+    return tiers.find((t) => t.length > 0) ?? [];
+  };
+  const found = match(q);
+  if (found.length) return found;
+  const bare = withoutTypeNoun(q);
+  return bare && bare !== q ? match(bare) : [];
 }
 
 /** Records matching `name`. With `inactive` (a record's status when it can't be used, else undefined), usable

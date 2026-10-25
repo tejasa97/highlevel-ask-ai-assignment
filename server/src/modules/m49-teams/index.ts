@@ -247,8 +247,7 @@ const archiveTeam = defineAction({
 export default {
   actions: [createTeam, getTeam, listTeams, renameTeam, addMember, removeMember, assignManager, setStrategy, teamWorkload, archiveTeam],
   resolvers: {
-    // "the Sales team" → "Sales"
-    team: (store, name) =>
-      candidates(store.all<Team>("teams"), name.replace(/\b(the|team)\b/gi, ""), (t) => t.name, undefined, (t) => (t.status === "active" ? undefined : t.status)),
+    // "the Sales team" → "Sales", by the same matchByName fallback every resolver gets.
+    team: (store, name) => candidates(store.all<Team>("teams"), name, (t) => t.name, undefined, (t) => (t.status === "active" ? undefined : t.status)),
   },
 } satisfies ModuleExports;
