@@ -30,6 +30,17 @@ describe("makePlanner defaults", () => {
     assert.deepEqual(makePlanner("claude-cli").models, { strong: "claude-sonnet-5-5", fast: "claude-sonnet-5-5" });
   });
 
+  it("treats a blank model variable as unset", () => {
+    // A blank line in .env reached `claude -p --model ""`, which answers "model: String should have at least 1
+    // character" on every turn.
+    process.env.CLAUDE_MODEL = "";
+    process.env.CLAUDE_FAST_MODEL = "";
+    assert.deepEqual(makePlanner("claude-cli").models, { strong: "haiku", fast: "haiku" });
+
+    process.env.CODEX_MODEL = "";
+    assert.deepEqual(makePlanner("codex-cli").models, { strong: "gpt-6.1-sol", fast: "gpt-6.1-sol" });
+  });
+
   it("keeps the Token Plan on qwen3.8-flash, with deepseek one variable away", () => {
     process.env.QWEN_API_KEY = "sk-sp-test";
     delete process.env.QWEN_MODEL;

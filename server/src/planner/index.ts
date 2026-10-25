@@ -12,19 +12,20 @@ export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner
     // MAX_THINKING_TOKENS=0 and --effort low only trim it), so it is ~2x slower than Sonnet: set
     // CLAUDE_MODEL=claude-sonnet-5-5 to trade cost for latency, and CLAUDE_FAST_MODEL to vary the fast tier.
     return new ClaudeCliPlanner({
-      strong: process.env.CLAUDE_MODEL ?? "haiku",
-      fast: process.env.CLAUDE_FAST_MODEL ?? "haiku",
+      // `||`, not `??`: a blank `CLAUDE_MODEL=` line must fall back, or the CLI gets an empty --model.
+      strong: process.env.CLAUDE_MODEL || "haiku",
+      fast: process.env.CLAUDE_FAST_MODEL || "haiku",
     });
   }
   if (kind === "codex-cli") {
     return new CodexCliPlanner({
-      strong: process.env.CODEX_MODEL ?? "gpt-6.1-sol",
-      fast: process.env.CODEX_FAST_MODEL ?? process.env.CODEX_MODEL ?? "gpt-6.1-sol",
+      strong: process.env.CODEX_MODEL || "gpt-6.1-sol",
+      fast: process.env.CODEX_FAST_MODEL || process.env.CODEX_MODEL || "gpt-6.1-sol",
     }, {
       executable: process.env.CODEX_BIN,
       reasoning: {
-        strong: (process.env.CODEX_REASONING ?? "low") as Reasoning,
-        fast: (process.env.CODEX_FAST_REASONING ?? process.env.CODEX_REASONING ?? "low") as Reasoning,
+        strong: (process.env.CODEX_REASONING || "low") as Reasoning,
+        fast: (process.env.CODEX_FAST_REASONING || process.env.CODEX_REASONING || "low") as Reasoning,
       },
     });
   }
