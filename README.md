@@ -11,6 +11,22 @@ All 500 actions are implemented against a simulated backend (SQLite, frozen cloc
 - [docs/PROMPT-EXAMPLE.md](docs/PROMPT-EXAMPLE.md): the planner prompt over two turns, with real payloads and token counts
 - `docs/assignment/` (local only, not in this checkout): the original brief and catalog PDFs
 
+## Architecture
+
+Each turn is one planner call wrapped in code. The full design is in [docs/PLAN.md](docs/PLAN.md), §1–§3.
+
+1. **Retrieve** (`server/src/retrieval/`, no LLM). BM25 and local embeddings rank about 22 action cards out of 500 (see below). Named records in the message are resolved to typed mentions.
+2. **Plan** (`server/src/planner/`, one LLM call). The model returns a typed JSON plan through `submit_plan`. Steps reference earlier outputs with `$refs`. When the model needs to see data before it can plan, it can return a read-only look first. Each turn allows two looks.
+3. **Validate** (`server/src/core/compile.ts`). Code checks action ids, arguments, refs and required inputs. A plan that fails gets one repair call that sees the error.
+4. **Execute** (`server/src/core/execute.ts`). A deterministic runner walks the plan's step graph. It runs the registered handlers along with `filter`, `exclude` and `forEach`. If a step fails before anything changed, there is one retry, and that retry sees the failure.
+5. **Summarize** (`server/src/core/summarize.ts`). The reply is built from the step results, not written by the model: a verdict for questions, then the records touched.
+
+**Context across turns.** The planner never sees the raw transcript. It gets two things. The first is the last four turns as text, in `<context>`. The second is up to 12 typed record identities from the chat, in `<recent_records>`. Follow-ups such as "make those due tomorrow" resolve against those identities. The identities are only ids and labels, so the records' current contents are read again when a plan uses them.
+
+**Approval gates.** The model doesn't decide what needs approval; code does. Destructive and external actions (sends, payments, publications, syncs) pause for approval, and so does any write repeated over 3 or more records. The approval is bound to a hash of the plan and to the exact records the plan targets. If either changes, the plan asks again. A batch where some targets are blocked shows those targets, and you approve only the eligible ones ([partial confirmation](docs/PARTIAL-CONFIRMATION.md)).
+
+**Baseline.** `server/src/server/baseline.ts` makes one model call per step, with tools. It runs on the same handlers and gates and is the comparison in BENCHMARK.md.
+
 ## How the tool list is narrowed
 
 The planner never sees all 500 actions. Retrieval starts with 15 ranked slots, then adds selected lookup/dependency/look-alike helpers; the latest combined evaluation averages 21.8 final cards ([evidence](docs/PLANNER-OUTCOMES-VALIDATION.md)). See [docs/PLAN.md](docs/PLAN.md), section "Retrieval". It combines two rankings over a search card per action, with no LLM call:
@@ -24,11 +40,23 @@ The planner never sees all 500 actions. Retrieval starts with 15 ranked slots, t
 
 ## Current implementation
 
-The latest shared-planner work is collected on `codex/planner-outcomes-and-retrieval`. It adds consistent named lookup and the seven changes described in [the rationale](docs/PLANNER-CHANGES.md). The follow-on [scoped lookup/clarification batch](docs/SCOPED-LOOKUPS-AND-CLARIFICATIONS.md) binds child names to their parents and questions to actual missing action arguments; 2,353 deterministic tests, typecheck and web build pass. The preceding complete Luna checkpoints passed 21/23 older cases and 70/75 coverage cases; they are historical, not the new batch's score. [Preceding validation](docs/PLANNER-OUTCOMES-VALIDATION.md). These results do not clear the consistency gate and are not directly comparable to historical Haiku/Sol benchmarks below.
+`main` now holds all the planner work. The Luna line (#5) and the DeepSeek/Qwen line (#6) were merged into it.
 
-Latest follow-on live runs at `48cbf80`: **16/22 clean older-suite attempts plus one timeout**, and **69/73 clean coverage attempts plus two timeouts**. The form/community/stage examples and Noah's team membership pass, but the older suite regressed. **Not merge-ready on these results.** [Current validation and failure analysis](docs/SCOPED-LOOKUPS-VALIDATION.md).
+The lookup and retrieval work came first. It covers consistent named lookup, child names bound to their parents, and clarifying questions tied to the action arguments that are actually missing. [Rationale](docs/PLANNER-CHANGES.md) · [scoped lookups and clarifications](docs/SCOPED-LOOKUPS-AND-CLARIFICATIONS.md).
 
-All 500 actions in all 50 modules are executable. The first 18 modules (Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams) were built in depth first and carry the scenario and module evals below; the other 32 were added in Wave 1 ([WAVE1-REPORT.md](WAVE1-REPORT.md)) and then hardened ([WAVE1-HARDENING-REPORT.md](WAVE1-HARDENING-REPORT.md), assumptions in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md)). The latest verified backend suite has 2,353 deterministic tests. The baseline scenarios cover the first 18 modules; the other 32 have a separate set of 25 planner scenarios (`eval/module-scenarios/wave1`) that historically scored 96% of clean runs on Haiku (3 repeats), up from 66.7% before the failure classes it exposed were fixed. In that run, one scenario failed every repeat: the planner read "Move X from Starter to Pro" as an opportunity stage change instead of a subscription plan change. It is recorded, not patched.
+The two merged lines add:
+- Id arguments named for a role look up their record type.
+- Invoices, quotes, orders and subscriptions can be named by state or owner, as in "Marco Patel's open invoice".
+- Clarification repair, plus repair for invented ids.
+- Up to two looks per turn, and a retry when a search finds nothing.
+- Answers to questions start with a verdict, with record cards under it.
+- The Qwen Token Plan adapter.
+
+On main, the 2,517 deterministic tests, the typecheck and the web build all pass.
+
+The newest live numbers on main are the Qwen/DeepSeek runs under [Use a Qwen Token Plan locally](#use-a-qwen-token-plan-locally). BENCHMARK.md's Haiku run predates both merges; see [Benchmark scope](#benchmark-scope). The earlier validation reports ([outcomes](docs/PLANNER-OUTCOMES-VALIDATION.md), [scoped lookups](docs/SCOPED-LOOKUPS-VALIDATION.md)) describe branches as they stood before the merge. Keep them as history; they don't score main.
+
+All 500 actions in all 50 modules are executable. The first 18 modules (Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams) were built in depth first and carry the scenario and module evals below; the other 32 were added in Wave 1 ([WAVE1-REPORT.md](WAVE1-REPORT.md)) and then hardened ([WAVE1-HARDENING-REPORT.md](WAVE1-HARDENING-REPORT.md), assumptions in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md)). The backend suite has 2,517 deterministic tests. The baseline scenarios cover the first 18 modules; the other 32 have a separate set of 25 planner scenarios (`eval/module-scenarios/wave1`) that historically scored 96% of clean runs on Haiku (3 repeats), up from 66.7% before the failure classes it exposed were fixed. In that run, one scenario failed every repeat: the planner read "Move X from Starter to Pro" as an opportunity stage change instead of a subscription plan change. It is recorded, not patched.
 
 The new thirty actions use the existing registry, compiler, executor, approval gates, replay ledger, SQLite persistence, audit, traces and UI. [Implementation contract](docs/M45-M47-SCOPE.md) · [Module-building guide](docs/ADDING-A-MODULE.md). Ticket-reply batches now disclose known blocked targets and require approval of the eligible subset before sending; see [subset confirmation](docs/PARTIAL-CONFIRMATION.md). Earlier Sol scores below precede this policy change.
 
@@ -62,6 +90,23 @@ npm run trajectory
 ```
 
 The 45 development cases cover all thirty new action IDs. The 12 reporting cases and matching seed IDs were frozen before handlers in commit `080618f`; do not use reporting outcomes for tuning. Development revision 2 corrects one test that counted existing seeded requests and asserts appointment reads through actual calls (which may run in a look); its original bytes/results are archived and its fingerprint changes. Seed and reporting definitions remain unchanged. The old 23-scenario fingerprint is unchanged **but its seeded database has expanded**. Legacy-row hashes check that existing records were not rewritten.
+
+### Benchmark scope
+
+[BENCHMARK.md](BENCHMARK.md) covers one suite, the 23-scenario regression set in `eval/scenarios`. Those scenarios touch 16 modules. Each ran 3 times on Haiku 5.5 through `claude -p`, once with the planner and once with the baseline, at commit `c41d50d` (2026-10-23). That was before #5 and #6 were merged. It doesn't score all 50 modules or the current main.
+
+The repository has 205 scenarios across all 50 modules. The other 182 are scored separately:
+
+| Set | Scenarios | Latest reported result |
+| --- | --- | --- |
+| `eval/module-scenarios/wave1` (the 32 Wave 1 modules) | 25 | 96% of clean runs on Haiku, 3 repeats ([JOURNEY.md](docs/JOURNEY.md)) |
+| `eval/module-scenarios/coverage` | 75 | 69/73 clean attempts plus 2 timeouts, before the merge ([SCOPED-LOOKUPS-VALIDATION.md](docs/SCOPED-LOOKUPS-VALIDATION.md)) |
+| `eval/module-scenarios/m45-m47/development` | 45 | Sol 91.9% ([M45-M47-FINAL-REPORT.md](docs/M45-M47-FINAL-REPORT.md)); qwen3.8-flash and DeepSeek 97.8% (table below) |
+| `eval/module-scenarios/m45-m47/reporting` (held out) | 12 | Sol 83.3% ([M45-M47-FINAL-REPORT.md](docs/M45-M47-FINAL-REPORT.md)) |
+| `eval/module-scenarios/questions` | 22 | Raw runs only, in `eval/results/` |
+| other (role ids, partial confirmation) | 3 | Raw runs only |
+
+The models, commits and repeat counts differ from row to row, so the rows can't be compared with each other or added into one score.
 
 Codex integration is available in this branch: explicitly select `PLANNER=codex-cli` (Claude is otherwise still the inherited default). Full GPT-6.1 Sol low-reasoning evaluations score 91.9% development, 91.3% original regression and 83.3% reporting, versus Luna's 85.2%, 56.5% and 72.2%. Sol improves overall quality but still misses acceptance. See the [delivery and evaluation report](docs/M45-M47-FINAL-REPORT.md) for counts, test conditions, test-set revisions and remaining planner gaps. Do not substitute adapter tests or retrieval recall for AI task success.
 
@@ -161,6 +206,28 @@ DeepSeek's regression figure is the lower of two batches (the other was 98.6%) a
 four-batch mean; a single batch moves by 1-3 points, so read gaps under ~5 points as noise. Batches:
 `eval/results/scenarios-ds-default-check-*.json`, `scenarios-base-ds-reg-3x-jo.json`,
 `scenarios-reg-fix{4,5,6,7}-qf-3x.json`, `scenarios-dev-smoke-compilerfix.json`.
+
+## Known limitations
+
+- **The latency targets are missed.** They were set for a direct API call. Every `claude -p` call starts a new process, and BENCHMARK.md shows a direct p50 of 8.1 s against a 1.5 s target. DeepSeek through the Token Plan API gets a median turn of 1.9 s. There is no Anthropic API adapter, so Claude can't be measured without the process overhead.
+- **Cost is unknown on subscription planners.** The Claude and Codex CLIs and the prepaid Token Plan report no USD cost. The cost figures here come from list rates.
+- **The benchmark is narrow and old.** See [Benchmark scope](#benchmark-scope). A single batch moves by 1–3 points, so small gaps are noise.
+- **Known planner misses are recorded, not patched.** For example, "Move X from Starter to Pro" is read as an opportunity stage change rather than a plan change. [PLANNER-CHANGES.md](docs/PLANNER-CHANGES.md) lists what is still unsolved.
+- **Retrieval can miss.** Hybrid recall@15 is 97.5%, so about 1 question in 40 doesn't get the right card into the shortlist. The planner can ask for another retrieval round (`search_tools`, up to twice), but it can't use an action it never sees.
+- **Each turn is bounded.** A turn gets two looks, two `search_tools` rounds, one compile repair and one retry after a failed run. Requests that need longer chains of read-then-decide steps hit those limits and stop with an honest partial reply.
+- **Everything is simulated.** The CRM is a single SQLite database with a frozen clock and a seeded demo tenant. Messages, payments, publications and directory syncs never leave the process. There is no real auth, and there is no multi-tenant isolation. Permissions are checked selectively, not globally.
+- **The cards are LLM-generated.** Only the first five modules and M45–M47 were reviewed by hand. Regenerating the cards overwrites hand edits.
+- **Context is short.** The planner gets the last four turns and 12 record identities. Anything older has to be named again.
+
+## Scaling beyond 500 actions
+
+The prompt doesn't grow with the catalog. The planner sees a fixed shortlist of about 22 cards, whether there are 500 actions or 5,000. Here is what grows, and what would change at 5,000 and beyond:
+
+- **Retrieval index.** BM25 and the in-memory cosine scan are linear in the number of cards, and both take milliseconds at 500. The card vectors are cached on disk (`server/data/vectors-*.bin`), keyed by a hash of all card texts. Changing any card re-embeds the whole set, which takes about 30 s at 500 because cards are embedded one at a time. At 5,000 or more cards, three changes would be needed: cache each card by its own hash, embed in batches, and replace the scan with an approximate-nearest-neighbour index.
+- **Precision drops before recall.** More actions means more near-duplicates ("send email" in five modules). Two things already help here: the look-alike sibling links on cards, and the lookup helpers pulled in for the record types the message names. The next step would be a two-stage retrieval: pick modules first, then actions within them. Recall@k should be re-measured per module group as the catalog grows.
+- **Cards and registration.** Each new module follows [docs/ADDING-A-MODULE.md](docs/ADDING-A-MODULE.md): a handler file, its schemas, a generated card and smoke coverage. The smoke test checks every action automatically for a valid call, an unknown param and an unknown id. That keeps the per-action cost low, but card review is manual, and at thousands of actions it would need sampling.
+- **Evals.** The suites are per module group, so new modules add their own sets without touching the regression fingerprint. A full run at this size costs real planner quota, so CI should run the regression set and sample the rest.
+- **Execution and gates.** These scale per request, not per catalog. Risk comes from each action's registered `risk` (`read`, `write`, `destructive` or `external`), so a new action gets approval gates without any new gate code.
 
 ## Layout
 
