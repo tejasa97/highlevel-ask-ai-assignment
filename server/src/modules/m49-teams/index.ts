@@ -82,7 +82,7 @@ const getTeam = defineAction({
 
 const listTeams = defineAction({
   id: "M49.A03",
-  description: "List teams of staff users (e.g. Sales, Support), with their member ids. Archived teams only when asked.",
+  description: "List teams of staff users (e.g. Sales, Support), with their members' names. Archived teams only when asked.",
   risk: "read",
   input: z.strictObject({
     query: z.string().optional().describe("part of a team name"),
@@ -90,7 +90,7 @@ const listTeams = defineAction({
     includeArchived: z.boolean().optional(),
     limit: Limit,
   }),
-  output: listOf(Team),
+  output: listOf(Team.extend({ memberNames: z.array(z.string()) })),
   entities: { produces: "team" },
   example: () => ({ query: "sales" }),
   handler: (a, { store }) => {
@@ -101,7 +101,9 @@ const listTeams = defineAction({
         (!a.query || contains(t.name, a.query)) &&
         (!a.memberId || t.memberIds.includes(a.memberId)),
     );
-    return page(items, a.limit);
+    // "Is Dan on Sales?" is answered from the list itself, without a get per team.
+    const memberNames = (t: Team) => t.memberIds.flatMap((id) => store.get<User>("users", id)?.name ?? []);
+    return page(items.map((t) => ({ ...t, memberNames: memberNames(t) })), a.limit);
   },
 });
 
@@ -124,7 +126,8 @@ const renameTeam = defineAction({
 
 const addMember = defineAction({
   id: "M49.A05",
-  description: "Add a staff user to a team.",
+  description: "Join an existing team as a member, including temporary help. Does not create a team or change its manager. No end date is required and automatic removal is not scheduled.",
+  synonyms: ["help a team", "join existing team", "temporary team membership", "lend a team a hand"],
   risk: "write",
   input: z.strictObject({ teamId: TeamId, userId: UserId }),
   output: Team,

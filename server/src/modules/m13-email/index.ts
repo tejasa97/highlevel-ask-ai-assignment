@@ -104,6 +104,7 @@ function outgoing(store: Store, a: { emailId?: string } & NewEmail, actorId: str
 
 const draftEmail = defineAction({
   id: "M13.A01",
+  inputAlternatives: [["invoiceId"], ["contactId", "subject", "body"], ["leadId", "subject", "body"]],
   description:
     "Write an email to a contact or lead and save it as a draft, without sending. With invoiceId it drafts a payment reminder for that open invoice to its contact (subject and body filled in unless given). Send it with M13.A03.",
   risk: "write",
@@ -132,6 +133,8 @@ const previewEmail = defineAction({
 
 const sendEmail = defineAction({
   id: "M13.A03",
+  inputAlternatives: [["emailId"], ["contactId", "subject", "body"], ["leadId", "subject", "body"]],
+  destination: { id: "email", label: "Email" },
   description:
     "Send an email now: a saved draft (emailId) or a new email to a contact or lead. Refused if they unsubscribed, are on do-not-disturb or turned off email (invoice emails are exempt from marketing preferences).",
   risk: "external",
@@ -151,6 +154,8 @@ const sendEmail = defineAction({
 
 const scheduleEmail = defineAction({
   id: "M13.A04",
+  inputAlternatives: [["emailId", "sendAt"], ["contactId", "subject", "body", "sendAt"], ["leadId", "subject", "body", "sendAt"]],
+  destination: { id: "email", label: "Email" },
   description: "Schedule an email to go out later: a saved draft (emailId) or a new email to a contact or lead. The same consent rules as sending apply.",
   risk: "external",
   input: z.strictObject({ ...SendArgs, sendAt: z.iso.datetime({ offset: true }).describe("when to send, ISO date-time") }),

@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -224,6 +225,7 @@ const schedulePost = defineAction({
   input: z.strictObject({ postId: PostId, publishAt: z.iso.datetime() }),
   output: BlogPost,
   entities: { consumes: ["blog_post"] },
+  destination: { id: "blog", label: "Blog" },
   example: (f) => ({ postId: f.blogPost().id, publishAt: "2026-12-01T15:00:00.000Z" }),
   handler: ({ postId, publishAt }, { store, clock }) => {
     const post = load(store, postId);
@@ -235,6 +237,7 @@ const schedulePost = defineAction({
 
 const publishPost = defineAction({
   id: "M38.A09",
+  destination: { id: "blog", label: "Blog" },
   description:
     "Publish a scheduled or unpublished post now. A draft must be scheduled first (M38.A08); this does not wait for publishAt. Taking it offline again is M38.A10 Unpublish post.",
   risk: "external",
@@ -269,5 +272,8 @@ const unpublishPost = defineAction({
 });
 
 export default {
+  resolvers: {
+    blog_post: tableResolver("blog_posts", "title", {"slug":"slug"}),
+  },
   actions: [createPost, getPost, searchPosts, updatePost, assignAuthor, setCategories, setSeo, schedulePost, publishPost, unpublishPost],
 } satisfies ModuleExports;

@@ -3,7 +3,7 @@ import type { JsonSchema } from "../registry/registry.js";
 // $refs: how plan steps point at earlier results without the data passing through the model.
 //   "$s1.items"              a step's output field
 //   "$s1.items[*].contactId" the field of every item (a list)
-//   "$s2.members[0]"         one item
+//   "$s2.members[0]"         one item; [-1] is the last, e.g. the page an add action just appended
 //   "$item.id" / "$rr.userId" the current forEach item / round-robin pick
 //   "Follow up with {{$item.name}}"  interpolated into a string
 // The same path walks a JSON Schema at compile time (static check) and a value at run time.
@@ -15,15 +15,15 @@ export interface Ref {
   raw: string;
 }
 
-const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)((?:\.[A-Za-z_][A-Za-z0-9_]*|\[\*\]|\[\d+\])*)$/;
+const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)((?:\.[A-Za-z_][A-Za-z0-9_]*|\[\*\]|\[-?\d+\])*)$/;
 const TEMPLATE = /\{\{\s*(\$[^}\s]+)\s*\}\}/g;
-export const RESERVED_ROOTS = new Set(["item", "rr", "ctx"]);
+export const RESERVED_ROOTS = new Set(["item", "rr", "prev", "ctx"]);
 
 export function parseRef(s: string): Ref | null {
   const m = REF.exec(s);
   if (!m) return null;
   const path: Seg[] = [];
-  for (const part of m[2]!.match(/\.[A-Za-z_][A-Za-z0-9_]*|\[\*\]|\[\d+\]/g) ?? []) {
+  for (const part of m[2]!.match(/\.[A-Za-z_][A-Za-z0-9_]*|\[\*\]|\[-?\d+\]/g) ?? []) {
     if (part === "[*]") path.push({ all: true });
     else if (part.startsWith("[")) path.push({ index: Number(part.slice(1, -1)) });
     else path.push({ field: part.slice(1) });
@@ -149,8 +149,9 @@ export function valueAt(value: unknown, path: Seg[], label: string): unknown {
     } else {
       if (!Array.isArray(cur)) throw new RefError(`${here} is not a list`);
       if ("index" in seg) {
-        if (seg.index >= cur.length) throw new RefError(`${here} has ${cur.length} items, no [${seg.index}]`);
-        cur = cur[seg.index];
+        const at = seg.index < 0 ? cur.length + seg.index : seg.index;
+        if (at < 0 || at >= cur.length) throw new RefError(`${here} has ${cur.length} items, no [${seg.index}]`);
+        cur = cur[at];
         continue;
       }
       const rest = path.slice(i + 1);

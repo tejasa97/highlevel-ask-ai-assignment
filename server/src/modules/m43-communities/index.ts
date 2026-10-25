@@ -1,3 +1,4 @@
+import { namedResolver, tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -75,13 +76,19 @@ const createCommunity = defineAction({
 
 const getCommunity = defineAction({
   id: "M43.A02",
-  description: "Get one community: its guidelines, channels and status. Unlike Create community, this only reads a community that already exists.",
+  description: "Get one community by id or by exact name: its id, guidelines, channels and status. Use this to find a community's id from its name. Unlike Create community, this only reads a community that already exists.",
   risk: "read",
-  input: z.strictObject({ communityId: CommunityId }),
+  input: z.strictObject({ communityId: CommunityId.optional(), name: Name.optional() }),
   output: Community,
-  entities: { consumes: ["community"] },
+  entities: { produces: "community", consumes: ["community"], lookup: "community" },
   example: (f) => ({ communityId: f.community().id }),
-  handler: ({ communityId }, { store }) => communityOf(store, communityId),
+  handler: ({ communityId, name }, { store }) => {
+    if (!communityId === !name) throw new ActionError("INVALID", "Give exactly one of communityId or name");
+    if (communityId) return communityOf(store, communityId);
+    const found = nameTaken(store, name!);
+    if (!found) throw new ActionError("NOT_FOUND", `No community called "${name}"`);
+    return found;
+  },
 });
 
 const updateGuidelines = defineAction({
@@ -161,7 +168,9 @@ const leave = defineAction({
 
 const createPost = defineAction({
   id: "M43.A07",
-  description: "Start a top-level post in a channel. Pass contactId for a member post, or omit it to post as the acting staff user. Unlike Reply to community post, this is not nested under another post and it can be pinned.",
+  argumentLookups: { channelId: { entity: "community_channel", scope: { communityId: "communityId" } } },
+  destination: { id: "community", label: "CRM community" },
+  description: "Start a top-level post in a channel. Pass contactId for a member post (they must be a current member: join them with M43.A05 first), or omit it to post as the acting staff user. Unlike Reply to community post, this is not nested under another post and it can be pinned.",
   risk: "write",
   input: z.strictObject({
     communityId: CommunityId,
@@ -170,6 +179,7 @@ const createPost = defineAction({
     contactId: ContactId.optional(),
   }),
   output: CommunityPost,
+  siblings: ["M43.A05"],
   entities: { produces: "community_post", consumes: ["community"] },
   example: (f) => {
     const c = f.community();
@@ -263,5 +273,13 @@ const removePost = defineAction({
 });
 
 export default {
+  resolvers: {
+    community: tableResolver("communities"),
+    community_channel: namedResolver({
+      records: (store) => store.all<Community>("communities").flatMap((c) => c.channels.map((channel) => ({ ...channel, communityId: c.id, community: c.name }))),
+      name: (c) => c.name, detail: (c) => c.community,
+      qualifiers: { communityId: (c) => c.communityId, community: (c) => c.community }, parentQualifiers: ["communityId", "community"],
+    }),
+  },
   actions: [createCommunity, getCommunity, updateGuidelines, createChannel, join, leave, createPost, reply, pin, removePost],
 } satisfies ModuleExports;

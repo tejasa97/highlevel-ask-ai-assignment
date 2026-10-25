@@ -81,9 +81,20 @@ export function addDays(date: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Bare weekdays mean the next occurrence including today; "next Friday" is strictly future. */
+export function weekdayDates(clock: Clock): Record<string, { upcoming: string; next: string }> {
+  const today = localDate(clock.now());
+  const dow = new Date(`${today}T12:00:00Z`).getUTCDay();
+  return Object.fromEntries(["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day, n) => {
+    const delta = (n - dow + 7) % 7;
+    return [day, { upcoming: addDays(today, delta), next: addDays(today, delta || 7) }];
+  }));
+}
+
 /** The <now> block: precomputed ranges so the model never does calendar math. */
 export function nowBlock(clock: Clock): string {
-  const today = localDate(clock.now());
+  const instant = clock.now();
+  const today = localDate(instant);
   const dow = new Date(`${today}T12:00:00Z`).getUTCDay(); // 0 = Sunday
   const monday = addDays(today, -((dow + 6) % 7));
   const weekday = new Date(`${today}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
@@ -92,6 +103,7 @@ export function nowBlock(clock: Clock): string {
     `today = ${today}. tomorrow = ${addDays(today, 1)}. yesterday = ${addDays(today, -1)}.`,
     `this_week = ${monday}..${addDays(monday, 6)}. last_week = ${addDays(monday, -7)}..${addDays(monday, -1)}.`,
     `last_7_days = ${addDays(today, -6)}..${today}. last_30_days = ${addDays(today, -29)}..${today}.`,
+    `weekdays = ${JSON.stringify(weekdayDates({ now: () => instant }))}. Bare weekday uses upcoming (including today); "next weekday" uses next (strictly future).`,
     `Date ranges are inclusive.</now>`,
   ].join(" ");
 }

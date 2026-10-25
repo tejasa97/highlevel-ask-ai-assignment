@@ -43,11 +43,11 @@ describe("runScenario", () => {
       { id: "s2", kind: "action", action: "M47.A08", argsJson: JSON.stringify({ ticketId: "tic_4", body: "Update" }) },
     ] });
     assert.equal((await run(s, mixed)).pass, true);
-    const failed = await run(s, reply({ type: "clarify", question: "Proceed with tic_1 only?" }));
+    const failed = await run(s, reply({ type: "clarify", missing: { action: "M47.A08", argument: "body", argsJson: '{"ticketId":"tic_1"}' }, question: "Proceed with tic_1 only?" }));
     assert.ok(failed.failures.some((f) => f.kind === "confirmation"));
   });
   test("subscription usage stays unknown while numeric tokens accumulate across turns", async () => {
-    const base = scripted(reply({ type: "clarify", question: "What should the task say?" }), action("M06.A01", { title: "Call Ana" }));
+    const base = scripted(reply({ type: "clarify", missing: { action: "M06.A01", argument: "title", argsJson: "{}" }, question: "What should the task say?" }), action("M06.A01", { title: "Call Ana" }));
     const planner: Planner = { name: "codex-cli", async plan(req) {
       const result = await base.plan(req);
       return { ...result, usage: { ...result.usage, costUsd: null, billing: "subscription" } };
@@ -110,6 +110,9 @@ describe("runScenario", () => {
     assert.deepEqual(detail([{ action: "M28.A10", args: {} }, { action: "M47.A01", args: {} }]), []);
     assert.match(detail([{ action: "M28.A10", args: {}, error: "boom" }])[0]!, /^M28\.A10 not planned/);
     assert.match(detail([])[0]!, /^M28\.A10 not planned/);
+    const either = scenario({ turns: [{ user: "x" }], expect: { actions: { includes: ["M05.A02|M47.A01"] } } });
+    assert.deepEqual(check(either, [turn([{ action: "M47.A01", args: {} }])], 0, () => 0), []);
+    assert.equal(check(either, [{ ...turn([]), planned: [] }], 0, () => 0).length, 1);
   });
 
   test("approval: approved by default, declined when the turn says so", async () => {
@@ -170,6 +173,23 @@ describe("runScenario", () => {
     assert.equal(r.pass, false);
     const own = await run(scenario({ turns: [{ user: "create a task to call Ana" }], expect: { status: ["clarify"] } }), action("M06.A01", { title: "Call Ana" }));
     assert.equal(own.infra, undefined);
+  });
+
+  test("an unasked-for question gets one answer and the run is judged on what follows; a second question does not", async () => {
+    const ask = reply({ type: "clarify", question: "What should the task be called?", missing: { action: "M06.A01", argument: "title", argsJson: "{}" } });
+    const s = scenario({ turns: [{ user: "create a task", answer: "Call it Call Ana" }], expect: { status: ["done"], actions: { includes: ["M06.A01"] } } });
+    const r = await run(s, ask, action("M06.A01", { title: "Call Ana" }));
+    assert.deepEqual(r.failures, []);
+    assert.deepEqual(r.turns[0]!.clarified, { question: r.turns[0]!.clarified!.question, answer: "Call it Call Ana" });
+    assert.equal(r.metrics.clarifications, 1);
+
+    const twice = await run(scenario({ turns: [{ user: "create a task" }], expect: { status: ["done"] } }), ask, ask);
+    assert.equal(twice.pass, false);
+    assert.equal(twice.metrics.clarifications, 1);
+
+    const expected = await run(scenario({ turns: [{ user: "create a task" }], expect: { status: ["clarify"] } }), ask);
+    assert.deepEqual(expected.failures, []);
+    assert.equal(expected.metrics.clarifications, 0);
   });
 
   test("an unknown fixture is a scenario error", async () => {

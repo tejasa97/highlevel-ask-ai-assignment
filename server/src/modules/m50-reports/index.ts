@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -202,7 +203,7 @@ const getReport = defineAction({
 
 const listReports = defineAction({
   id: "M50.A03",
-  description: "List saved reports by metric or by words in the name. Results are sorted by name, then id. Unlike Get report definition, this returns a page and does not compute rows.",
+  description: "List saved report definitions by metric or name, sorted by name then id. This is discovery only: it does not answer questions about totals, rankings or metric values. For those, select a definition then use M50.A07 Run report. Unlike Get report definition, this returns a page.",
   risk: "read",
   input: z.strictObject({ metric: z.enum(REPORT_METRICS).optional(), query: z.string().optional(), limit: Limit }),
   output: listOf(SavedReport),
@@ -270,6 +271,7 @@ const runReport = defineAction({
   id: "M50.A07",
   description: "Run a saved report and return live rows plus a total. With no grouping, rows is a single key all. This writes lastRunAt. pipeline_value ignores the date range and sums the value of every open opportunity. Unlike Compare report periods, this uses only the saved range. Unlike M09.A06 Preview matching records, this runs a saved report, not a smart list's filter. Requires reports.view.",
   risk: "write",
+  query: true, // Only lastRunAt/updatedAt bookkeeping; the execution risk and reports.view check stay unchanged.
   input: z.strictObject({ reportId: ReportId }),
   output: Rows,
   siblings: ["M09.A06"],
@@ -286,7 +288,7 @@ const runReport = defineAction({
 
 const compare = defineAction({
   id: "M50.A08",
-  description: "Compare a saved report with the previous window of the same length immediately before from. Both sides are computed live and nothing is saved. pipeline_value ignores the date range, so both windows show the same open-pipeline sum. Unlike Run report, this does not set lastRunAt. Requires reports.view.",
+  description: "Compare a saved report against the previous period (this window versus the one of the same length immediately before from), e.g. this month vs last month. Both sides are computed live and nothing is saved. pipeline_value ignores the date range, so both windows show the same open-pipeline sum. Unlike Run report, this does not set lastRunAt. Requires reports.view.",
   risk: "read",
   input: z.strictObject({ reportId: ReportId }),
   output: z.object({ current: Rows, previous: Rows }),
@@ -328,6 +330,7 @@ const schedule = defineAction({
   }),
   output: SavedReport,
   entities: { consumes: ["report"] },
+  destination: { id: "email", label: "Email" },
   example: (f) => ({ reportId: f.savedReport().id, frequency: "weekly", recipients: ["ops@ourco.example"] }),
   handler: (a, { store, clock, actorId }) => {
     requirePermission(store, actorId, "reports.view");
@@ -342,5 +345,8 @@ const schedule = defineAction({
 });
 
 export default {
+  resolvers: {
+    report: tableResolver("saved_reports", "name", {"metric":"metric"}),
+  },
   actions: [createReport, getReport, listReports, updateFilters, setRange, setGrouping, runReport, compare, exportReport, schedule],
 } satisfies ModuleExports;

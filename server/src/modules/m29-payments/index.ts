@@ -111,11 +111,11 @@ const cancelRequest = defineAction({
 const recordPayment = defineAction({
   id: "M29.A04",
   description:
-    "Record a payment from a contact (simulated): card, bank transfer, cash or check, succeeded or failed. A succeeded payment for an invoice or payment request is applied to that invoice; otherwise it stays unallocated.",
+    "Record a payment from a contact (simulated): card, bank transfer, cash or check, succeeded or failed. A succeeded payment for an invoice or payment request is applied to that invoice; otherwise it stays unallocated. Paid in full: omit amount and it is the payment request's amount or the invoice's balance due.",
   risk: "write",
   input: z.strictObject({
     contactId: z.string(),
-    amount: z.number().positive().describe("USD"),
+    amount: z.number().positive().optional().describe("USD; default the payment request's amount, else the invoice's balance due"),
     method: z.enum(PAYMENT_METHODS).optional().describe("default card"),
     invoiceId: z.string().optional(),
     paymentRequestId: z.string().optional(),
@@ -137,27 +137,29 @@ const recordPayment = defineAction({
     }
     const invoiceId = a.invoiceId ?? req?.invoiceId ?? undefined;
     const failed = a.outcome === "failed";
-    if (req && !failed && a.amount !== req.amount) throw new ActionError("CONFLICT", `Payment request ${req.id} is for $${req.amount}; a payment of $${a.amount} can't settle it`, { amount: req.amount });
+    const amount = a.amount ?? req?.amount ?? (invoiceId ? mustGet<Invoice>(store, "invoices", invoiceId, "invoice").amountDue : undefined);
+    if (amount === undefined) throw new ActionError("INVALID", "amount is required without an invoice or payment request");
+    if (req && !failed && amount !== req.amount) throw new ActionError("CONFLICT", `Payment request ${req.id} is for $${req.amount}; a payment of $${amount} can't settle it`, { amount: req.amount });
     if (!failed && a.failureCode) throw new ActionError("INVALID", "failureCode only applies when outcome is failed");
     const inv = invoiceId && !failed ? openInvoice(store, invoiceId, a.contactId) : undefined;
-    if (inv && a.amount > inv.amountDue) throw new ActionError("CONFLICT", `Invoice ${inv.number} only has $${inv.amountDue} due; record the payment without invoiceId and allocate part of it`);
+    if (inv && amount > inv.amountDue) throw new ActionError("CONFLICT", `Invoice ${inv.number} only has $${inv.amountDue} due; record the payment without invoiceId and allocate part of it`);
     const at = clock.now().toISOString();
     const code = failed ? (a.failureCode ?? "card_declined") : null;
     let p: Payment = store.insert("payments", "pay", {
       contactId: a.contactId,
-      amount: a.amount,
+      amount,
       currency: "USD" as const,
       method: a.method ?? "card",
       status: failed ? ("failed" as const) : ("succeeded" as const),
       failure: code ? { code, message: FAILURES[code].message } : null,
       paymentRequestId: req?.id ?? null,
       allocations: [] as Payment["allocations"],
-      unallocated: failed ? 0 : a.amount,
+      unallocated: failed ? 0 : amount,
       recordedBy: actorId ?? "us_1",
       createdAt: at,
     });
     if (failed) return p;
-    if (inv) p = allocate(store, p, inv, a.amount, at);
+    if (inv) p = allocate(store, p, inv, amount, at);
     if (req) store.update<PaymentRequest>("payment_requests", req.id, { status: "paid", paymentId: p.id, paidAt: at });
     return p;
   },

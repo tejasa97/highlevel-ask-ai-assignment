@@ -12,6 +12,24 @@ test("create: line items total up; past due date INVALID; archived contact CONFL
   assert.equal(failure(() => w.call("M28.A01", { contactId: archived.id })).code, "CONFLICT");
 });
 
+test("a product's line takes its name and its only price; several prices and no default need unitPrice", async () => {
+  const w = await testWorld();
+  const pack = w.f.product({ name: "Setup Package" });
+  w.f.price({ productId: pack.id, label: "Standard", amount: 1200, isDefault: false });
+  const inv = w.call("M28.A01", { contactId: "ct_31", lineItems: [{ productId: pack.id, quantity: 2 }] });
+  assert.deepEqual([inv.total, inv.lineItems[0]?.description, inv.lineItems[0]?.unitPrice], [2400, "Setup Package", 1200]);
+  w.f.price({ productId: pack.id, label: "Rush", amount: 1800, isDefault: false });
+  assert.equal(failure(() => w.call("M28.A04", { invoiceId: inv.id, productId: pack.id })).code, "CONFLICT");
+  assert.equal(w.call("M28.A04", { invoiceId: inv.id, productId: pack.id, unitPrice: 1800 }).total, 4200);
+  assert.equal(failure(() => w.call("M28.A04", { invoiceId: inv.id, quantity: 1 })).code, "INVALID");
+  // An unpriced line named exactly like a product is that product's line.
+  const retainer = w.f.product({ name: "Retainer" });
+  w.f.price({ productId: retainer.id, label: "Monthly", amount: 500 });
+  const named = w.call("M28.A01", { contactId: "ct_31", lineItems: [{ description: "Retainers", quantity: 2 }] });
+  assert.deepEqual([named.total, named.lineItems[0]?.description], [1000, "Retainer"]);
+  assert.equal(failure(() => w.call("M28.A01", { contactId: "ct_31", lineItems: [{ description: "Audit" }] })).code, "INVALID");
+});
+
 test("only drafts take line items or edits; updating needs a field", async () => {
   const w = await testWorld();
   const d = w.f.invoice();
@@ -89,4 +107,28 @@ test("get: shows the payments applied to it", async () => {
   assert.equal(inv.payments.length, 1);
   assert.equal(inv.amountPaid, 400);
   assert.equal(inv.daysOverdue, 45);
+});
+
+test("notRemindedSince retains old and null reminders, excludes this week, before pagination", async () => {
+  const w = await testWorld();
+  const args = { minDaysOverdue: 15, notRemindedSince: "2026-10-19" };
+  const listed = w.call("M28.A10", args);
+  assert.deepEqual(listed.items.map((i: { invoiceId: string }) => i.invoiceId), ["inv_6", "inv_5", "inv_9"]);
+  assert.equal(listed.total, 3);
+  const first = w.call("M28.A10", { ...args, limit: 1 });
+  assert.equal(first.items.length, 1);
+  assert.equal(first.total, 3);
+  assert.equal(w.call("M28.A02", { invoiceId: "inv_6" }).reminders.length, 1, "eligibility query never sends");
+  assert.equal(failure(() => w.call("M28.A10", { notRemindedSince: "Monday" })).code, "INVALID");
+});
+
+test("notRemindedSince uses inclusive account-local midnight across the DST change", async () => {
+  const w = await testWorld({ now: "2026-11-03T15:00:00Z" });
+  const before = w.f.invoice({ status: "open", dueDate: "2026-10-01", lastReminderAt: "2026-11-02T04:59:59Z" });
+  const at = w.f.invoice({ status: "open", dueDate: "2026-10-01", lastReminderAt: "2026-11-02T05:00:00Z" });
+  const future = w.f.invoice({ status: "open", dueDate: "2026-10-01", lastReminderAt: "2026-11-03T13:00:00Z" });
+  const ids = w.call("M28.A10", { notRemindedSince: "2026-11-02" }).items.map((i: { invoiceId: string }) => i.invoiceId);
+  assert.ok(ids.includes(before.id));
+  assert.ok(!ids.includes(at.id));
+  assert.ok(!ids.includes(future.id));
 });

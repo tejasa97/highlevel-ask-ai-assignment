@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -247,6 +248,7 @@ const setGoal = defineAction({
 
 const publishFunnel = defineAction({
   id: "M36.A09",
+  destination: { id: "funnel", label: "Funnel" },
   description:
     "Publish a draft funnel. It needs at least one step, and every step that has a landing page must point at a published page (M37.A09). A failing step is named in the error.",
   risk: "external",
@@ -315,5 +317,8 @@ const metrics = defineAction({
 });
 
 export default {
+  resolvers: {
+    funnel: tableResolver("funnels"),
+  },
   actions: [createFunnel, getFunnel, listFunnels, addStep, reorderSteps, removeStep, linkPage, setGoal, publishFunnel, metrics],
 } satisfies ModuleExports;

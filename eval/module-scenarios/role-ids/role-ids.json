@@ -1,0 +1,37 @@
+[
+  {
+    "id": "merge-two-sarahs",
+    "category": "ambiguous",
+    "modules": [
+      "M01"
+    ],
+    "note": "Two contacts are called Sarah Johnson (Brightside ct_31, gmail ct_32). Merging them asks which one stays, then merges the other into it.",
+    "turns": [
+      {
+        "user": "Merge the two Sarah Johnson contacts",
+        "status": [
+          "clarify",
+          "needs_clarification"
+        ]
+      },
+      {
+        "user": "Keep the Brightside one"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM contacts WHERE id='ct_32'",
+          "equals": "merged"
+        },
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM contacts WHERE id='ct_31'",
+          "equals": "active"
+        }
+      ]
+    }
+  }
+]

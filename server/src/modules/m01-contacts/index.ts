@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { namedResolver } from "../../registry/lookup.js";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, atLeastOne, candidates, contains, fullName, inDateRange, Limit, listOf, Name, page, requireState, sameEmail } from "../../registry/helpers.js";
+import { activeUser, atLeastOne, contains, fullName, inDateRange, Limit, listOf, Name, page, requireState, sameEmail } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Lead } from "../m03-leads/schema.js";
@@ -175,6 +176,7 @@ const mergeContacts = defineAction({
     keepId: ContactId.describe("the contact that stays"),
     duplicateId: ContactId.describe("the contact that goes away"),
   }),
+  idTypes: { keepId: ["contact"], duplicateId: ["contact"] },
   output: z.object({
     contact: Contact,
     moved: z.object({ tasks: z.number(), opportunities: z.number(), leads: z.number() }),
@@ -273,6 +275,7 @@ const addRelationship = defineAction({
     relatedId: ContactId.describe("the other contact"),
     type: z.enum(RELATIONSHIPS).describe("what relatedId is to contactId"),
   }),
+  idTypes: { relatedId: ["contact"] },
   output: Contact,
   entities: { consumes: ["contact"] },
   example: () => ({ contactId: "ct_1", relatedId: "ct_2", type: "colleague" }),
@@ -327,7 +330,12 @@ const timeline = defineAction({
 export default {
   actions: [createContact, getContact, searchContacts, updateContact, archiveContact, mergeContacts, assignContactOwner, setPreferences, addRelationship, timeline],
   resolvers: {
-    contact: (store, name) =>
-      candidates(store.all<Contact>("contacts"), name, (c) => c.name, (c) => [c.email, c.phone, c.company].filter(Boolean).join(", "), (c) => (c.status === "active" ? undefined : c.status)),
+    contact: namedResolver<Contact>({
+      records: (store) => store.all<Contact>("contacts"),
+      name: (c) => c.name,
+      detail: (c) => [c.email, c.phone, c.company].filter(Boolean).join(", "),
+      inactive: (c) => c.status === "active" ? undefined : c.status,
+      qualifiers: { company: (c) => c.company, companyId: (c) => c.companyId, email: (c) => c.email, phone: (c) => c.phone },
+    }),
   },
 } satisfies ModuleExports;

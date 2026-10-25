@@ -1,0 +1,195 @@
+[
+  {
+    "id": "cov-calendar-create",
+    "category": "direct",
+    "modules": ["M20"],
+    "turns": [{ "user": "Create a calendar called Demo Calls with 45 minute appointments in the Europe/London timezone" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M20.A01"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.durationMinutes') FROM calendars WHERE json_extract(data,'$.name')='Demo Calls'", "equals": 45 },
+        { "sql": "SELECT json_extract(data,'$.timezone') FROM calendars WHERE json_extract(data,'$.name')='Demo Calls'", "equals": "Europe/London" }
+      ]
+    }
+  },
+  {
+    "id": "cov-calendar-configure",
+    "category": "multi",
+    "modules": ["M20"],
+    "note": "Raj Iyer is us_2.",
+    "setup": [{ "fixture": "calendar", "with": { "name": "Sales Calls" } }],
+    "turns": [{ "user": "On the Sales Calls calendar, add Raj Iyer as a host, put 15 minutes between bookings and make it public" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M20.A06", "M20.A08", "M20.A09"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.bufferMinutes') FROM calendars WHERE json_extract(data,'$.name')='Sales Calls'", "equals": 15 },
+        { "sql": "SELECT json_extract(data,'$.visibility') FROM calendars WHERE json_extract(data,'$.name')='Sales Calls'", "equals": "public" },
+        { "sql": "SELECT count(*) FROM calendars c, json_each(c.data,'$.hostIds') h WHERE json_extract(c.data,'$.name')='Sales Calls' AND h.value='us_2'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "cov-calendar-archive-with-upcoming",
+    "category": "failure",
+    "modules": ["M20", "M21"],
+    "note": "Sales Calls (cal_1) has a booked appointment next week, so it cannot be archived.",
+    "setup": [
+      { "fixture": "calendar", "with": { "name": "Sales Calls", "hostIds": ["us_2"] } },
+      { "fixture": "appointment", "with": { "title": "Quarterly sync", "calendarId": "cal_1", "hostId": "us_2", "startAt": "2026-10-27T16:00:00.000Z", "endAt": "2026-10-27T16:30:00.000Z", "status": "booked" } }
+    ],
+    "turns": [{ "user": "Archive the Sales Calls calendar" }],
+    "expect": {
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM calendars WHERE json_extract(data,'$.name')='Sales Calls'", "equals": "active" }],
+      "reply": { "includes": ["upcoming|appointment"] }
+    }
+  },
+  {
+    "id": "cov-calendar-list",
+    "category": "direct",
+    "modules": ["M20"],
+    "setup": [
+      { "fixture": "calendar", "with": { "name": "Sales Calls" } },
+      { "fixture": "calendar", "with": { "name": "Onboarding Calls" } }
+    ],
+    "turns": [{ "user": "Which calendars do we have set up?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M20.A03"] },
+      "reply": { "includes": ["Sales Calls", "Onboarding Calls"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-availability-weekly-hours",
+    "category": "direct",
+    "modules": ["M22"],
+    "setup": [{ "fixture": "calendar", "with": { "name": "Sales Calls" } }, { "fixture": "availability", "with": { "calendarId": "cal_1" } }],
+    "turns": [{ "user": "Set the Sales Calls working hours to Monday through Thursday, 10:00 to 14:00" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M22.A01"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.weekly.mon[0].start') FROM availability WHERE json_extract(data,'$.calendarId')='cal_1'", "equals": "10:00" },
+        { "sql": "SELECT json_extract(data,'$.weekly.thu[0].end') FROM availability WHERE json_extract(data,'$.calendarId')='cal_1'", "equals": "14:00" }
+      ]
+    }
+  },
+  {
+    "id": "cov-availability-block-lunch",
+    "category": "direct",
+    "modules": ["M22"],
+    "setup": [{ "fixture": "calendar", "with": { "name": "Sales Calls" } }, { "fixture": "availability", "with": { "calendarId": "cal_1" } }],
+    "turns": [{ "user": "Block off the Sales Calls calendar on 2026-10-30 from 12:00 to 13:00, it's the team lunch" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M22.A05"] },
+      "state": [{ "sql": "SELECT json_array_length(data,'$.blocks') FROM availability WHERE json_extract(data,'$.calendarId')='cal_1'", "equals": 1 }]
+    }
+  },
+  {
+    "id": "cov-availability-notice-and-horizon",
+    "category": "multi",
+    "modules": ["M22"],
+    "setup": [{ "fixture": "calendar", "with": { "name": "Sales Calls" } }, { "fixture": "availability", "with": { "calendarId": "cal_1" } }],
+    "turns": [{ "user": "People should book the Sales Calls at least 4 hours ahead and no more than 30 days out" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M22.A07", "M22.A08"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.minNoticeMinutes') FROM availability WHERE json_extract(data,'$.calendarId')='cal_1'", "equals": 240 },
+        { "sql": "SELECT json_extract(data,'$.maxHorizonDays') FROM availability WHERE json_extract(data,'$.calendarId')='cal_1'", "equals": 30 }
+      ]
+    }
+  },
+  {
+    "id": "cov-availability-open-slots",
+    "category": "indirect",
+    "modules": ["M22", "M20"],
+    "note": "Today is Wednesday 21 October; the calendar is open 09:00-17:00 on weekdays.",
+    "setup": [
+      { "fixture": "calendar", "with": { "name": "Sales Calls", "hostIds": ["us_2"] } },
+      { "fixture": "availability", "with": { "calendarId": "cal_1" } }
+    ],
+    "turns": [{ "user": "When could someone book a Sales Calls slot tomorrow?" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M22.A09"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-booking-page-create",
+    "category": "direct",
+    "modules": ["M23"],
+    "turns": [{ "user": "Create a booking page titled Book a Demo with the slug book-a-demo" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M23.A01"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.status') FROM booking_pages WHERE json_extract(data,'$.slug')='book-a-demo'", "equals": "draft" },
+        { "sql": "SELECT json_extract(data,'$.title') FROM booking_pages WHERE json_extract(data,'$.slug')='book-a-demo'", "equals": "Book a Demo" }
+      ]
+    }
+  },
+  {
+    "id": "cov-booking-page-link-and-publish",
+    "category": "multi",
+    "modules": ["M23", "M20"],
+    "setup": [
+      { "fixture": "calendar", "with": { "name": "Demo Calls", "visibility": "public", "hostIds": ["us_2"] } },
+      { "fixture": "bookingPage", "with": { "title": "Book a Demo", "slug": "book-a-demo" } }
+    ],
+    "turns": [{ "user": "Link the Demo Calls calendar to the Book a Demo page and publish it" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M23.A05", "M23.A09"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.calendarId') FROM booking_pages WHERE json_extract(data,'$.slug')='book-a-demo'", "equals": "cal_1" },
+        { "sql": "SELECT json_extract(data,'$.status') FROM booking_pages WHERE json_extract(data,'$.slug')='book-a-demo'", "equals": "published" }
+      ]
+    }
+  },
+  {
+    "id": "cov-booking-page-publish-without-calendar",
+    "category": "failure",
+    "modules": ["M23"],
+    "note": "Book a Demo has no calendar linked, so it cannot be published.",
+    "setup": [{ "fixture": "bookingPage", "with": { "title": "Book a Demo", "slug": "book-a-demo" } }],
+    "turns": [{ "user": "Publish the Book a Demo booking page" }],
+    "expect": {
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM booking_pages WHERE json_extract(data,'$.slug')='book-a-demo'", "equals": "draft" }],
+      "reply": { "includes": ["calendar"] },
+      "noChanges": true
+    }
+  },
+  {
+    "id": "cov-booking-page-confirmation-message",
+    "category": "direct",
+    "modules": ["M23"],
+    "setup": [{ "fixture": "bookingPage", "with": { "title": "Book a Demo", "slug": "book-a-demo" } }],
+    "turns": [{ "user": "Set the confirmation message on the Book a Demo page to: Thanks, we'll see you soon!" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M23.A07"] },
+      "state": [{ "sql": "SELECT count(*) FROM booking_pages WHERE json_extract(data,'$.slug')='book-a-demo' AND json_extract(data,'$.confirmationMessage') LIKE '%see you soon%'", "equals": 1 }]
+    }
+  },
+  {
+    "id": "cov-booking-page-create-then-publish",
+    "category": "followup",
+    "modules": ["M23", "M20"],
+    "note": "The second turn says only 'it'; the page from turn one is meant.",
+    "setup": [{ "fixture": "calendar", "with": { "name": "Demo Calls", "visibility": "public", "hostIds": ["us_2"] } }],
+    "turns": [
+      { "user": "Create a booking page called Strategy Call", "answer": "Use strategy-call as the slug", "status": ["done"] },
+      { "user": "Link the Demo Calls calendar to it and publish it" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M23.A01", "M23.A05", "M23.A09"] },
+      "state": [{ "sql": "SELECT json_extract(data,'$.status') FROM booking_pages WHERE json_extract(data,'$.title')='Strategy Call'", "equals": "published" }]
+    }
+  }
+]

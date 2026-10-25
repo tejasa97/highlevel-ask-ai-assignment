@@ -121,10 +121,17 @@ const details = defineAction({
   example: (f) => ({ ticketId: f.ticket().id }),
   handler: ({ ticketId }, { store }) => detail(store, get(store, ticketId)),
 });
+/** "Portal export fails support ticket": the words naming the record type are not part of what it says. */
+const TYPE_WORDS = new Set(["support", "ticket", "tickets"]);
+function queryWords(query: string): string[] {
+  const words = norm(query).split(" ").filter(Boolean);
+  const kept = words.filter((w) => !TYPE_WORDS.has(w));
+  return kept.length ? kept : words;
+}
 const search = defineAction({
   id: "M47.A03",
   description:
-    "Search support tickets by text (matched against title, body, requester name and email: every word must appear somewhere), contact, owner, priority or status; newest first. With no status filter includes resolved and closed tickets.",
+    "Search support tickets by text (matched against title, body, requester name and email: every word must appear somewhere; the words support and ticket are ignored), contact, owner, priority or status; newest first. With no status filter includes resolved and closed tickets.",
   risk: "read",
   input: z.strictObject({
     query: Text.optional(),
@@ -140,7 +147,7 @@ const search = defineAction({
   entities: { produces: "ticket" },
   example: () => ({ status: "open" }),
   handler: (a, { store }) => {
-    const words = a.query ? norm(a.query).split(" ").filter(Boolean) : null;
+    const words = a.query ? queryWords(a.query) : null;
     return page(
       store
         .find<Ticket>(
@@ -272,6 +279,7 @@ function replyTarget(ticketId: string, ctx: ActionContext) {
 }
 const reply = defineAction({
   id: "M47.A08",
+  destination: { id: "email", label: "Email" },
   description:
     "Reply by email to a support ticket's requester with body. Only this action updates ticket replies and first-response SLA; do not use generic email/SMS/conversation send. Resolved/closed tickets must be reopened; success moves open to in_progress. If the email bounces, the reply is kept on the ticket with its failure reason, but it does not count as a first response and the status does not change. Transactional: marketing opt-outs do not block, but an email address is required.",
   risk: "external",

@@ -250,9 +250,16 @@ export class Retriever {
       const resolvable = new Set(input.resolvable ?? []);
       const bulk = BULK.test(input.message);
       for (const p of [...picks]) {
-        for (const need of this.byId.get(p.id)!.consumes) {
-          if (bulk && resolvable.has(need) && p.why !== "sibling") for (const id of this.lookupsFor(need).slice(-1)) add(id, "producer", p.id);
-          if (resolvable.has(need) || picks.some((q) => this.byId.get(q.id)!.produces === need)) continue;
+        const c = this.byId.get(p.id)!;
+        // Optional relationships only expand when a typed name actually supplies that relationship.
+        // A plain "create task" must not pull in contact, lead, opportunity and user searches.
+        const optional = (c.optionalConsumes ?? []).filter((e) => input.mentions?.some((m) => m.entity === e));
+        for (const need of new Set([...c.consumes, ...optional])) {
+          if (bulk && resolvable.has(need) && p.why !== "sibling") {
+            const producer = this.producerFor(need, ranking);
+            if (producer) add(producer, "producer", p.id);
+          }
+          if (resolvable.has(need) || picks.some((q) => this.byId.get(q.id)!.lookupFor === need)) continue;
           const producer = this.producerFor(need, ranking);
           if (producer) add(producer, "producer", p.id);
         }
@@ -281,17 +288,21 @@ export class Retriever {
 
   /** The get and search actions for a record type. */
   private lookupsFor(type: string): string[] {
-    const producers = this.cards.filter((c) => c.produces === type && c.available);
-    return ["get", "search"].flatMap((verb) => producers.find((c) => new RegExp(`^${verb}\\b`, "i").test(c.name))?.id ?? []);
+    const getters = this.cards.filter((c) => c.produces === type && c.available && /^get\b/i.test(c.name));
+    // One generic discovery helper, not every cross-module list returning the same record type.
+    const discovery = this.producerFor(type, []);
+    return [...new Set([...(getters[0] ? [getters[0].id] : []), ...(discovery ? [discovery] : [])])];
   }
 
   /** Prefer a producer the query already ranked; otherwise the module's search/list action for that type. */
   private producerFor(type: string, ranking: { id: string }[]): string | undefined {
-    const producers = this.cards.filter((c) => c.produces === type);
-    if (!producers.length) return undefined;
+    const candidates = this.cards.filter((c) => c.lookupFor === type && c.available);
+    if (!candidates.length) return undefined;
+    const required = Math.min(...candidates.map((c) => c.lookupRequired ?? 0));
+    const producers = candidates.filter((c) => (c.lookupRequired ?? 0) === required);
     const ranked = ranking.find((r) => producers.some((p) => p.id === r.id));
     if (ranked) return ranked.id;
-    return (producers.find((p) => /^(search|list)\b/i.test(p.name)) ?? producers[0])!.id;
+    return producers[0]!.id;
   }
 }
 

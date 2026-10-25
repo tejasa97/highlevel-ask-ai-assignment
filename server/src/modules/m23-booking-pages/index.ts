@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { atLeastOne, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -213,6 +214,7 @@ const setRedirect = defineAction({
 
 const publishPage = defineAction({
   id: "M23.A09",
+  destination: { id: "booking_page", label: "Booking page" },
   description:
     "Publish a draft booking page so visitors can book. The linked calendar must be public and active; a private or archived calendar is refused. M20.A09 only changes the calendar's visibility and does not publish the page.",
   risk: "external",
@@ -251,5 +253,8 @@ const unpublishPage = defineAction({
 });
 
 export default {
+  resolvers: {
+    booking_page: tableResolver("booking_pages", "title", {"slug":"slug","calendarId":"calendarId"}),
+  },
   actions: [createPage, getPage, listPages, updateContent, linkCalendar, setIntake, setConfirmation, setRedirect, publishPage, unpublishPage],
 } satisfies ModuleExports;

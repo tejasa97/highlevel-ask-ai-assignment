@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { activeUser, atLeastOne, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -260,6 +261,7 @@ const mergeCompanies = defineAction({
   description: "Merge a duplicate company into the one you keep. The duplicate becomes merged, and its contacts move over (companyId and company name). To merge two people, use M01.A06.",
   risk: "destructive",
   input: z.strictObject({ companyId: CompanyId.describe("the company to keep"), duplicateId: z.string().describe("the company to merge away (co_…)") }),
+  idTypes: { duplicateId: ["company"] },
   output: z.object({ company: Company, merged: Company, contactsMoved: z.number() }),
   siblings: ["M01.A06"],
   entities: { consumes: ["company", "contact"] },
@@ -302,5 +304,8 @@ const listContacts = defineAction({
 });
 
 export default {
+  resolvers: {
+    company: tableResolver("companies", "name", {"domain":"domain"}),
+  },
   actions: [createCompany, getCompany, searchCompanies, updateCompany, archiveCompany, linkContact, unlinkContact, assignManager, mergeCompanies, listContacts],
 } satisfies ModuleExports;

@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -115,7 +116,7 @@ const renameWebsite = defineAction({
 const addPage = defineAction({
   id: "M35.A05",
   description:
-    "Add a page to a website. The slug must be unique on that site (another site may reuse it). Optionally point the page at an existing landing page. To make it the home page, use M35.A06.",
+    "Add a page to a website. The slug must be unique on that site (another site may reuse it). Optionally point the page at an existing landing page. Returns the website with the new page last in pages. To make it the home page, use M35.A06.",
   risk: "write",
   input: z.strictObject({
     websiteId: WebsiteId,
@@ -208,6 +209,7 @@ const setSeo = defineAction({
 
 const publishWebsite = defineAction({
   id: "M35.A09",
+  destination: { id: "website", label: "Website" },
   description:
     "Publish a draft website so it is live. A home page must already be set (M35.A06); otherwise this is refused. Taking a live site offline is M35.A10 Unpublish website. Unlike M37.A09 Publish landing page, M36.A09 Publish funnel and M38.A09 Publish post, this puts the whole site live, not a single page, funnel or article.",
   risk: "external",
@@ -255,5 +257,8 @@ const unpublishWebsite = defineAction({
 });
 
 export default {
+  resolvers: {
+    website: tableResolver("websites"),
+  },
   actions: [createWebsite, getWebsite, listWebsites, renameWebsite, addPage, setHome, updateNav, setSeo, publishWebsite, unpublishWebsite],
 } satisfies ModuleExports;

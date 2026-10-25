@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { Limit, listOf, page } from "../../registry/helpers.js";
@@ -303,5 +304,8 @@ const deleteList = defineAction({
 });
 
 export default {
+  resolvers: {
+    smart_list: tableResolver("smart_lists", "name", {"target":"target"}),
+  },
   actions: [createList, getList, listLists, renameList, updateRules, preview, countMatches, exportMatches, duplicateList, deleteList],
 } satisfies ModuleExports;

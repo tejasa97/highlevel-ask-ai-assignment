@@ -1,0 +1,258 @@
+{
+ "summary": {
+  "label": "shared-outcomes-query-diagnostic-luna-20261024",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/module-scenarios/coverage",
+  "set": "5dae94680e8e",
+  "tier": "strong",
+  "scenarios": 3,
+  "repeat": 1,
+  "runs": 3,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 3,
+  "measured": 3,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 5560,
+   "p95": 11401
+  },
+  "firstReplyMs": {
+   "p50": 5560,
+   "p95": 11401
+  },
+  "plannerRoundsPerRun": 1.33,
+  "callsPerRun": 1.3,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 22299
+ },
+ "runs": [
+  {
+   "id": "cov-report-run",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Run the Monthly Revenue report",
+     "status": "done",
+     "reply": "Done: Run report.",
+     "offered": [
+      "M50.A10",
+      "M50.A07",
+      "M50.A09",
+      "M50.A08",
+      "M50.A03",
+      "M50.A05",
+      "M26.A07",
+      "M30.A01",
+      "M43.A10",
+      "M16.A10",
+      "M17.A09",
+      "M50.A01",
+      "M50.A06",
+      "M50.A02",
+      "M50.A04",
+      "M15.A10",
+      "M09.A06",
+      "M36.A10",
+      "M09.A08"
+     ],
+     "planned": [
+      "M50.A07"
+     ],
+     "calls": [
+      {
+       "action": "M50.A07",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5560,
+     "ms": 5560
+    }
+   ],
+   "metrics": {
+    "ms": 5560,
+    "firstReplyMs": 5560,
+    "plannerMs": 5409,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10387,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 110,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-top-rep",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Show me the Won Deals by Rep report",
+     "status": "done",
+     "reply": "Done: Run report.",
+     "offered": [
+      "M04.A08",
+      "M50.A03",
+      "M04.A02",
+      "M50.A07",
+      "M50.A02",
+      "M50.A09",
+      "M04.A03",
+      "M25.A02",
+      "M31.A02",
+      "M04.A06",
+      "M50.A08",
+      "M04.A10",
+      "M04.A05",
+      "M29.A09",
+      "M50.A01",
+      "M27.A09",
+      "M09.A03",
+      "M03.A02",
+      "M29.A06",
+      "M27.A03"
+     ],
+     "planned": [
+      "M50.A03",
+      "M50.A07"
+     ],
+     "calls": [
+      {
+       "action": "M50.A03",
+       "args": {
+        "metric": "won_deals",
+        "query": "Won Deals by Rep"
+       }
+      },
+      {
+       "action": "M50.A07",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5119,
+     "ms": 5119
+    }
+   ],
+   "metrics": {
+    "ms": 5119,
+    "firstReplyMs": 5119,
+    "plannerMs": 5096,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 10586,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 141,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-trigger-test-event",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Test the Signup trigger with a sample form submission where the source is facebook_ads. Does it match?",
+     "status": "done",
+     "reply": "Done: Test trigger with sample event.",
+     "offered": [
+      "M18.A09",
+      "M09.A06",
+      "M17.A09",
+      "M09.A07",
+      "M03.A06",
+      "M19.A09",
+      "M14.A09",
+      "M37.A07",
+      "M17.A04",
+      "M18.A08",
+      "M37.A09",
+      "M31.A09",
+      "M37.A04",
+      "M09.A08",
+      "M40.A03",
+      "M01.A03",
+      "M50.A07",
+      "M16.A07"
+     ],
+     "planned": [
+      "M17.A09"
+     ],
+     "calls": [
+      {
+       "action": "M17.A09",
+       "args": {
+        "triggerId": "trg_1",
+        "payload": {
+         "source": "facebook_ads"
+        },
+        "eventType": "form.submitted"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 11401,
+     "ms": 11401
+    }
+   ],
+   "metrics": {
+    "ms": 11401,
+    "firstReplyMs": 11401,
+    "plannerMs": 11223,
+    "plannerRounds": 2,
+    "calls": 1,
+    "usage": {
+     "input": 19826,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 206,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

@@ -9,6 +9,15 @@ test("M43.A01 duplicate name is DUPLICATE", async () => {
   assert.equal(failure(() => w.call("M43.A01", { name: "builders" })).code, "DUPLICATE");
 });
 
+test("M43.A02 finds a community by exact name, and wants exactly one of id or name", async () => {
+  const w = await testWorld();
+  const c = w.f.community({ name: "Builders" });
+  assert.equal(w.call("M43.A02", { name: "builders" }).id, c.id);
+  assert.equal(failure(() => w.call("M43.A02", { name: "Nobody" })).code, "NOT_FOUND");
+  assert.equal(failure(() => w.call("M43.A02", {})).code, "INVALID");
+  assert.equal(failure(() => w.call("M43.A02", { communityId: c.id, name: "Builders" })).code, "INVALID");
+});
+
 test("M43.A03 same guidelines is CONFLICT", async () => {
   const w = await testWorld();
   const c = w.f.community({ guidelines: "Be nice" });

@@ -1,0 +1,8786 @@
+{
+ "summary": {
+  "label": "shared-outcomes-final-luna-coverage-20261024-1x",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/module-scenarios/wave1,eval/module-scenarios/coverage",
+  "set": "611207a1bff4",
+  "tier": "strong",
+  "scenarios": 100,
+  "repeat": 1,
+  "runs": 100,
+  "infraRuns": 15,
+  "notRun": 0,
+  "passRate": 85.9,
+  "allPass": 73,
+  "measured": 85,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 5116,
+   "p95": 16199
+  },
+  "firstReplyMs": {
+   "p50": 5042,
+   "p95": 13718
+  },
+  "plannerRoundsPerRun": 1.28,
+  "callsPerRun": 1.4,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 207434
+ },
+ "runs": [
+  {
+   "id": "cov-availability-block-lunch",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Block off the Sales Calls calendar on 2026-10-30 from 12:00 to 13:00, it's the team lunch",
+     "status": "done",
+     "reply": "Done: Block time range.",
+     "offered": [
+      "M22.A06",
+      "M49.A10",
+      "M22.A05",
+      "M49.A03",
+      "M22.A01",
+      "M21.A05",
+      "M20.A10",
+      "M49.A04",
+      "M49.A01",
+      "M22.A04",
+      "M22.A07",
+      "M22.A08",
+      "M49.A02",
+      "M49.A05",
+      "M04.A07",
+      "M20.A02",
+      "M20.A03",
+      "M05.A05"
+     ],
+     "planned": [
+      "M22.A05"
+     ],
+     "calls": [
+      {
+       "action": "M22.A05",
+       "args": {
+        "calendarId": "cal_1",
+        "date": "2026-10-30",
+        "start": "12:00",
+        "end": "13:00",
+        "reason": "team lunch"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5072,
+     "ms": 5072
+    }
+   ],
+   "metrics": {
+    "ms": 5072,
+    "firstReplyMs": 5072,
+    "plannerMs": 5034,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 9473,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 151,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-availability-notice-and-horizon",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "People should book the Sales Calls at least 4 hours ahead and no more than 30 days out",
+     "status": "done",
+     "reply": "Done: Set minimum booking notice.\nDone: Set maximum booking horizon.",
+     "offered": [
+      "M22.A07",
+      "M12.A10",
+      "M22.A08",
+      "M22.A03",
+      "M46.A07",
+      "M22.A01",
+      "M21.A04",
+      "M21.A01",
+      "M28.A07",
+      "M28.A06",
+      "M22.A10",
+      "M22.A04",
+      "M24.A06",
+      "M50.A05",
+      "M04.A07",
+      "M20.A02",
+      "M20.A03",
+      "M13.A10",
+      "M01.A08"
+     ],
+     "planned": [
+      "M22.A07",
+      "M22.A08"
+     ],
+     "calls": [
+      {
+       "action": "M22.A07",
+       "args": {
+        "calendarId": "cal_1",
+        "minNoticeMinutes": 240
+       }
+      },
+      {
+       "action": "M22.A08",
+       "args": {
+        "calendarId": "cal_1",
+        "maxHorizonDays": 30
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4740,
+     "ms": 4740
+    }
+   ],
+   "metrics": {
+    "ms": 4740,
+    "firstReplyMs": 4740,
+    "plannerMs": 4695,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 10382,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 171,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-availability-open-slots",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "When could someone book a Sales Calls slot tomorrow?",
+     "status": "done",
+     "reply": "Found 16 slots matching from 2026-10-22, to 2026-10-22: ?, ?, ?, ?, ? and 11 more.",
+     "offered": [
+      "M22.A07",
+      "M22.A08",
+      "M22.A09",
+      "M21.A01",
+      "M21.A03",
+      "M21.A04",
+      "M21.A07",
+      "M23.A01",
+      "M22.A10",
+      "M23.A05",
+      "M24.A06",
+      "M04.A07",
+      "M23.A07",
+      "M21.A05",
+      "M20.A08",
+      "M20.A02",
+      "M20.A03",
+      "M20.A01"
+     ],
+     "planned": [
+      "M22.A09"
+     ],
+     "calls": [
+      {
+       "action": "M22.A09",
+       "args": {
+        "calendarId": "cal_1",
+        "from": "2026-10-22",
+        "to": "2026-10-22"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5375,
+     "ms": 5375
+    }
+   ],
+   "metrics": {
+    "ms": 5375,
+    "firstReplyMs": 5375,
+    "plannerMs": 5348,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10073,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 143,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-availability-weekly-hours",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Set the Sales Calls working hours to Monday through Thursday, 10:00 to 14:00",
+     "status": "done",
+     "reply": "Done: Set weekly working hours.",
+     "offered": [
+      "M22.A01",
+      "M46.A07",
+      "M22.A02",
+      "M22.A07",
+      "M20.A05",
+      "M22.A03",
+      "M22.A05",
+      "M04.A07",
+      "M01.A08",
+      "M22.A08",
+      "M28.A06",
+      "M05.A01",
+      "M04.A09",
+      "M49.A01",
+      "M49.A08",
+      "M20.A02",
+      "M20.A03"
+     ],
+     "planned": [
+      "M22.A01"
+     ],
+     "calls": [
+      {
+       "action": "M22.A01",
+       "args": {
+        "calendarId": "cal_1",
+        "hours": [
+         {
+          "weekday": "mon",
+          "ranges": [
+           {
+            "start": "10:00",
+            "end": "14:00"
+           }
+          ]
+         },
+         {
+          "weekday": "tue",
+          "ranges": [
+           {
+            "start": "10:00",
+            "end": "14:00"
+           }
+          ]
+         },
+         {
+          "weekday": "wed",
+          "ranges": [
+           {
+            "start": "10:00",
+            "end": "14:00"
+           }
+          ]
+         },
+         {
+          "weekday": "thu",
+          "ranges": [
+           {
+            "start": "10:00",
+            "end": "14:00"
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5288,
+     "ms": 5288
+    }
+   ],
+   "metrics": {
+    "ms": 5288,
+    "firstReplyMs": 5288,
+    "plannerMs": 5260,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 9807,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 207,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-booking-page-confirmation-message",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Set the confirmation message on the Book a Demo page to: Thanks, we'll see you soon!",
+     "status": "done",
+     "reply": "Done: Set booking confirmation message (Book a Demo).",
+     "offered": [
+      "M23.A07",
+      "M23.A02",
+      "M23.A08",
+      "M23.A06",
+      "M14.A09",
+      "M37.A09",
+      "M37.A08",
+      "M13.A02",
+      "M36.A07",
+      "M24.A09",
+      "M21.A01",
+      "M15.A05",
+      "M21.A10",
+      "M13.A04",
+      "M23.A04",
+      "M37.A02",
+      "M20.A02",
+      "M13.A07"
+     ],
+     "planned": [
+      "M23.A07"
+     ],
+     "calls": [
+      {
+       "action": "M23.A07",
+       "args": {
+        "bookingPageId": "bkp_1",
+        "confirmationMessage": "Thanks, we'll see you soon!"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5151,
+     "ms": 5151
+    }
+   ],
+   "metrics": {
+    "ms": 5151,
+    "firstReplyMs": 5151,
+    "plannerMs": 5111,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10199,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 125,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-booking-page-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a booking page titled Book a Demo with the slug book-a-demo",
+     "status": "done",
+     "reply": "Done: Create booking page (Book a Demo).",
+     "offered": [
+      "M23.A01",
+      "M23.A04",
+      "M23.A03",
+      "M23.A02",
+      "M23.A09",
+      "M37.A01",
+      "M23.A08",
+      "M35.A05",
+      "M20.A01",
+      "M37.A04",
+      "M21.A01",
+      "M37.A03",
+      "M37.A02",
+      "M22.A07",
+      "M22.A08",
+      "M20.A04",
+      "M20.A03"
+     ],
+     "planned": [
+      "M23.A01"
+     ],
+     "calls": [
+      {
+       "action": "M23.A01",
+       "args": {
+        "title": "Book a Demo",
+        "slug": "book-a-demo"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4566,
+     "ms": 4566
+    }
+   ],
+   "metrics": {
+    "ms": 4566,
+    "firstReplyMs": 4566,
+    "plannerMs": 4540,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 9894,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 106,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-booking-page-create-then-publish",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a booking page called Strategy Call",
+     "status": "done",
+     "reply": "Done: Create booking page (Strategy Call).",
+     "offered": [
+      "M23.A01",
+      "M21.A01",
+      "M23.A09",
+      "M23.A03",
+      "M23.A02",
+      "M23.A05",
+      "M23.A04",
+      "M20.A01",
+      "M22.A07",
+      "M22.A08",
+      "M07.A01",
+      "M37.A01",
+      "M24.A01",
+      "M21.A05",
+      "M35.A05",
+      "M06.A01",
+      "M22.A09",
+      "M24.A06",
+      "M20.A09",
+      "M37.A09",
+      "M35.A09"
+     ],
+     "planned": [
+      "M23.A01"
+     ],
+     "calls": [
+      {
+       "action": "M23.A01",
+       "args": {
+        "title": "Strategy Call",
+        "slug": "strategy-call"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4596,
+     "ms": 4596
+    },
+    {
+     "user": "Link the Demo Calls calendar to it and publish it",
+     "status": "done",
+     "reply": "Done: Link calendar to booking page (Strategy Call), already done earlier.\nDone: Publish booking page (Strategy Call).",
+     "offered": [
+      "M23.A05",
+      "M38.A09",
+      "M20.A03",
+      "M37.A09",
+      "M23.A09",
+      "M23.A01",
+      "M20.A09",
+      "M20.A10",
+      "M36.A07",
+      "M23.A02",
+      "M20.A01",
+      "M20.A04",
+      "M23.A10",
+      "M22.A08",
+      "M46.A09",
+      "M20.A02",
+      "M35.A09",
+      "M40.A09",
+      "M23.A03"
+     ],
+     "planned": [
+      "M23.A05",
+      "M23.A09"
+     ],
+     "calls": [
+      {
+       "action": "M23.A05",
+       "args": {
+        "bookingPageId": "bkp_1",
+        "calendarId": "cal_1"
+       }
+      },
+      {
+       "action": "M23.A09",
+       "args": {
+        "bookingPageId": "bkp_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4468,
+     "ms": 4471,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "5056b01ebff37149",
+       "targetsHash": "0d4635463b32c5d8",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M23.A09",
+         "name": "Publish booking page",
+         "args": {
+          "bookingPageId": "bkp_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 9067,
+    "firstReplyMs": 4596,
+    "plannerMs": 9009,
+    "plannerRounds": 2,
+    "calls": 3,
+    "usage": {
+     "input": 20673,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 274,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-booking-page-link-and-publish",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Link the Demo Calls calendar to the Book a Demo page and publish it",
+     "status": "done",
+     "reply": "Done: Link calendar to booking page (Book a Demo), already done earlier.\nDone: Publish booking page (Book a Demo).",
+     "offered": [
+      "M23.A05",
+      "M38.A09",
+      "M23.A09",
+      "M37.A09",
+      "M36.A07",
+      "M37.A07",
+      "M37.A05",
+      "M36.A09",
+      "M23.A10",
+      "M23.A01",
+      "M23.A04",
+      "M23.A02",
+      "M20.A09",
+      "M20.A10",
+      "M35.A09",
+      "M20.A02",
+      "M20.A03",
+      "M40.A09"
+     ],
+     "planned": [
+      "M23.A05",
+      "M23.A09"
+     ],
+     "calls": [
+      {
+       "action": "M23.A05",
+       "args": {
+        "bookingPageId": "bkp_1",
+        "calendarId": "cal_1"
+       }
+      },
+      {
+       "action": "M23.A09",
+       "args": {
+        "bookingPageId": "bkp_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4634,
+     "ms": 4636,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "e3eff62bd7ff9ffb",
+       "targetsHash": "0d4635463b32c5d8",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M23.A09",
+         "name": "Publish booking page",
+         "args": {
+          "bookingPageId": "bkp_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4636,
+    "firstReplyMs": 4634,
+    "plannerMs": 4586,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 9888,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 182,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-booking-page-publish-without-calendar",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Publish the Book a Demo booking page",
+     "status": "failed",
+     "reply": "Couldn't publish booking page: Link a public, active calendar before publishing.",
+     "offered": [
+      "M23.A09",
+      "M23.A10",
+      "M23.A01",
+      "M23.A05",
+      "M23.A03",
+      "M23.A04",
+      "M37.A09",
+      "M37.A01",
+      "M37.A07",
+      "M36.A07",
+      "M37.A05",
+      "M36.A09",
+      "M35.A09",
+      "M37.A10",
+      "M37.A02",
+      "M20.A09",
+      "M35.A10",
+      "M20.A01"
+     ],
+     "planned": [
+      "M23.A09"
+     ],
+     "calls": [
+      {
+       "action": "M23.A09",
+       "args": {
+        "bookingPageId": "bkp_1"
+       },
+       "error": "CONFLICT: Link a public, active calendar before publishing"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 8081,
+     "ms": 8086,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "d74552e747a97f28",
+       "targetsHash": "0d4635463b32c5d8",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M23.A09",
+         "name": "Publish booking page",
+         "args": {
+          "bookingPageId": "bkp_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8086,
+    "firstReplyMs": 8081,
+    "plannerMs": 8063,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 20338,
+     "cachedRead": 15104,
+     "cacheWrite": 0,
+     "output": 142,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-calendar-archive-with-upcoming",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Archive the Sales Calls calendar",
+     "status": "failed",
+     "reply": "Couldn't archive calendar: Cancel or wait out 1 upcoming appointments first.",
+     "offered": [
+      "M20.A10",
+      "M20.A04",
+      "M20.A01",
+      "M01.A05",
+      "M23.A05",
+      "M07.A01",
+      "M22.A08",
+      "M22.A01",
+      "M21.A01",
+      "M22.A07",
+      "M05.A01",
+      "M05.A05",
+      "M20.A03",
+      "M28.A08",
+      "M20.A02",
+      "M02.A05",
+      "M40.A10",
+      "M49.A10",
+      "M23.A04",
+      "M22.A09",
+      "M23.A01",
+      "M24.A01"
+     ],
+     "planned": [
+      "M20.A10"
+     ],
+     "calls": [
+      {
+       "action": "M20.A10",
+       "args": {
+        "calendarId": "cal_1"
+       },
+       "error": "CONFLICT: Cancel or wait out 1 upcoming appointments first"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5043,
+     "ms": 5045,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "2ee6a91544634c47",
+       "targetsHash": "edb4562c04a00aea",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M20.A10",
+         "name": "Archive calendar",
+         "args": {
+          "calendarId": "cal_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5045,
+    "firstReplyMs": 5043,
+    "plannerMs": 5020,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10471,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 125,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-calendar-configure",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "On the Sales Calls calendar, add Raj Iyer as a host, put 15 minutes between bookings and make it public",
+     "status": "done",
+     "reply": "Done: Assign calendar host (Sales Calls).\nDone: Set booking buffer (Sales Calls).\nDone: Set calendar visibility (Sales Calls).",
+     "offered": [
+      "M05.A01",
+      "M20.A06",
+      "M20.A08",
+      "M20.A03",
+      "M21.A06",
+      "M23.A09",
+      "M20.A09",
+      "M21.A01",
+      "M20.A01",
+      "M23.A01",
+      "M23.A05",
+      "M24.A01",
+      "M22.A07",
+      "M21.A07",
+      "M22.A08",
+      "M20.A02",
+      "M48.A02",
+      "M48.A03",
+      "M04.A01",
+      "M36.A01"
+     ],
+     "planned": [
+      "M20.A06",
+      "M20.A08",
+      "M20.A09"
+     ],
+     "calls": [
+      {
+       "action": "M20.A06",
+       "args": {
+        "calendarId": "cal_1",
+        "userId": "us_2"
+       }
+      },
+      {
+       "action": "M20.A08",
+       "args": {
+        "calendarId": "cal_1",
+        "bufferMinutes": 15
+       }
+      },
+      {
+       "action": "M20.A09",
+       "args": {
+        "calendarId": "cal_1",
+        "visibility": "public"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5775,
+     "ms": 5775
+    }
+   ],
+   "metrics": {
+    "ms": 5775,
+    "firstReplyMs": 5775,
+    "plannerMs": 5723,
+    "plannerRounds": 1,
+    "calls": 3,
+    "usage": {
+     "input": 10220,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 235,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-calendar-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a calendar called Demo Calls with 45 minute appointments in the Europe/London timezone",
+     "status": "done",
+     "reply": "Done: Create calendar (Demo Calls).",
+     "offered": [
+      "M20.A01",
+      "M21.A01",
+      "M20.A05",
+      "M20.A07",
+      "M20.A02",
+      "M22.A07",
+      "M22.A08",
+      "M24.A01",
+      "M23.A01",
+      "M20.A08",
+      "M20.A10",
+      "M21.A04",
+      "M22.A01",
+      "M21.A03",
+      "M21.A07",
+      "M22.A09",
+      "M06.A01",
+      "M24.A06"
+     ],
+     "planned": [
+      "M20.A01"
+     ],
+     "calls": [
+      {
+       "action": "M20.A01",
+       "args": {
+        "name": "Demo Calls",
+        "timezone": "Europe/London",
+        "durationMinutes": 45
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4283,
+     "ms": 4283
+    }
+   ],
+   "metrics": {
+    "ms": 4283,
+    "firstReplyMs": 4283,
+    "plannerMs": 4248,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10065,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 109,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-calendar-list",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Which calendars do we have set up?",
+     "status": "done",
+     "reply": "Found 2 calendars: Onboarding Calls (active), Sales Calls (active).",
+     "offered": [
+      "M20.A02",
+      "M20.A09",
+      "M20.A01",
+      "M20.A06",
+      "M20.A05",
+      "M20.A03",
+      "M23.A05",
+      "M22.A01",
+      "M22.A08",
+      "M22.A07",
+      "M24.A01",
+      "M21.A03",
+      "M23.A02",
+      "M23.A01",
+      "M35.A02",
+      "M21.A02",
+      "M23.A09",
+      "M21.A01",
+      "M22.A09"
+     ],
+     "planned": [
+      "M20.A03"
+     ],
+     "calls": [
+      {
+       "action": "M20.A03",
+       "args": {}
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7046,
+     "ms": 7046
+    }
+   ],
+   "metrics": {
+    "ms": 7046,
+    "firstReplyMs": 7046,
+    "plannerMs": 7021,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10152,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 93,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-community-create-with-channel",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a community called Customer Hub and add a discussion channel called Announcements",
+     "status": "done",
+     "reply": "Done: Create community (Customer Hub).\nDone: Create discussion channel (Customer Hub).",
+     "offered": [
+      "M10.A01",
+      "M43.A04",
+      "M43.A01",
+      "M43.A07",
+      "M43.A03",
+      "M43.A05",
+      "M43.A09",
+      "M44.A05",
+      "M03.A01",
+      "M15.A01",
+      "M11.A08",
+      "M05.A01",
+      "M44.A01",
+      "M41.A01",
+      "M15.A05",
+      "M18.A04",
+      "M11.A02"
+     ],
+     "planned": [
+      "M43.A01",
+      "M43.A04"
+     ],
+     "calls": [
+      {
+       "action": "M43.A01",
+       "args": {
+        "name": "Customer Hub"
+       }
+      },
+      {
+       "action": "M43.A04",
+       "args": {
+        "communityId": "com_1",
+        "name": "Announcements"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4472,
+     "ms": 4472
+    }
+   ],
+   "metrics": {
+    "ms": 4472,
+    "firstReplyMs": 4472,
+    "plannerMs": 4438,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 9909,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 138,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-community-join",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a community called Customer Hub",
+     "status": "done",
+     "reply": "Done: Create community (Customer Hub).",
+     "offered": [
+      "M43.A01",
+      "M43.A07",
+      "M43.A02",
+      "M43.A04",
+      "M43.A08",
+      "M01.A01",
+      "M43.A03",
+      "M03.A01",
+      "M44.A01",
+      "M03.A10",
+      "M05.A01",
+      "M44.A05",
+      "M02.A01",
+      "M49.A01",
+      "M44.A07",
+      "M38.A01"
+     ],
+     "planned": [
+      "M43.A01"
+     ],
+     "calls": [
+      {
+       "action": "M43.A01",
+       "args": {
+        "name": "Customer Hub"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4480,
+     "ms": 4480
+    },
+    {
+     "user": "Add Elodie Mercer to it",
+     "status": "done",
+     "reply": "Done: Join community.",
+     "offered": [
+      "M43.A07",
+      "M43.A04",
+      "M43.A01",
+      "M43.A05",
+      "M43.A08",
+      "M44.A07",
+      "M43.A03",
+      "M44.A05",
+      "M19.A04",
+      "M08.A01",
+      "M21.A07",
+      "M49.A05",
+      "M02.A01",
+      "M11.A08",
+      "M47.A07",
+      "M01.A02",
+      "M01.A03",
+      "M38.A01",
+      "M11.A02"
+     ],
+     "planned": [
+      "M43.A05"
+     ],
+     "calls": [
+      {
+       "action": "M43.A05",
+       "args": {
+        "communityId": "com_1",
+        "contactId": "ct_35"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4445,
+     "ms": 4445
+    }
+   ],
+   "metrics": {
+    "ms": 8925,
+    "firstReplyMs": 4480,
+    "plannerMs": 8890,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 20198,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 232,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-community-pin-reply",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Pin post cmp_2 (the 'Agreed!' reply) in the Customer Hub community",
+     "status": "failed",
+     "reply": "Couldn't pin community post: Replies can't be pinned.",
+     "offered": [
+      "M43.A09",
+      "M43.A08",
+      "M43.A10",
+      "M47.A08",
+      "M43.A07",
+      "M45.A09",
+      "M43.A04",
+      "M43.A06",
+      "M45.A08",
+      "M07.A09",
+      "M11.A10",
+      "M11.A08",
+      "M07.A08",
+      "M13.A09",
+      "M12.A09",
+      "M43.A02",
+      "M07.A05",
+      "M45.A06",
+      "M07.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M43.A09"
+     ],
+     "calls": [
+      {
+       "action": "M43.A09",
+       "args": {
+        "postId": "cmp_2"
+       },
+       "error": "CONFLICT: Replies can't be pinned"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3827,
+     "ms": 3827
+    }
+   ],
+   "metrics": {
+    "ms": 3827,
+    "firstReplyMs": 3827,
+    "plannerMs": 3783,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10179,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 101,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-community-post-and-pin",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M43.A05 not planned (was offered; planned: M43.A01, M43.A04)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M43.A07 not planned (was offered; planned: M43.A01, M43.A04)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M43.A09 not planned (was offered; planned: M43.A01, M43.A04)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.pinned') FROM community_posts WHERE json_extract(data,'$.body') LIKE '%Welcome to the hub%' → \"SQL error: no such table: community_posts\", wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Create a community called Customer Hub with a channel called Announcements",
+     "status": "done",
+     "reply": "Done: Create community (Customer Hub).\nDone: Create discussion channel (Customer Hub).",
+     "offered": [
+      "M43.A04",
+      "M43.A01",
+      "M43.A07",
+      "M43.A03",
+      "M43.A02",
+      "M43.A09",
+      "M05.A01",
+      "M15.A01",
+      "M44.A01",
+      "M03.A01",
+      "M11.A08",
+      "M44.A07",
+      "M01.A08",
+      "M10.A01",
+      "M07.A01",
+      "M38.A01",
+      "M11.A02"
+     ],
+     "planned": [
+      "M43.A01",
+      "M43.A04"
+     ],
+     "calls": [
+      {
+       "action": "M43.A01",
+       "args": {
+        "name": "Customer Hub"
+       }
+      },
+      {
+       "action": "M43.A04",
+       "args": {
+        "communityId": "com_1",
+        "name": "Announcements"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4205,
+     "ms": 4205
+    },
+    {
+     "user": "Add Elodie Mercer, then post 'Welcome to the hub, say hi!' as her in Announcements and pin it",
+     "status": "failed",
+     "reply": "The plan was still invalid after one repair:\nstep s3: M43.A07 arg channelId needs a single value, but $s2.channels is a array",
+     "offered": [
+      "M19.A04",
+      "M43.A10",
+      "M43.A09",
+      "M07.A08",
+      "M43.A07",
+      "M43.A08",
+      "M43.A04",
+      "M08.A01",
+      "M08.A06",
+      "M21.A07",
+      "M11.A08",
+      "M02.A01",
+      "M03.A01",
+      "M48.A01",
+      "M43.A01",
+      "M01.A02",
+      "M01.A03",
+      "M18.A04",
+      "M07.A05",
+      "M07.A03",
+      "M11.A02",
+      "M01.A01",
+      "M43.A02",
+      "M43.A03",
+      "M43.A05",
+      "M44.A07",
+      "M43.A06",
+      "M45.A01",
+      "M47.A09",
+      "M28.A01",
+      "M01.A08",
+      "M02.A06",
+      "M27.A01",
+      "M29.A01",
+      "M30.A03",
+      "M38.A03",
+      "M47.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step s3: \"$s2.channels[?name='Announcements'].id\" is not a valid $ref (forms: $s1.items, $s1.items[*].id, $item.id, $rr.userId)",
+      "step s3: M43.A07 arg channelId needs a single value, but $s2.channels is a array"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 15692,
+     "ms": 15692
+    }
+   ],
+   "metrics": {
+    "ms": 19897,
+    "firstReplyMs": 4205,
+    "plannerMs": 19775,
+    "plannerRounds": 4,
+    "calls": 2,
+    "usage": {
+     "input": 62956,
+     "cachedRead": 34944,
+     "cacheWrite": 0,
+     "output": 727,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-community-remove-reported-post",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Post cmp_1 in the Customer Hub community (com_1) was reported as spam, take it down",
+     "status": "done",
+     "reply": "Done: Remove reported post.",
+     "offered": [
+      "M43.A10",
+      "M35.A10",
+      "M43.A09",
+      "M38.A10",
+      "M44.A06",
+      "M43.A07",
+      "M43.A08",
+      "M43.A06",
+      "M43.A04",
+      "M45.A09",
+      "M47.A08",
+      "M44.A09",
+      "M44.A07",
+      "M50.A06",
+      "M07.A07",
+      "M43.A02",
+      "M07.A05",
+      "M37.A10",
+      "M23.A10",
+      "M07.A08",
+      "M45.A06",
+      "M07.A03"
+     ],
+     "planned": [
+      "M43.A10"
+     ],
+     "calls": [
+      {
+       "action": "M43.A10",
+       "args": {
+        "postId": "cmp_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5769,
+     "ms": 5771,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "fd8113120e7f2f62",
+       "targetsHash": "0d87e0e1be7cae02",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M43.A10",
+         "name": "Remove reported post",
+         "args": {
+          "postId": "cmp_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5771,
+    "firstReplyMs": 5769,
+    "plannerMs": 5734,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 20914,
+     "cachedRead": 15488,
+     "cacheWrite": 0,
+     "output": 135,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-company-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Add a company called Northwind Traders with the domain northwind.example in the logistics industry",
+     "status": "done",
+     "reply": "Done: Create company (Northwind Traders).",
+     "offered": [
+      "M02.A01",
+      "M02.A03",
+      "M02.A04",
+      "M05.A01",
+      "M04.A01",
+      "M02.A06",
+      "M35.A01",
+      "M10.A01",
+      "M05.A06",
+      "M25.A06",
+      "M35.A05",
+      "M27.A04",
+      "M36.A01",
+      "M46.A01",
+      "M03.A01",
+      "M01.A01",
+      "M01.A03",
+      "M03.A03",
+      "M46.A03",
+      "M01.A04",
+      "M03.A04",
+      "M24.A04",
+      "M27.A03"
+     ],
+     "planned": [
+      "M02.A01"
+     ],
+     "calls": [
+      {
+       "action": "M02.A01",
+       "args": {
+        "name": "Northwind Traders",
+        "domain": "northwind.example",
+        "industry": "logistics"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4337,
+     "ms": 4337
+    }
+   ],
+   "metrics": {
+    "ms": 4337,
+    "firstReplyMs": 4337,
+    "plannerMs": 4303,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 12137,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 111,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-company-duplicate-domain",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a company called Northwind Logistics with the domain northwind.example",
+     "status": "failed",
+     "reply": "Couldn't create company: Northwind Traders already uses the domain northwind.example (co_1); link contacts to that company or merge.",
+     "offered": [
+      "M02.A01",
+      "M02.A03",
+      "M35.A01",
+      "M02.A04",
+      "M10.A01",
+      "M05.A01",
+      "M02.A05",
+      "M36.A01",
+      "M46.A01",
+      "M25.A01",
+      "M32.A01",
+      "M37.A01",
+      "M34.A01",
+      "M15.A01",
+      "M04.A01",
+      "M01.A01",
+      "M03.A01",
+      "M01.A03",
+      "M03.A03",
+      "M46.A03"
+     ],
+     "planned": [
+      "M02.A01"
+     ],
+     "calls": [
+      {
+       "action": "M02.A01",
+       "args": {
+        "name": "Northwind Logistics",
+        "domain": "northwind.example"
+       },
+       "error": "DUPLICATE: Northwind Traders already uses the domain northwind.example (co_1); link contacts to that company or merge"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4432,
+     "ms": 4432
+    }
+   ],
+   "metrics": {
+    "ms": 4432,
+    "firstReplyMs": 4432,
+    "plannerMs": 4386,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 11348,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 106,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-company-link-and-assign",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Link Kofi Brown to Northwind Traders and make Raj Iyer the account manager for that company",
+     "status": "done",
+     "reply": "Done: Link contact to company.\nDone: Assign account manager (Northwind Traders).",
+     "offered": [
+      "M02.A08",
+      "M02.A06",
+      "M02.A02",
+      "M47.A09",
+      "M29.A01",
+      "M02.A01",
+      "M02.A04",
+      "M02.A09",
+      "M47.A04",
+      "M04.A06",
+      "M03.A10",
+      "M36.A01",
+      "M49.A07",
+      "M36.A07",
+      "M23.A05",
+      "M01.A02",
+      "M01.A03",
+      "M02.A03",
+      "M48.A02",
+      "M48.A03",
+      "M01.A07",
+      "M03.A05",
+      "M01.A09",
+      "M03.A02",
+      "M24.A02",
+      "M46.A02"
+     ],
+     "planned": [
+      "M02.A06",
+      "M02.A08"
+     ],
+     "calls": [
+      {
+       "action": "M02.A06",
+       "args": {
+        "companyId": "co_1",
+        "contactId": "ct_14"
+       }
+      },
+      {
+       "action": "M02.A08",
+       "args": {
+        "companyId": "co_1",
+        "accountManagerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4997,
+     "ms": 4997
+    }
+   ],
+   "metrics": {
+    "ms": 4997,
+    "firstReplyMs": 4997,
+    "plannerMs": 4949,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 12560,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 226,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-company-merge-duplicates",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Acme Holdings and Acme Holdings Inc are the same company. Merge Acme Holdings Inc into Acme Holdings.",
+     "status": "done",
+     "reply": "Done: Merge duplicate companies.",
+     "offered": [
+      "M15.A08",
+      "M02.A05",
+      "M08.A09",
+      "M30.A07",
+      "M02.A03",
+      "M02.A09",
+      "M02.A08",
+      "M02.A01",
+      "M03.A10",
+      "M04.A01",
+      "M04.A05",
+      "M42.A05",
+      "M05.A06",
+      "M05.A07",
+      "M16.A09",
+      "M02.A02",
+      "M15.A09",
+      "M01.A05",
+      "M05.A05",
+      "M20.A10",
+      "M01.A06",
+      "M30.A03",
+      "M42.A03"
+     ],
+     "planned": [
+      "M02.A09"
+     ],
+     "calls": [
+      {
+       "action": "M02.A09",
+       "args": {
+        "companyId": "co_1",
+        "duplicateId": "co_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4927,
+     "ms": 4930,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "0d831ecb47e4aa21",
+       "targetsHash": "2bc76b2563878a81",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M02.A09",
+         "name": "Merge duplicate companies",
+         "args": {
+          "companyId": "co_1",
+          "duplicateId": "co_2"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4930,
+    "firstReplyMs": 4927,
+    "plannerMs": 4879,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 11309,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 159,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-company-who-works-there",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Who do we know at Northwind Traders?",
+     "status": "done",
+     "reply": "Found 2 companies: Priya Nair (active), Tomas Ruiz (active).",
+     "offered": [
+      "M04.A03",
+      "M04.A02",
+      "M11.A10",
+      "M11.A02",
+      "M03.A01",
+      "M48.A03",
+      "M46.A02",
+      "M03.A03",
+      "M04.A06",
+      "M43.A02",
+      "M02.A02",
+      "M02.A10",
+      "M02.A03",
+      "M46.A04",
+      "M46.A03",
+      "M03.A02"
+     ],
+     "planned": [
+      "M02.A10"
+     ],
+     "calls": [
+      {
+       "action": "M02.A10",
+       "args": {
+        "companyId": "co_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4835,
+     "ms": 4835
+    }
+   ],
+   "metrics": {
+    "ms": 4835,
+    "firstReplyMs": 4835,
+    "plannerMs": 4813,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10464,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 126,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-form-create-with-fields",
+   "category": "multi",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M18.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(data,'$.fields') FROM forms WHERE json_extract(data,'$.name')='Contact Us' → undefined, wanted 2"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM forms f, json_each(f.data,'$.fields') s WHERE json_extract(f.data,'$.name')='Contact Us' AND json_extract(s.value,'$.type')='email' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Create a form called Contact Us with a required email field and an optional message textarea",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31ca40dc5c5ff-MAA)",
+     "offered": [
+      "M18.A05",
+      "M10.A07",
+      "M10.A01",
+      "M10.A08",
+      "M14.A01",
+      "M27.A08",
+      "M23.A06",
+      "M13.A03",
+      "M13.A01",
+      "M18.A04",
+      "M47.A01",
+      "M18.A01",
+      "M28.A01",
+      "M13.A09",
+      "M01.A01",
+      "M19.A05",
+      "M10.A04",
+      "M16.A05",
+      "M27.A03",
+      "M13.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2459,
+     "ms": 2459,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2459,
+    "firstReplyMs": 2459,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "cov-form-publish",
+   "category": "direct",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M18.A08 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM forms WHERE json_extract(data,'$.name')='Contact Us' → \"draft\", wanted \"published\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Publish the Contact Us form",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31ca35ddecbcd-MAA)",
+     "offered": [
+      "M37.A09",
+      "M37.A07",
+      "M18.A08",
+      "M46.A09",
+      "M01.A05",
+      "M41.A09",
+      "M36.A09",
+      "M42.A01",
+      "M40.A09",
+      "M45.A09",
+      "M23.A09",
+      "M47.A09",
+      "M28.A07",
+      "M13.A03",
+      "M45.A01",
+      "M18.A02",
+      "M18.A03",
+      "M38.A09",
+      "M35.A09",
+      "M19.A07",
+      "M36.A07",
+      "M23.A06",
+      "M16.A08",
+      "M45.A06",
+      "M13.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2201,
+     "ms": 2201,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2201,
+    "firstReplyMs": 2201,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "cov-form-simulated-submit",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Submit a test response to the Contact Us form with the email test.user@example.com",
+     "status": "done",
+     "reply": "Done: Submit simulated form response.",
+     "offered": [
+      "M18.A09",
+      "M48.A03",
+      "M19.A09",
+      "M14.A09",
+      "M13.A09",
+      "M13.A02",
+      "M18.A10",
+      "M13.A04",
+      "M13.A03",
+      "M13.A10",
+      "M27.A08",
+      "M13.A01",
+      "M47.A08",
+      "M48.A01",
+      "M48.A04",
+      "M18.A02",
+      "M18.A03",
+      "M01.A03",
+      "M49.A03",
+      "M13.A07",
+      "M27.A03"
+     ],
+     "planned": [
+      "M18.A09"
+     ],
+     "calls": [
+      {
+       "action": "M18.A03",
+       "args": {
+        "query": "Contact Us"
+       }
+      },
+      {
+       "action": "M18.A09",
+       "args": {
+        "formId": "fm_1",
+        "values": {
+         "fld_email": "test.user@example.com"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8948,
+     "ms": 8948
+    }
+   ],
+   "metrics": {
+    "ms": 8948,
+    "firstReplyMs": 8948,
+    "plannerMs": 8897,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 22440,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 210,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-form-submission-count",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M18.A10 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "reply",
+     "detail": "missing /\\b3\\b/"
+    }
+   ],
+   "turns": [
+    {
+     "user": "How many people have filled in the Contact Us form?",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31ca93d0bc5ff-MAA)",
+     "offered": [
+      "M18.A10",
+      "M01.A09",
+      "M01.A01",
+      "M01.A05",
+      "M02.A10",
+      "M01.A06",
+      "M01.A07",
+      "M18.A03",
+      "M11.A10",
+      "M24.A05",
+      "M44.A07",
+      "M47.A09",
+      "M09.A07",
+      "M24.A06",
+      "M21.A07",
+      "M18.A02",
+      "M19.A10",
+      "M02.A06",
+      "M03.A01",
+      "M02.A01",
+      "M47.A01",
+      "M48.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2664,
+     "ms": 2664,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2664,
+    "firstReplyMs": 2664,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "cov-funnel-ambiguous-name",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Add a step called Upsell to the Spring Funnel",
+     "status": "clarify",
+     "reply": "I found 2 matching funnel records. Which one do you mean?",
+     "offered": [
+      "M36.A04",
+      "M36.A01",
+      "M36.A05",
+      "M36.A07",
+      "M36.A06",
+      "M36.A08",
+      "M15.A05",
+      "M16.A04",
+      "M05.A01",
+      "M05.A06",
+      "M16.A05",
+      "M37.A05",
+      "M07.A01",
+      "M16.A06",
+      "M16.A01",
+      "M36.A02",
+      "M36.A03",
+      "M35.A01",
+      "M37.A01",
+      "M05.A08",
+      "M37.A06",
+      "M18.A06",
+      "M40.A06"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6280,
+     "ms": 6280
+    }
+   ],
+   "metrics": {
+    "ms": 6280,
+    "firstReplyMs": 6280,
+    "plannerMs": 6253,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 21509,
+     "cachedRead": 15744,
+     "cacheWrite": 0,
+     "output": 120,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-funnel-conversion-metrics",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "How is the Webinar Signup funnel converting?",
+     "status": "done",
+     "reply": "Webinar Signup (funnel): status published, conversion rate 0.2.",
+     "offered": [
+      "M36.A08",
+      "M36.A01",
+      "M36.A10",
+      "M36.A02",
+      "M36.A06",
+      "M36.A09",
+      "M03.A10",
+      "M37.A09",
+      "M37.A07",
+      "M37.A10",
+      "M27.A10",
+      "M11.A06",
+      "M11.A01",
+      "M11.A07",
+      "M11.A02",
+      "M36.A03",
+      "M05.A01",
+      "M35.A01",
+      "M37.A01",
+      "M15.A10",
+      "M50.A07",
+      "M27.A03"
+     ],
+     "planned": [
+      "M36.A10"
+     ],
+     "calls": [
+      {
+       "action": "M36.A10",
+       "args": {
+        "funnelId": "fn_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4545,
+     "ms": 4545
+    }
+   ],
+   "metrics": {
+    "ms": 4545,
+    "firstReplyMs": 4545,
+    "plannerMs": 4519,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 11075,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 128,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-funnel-create-with-steps",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a funnel called Webinar Signup with three steps: Landing, Registration and Thank You",
+     "status": "done",
+     "reply": "Done: Create funnel (Webinar Signup).\nDone: Add funnel step (Webinar Signup).\nDone: Add funnel step (Webinar Signup).\nDone: Add funnel step (Webinar Signup).",
+     "offered": [
+      "M36.A04",
+      "M37.A01",
+      "M24.A07",
+      "M36.A01",
+      "M37.A03",
+      "M24.A06",
+      "M36.A07",
+      "M36.A02",
+      "M37.A09",
+      "M37.A10",
+      "M36.A09",
+      "M37.A07",
+      "M03.A01",
+      "M36.A06",
+      "M37.A05",
+      "M05.A06",
+      "M16.A04",
+      "M39.A10",
+      "M35.A05",
+      "M18.A01",
+      "M23.A01",
+      "M35.A01",
+      "M38.A01",
+      "M21.A08",
+      "M21.A05",
+      "M42.A07",
+      "M42.A03"
+     ],
+     "planned": [
+      "M36.A01",
+      "M36.A04",
+      "M36.A04",
+      "M36.A04"
+     ],
+     "calls": [
+      {
+       "action": "M36.A01",
+       "args": {
+        "name": "Webinar Signup"
+       }
+      },
+      {
+       "action": "M36.A04",
+       "args": {
+        "funnelId": "fn_1",
+        "name": "Landing"
+       }
+      },
+      {
+       "action": "M36.A04",
+       "args": {
+        "funnelId": "fn_1",
+        "name": "Registration"
+       }
+      },
+      {
+       "action": "M36.A04",
+       "args": {
+        "funnelId": "fn_1",
+        "name": "Thank You"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5787,
+     "ms": 5787
+    }
+   ],
+   "metrics": {
+    "ms": 5787,
+    "firstReplyMs": 5787,
+    "plannerMs": 5727,
+    "plannerRounds": 1,
+    "calls": 4,
+    "usage": {
+     "input": 11547,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 211,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-funnel-reorder-and-remove",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "In the Webinar Signup funnel, remove the Landing step and then put Thank You before Registration",
+     "status": "done",
+     "reply": "Done: Remove funnel step (Webinar Signup).\nDone: Reorder funnel steps (Webinar Signup).",
+     "offered": [
+      "M36.A03",
+      "M16.A06",
+      "M24.A08",
+      "M36.A09",
+      "M36.A07",
+      "M24.A07",
+      "M36.A05",
+      "M37.A09",
+      "M36.A06",
+      "M36.A04",
+      "M37.A10",
+      "M37.A07",
+      "M37.A01",
+      "M24.A09",
+      "M35.A09",
+      "M36.A02",
+      "M05.A03",
+      "M35.A03"
+     ],
+     "planned": [
+      "M36.A06",
+      "M36.A05"
+     ],
+     "calls": [
+      {
+       "action": "M36.A02",
+       "args": {
+        "funnelId": "fn_1"
+       }
+      },
+      {
+       "action": "M36.A06",
+       "args": {
+        "funnelId": "fn_1",
+        "stepId": "fs_1"
+       }
+      },
+      {
+       "action": "M36.A05",
+       "args": {
+        "funnelId": "fn_1",
+        "stepIds": [
+         "fs_3",
+         "fs_2"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step s1: $s2 is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 16685,
+     "ms": 16688,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "3dde79d092085258",
+       "targetsHash": "96c7c4c88aeb2ba6",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M36.A06",
+         "name": "Remove funnel step",
+         "args": {
+          "funnelId": "fn_1",
+          "stepId": "fs_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 16688,
+    "firstReplyMs": 16685,
+    "plannerMs": 16638,
+    "plannerRounds": 3,
+    "calls": 3,
+    "usage": {
+     "input": 40782,
+     "cachedRead": 20608,
+     "cacheWrite": 0,
+     "output": 471,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-media-alt-text",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Set the alt text of hero.jpg to Our team at the 2026 offsite",
+     "status": "done",
+     "reply": "Done: Set asset alt text (hero.jpg).",
+     "offered": [
+      "M39.A05",
+      "M49.A10",
+      "M12.A04",
+      "M49.A03",
+      "M10.A05",
+      "M37.A05",
+      "M49.A04",
+      "M23.A07",
+      "M44.A04",
+      "M37.A04",
+      "M49.A01",
+      "M37.A08",
+      "M49.A08",
+      "M11.A08",
+      "M49.A07",
+      "M20.A10",
+      "M05.A05",
+      "M13.A04",
+      "M15.A06",
+      "M12.A07",
+      "M11.A02",
+      "M13.A07"
+     ],
+     "planned": [
+      "M39.A05"
+     ],
+     "calls": [
+      {
+       "action": "M39.A05",
+       "args": {
+        "assetId": "md_1",
+        "altText": "Our team at the 2026 offsite"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4880,
+     "ms": 4880
+    }
+   ],
+   "metrics": {
+    "ms": 4880,
+    "firstReplyMs": 4880,
+    "plannerMs": 4827,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10857,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 139,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-media-delete-in-use",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Delete hero.jpg",
+     "status": "failed",
+     "reply": "Couldn't delete unreferenced asset: This asset is used by 1 record. Remove it from 1 record first.",
+     "offered": [
+      "M39.A10",
+      "M07.A05",
+      "M09.A10",
+      "M16.A06",
+      "M08.A05",
+      "M05.A09",
+      "M22.A04",
+      "M05.A05",
+      "M07.A07",
+      "M39.A07",
+      "M39.A08",
+      "M36.A06",
+      "M43.A10",
+      "M49.A06",
+      "M14.A05",
+      "M37.A01",
+      "M38.A01",
+      "M07.A03"
+     ],
+     "planned": [
+      "M39.A10"
+     ],
+     "calls": [
+      {
+       "action": "M39.A10",
+       "args": {
+        "assetId": "md_1"
+       },
+       "error": "CONFLICT: This asset is used by 1 record. Remove it from 1 record first"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4647,
+     "ms": 4650,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "22ecdfd04d89eb88",
+       "targetsHash": "d7d008840a25267d",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M39.A10",
+         "name": "Delete unreferenced asset",
+         "args": {
+          "assetId": "md_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4650,
+    "firstReplyMs": 4647,
+    "plannerMs": 4618,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 9532,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 126,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-media-delete-unused",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Delete old-banner.png, nothing uses it any more",
+     "status": "done",
+     "reply": "Done: Delete unreferenced asset (old-banner.png).",
+     "offered": [
+      "M20.A10",
+      "M12.A10",
+      "M39.A10",
+      "M20.A06",
+      "M08.A05",
+      "M07.A05",
+      "M02.A05",
+      "M09.A10",
+      "M10.A08",
+      "M05.A09",
+      "M26.A10",
+      "M25.A05",
+      "M16.A06",
+      "M39.A07",
+      "M49.A10",
+      "M40.A10",
+      "M13.A10",
+      "M01.A08",
+      "M37.A01",
+      "M38.A01",
+      "M07.A03"
+     ],
+     "planned": [
+      "M39.A10"
+     ],
+     "calls": [
+      {
+       "action": "M39.A10",
+       "args": {
+        "assetId": "md_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6694,
+     "ms": 6696,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "bb4496d0e2f2460e",
+       "targetsHash": "d7d008840a25267d",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M39.A10",
+         "name": "Delete unreferenced asset",
+         "args": {
+          "assetId": "md_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6696,
+    "firstReplyMs": 6694,
+    "plannerMs": 6655,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 20313,
+     "cachedRead": 15104,
+     "cacheWrite": 0,
+     "output": 128,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-media-share-link",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Give me a share link for hero.jpg that expires on 2026-11-30 at 17:00 UTC",
+     "status": "done",
+     "reply": "Done: Generate asset access link (hero.jpg).",
+     "offered": [
+      "M39.A09",
+      "M44.A08",
+      "M24.A03",
+      "M07.A06",
+      "M42.A04",
+      "M50.A06",
+      "M27.A06",
+      "M31.A06",
+      "M37.A05",
+      "M32.A07",
+      "M41.A05",
+      "M47.A09",
+      "M36.A07",
+      "M29.A01",
+      "M41.A07",
+      "M21.A03",
+      "M03.A03",
+      "M07.A03",
+      "M42.A03",
+      "M27.A03",
+      "M32.A03"
+     ],
+     "planned": [
+      "M39.A09"
+     ],
+     "calls": [
+      {
+       "action": "M39.A09",
+       "args": {
+        "assetId": "md_1",
+        "expiresAt": "2026-11-30T17:00:00Z"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6505,
+     "ms": 6505
+    }
+   ],
+   "metrics": {
+    "ms": 6505,
+    "firstReplyMs": 6505,
+    "plannerMs": 6457,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 22681,
+     "cachedRead": 16256,
+     "cacheWrite": 0,
+     "output": 159,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-media-upload",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Upload a PNG called company-logo.png, about 20 KB, into the brand folder",
+     "status": "done",
+     "reply": "Done: Upload media asset (company-logo.png).",
+     "offered": [
+      "M39.A01",
+      "M39.A06",
+      "M02.A05",
+      "M39.A03",
+      "M37.A01",
+      "M39.A07",
+      "M02.A04",
+      "M02.A01",
+      "M02.A06",
+      "M39.A02",
+      "M09.A01",
+      "M08.A01",
+      "M02.A09",
+      "M02.A02",
+      "M25.A06",
+      "M41.A05",
+      "M01.A05",
+      "M05.A05",
+      "M20.A10"
+     ],
+     "planned": [
+      "M39.A01"
+     ],
+     "calls": [
+      {
+       "action": "M39.A01",
+       "args": {
+        "name": "company-logo.png",
+        "mimeType": "image/png",
+        "sizeBytes": 20480,
+        "folder": "brand"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4955,
+     "ms": 4955
+    }
+   ],
+   "metrics": {
+    "ms": 4955,
+    "firstReplyMs": 4955,
+    "plannerMs": 4901,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10370,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 116,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-pipeline-add-and-rename-stage",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "In the Sales Pipeline add a stage called Contract at 90% and rename the Qualified stage to Discovery",
+     "status": "done",
+     "reply": "Done: Add pipeline stage (Sales Pipeline).\nDone: Rename pipeline stage (Sales Pipeline).",
+     "offered": [
+      "M05.A01",
+      "M05.A07",
+      "M05.A06",
+      "M03.A07",
+      "M05.A04",
+      "M04.A05",
+      "M05.A08",
+      "M05.A09",
+      "M04.A01",
+      "M03.A10",
+      "M09.A04",
+      "M04.A03",
+      "M36.A04",
+      "M49.A04",
+      "M04.A02",
+      "M05.A02",
+      "M05.A03",
+      "M36.A01"
+     ],
+     "planned": [
+      "M05.A06",
+      "M05.A07"
+     ],
+     "calls": [
+      {
+       "action": "M05.A06",
+       "args": {
+        "pipelineId": "pl_1",
+        "name": "Contract",
+        "probability": 90
+       }
+      },
+      {
+       "action": "M05.A07",
+       "args": {
+        "pipelineId": "pl_1",
+        "stageId": "st_14_2",
+        "name": "Discovery"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5389,
+     "ms": 5389
+    }
+   ],
+   "metrics": {
+    "ms": 5389,
+    "firstReplyMs": 5389,
+    "plannerMs": 5342,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 9855,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 208,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-pipeline-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a pipeline called Partner Deals with the stages Intro, Review and Signed",
+     "status": "done",
+     "reply": "Done: Create pipeline (Partner Deals).",
+     "offered": [
+      "M05.A06",
+      "M45.A06",
+      "M05.A01",
+      "M45.A07",
+      "M04.A08",
+      "M04.A05",
+      "M05.A07",
+      "M04.A01",
+      "M05.A09",
+      "M05.A08",
+      "M05.A04",
+      "M07.A01",
+      "M03.A10",
+      "M45.A01",
+      "M04.A02",
+      "M21.A02",
+      "M21.A03",
+      "M36.A04",
+      "M36.A01"
+     ],
+     "planned": [
+      "M05.A01"
+     ],
+     "calls": [
+      {
+       "action": "M05.A01",
+       "args": {
+        "name": "Partner Deals",
+        "stages": [
+         {
+          "name": "Intro"
+         },
+         {
+          "name": "Review"
+         },
+         {
+          "name": "Signed"
+         }
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4658,
+     "ms": 4658
+    }
+   ],
+   "metrics": {
+    "ms": 4658,
+    "firstReplyMs": 4658,
+    "plannerMs": 4617,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 9961,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 121,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-pipeline-describe-stages",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M05.A02 not planned (not offered; planned: M05.A03)"
+    },
+    {
+     "kind": "reply",
+     "detail": "missing /Negotiation/"
+    },
+    {
+     "kind": "reply",
+     "detail": "missing /75/"
+    }
+   ],
+   "turns": [
+    {
+     "user": "What stages does our sales process go through, and how likely is a deal to close at each one?",
+     "status": "done",
+     "reply": "Found 1 pipeline: Sales Pipeline: status active.",
+     "offered": [
+      "M04.A05",
+      "M04.A07",
+      "M04.A01",
+      "M04.A10",
+      "M04.A03",
+      "M04.A02",
+      "M05.A10",
+      "M05.A06",
+      "M05.A01",
+      "M03.A10",
+      "M05.A07",
+      "M05.A05",
+      "M36.A09",
+      "M05.A09",
+      "M03.A01",
+      "M06.A06",
+      "M01.A03",
+      "M48.A03",
+      "M05.A03",
+      "M03.A03",
+      "M36.A03",
+      "M37.A03"
+     ],
+     "planned": [
+      "M05.A03"
+     ],
+     "calls": [
+      {
+       "action": "M05.A03",
+       "args": {}
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4652,
+     "ms": 4652
+    }
+   ],
+   "metrics": {
+    "ms": 4652,
+    "firstReplyMs": 4652,
+    "plannerMs": 4598,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 11000,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 93,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-pipeline-remove-stage-with-deals",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Remove the Proposal stage from the Sales Pipeline",
+     "status": "failed",
+     "reply": "Couldn't remove empty pipeline stage: 2 deal(s) still sit in Proposal; move them first (M04.A05).",
+     "offered": [
+      "M05.A09",
+      "M05.A05",
+      "M05.A06",
+      "M05.A01",
+      "M05.A07",
+      "M04.A05",
+      "M05.A04",
+      "M36.A06",
+      "M04.A01",
+      "M16.A06",
+      "M05.A08",
+      "M05.A10",
+      "M05.A02",
+      "M05.A03",
+      "M02.A05",
+      "M01.A05",
+      "M14.A05",
+      "M40.A10",
+      "M49.A10",
+      "M36.A04"
+     ],
+     "planned": [
+      "M05.A09"
+     ],
+     "calls": [
+      {
+       "action": "M05.A09",
+       "args": {
+        "pipelineId": "pl_1",
+        "stageId": "st_14_3"
+       },
+       "error": "CONFLICT: 2 deal(s) still sit in Proposal; move them first (M04.A05)"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4819,
+     "ms": 4821,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "3184450674053f7c",
+       "targetsHash": "354f3d1f3c977d4d",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M05.A09",
+         "name": "Remove empty pipeline stage",
+         "args": {
+          "pipelineId": "pl_1",
+          "stageId": "st_14_3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4821,
+    "firstReplyMs": 4819,
+    "plannerMs": 4794,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 9630,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 161,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-pipeline-win-probability",
+   "category": "direct",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "partial, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(s.value,'$.probability') FROM pipelines p, json_each(p.data,'$.stages') s WHERE json_extract(p.data,'$.name')='Sales Pipeline' AND json_extract(s.value,'$.name')='Proposal' → 50, wanted 60"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Set the win probability of the Proposal stage in the Sales Pipeline to 60%",
+     "status": "partial",
+     "reply": "Sales Pipeline (pipeline): status active.\nCouldn't set stage win probability: Pipeline Sales Pipeline has no stage Proposal.",
+     "offered": [
+      "M05.A10",
+      "M05.A01",
+      "M05.A06",
+      "M05.A02",
+      "M04.A05",
+      "M05.A08",
+      "M05.A07",
+      "M04.A01",
+      "M04.A02",
+      "M03.A08",
+      "M50.A07",
+      "M34.A05",
+      "M05.A09",
+      "M05.A04",
+      "M05.A05",
+      "M05.A03",
+      "M36.A01",
+      "M36.A04"
+     ],
+     "planned": [
+      "M05.A02",
+      "M05.A10"
+     ],
+     "calls": [
+      {
+       "action": "M05.A02",
+       "args": {
+        "pipelineId": "pl_1"
+       }
+      },
+      {
+       "action": "M05.A10",
+       "args": {
+        "pipelineId": "pl_1",
+        "stageId": "Proposal",
+        "probability": 60
+       },
+       "error": "NOT_FOUND: Pipeline Sales Pipeline has no stage Proposal"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5248,
+     "ms": 5248
+    }
+   ],
+   "metrics": {
+    "ms": 5248,
+    "firstReplyMs": 5248,
+    "plannerMs": 5228,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 9380,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 164,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-compare-periods",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Compare the New Contacts report for the last 30 days against the 30 days before that",
+     "status": "done",
+     "reply": "Report.",
+     "offered": [
+      "M50.A08",
+      "M50.A05",
+      "M50.A07",
+      "M50.A04",
+      "M30.A01",
+      "M22.A10",
+      "M50.A09",
+      "M01.A03",
+      "M01.A10",
+      "M50.A10",
+      "M01.A09",
+      "M28.A07",
+      "M21.A03",
+      "M26.A08",
+      "M01.A01",
+      "M15.A10",
+      "M50.A03",
+      "M09.A06",
+      "M36.A10"
+     ],
+     "planned": [
+      "M50.A03",
+      "M50.A08"
+     ],
+     "calls": [
+      {
+       "action": "M50.A03",
+       "args": {
+        "metric": "new_contacts",
+        "query": "New Contacts"
+       }
+      },
+      {
+       "action": "M50.A08",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4703,
+     "ms": 4703
+    }
+   ],
+   "metrics": {
+    "ms": 4703,
+    "firstReplyMs": 4703,
+    "plannerMs": 4677,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 10448,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 138,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a saved report called Weekly New Leads that counts new leads over the last 7 days, grouped by source",
+     "status": "done",
+     "reply": "Done: Create saved report (Weekly New Leads).",
+     "offered": [
+      "M50.A01",
+      "M50.A06",
+      "M03.A01",
+      "M03.A06",
+      "M03.A03",
+      "M50.A02",
+      "M50.A07",
+      "M50.A04",
+      "M03.A04",
+      "M50.A10",
+      "M09.A01",
+      "M24.A01",
+      "M07.A01",
+      "M06.A01",
+      "M10.A01",
+      "M01.A01",
+      "M02.A01",
+      "M04.A01"
+     ],
+     "planned": [
+      "M50.A01"
+     ],
+     "calls": [
+      {
+       "action": "M50.A01",
+       "args": {
+        "name": "Weekly New Leads",
+        "metric": "new_leads",
+        "dateRange": {
+         "from": "2026-10-15",
+         "to": "2026-10-21"
+        },
+        "groupBy": "source"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4863,
+     "ms": 4863
+    }
+   ],
+   "metrics": {
+    "ms": 4863,
+    "firstReplyMs": 4863,
+    "plannerMs": 4827,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 11081,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 134,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-run",
+   "category": "direct",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M50.A07 not planned (was offered; planned: nothing)"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Run the Monthly Revenue report",
+     "status": "failed",
+     "reply": "The plan was still invalid after one repair:\nthe requested outcome is read-only; do not introduce a change",
+     "offered": [
+      "M50.A10",
+      "M50.A07",
+      "M50.A09",
+      "M50.A08",
+      "M50.A05",
+      "M50.A01",
+      "M26.A07",
+      "M30.A01",
+      "M24.A01",
+      "M43.A10",
+      "M16.A10",
+      "M17.A09",
+      "M50.A02",
+      "M50.A06",
+      "M50.A04",
+      "M15.A10",
+      "M50.A03",
+      "M09.A06",
+      "M36.A10",
+      "M09.A08"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "the requested outcome is read-only; do not introduce a change",
+      "the requested outcome is read-only; do not introduce a change"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9057,
+     "ms": 9057
+    }
+   ],
+   "metrics": {
+    "ms": 9057,
+    "firstReplyMs": 9057,
+    "plannerMs": 9039,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 21136,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 220,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-schedule",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Send the Monthly Revenue report every week to maya@example.com",
+     "status": "done",
+     "reply": "Done: Schedule report delivery (Monthly Revenue).",
+     "offered": [
+      "M50.A10",
+      "M50.A06",
+      "M50.A07",
+      "M50.A09",
+      "M26.A07",
+      "M50.A01",
+      "M27.A08",
+      "M50.A05",
+      "M14.A09",
+      "M46.A09",
+      "M28.A08",
+      "M28.A10",
+      "M30.A01",
+      "M30.A04",
+      "M13.A03",
+      "M15.A10",
+      "M50.A03",
+      "M09.A06",
+      "M36.A10",
+      "M26.A03",
+      "M27.A03",
+      "M14.A03",
+      "M46.A03",
+      "M28.A03",
+      "M01.A03",
+      "M30.A03",
+      "M03.A03",
+      "M13.A07",
+      "M15.A03"
+     ],
+     "planned": [
+      "M50.A10"
+     ],
+     "calls": [
+      {
+       "action": "M50.A10",
+       "args": {
+        "reportId": "rpt_1",
+        "frequency": "weekly",
+        "recipients": [
+         "maya@example.com"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3988,
+     "ms": 3993,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "58d1f8a56e706c37",
+       "targetsHash": "c11dcdf64eba3958",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M50.A10",
+         "name": "Schedule report delivery",
+         "args": {
+          "reportId": "rpt_1",
+          "frequency": "weekly",
+          "recipients": [
+           "maya@example.com"
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3993,
+    "firstReplyMs": 3988,
+    "plannerMs": 3949,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 13128,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 124,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-top-rep",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M50.A07 not planned (was offered; planned: M50.A03)"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Show me the Won Deals by Rep report",
+     "status": "done",
+     "reply": "Found 1 report: Won Deals by Rep: metric won_deals, group by owner.",
+     "offered": [
+      "M04.A08",
+      "M50.A03",
+      "M04.A02",
+      "M50.A07",
+      "M50.A02",
+      "M50.A09",
+      "M04.A03",
+      "M25.A02",
+      "M31.A02",
+      "M04.A06",
+      "M50.A08",
+      "M04.A10",
+      "M04.A05",
+      "M29.A09",
+      "M50.A01",
+      "M27.A09",
+      "M09.A03",
+      "M03.A02",
+      "M29.A06",
+      "M27.A03"
+     ],
+     "planned": [
+      "M50.A03"
+     ],
+     "calls": [
+      {
+       "action": "M50.A03",
+       "args": {
+        "metric": "won_deals",
+        "query": "Won Deals by Rep"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3959,
+     "ms": 3959
+    }
+   ],
+   "metrics": {
+    "ms": 3959,
+    "firstReplyMs": 3959,
+    "plannerMs": 3936,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10564,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 107,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-smartlist-count",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "How many contacts are on the Umbrella contacts smart list?",
+     "status": "done",
+     "reply": "Smart_list: count 3.",
+     "offered": [
+      "M09.A01",
+      "M09.A03",
+      "M09.A08",
+      "M02.A10",
+      "M09.A07",
+      "M09.A02",
+      "M09.A10",
+      "M01.A03",
+      "M46.A06",
+      "M01.A09",
+      "M01.A05",
+      "M10.A03",
+      "M01.A06",
+      "M01.A02",
+      "M02.A06",
+      "M15.A03",
+      "M50.A03",
+      "M50.A09"
+     ],
+     "planned": [
+      "M09.A07"
+     ],
+     "calls": [
+      {
+       "action": "M09.A07",
+       "args": {
+        "smartListId": "sl_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4660,
+     "ms": 4660
+    }
+   ],
+   "metrics": {
+    "ms": 4660,
+    "firstReplyMs": 4660,
+    "plannerMs": 4639,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10277,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 133,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-smartlist-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Make a smart list called Umbrella contacts of every contact whose company is Umbrella",
+     "status": "done",
+     "reply": "Done: Create smart list (Umbrella contacts).",
+     "offered": [
+      "M02.A10",
+      "M09.A01",
+      "M02.A06",
+      "M02.A07",
+      "M09.A03",
+      "M01.A03",
+      "M09.A08",
+      "M09.A02",
+      "M09.A04",
+      "M10.A01",
+      "M09.A10",
+      "M10.A03",
+      "M02.A03",
+      "M01.A09",
+      "M01.A01",
+      "M08.A08",
+      "M47.A09"
+     ],
+     "planned": [
+      "M09.A01"
+     ],
+     "calls": [
+      {
+       "action": "M09.A01",
+       "args": {
+        "name": "Umbrella contacts",
+        "target": "contact",
+        "rules": [
+         {
+          "field": "company",
+          "op": "eq",
+          "value": "Umbrella"
+         }
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4756,
+     "ms": 4756
+    }
+   ],
+   "metrics": {
+    "ms": 4756,
+    "firstReplyMs": 4756,
+    "plannerMs": 4734,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10232,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 122,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-smartlist-duplicate-and-delete",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Duplicate the Hot leads smart list as Hot leads copy, then delete the original Hot leads list",
+     "status": "done",
+     "reply": "Done: Duplicate smart list (Hot leads copy), already done earlier.\nDone: Delete smart list (Hot leads).",
+     "offered": [
+      "M09.A09",
+      "M03.A03",
+      "M09.A10",
+      "M09.A01",
+      "M09.A04",
+      "M03.A04",
+      "M09.A03",
+      "M03.A09",
+      "M14.A06",
+      "M46.A01",
+      "M09.A05",
+      "M46.A08",
+      "M01.A06",
+      "M03.A10",
+      "M03.A01",
+      "M01.A03",
+      "M02.A03",
+      "M04.A03",
+      "M24.A03",
+      "M07.A05",
+      "M08.A05",
+      "M07.A03"
+     ],
+     "planned": [
+      "M09.A09",
+      "M09.A10"
+     ],
+     "calls": [
+      {
+       "action": "M09.A09",
+       "args": {
+        "smartListId": "sl_1",
+        "name": "Hot leads copy"
+       }
+      },
+      {
+       "action": "M09.A10",
+       "args": {
+        "smartListId": "sl_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4803,
+     "ms": 4804,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "5c97b3372c7fc3eb",
+       "targetsHash": "d1a692c7b6dfafb1",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M09.A10",
+         "name": "Delete smart list",
+         "args": {
+          "smartListId": "sl_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4804,
+    "firstReplyMs": 4803,
+    "plannerMs": 4764,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 12003,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 169,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-survey-closed-rejects-response",
+   "category": "failure",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "reply",
+     "detail": "missing /closed/"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Submit a test response to the Customer Satisfaction survey with a rating of 5",
+     "status": "clarify",
+     "reply": "The survey requires answers to its questions. Should I submit a response with a rating of 5 for its rating question and leave any other questions unanswered?",
+     "offered": [
+      "M19.A09",
+      "M45.A05",
+      "M18.A09",
+      "M45.A09",
+      "M45.A08",
+      "M45.A10",
+      "M19.A10",
+      "M45.A06",
+      "M19.A04",
+      "M45.A07",
+      "M19.A07",
+      "M19.A01",
+      "M47.A08",
+      "M18.A10",
+      "M19.A08",
+      "M19.A02",
+      "M19.A03",
+      "M45.A04"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5081,
+     "ms": 5081
+    }
+   ],
+   "metrics": {
+    "ms": 5081,
+    "firstReplyMs": 5081,
+    "plannerMs": 5065,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 9559,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 108,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-survey-create-with-rating",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a survey called Customer Satisfaction with a 1 to 5 rating question: How satisfied are you with our service?",
+     "status": "done",
+     "reply": "Done: Create survey (Customer Satisfaction).\nDone: Add survey question (Customer Satisfaction).",
+     "offered": [
+      "M19.A04",
+      "M27.A04",
+      "M19.A05",
+      "M45.A05",
+      "M19.A10",
+      "M45.A07",
+      "M45.A10",
+      "M19.A01",
+      "M45.A01",
+      "M45.A09",
+      "M19.A09",
+      "M45.A08",
+      "M19.A02",
+      "M03.A01",
+      "M47.A10",
+      "M18.A04",
+      "M28.A04",
+      "M32.A04",
+      "M18.A05",
+      "M16.A05",
+      "M27.A03",
+      "M45.A04",
+      "M45.A06",
+      "M32.A03"
+     ],
+     "planned": [
+      "M19.A01",
+      "M19.A04"
+     ],
+     "calls": [
+      {
+       "action": "M19.A01",
+       "args": {
+        "name": "Customer Satisfaction"
+       }
+      },
+      {
+       "action": "M19.A04",
+       "args": {
+        "surveyId": "sv_1",
+        "text": "How satisfied are you with our service?",
+        "type": "rating",
+        "required": true
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4454,
+     "ms": 4454
+    }
+   ],
+   "metrics": {
+    "ms": 4454,
+    "firstReplyMs": 4454,
+    "plannerMs": 4417,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 11331,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 152,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-survey-publish-then-close",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Publish the Customer Satisfaction survey",
+     "status": "done",
+     "reply": "Done: Publish survey (Customer Satisfaction).",
+     "offered": [
+      "M19.A07",
+      "M45.A09",
+      "M19.A03",
+      "M19.A08",
+      "M19.A05",
+      "M45.A08",
+      "M19.A01",
+      "M19.A04",
+      "M46.A09",
+      "M45.A07",
+      "M45.A05",
+      "M45.A01",
+      "M41.A09",
+      "M36.A09",
+      "M45.A02",
+      "M19.A02",
+      "M18.A08",
+      "M37.A09",
+      "M47.A08",
+      "M18.A03",
+      "M45.A06",
+      "M45.A04"
+     ],
+     "planned": [
+      "M19.A07"
+     ],
+     "calls": [
+      {
+       "action": "M19.A07",
+       "args": {
+        "surveyId": "sv_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4291,
+     "ms": 4293,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "a06cc3f595fcb5ee",
+       "targetsHash": "5d3d9a84af2687a2",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M19.A07",
+         "name": "Publish survey",
+         "args": {
+          "surveyId": "sv_1"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "user": "Actually we have enough answers, close it",
+     "status": "done",
+     "reply": "Done: Close survey (Customer Satisfaction).",
+     "offered": [
+      "M03.A07",
+      "M11.A06",
+      "M19.A09",
+      "M04.A07",
+      "M19.A08",
+      "M21.A10",
+      "M18.A10",
+      "M04.A09",
+      "M04.A08",
+      "M19.A06",
+      "M06.A08",
+      "M11.A07",
+      "M19.A07",
+      "M04.A05",
+      "M04.A10",
+      "M47.A06",
+      "M18.A09",
+      "M11.A02"
+     ],
+     "planned": [
+      "M19.A08"
+     ],
+     "calls": [
+      {
+       "action": "M19.A08",
+       "args": {
+        "surveyId": "sv_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4551,
+     "ms": 4551
+    }
+   ],
+   "metrics": {
+    "ms": 8844,
+    "firstReplyMs": 4291,
+    "plannerMs": 8799,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 20443,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 226,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-survey-response-summary",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "How are people rating us in the Customer Satisfaction survey so far?",
+     "status": "done",
+     "reply": "Customer Satisfaction (report): status open, total 3.",
+     "offered": [
+      "M45.A05",
+      "M45.A10",
+      "M19.A04",
+      "M45.A06",
+      "M45.A07",
+      "M19.A03",
+      "M19.A10",
+      "M19.A07",
+      "M19.A02",
+      "M19.A09",
+      "M45.A01",
+      "M45.A08",
+      "M42.A09",
+      "M01.A03",
+      "M34.A04",
+      "M18.A04",
+      "M45.A04",
+      "M42.A03"
+     ],
+     "planned": [
+      "M19.A03",
+      "M19.A10"
+     ],
+     "calls": [
+      {
+       "action": "M19.A03",
+       "args": {
+        "query": "Customer Satisfaction"
+       }
+      },
+      {
+       "action": "M19.A10",
+       "args": {
+        "surveyId": "sv_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4525,
+     "ms": 4525
+    }
+   ],
+   "metrics": {
+    "ms": 4525,
+    "firstReplyMs": 4525,
+    "plannerMs": 4496,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 9735,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 133,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-tax-calculate",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "How much tax would Elodie Mercer pay on a $200 order of the Pro plan shipped to California?",
+     "status": "done",
+     "reply": "Tax_rule: exempt false, tax total 20, exclusive tax 20, subtotal 200, discount total 0, total 220.",
+     "offered": [
+      "M34.A09",
+      "M32.A06",
+      "M32.A08",
+      "M34.A01",
+      "M34.A02",
+      "M32.A01",
+      "M34.A08",
+      "M32.A04",
+      "M34.A05",
+      "M34.A07",
+      "M28.A08",
+      "M30.A04",
+      "M32.A10",
+      "M32.A02",
+      "M27.A10",
+      "M01.A02",
+      "M01.A03",
+      "M04.A02",
+      "M04.A03",
+      "M46.A05",
+      "M28.A01",
+      "M31.A09",
+      "M28.A07",
+      "M27.A08",
+      "M32.A03",
+      "M30.A03",
+      "M27.A03",
+      "M25.A03",
+      "M26.A06",
+      "M01.A10",
+      "M26.A01",
+      "M26.A03",
+      "M25.A01",
+      "M25.A02",
+      "M26.A02",
+      "M26.A05",
+      "M34.A03",
+      "M34.A06",
+      "M34.A04",
+      "M27.A04",
+      "M26.A09",
+      "M31.A05",
+      "M31.A03",
+      "M48.A10",
+      "M11.A09",
+      "M11.A02"
+     ],
+     "planned": [
+      "M34.A09"
+     ],
+     "calls": [
+      {
+       "action": "M34.A09",
+       "args": {
+        "contactId": "ct_35",
+        "country": "US",
+        "region": "CA",
+        "lines": [
+         {
+          "productId": "prd_1",
+          "amount": 200
+         }
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step s3: M34.A09 arg region: Invalid string: must match pattern /^[A-Za-z0-9]{1,8}$/"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 16199,
+     "ms": 16199
+    }
+   ],
+   "metrics": {
+    "ms": 16199,
+    "firstReplyMs": 16199,
+    "plannerMs": 16130,
+    "plannerRounds": 3,
+    "calls": 1,
+    "usage": {
+     "input": 44663,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 449,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-tax-exemption",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Record a tax exemption for Marcus Lee for California, certificate number EX-4471",
+     "status": "done",
+     "reply": "Done: Record customer tax exemption.",
+     "offered": [
+      "M34.A08",
+      "M42.A10",
+      "M34.A09",
+      "M27.A09",
+      "M34.A10",
+      "M34.A02",
+      "M34.A03",
+      "M34.A01",
+      "M32.A01",
+      "M32.A08",
+      "M03.A07",
+      "M09.A07",
+      "M42.A02",
+      "M25.A03",
+      "M31.A09",
+      "M01.A02",
+      "M01.A03",
+      "M41.A09",
+      "M40.A09",
+      "M42.A03",
+      "M27.A03",
+      "M32.A03"
+     ],
+     "planned": [
+      "M34.A08"
+     ],
+     "calls": [
+      {
+       "action": "M34.A08",
+       "args": {
+        "contactId": "ct_33",
+        "certificateNumber": "EX-4471",
+        "regions": [
+         "US-CA"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4724,
+     "ms": 4724
+    }
+   ],
+   "metrics": {
+    "ms": 4724,
+    "firstReplyMs": 4724,
+    "plannerMs": 4673,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 11093,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 127,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-tax-rule-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a tax rule called CA Sales Tax at 7.25% for California",
+     "status": "done",
+     "reply": "Done: Create tax rule (CA Sales Tax).",
+     "offered": [
+      "M34.A01",
+      "M34.A02",
+      "M34.A05",
+      "M34.A04",
+      "M34.A09",
+      "M31.A01",
+      "M34.A10",
+      "M25.A01",
+      "M26.A05",
+      "M32.A08",
+      "M33.A04",
+      "M32.A01",
+      "M04.A01",
+      "M05.A10",
+      "M31.A05",
+      "M32.A03",
+      "M33.A03"
+     ],
+     "planned": [
+      "M34.A01"
+     ],
+     "calls": [
+      {
+       "action": "M34.A01",
+       "args": {
+        "name": "CA Sales Tax",
+        "rate": 7.25,
+        "region": "US-CA"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7471,
+     "ms": 7471
+    }
+   ],
+   "metrics": {
+    "ms": 7471,
+    "firstReplyMs": 7471,
+    "plannerMs": 7432,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 19941,
+     "cachedRead": 14976,
+     "cacheWrite": 0,
+     "output": 132,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-tax-rule-deactivate",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Turn off the CA Sales Tax rule, we no longer collect it",
+     "status": "done",
+     "reply": "Done: Deactivate tax rule (CA Sales Tax).",
+     "offered": [
+      "M34.A10",
+      "M06.A10",
+      "M34.A01",
+      "M21.A09",
+      "M34.A08",
+      "M34.A06",
+      "M34.A09",
+      "M34.A05",
+      "M17.A08",
+      "M29.A08",
+      "M10.A08",
+      "M44.A06",
+      "M31.A10",
+      "M23.A10",
+      "M04.A09",
+      "M34.A02",
+      "M34.A03",
+      "M21.A05",
+      "M32.A09",
+      "M29.A06",
+      "M32.A03"
+     ],
+     "planned": [
+      "M34.A10"
+     ],
+     "calls": [
+      {
+       "action": "M34.A10",
+       "args": {
+        "taxRuleId": "tx_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5144,
+     "ms": 5152,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "a46caf9c5a11c14c",
+       "targetsHash": "bc6a33b41be26302",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M34.A10",
+         "name": "Deactivate tax rule",
+         "args": {
+          "taxRuleId": "tx_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5152,
+    "firstReplyMs": 5144,
+    "plannerMs": 5104,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10391,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 128,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-template-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create an email template called Welcome Email with the subject Welcome aboard and the body: Hi {{firstName}}, thanks for joining us.",
+     "status": "done",
+     "reply": "Done: Create message template (Welcome Email).",
+     "offered": [
+      "M14.A01",
+      "M14.A04",
+      "M43.A05",
+      "M49.A05",
+      "M14.A02",
+      "M13.A06",
+      "M48.A01",
+      "M14.A03",
+      "M14.A09",
+      "M13.A01",
+      "M45.A01",
+      "M15.A05",
+      "M07.A01",
+      "M02.A01",
+      "M14.A07",
+      "M12.A01",
+      "M44.A07",
+      "M44.A09",
+      "M13.A07"
+     ],
+     "planned": [
+      "M14.A01"
+     ],
+     "calls": [
+      {
+       "action": "M14.A01",
+       "args": {
+        "name": "Welcome Email",
+        "channel": "email",
+        "subject": "Welcome aboard",
+        "body": "Hi {{firstName}}, thanks for joining us."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4247,
+     "ms": 4247
+    }
+   ],
+   "metrics": {
+    "ms": 4247,
+    "firstReplyMs": 4247,
+    "plannerMs": 4163,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10579,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 120,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-template-preview",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Show me the Appointment Reminder template filled in with firstName Grace and time 3pm",
+     "status": "done",
+     "reply": "Template: channel email, subject Hello, body Hi Grace, see you at 3pm..",
+     "offered": [
+      "M14.A09",
+      "M22.A06",
+      "M14.A02",
+      "M22.A05",
+      "M21.A04",
+      "M21.A01",
+      "M22.A09",
+      "M20.A08",
+      "M28.A08",
+      "M21.A02",
+      "M20.A05",
+      "M20.A01",
+      "M21.A03",
+      "M22.A07",
+      "M21.A06",
+      "M14.A03",
+      "M03.A02",
+      "M03.A03",
+      "M13.A02",
+      "M12.A02",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M14.A09"
+     ],
+     "calls": [
+      {
+       "action": "M14.A09",
+       "args": {
+        "templateId": "tpl_1",
+        "data": {
+         "firstName": "Grace",
+         "time": "3pm"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5116,
+     "ms": 5116
+    }
+   ],
+   "metrics": {
+    "ms": 5116,
+    "firstReplyMs": 5116,
+    "plannerMs": 5067,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 11286,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 137,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-template-restore-version",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Go back to the first version of the Follow-up Email template",
+     "status": "done",
+     "reply": "Done: Restore template version (Follow-up Email).",
+     "offered": [
+      "M14.A10",
+      "M14.A06",
+      "M14.A09",
+      "M13.A10",
+      "M14.A02",
+      "M14.A04",
+      "M13.A02",
+      "M14.A01",
+      "M13.A04",
+      "M15.A05",
+      "M13.A07",
+      "M11.A10",
+      "M11.A05",
+      "M14.A05",
+      "M14.A03",
+      "M07.A10",
+      "M09.A09",
+      "M12.A02",
+      "M11.A02",
+      "M07.A03",
+      "M12.A07"
+     ],
+     "planned": [
+      "M14.A10"
+     ],
+     "calls": [
+      {
+       "action": "M14.A10",
+       "args": {
+        "templateId": "tpl_1",
+        "version": 1
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5042,
+     "ms": 5042
+    }
+   ],
+   "metrics": {
+    "ms": 5042,
+    "firstReplyMs": 5042,
+    "plannerMs": 5018,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10799,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 134,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-template-undeclared-variable",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Check whether the Intro Email template uses any variables that haven't been declared",
+     "status": "failed",
+     "reply": "Couldn't validate template variables: Intro Email has unknown placeholders: company (define them with M14.A07).",
+     "offered": [
+      "M14.A07",
+      "M14.A08",
+      "M14.A02",
+      "M14.A01",
+      "M14.A09",
+      "M14.A03",
+      "M13.A02",
+      "M13.A08",
+      "M44.A10",
+      "M14.A06",
+      "M14.A05",
+      "M14.A04",
+      "M16.A07",
+      "M13.A07"
+     ],
+     "planned": [
+      "M14.A08"
+     ],
+     "calls": [
+      {
+       "action": "M14.A08",
+       "args": {
+        "templateId": "tpl_1"
+       },
+       "error": "INVALID: Intro Email has unknown placeholders: company (define them with M14.A07)"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5017,
+     "ms": 5017
+    }
+   ],
+   "metrics": {
+    "ms": 5017,
+    "firstReplyMs": 5017,
+    "plannerMs": 4997,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 9137,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 130,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-trigger-bind-and-enable",
+   "category": "multi",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M17.A06 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M17.A07 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.workflowId') FROM event_triggers WHERE json_extract(data,'$.name')='Signup trigger' → null, wanted \"wf_1\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.enabled') FROM event_triggers WHERE json_extract(data,'$.name')='Signup trigger' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Connect the Signup trigger to the Welcome Series workflow and switch it on",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31c899fa1e727-MAA)",
+     "offered": [
+      "M17.A06",
+      "M17.A04",
+      "M17.A07",
+      "M17.A08",
+      "M16.A08",
+      "M17.A01",
+      "M17.A02",
+      "M16.A01",
+      "M16.A04",
+      "M16.A09",
+      "M23.A05",
+      "M15.A07",
+      "M03.A01",
+      "M16.A03",
+      "M24.A06",
+      "M16.A02"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2771,
+     "ms": 2771,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2771,
+    "firstReplyMs": 2771,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "cov-trigger-bind-draft-workflow",
+   "category": "failure",
+   "pass": true,
+   "infra": "provider",
+   "failures": [],
+   "turns": [
+    {
+     "user": "Connect the Signup trigger to the Draft Flow workflow",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31c94daa33147-MAA)",
+     "offered": [
+      "M17.A06",
+      "M16.A08",
+      "M17.A07",
+      "M16.A01",
+      "M13.A01",
+      "M17.A09",
+      "M17.A01",
+      "M16.A04",
+      "M37.A07",
+      "M32.A01",
+      "M28.A01",
+      "M36.A01",
+      "M36.A09",
+      "M17.A08",
+      "M17.A02",
+      "M16.A02",
+      "M16.A03",
+      "M18.A08",
+      "M15.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2241,
+     "ms": 2241,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2241,
+    "firstReplyMs": 2241,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "cov-trigger-create",
+   "category": "direct",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M17.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.eventType') FROM event_triggers WHERE json_extract(data,'$.name')='New form lead' → undefined, wanted \"form.submitted\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.enabled') FROM event_triggers WHERE json_extract(data,'$.name')='New form lead' → undefined, wanted 0"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Create an event trigger called New form lead that fires when a form is submitted",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31c8869a53d0f-MAA)",
+     "offered": [
+      "M17.A04",
+      "M17.A01",
+      "M18.A01",
+      "M17.A09",
+      "M17.A06",
+      "M17.A10",
+      "M17.A05",
+      "M18.A04",
+      "M18.A09",
+      "M03.A01",
+      "M37.A07",
+      "M18.A05",
+      "M10.A01",
+      "M18.A08",
+      "M13.A03",
+      "M16.A01",
+      "M19.A01",
+      "M37.A01",
+      "M13.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2614,
+     "ms": 2614,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2614,
+    "firstReplyMs": 2614,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "cov-trigger-firing-history",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M17.A10 not planned (was offered; planned: nothing)"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Has the Signup trigger fired recently?",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31c987887a92c-MAA)",
+     "offered": [
+      "M17.A10",
+      "M17.A04",
+      "M17.A09",
+      "M17.A03",
+      "M17.A07",
+      "M17.A01",
+      "M24.A09",
+      "M24.A06",
+      "M31.A09",
+      "M17.A05",
+      "M17.A06",
+      "M17.A08",
+      "M17.A02",
+      "M16.A10",
+      "M16.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2247,
+     "ms": 2247,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2247,
+    "firstReplyMs": 2247,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "cov-trigger-test-event",
+   "category": "direct",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M17.A09 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM trigger_firings WHERE json_extract(data,'$.test')=1 → \"SQL error: no such table: trigger_firings\", wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Test the Signup trigger with a sample form submission where the source is facebook_ads. Does it match?",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31c959f817eb8-MAA)",
+     "offered": [
+      "M18.A09",
+      "M09.A06",
+      "M17.A09",
+      "M09.A07",
+      "M03.A06",
+      "M19.A09",
+      "M14.A09",
+      "M37.A07",
+      "M17.A04",
+      "M18.A08",
+      "M37.A09",
+      "M31.A09",
+      "M37.A04",
+      "M09.A08",
+      "M40.A03",
+      "M01.A03",
+      "M50.A07",
+      "M16.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2063,
+     "ms": 2063,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2063,
+    "firstReplyMs": 2063,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "cov-unsupported-ab-test-funnel",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Run an A/B test on the first step of the Webinar Signup funnel and tell me which version wins",
+     "status": "unsupported",
+     "reply": "A/B testing funnel steps isn’t supported by the available actions. I can retrieve the Webinar Signup funnel’s conversion metrics, but they won’t identify an A/B test winner.\nAlternatives: View the funnel’s conversion metrics",
+     "offered": [
+      "M36.A06",
+      "M14.A10",
+      "M36.A10",
+      "M05.A10",
+      "M05.A01",
+      "M36.A04",
+      "M36.A07",
+      "M36.A05",
+      "M36.A09",
+      "M17.A09",
+      "M50.A07",
+      "M37.A09",
+      "M05.A06",
+      "M35.A09",
+      "M04.A08",
+      "M36.A02",
+      "M36.A03",
+      "M05.A09",
+      "M16.A06",
+      "M07.A10",
+      "M15.A10",
+      "M07.A03",
+      "M36.A01",
+      "M36.A08",
+      "M50.A01",
+      "M16.A04",
+      "M03.A10",
+      "M50.A02",
+      "M04.A02",
+      "M16.A01",
+      "M50.A09",
+      "M16.A02",
+      "M50.A10",
+      "M50.A08",
+      "M24.A01",
+      "M16.A05",
+      "M50.A03",
+      "M35.A01",
+      "M37.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9075,
+     "ms": 9075
+    }
+   ],
+   "metrics": {
+    "ms": 9075,
+    "firstReplyMs": 9075,
+    "plannerMs": 8969,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 23678,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 205,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-website-build",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a website called Acme Landing with two pages, Home and Pricing, and make Home the home page",
+     "status": "done",
+     "reply": "Done: Create website (Acme Landing).\nDone: Add website page (Acme Landing).\nDone: Add website page (Acme Landing).\nDone: Set website home page (Acme Landing).",
+     "offered": [
+      "M35.A05",
+      "M35.A06",
+      "M26.A03",
+      "M37.A01",
+      "M35.A01",
+      "M35.A09",
+      "M37.A08",
+      "M37.A09",
+      "M37.A02",
+      "M35.A10",
+      "M37.A03",
+      "M37.A05",
+      "M36.A07",
+      "M26.A01",
+      "M23.A01",
+      "M38.A01",
+      "M25.A03",
+      "M44.A03"
+     ],
+     "planned": [
+      "M35.A01",
+      "M35.A05",
+      "M35.A05",
+      "M35.A06"
+     ],
+     "calls": [
+      {
+       "action": "M35.A01",
+       "args": {
+        "name": "Acme Landing"
+       }
+      },
+      {
+       "action": "M35.A05",
+       "args": {
+        "websiteId": "ws_1",
+        "title": "Home",
+        "slug": "home"
+       }
+      },
+      {
+       "action": "M35.A05",
+       "args": {
+        "websiteId": "ws_1",
+        "title": "Pricing",
+        "slug": "pricing"
+       }
+      },
+      {
+       "action": "M35.A06",
+       "args": {
+        "websiteId": "ws_1",
+        "pageId": "pg_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6045,
+     "ms": 6045
+    }
+   ],
+   "metrics": {
+    "ms": 6045,
+    "firstReplyMs": 6045,
+    "plannerMs": 5995,
+    "plannerRounds": 1,
+    "calls": 4,
+    "usage": {
+     "input": 10222,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 228,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-website-publish-without-home",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Publish the Acme Landing website",
+     "status": "failed",
+     "reply": "Couldn't publish website: Set a home page before publishing this website.",
+     "offered": [
+      "M35.A09",
+      "M37.A09",
+      "M37.A01",
+      "M37.A02",
+      "M36.A07",
+      "M35.A10",
+      "M37.A10",
+      "M35.A01",
+      "M37.A07",
+      "M37.A04",
+      "M36.A09",
+      "M35.A05",
+      "M40.A09",
+      "M23.A09",
+      "M35.A06",
+      "M35.A02",
+      "M35.A03",
+      "M38.A09",
+      "M18.A08",
+      "M46.A09",
+      "M19.A07",
+      "M41.A09",
+      "M39.A10",
+      "M36.A01",
+      "M18.A01",
+      "M23.A01",
+      "M38.A01"
+     ],
+     "planned": [
+      "M35.A09"
+     ],
+     "calls": [
+      {
+       "action": "M35.A09",
+       "args": {
+        "websiteId": "ws_1"
+       },
+       "error": "CONFLICT: Set a home page before publishing this website"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6470,
+     "ms": 6473,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "52fc54a5c584fe11",
+       "targetsHash": "33928d23d06f9a51",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M35.A09",
+         "name": "Publish website",
+         "args": {
+          "websiteId": "ws_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6473,
+    "firstReplyMs": 6470,
+    "plannerMs": 6312,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 23151,
+     "cachedRead": 16640,
+     "cacheWrite": 0,
+     "output": 161,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-website-seo-defaults",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Set the default SEO title for Acme Landing to Acme | Home of better widgets",
+     "status": "done",
+     "reply": "Done: Set site SEO defaults (Acme Landing).",
+     "offered": [
+      "M35.A08",
+      "M37.A08",
+      "M38.A07",
+      "M37.A01",
+      "M37.A02",
+      "M37.A04",
+      "M37.A03",
+      "M37.A09",
+      "M36.A07",
+      "M39.A05",
+      "M05.A07",
+      "M35.A06",
+      "M35.A02",
+      "M26.A09",
+      "M04.A05",
+      "M35.A03",
+      "M04.A02",
+      "M04.A03"
+     ],
+     "planned": [
+      "M35.A08"
+     ],
+     "calls": [
+      {
+       "action": "M35.A08",
+       "args": {
+        "websiteId": "ws_1",
+        "title": "Acme | Home of better widgets"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [
+      "step s1: $s1 is not an earlier step (refs can only point back)"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 14433,
+     "ms": 14433
+    }
+   ],
+   "metrics": {
+    "ms": 14433,
+    "firstReplyMs": 14433,
+    "plannerMs": 14187,
+    "plannerRounds": 3,
+    "calls": 1,
+    "usage": {
+     "input": 30437,
+     "cachedRead": 15744,
+     "cacheWrite": 0,
+     "output": 319,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-website-unpublish",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Take the Acme Landing website offline",
+     "status": "done",
+     "reply": "Done: Unpublish website (Acme Landing).",
+     "offered": [
+      "M35.A10",
+      "M37.A10",
+      "M35.A09",
+      "M23.A10",
+      "M38.A10",
+      "M37.A01",
+      "M37.A09",
+      "M37.A02",
+      "M37.A03",
+      "M36.A07",
+      "M35.A01",
+      "M37.A04",
+      "M35.A05",
+      "M35.A06",
+      "M35.A03",
+      "M35.A02",
+      "M41.A10",
+      "M36.A09",
+      "M38.A09",
+      "M18.A08",
+      "M23.A09",
+      "M46.A09"
+     ],
+     "planned": [
+      "M35.A10"
+     ],
+     "calls": [
+      {
+       "action": "M35.A10",
+       "args": {
+        "websiteId": "ws_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6642,
+     "ms": 6644,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "7e69938f2877cfb5",
+       "targetsHash": "4a74f08d6c4df3c3",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M35.A10",
+         "name": "Unpublish website",
+         "args": {
+          "websiteId": "ws_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6644,
+    "firstReplyMs": 6642,
+    "plannerMs": 6446,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 21689,
+     "cachedRead": 10624,
+     "cacheWrite": 0,
+     "output": 127,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-workflow-create-with-wait",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a workflow called New Lead Follow-up and give it a wait step of 60 minutes",
+     "status": "done",
+     "reply": "Done: Create workflow (New Lead Follow-up).\nDone: Add workflow step (New Lead Follow-up).",
+     "offered": [
+      "M06.A01",
+      "M16.A04",
+      "M16.A01",
+      "M16.A06",
+      "M15.A05",
+      "M16.A05",
+      "M36.A04",
+      "M21.A01",
+      "M16.A08",
+      "M16.A07",
+      "M03.A01",
+      "M36.A05",
+      "M36.A01",
+      "M01.A01",
+      "M04.A01",
+      "M07.A01",
+      "M47.A01",
+      "M17.A01",
+      "M15.A01"
+     ],
+     "planned": [
+      "M16.A01",
+      "M16.A04"
+     ],
+     "calls": [
+      {
+       "action": "M16.A01",
+       "args": {
+        "name": "New Lead Follow-up"
+       }
+      },
+      {
+       "action": "M16.A04",
+       "args": {
+        "workflowId": "wf_1",
+        "kind": "wait",
+        "name": "Wait 60 minutes",
+        "waitMinutes": 60
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4568,
+     "ms": 4568
+    }
+   ],
+   "metrics": {
+    "ms": 4568,
+    "firstReplyMs": 4568,
+    "plannerMs": 4522,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 10597,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 151,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-workflow-pause",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Pause the Welcome Series workflow",
+     "status": "done",
+     "reply": "Done: Pause workflow (Welcome Series).",
+     "offered": [
+      "M16.A09",
+      "M16.A08",
+      "M16.A06",
+      "M30.A07",
+      "M17.A08",
+      "M16.A01",
+      "M16.A04",
+      "M15.A08",
+      "M16.A03",
+      "M30.A08",
+      "M15.A09",
+      "M17.A06",
+      "M16.A05",
+      "M16.A07",
+      "M16.A02",
+      "M18.A08",
+      "M15.A07",
+      "M17.A07",
+      "M36.A06",
+      "M30.A03"
+     ],
+     "planned": [
+      "M16.A03",
+      "M16.A09"
+     ],
+     "calls": [
+      {
+       "action": "M16.A03",
+       "args": {
+        "query": "Welcome Series",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M16.A09",
+       "args": {
+        "workflowId": "wf_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4099,
+     "ms": 4099
+    }
+   ],
+   "metrics": {
+    "ms": 4099,
+    "firstReplyMs": 4099,
+    "plannerMs": 4081,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 10239,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 136,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-workflow-publish-empty",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Publish the Empty Flow workflow",
+     "status": "failed",
+     "reply": "Couldn't publish workflow: Fix the workflow before publishing: Add at least one step.",
+     "offered": [
+      "M16.A08",
+      "M16.A07",
+      "M16.A01",
+      "M16.A09",
+      "M16.A04",
+      "M38.A09",
+      "M36.A09",
+      "M37.A09",
+      "M35.A09",
+      "M17.A06",
+      "M16.A02",
+      "M41.A09",
+      "M40.A09",
+      "M46.A09",
+      "M45.A09",
+      "M16.A03",
+      "M18.A08",
+      "M15.A07",
+      "M17.A07",
+      "M14.A08",
+      "M17.A09",
+      "M17.A01",
+      "M15.A01",
+      "M45.A06"
+     ],
+     "planned": [
+      "M16.A08"
+     ],
+     "calls": [
+      {
+       "action": "M16.A08",
+       "args": {
+        "workflowId": "wf_1"
+       },
+       "error": "CONFLICT: Fix the workflow before publishing: Add at least one step"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4453,
+     "ms": 4455,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "8d0f6bc34ccd5842",
+       "targetsHash": "919e9ea901e3f931",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M16.A08",
+         "name": "Publish workflow",
+         "args": {
+          "workflowId": "wf_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4455,
+    "firstReplyMs": 4453,
+    "plannerMs": 4435,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10938,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 110,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-workflow-run-history",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M16.A10 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "reply",
+     "detail": "missing /completed/"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Has the Welcome Series workflow actually run for anyone yet?",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31c8619a97f83-MAA)",
+     "offered": [
+      "M16.A08",
+      "M16.A07",
+      "M16.A01",
+      "M16.A10",
+      "M16.A03",
+      "M16.A04",
+      "M50.A07",
+      "M17.A06",
+      "M05.A01",
+      "M17.A09",
+      "M48.A01",
+      "M17.A10",
+      "M23.A01",
+      "M44.A01",
+      "M11.A10",
+      "M16.A02",
+      "M18.A08",
+      "M15.A07",
+      "M17.A07",
+      "M14.A08",
+      "M17.A01",
+      "M15.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2294,
+     "ms": 2294,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2294,
+    "firstReplyMs": 2294,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "w1-ambiguous-femi-enrol",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Enroll Femi in Sales 101",
+     "status": "needs_clarification",
+     "reply": "More than one contact matches \"Femi\": Femi Silva (femi.silva@globex.example, +15552862586, Globex), Femi Reyes (femi.reyes@stark.example, +15552537506, Stark), Femi Schmidt (femi.schmidt@initech.example, +15552988021, Initech). Which one?",
+     "offered": [
+      "M42.A02",
+      "M42.A03",
+      "M05.A01",
+      "M42.A01",
+      "M04.A01",
+      "M42.A04",
+      "M42.A10",
+      "M32.A01",
+      "M42.A06",
+      "M31.A01",
+      "M31.A05",
+      "M32.A07",
+      "M30.A05",
+      "M04.A08",
+      "M32.A08",
+      "M01.A02",
+      "M01.A03",
+      "M03.A02",
+      "M03.A03",
+      "M49.A02",
+      "M49.A03",
+      "M44.A03",
+      "M40.A03",
+      "M36.A01",
+      "M32.A03",
+      "M30.A03"
+     ],
+     "planned": [
+      "M42.A01"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7650,
+     "ms": 7650
+    }
+   ],
+   "metrics": {
+    "ms": 7650,
+    "firstReplyMs": 7650,
+    "plannerMs": 7632,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 11955,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 157,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-blog-schedule",
+   "category": "multi",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M38.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M38.A08 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM blog_posts WHERE json_extract(data,'$.title')='Our new pricing' → undefined, wanted \"scheduled\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.publishAt') LIKE '2026-10-28%' FROM blog_posts WHERE json_extract(data,'$.title')='Our new pricing' → undefined, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Write a draft blog post called Our new pricing with the text \"We are simplifying our plans from November.\" and schedule it to go live on 28 October at 9am",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31b203a4ec116-BOM)",
+     "offered": [
+      "M12.A01",
+      "M38.A08",
+      "M38.A01",
+      "M38.A09",
+      "M23.A09",
+      "M23.A01",
+      "M22.A08",
+      "M28.A01",
+      "M22.A07",
+      "M12.A04",
+      "M37.A05",
+      "M27.A05",
+      "M27.A01",
+      "M37.A04",
+      "M44.A04",
+      "M13.A01",
+      "M14.A01",
+      "M39.A10",
+      "M37.A01",
+      "M35.A05",
+      "M43.A07",
+      "M12.A07",
+      "M27.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2611,
+     "ms": 2611,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2611,
+    "firstReplyMs": 2611,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "w1-coupon-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a 25% off coupon with the code LAUNCH25",
+     "status": "done",
+     "reply": "Done: Create coupon.",
+     "offered": [
+      "M31.A01",
+      "M31.A10",
+      "M31.A05",
+      "M32.A07",
+      "M31.A09",
+      "M31.A04",
+      "M31.A03",
+      "M27.A07",
+      "M32.A01",
+      "M15.A01",
+      "M14.A01",
+      "M31.A02",
+      "M31.A06",
+      "M31.A08",
+      "M31.A07",
+      "M34.A10",
+      "M26.A10",
+      "M26.A05",
+      "M32.A03",
+      "M27.A03"
+     ],
+     "planned": [
+      "M31.A01"
+     ],
+     "calls": [
+      {
+       "action": "M31.A01",
+       "args": {
+        "code": "LAUNCH25",
+        "discount": {
+         "type": "percent",
+         "value": 25
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4200,
+     "ms": 4200
+    }
+   ],
+   "metrics": {
+    "ms": 4200,
+    "firstReplyMs": 4200,
+    "plannerMs": 4178,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 10558,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 109,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-course-build",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a course called Sales 101, add a lesson called Cold Calling Basics to it, and publish the course",
+     "status": "done",
+     "reply": "Done: Create course (Sales 101), already done earlier.\nDone: Create lesson (Cold Calling Basics), already done earlier.\nDone: Publish lesson (Cold Calling Basics), already done earlier.\nDone: Publish course (Sales 101).",
+     "offered": [
+      "M05.A01",
+      "M41.A01",
+      "M40.A09",
+      "M40.A01",
+      "M41.A05",
+      "M40.A10",
+      "M40.A05",
+      "M41.A06",
+      "M42.A01",
+      "M41.A09",
+      "M41.A10",
+      "M40.A07",
+      "M41.A04",
+      "M42.A08",
+      "M42.A10",
+      "M49.A02",
+      "M49.A03",
+      "M04.A01",
+      "M36.A01",
+      "M37.A09",
+      "M38.A09",
+      "M42.A03",
+      "M40.A04",
+      "M41.A03",
+      "M41.A02",
+      "M36.A09",
+      "M40.A08",
+      "M40.A06",
+      "M40.A02",
+      "M42.A09",
+      "M41.A08",
+      "M41.A07",
+      "M37.A01",
+      "M40.A03",
+      "M38.A01",
+      "M37.A05",
+      "M23.A09",
+      "M44.A04"
+     ],
+     "planned": [
+      "M40.A01",
+      "M41.A01",
+      "M41.A09",
+      "M40.A09"
+     ],
+     "calls": [
+      {
+       "action": "M40.A01",
+       "args": {
+        "title": "Sales 101"
+       }
+      },
+      {
+       "action": "M41.A01",
+       "args": {
+        "courseId": "crs_1",
+        "title": "Cold Calling Basics"
+       }
+      },
+      {
+       "action": "M41.A09",
+       "args": {
+        "lessonId": "lsn_1"
+       }
+      },
+      {
+       "action": "M40.A09",
+       "args": {
+        "courseId": "crs_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 9625,
+     "ms": 9630,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "f0efb3bde374c3af",
+       "targetsHash": "77bc8344e45fb1cb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M41.A09",
+         "name": "Publish lesson",
+         "args": {
+          "lessonId": "lsn_1"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s4",
+       "planHash": "f0efb3bde374c3af",
+       "targetsHash": "1af3af5e5f93198e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M40.A09",
+         "name": "Publish course",
+         "args": {
+          "courseId": "crs_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 9630,
+    "firstReplyMs": 9625,
+    "plannerMs": 9469,
+    "plannerRounds": 2,
+    "calls": 4,
+    "usage": {
+     "input": 23243,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 331,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-custom-field-value",
+   "category": "multi",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M10.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M10.A09 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM custom_fields WHERE json_extract(data,'$.label')='Contract renewal' AND json_extract(data,'$.type')='date' → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.value') FROM custom_field_values WHERE json_extract(data,'$.recordId')='ct_11' → \"SQL error: no such table: custom_field_values\", wanted \"2027-03-01\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Add a date field for contacts called Contract renewal and set it to 1 March 2027 on Jo Okafor",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31b2fffe43fe4-BOM)",
+     "offered": [
+      "M10.A01",
+      "M01.A01",
+      "M20.A05",
+      "M10.A09",
+      "M30.A01",
+      "M22.A03",
+      "M22.A08",
+      "M04.A07",
+      "M06.A06",
+      "M28.A06",
+      "M31.A06",
+      "M01.A09",
+      "M02.A06",
+      "M22.A07",
+      "M44.A07",
+      "M01.A02",
+      "M01.A03",
+      "M18.A04",
+      "M03.A01",
+      "M02.A01",
+      "M47.A01",
+      "M48.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3043,
+     "ms": 3043,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3043,
+    "firstReplyMs": 3043,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "w1-enrol-complete-certificate",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Omar Larsen has finished the Intro lesson in Sales 101, so record that and issue his completion certificate",
+     "status": "done",
+     "reply": "Done: Record lesson completion, already done earlier.\nDone: Issue course completion certificate.",
+     "offered": [
+      "M41.A08",
+      "M42.A10",
+      "M41.A09",
+      "M07.A06",
+      "M33.A09",
+      "M42.A08",
+      "M42.A09",
+      "M41.A07",
+      "M41.A04",
+      "M41.A01",
+      "M41.A02",
+      "M21.A10",
+      "M03.A07",
+      "M06.A08",
+      "M05.A01",
+      "M01.A02",
+      "M01.A03",
+      "M21.A02",
+      "M21.A03",
+      "M41.A03",
+      "M49.A02",
+      "M49.A03",
+      "M40.A09",
+      "M42.A01",
+      "M37.A09",
+      "M42.A03",
+      "M07.A03",
+      "M33.A03",
+      "M29.A06"
+     ],
+     "planned": [
+      "M42.A03",
+      "M42.A08",
+      "M42.A10"
+     ],
+     "calls": [
+      {
+       "action": "M42.A03",
+       "args": {
+        "courseId": "crs_1",
+        "contactId": "ct_7",
+        "status": "active"
+       }
+      },
+      {
+       "action": "M42.A08",
+       "args": {
+        "enrollmentId": "enr_1",
+        "lessonId": "lsn_1"
+       }
+      },
+      {
+       "action": "M42.A03",
+       "args": {
+        "courseId": "crs_1",
+        "contactId": "ct_7",
+        "status": "active"
+       }
+      },
+      {
+       "action": "M42.A10",
+       "args": {
+        "enrollmentId": "enr_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5298,
+     "ms": 5302,
+     "confirmations": [
+      {
+       "stepId": "s6",
+       "planHash": "749a12a00a153804",
+       "targetsHash": "a234661616d2d0b0",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M42.A10",
+         "name": "Issue course completion certificate",
+         "args": {
+          "enrollmentId": "enr_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5302,
+    "firstReplyMs": 5298,
+    "plannerMs": 5252,
+    "plannerRounds": 1,
+    "calls": 4,
+    "usage": {
+     "input": 12132,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 276,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-enrol-draft-course",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Enroll Tara Larsen in Safety Induction",
+     "status": "failed",
+     "reply": "Couldn't enroll learner in course: Course \"Safety Induction\" is draft; can only accept learners when published.",
+     "offered": [
+      "M42.A01",
+      "M42.A05",
+      "M42.A08",
+      "M42.A06",
+      "M42.A10",
+      "M42.A04",
+      "M41.A07",
+      "M40.A08",
+      "M40.A09",
+      "M41.A01",
+      "M40.A07",
+      "M44.A07",
+      "M24.A06",
+      "M30.A01",
+      "M49.A05",
+      "M01.A02",
+      "M01.A03",
+      "M40.A02",
+      "M40.A03",
+      "M41.A09",
+      "M44.A09",
+      "M30.A07",
+      "M06.A08",
+      "M42.A03",
+      "M30.A03"
+     ],
+     "planned": [
+      "M42.A01"
+     ],
+     "calls": [
+      {
+       "action": "M42.A01",
+       "args": {
+        "courseId": "crs_1",
+        "contactId": "ct_9"
+       },
+       "error": "CONFLICT: Course \"Safety Induction\" is draft; can only accept learners when published"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4616,
+     "ms": 4616
+    }
+   ],
+   "metrics": {
+    "ms": 4616,
+    "firstReplyMs": 4616,
+    "plannerMs": 4598,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 11233,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 158,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-enrol-learner",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Enroll Tara Larsen in Onboarding Basics",
+     "status": "done",
+     "reply": "Done: Enroll learner in course.",
+     "offered": [
+      "M42.A03",
+      "M42.A02",
+      "M42.A01",
+      "M42.A06",
+      "M42.A04",
+      "M42.A08",
+      "M41.A07",
+      "M48.A01",
+      "M49.A05",
+      "M30.A01",
+      "M03.A01",
+      "M44.A07",
+      "M06.A01",
+      "M07.A01",
+      "M24.A06",
+      "M01.A02",
+      "M01.A03",
+      "M40.A02",
+      "M40.A03",
+      "M44.A03",
+      "M41.A09",
+      "M40.A09",
+      "M44.A09"
+     ],
+     "planned": [
+      "M42.A01"
+     ],
+     "calls": [
+      {
+       "action": "M42.A01",
+       "args": {
+        "courseId": "crs_1",
+        "contactId": "ct_9"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8270,
+     "ms": 8270
+    }
+   ],
+   "metrics": {
+    "ms": 8270,
+    "firstReplyMs": 8270,
+    "plannerMs": 8238,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 22335,
+     "cachedRead": 16128,
+     "cacheWrite": 0,
+     "output": 174,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-event-checkin-followup",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Who's registered for the Autumn Workshop?",
+     "status": "done",
+     "reply": "Autumn Workshop (event): starts at 2026-10-24T14:00:00.000Z, ends at 2026-10-24T15:00:00.000Z, capacity 10, status scheduled, registered 2, waitlisted 0.",
+     "offered": [
+      "M24.A06",
+      "M42.A01",
+      "M24.A01",
+      "M24.A08",
+      "M24.A05",
+      "M24.A02",
+      "M03.A01",
+      "M40.A09",
+      "M24.A07",
+      "M23.A09",
+      "M32.A01",
+      "M02.A01",
+      "M42.A10",
+      "M41.A01",
+      "M46.A01",
+      "M24.A03",
+      "M21.A01",
+      "M21.A07",
+      "M41.A09",
+      "M44.A07",
+      "M30.A01",
+      "M44.A09",
+      "M20.A01",
+      "M42.A03"
+     ],
+     "planned": [
+      "M24.A02"
+     ],
+     "calls": [
+      {
+       "action": "M24.A02",
+       "args": {
+        "eventId": "ev_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "requested operation M24.A02 is missing; prerequisite reads do not complete it"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 12415,
+     "ms": 12415
+    },
+    {
+     "user": "Check Ben Brown in",
+     "status": "done",
+     "reply": "Done: Check in attendee.",
+     "offered": [
+      "M33.A03",
+      "M22.A10",
+      "M44.A10",
+      "M21.A03",
+      "M30.A03",
+      "M37.A03",
+      "M24.A10",
+      "M33.A06",
+      "M27.A03",
+      "M20.A02",
+      "M11.A02",
+      "M23.A02",
+      "M28.A03",
+      "M35.A02",
+      "M07.A03",
+      "M24.A02",
+      "M01.A02",
+      "M01.A03",
+      "M29.A06",
+      "M32.A03",
+      "M48.A09"
+     ],
+     "planned": [
+      "M24.A10"
+     ],
+     "calls": [
+      {
+       "action": "M24.A10",
+       "args": {
+        "eventId": "ev_1",
+        "contactId": "ct_6"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4862,
+     "ms": 4862
+    }
+   ],
+   "metrics": {
+    "ms": 17277,
+    "firstReplyMs": 12415,
+    "plannerMs": 17231,
+    "plannerRounds": 3,
+    "calls": 2,
+    "usage": {
+     "input": 34586,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 358,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-event-waitlist",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Ana Ruiz wants to come to the Autumn Workshop but it's full, so put her on the waiting list",
+     "status": "done",
+     "reply": "Done: Add attendee to waitlist.",
+     "offered": [
+      "M24.A01",
+      "M24.A08",
+      "M11.A10",
+      "M24.A09",
+      "M22.A10",
+      "M24.A05",
+      "M32.A04",
+      "M09.A03",
+      "M21.A04",
+      "M38.A09",
+      "M17.A03",
+      "M07.A03",
+      "M09.A08",
+      "M20.A10",
+      "M09.A07",
+      "M01.A02",
+      "M01.A03",
+      "M24.A02",
+      "M24.A03",
+      "M21.A01",
+      "M20.A01",
+      "M11.A02",
+      "M32.A03"
+     ],
+     "planned": [
+      "M24.A08"
+     ],
+     "calls": [
+      {
+       "action": "M24.A08",
+       "args": {
+        "eventId": "ev_1",
+        "contactId": "ct_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4422,
+     "ms": 4422
+    }
+   ],
+   "metrics": {
+    "ms": 4422,
+    "firstReplyMs": 4422,
+    "plannerMs": 4379,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 11259,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 157,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-landing-page-publish",
+   "category": "direct",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M37.A09 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM landing_pages WHERE id='lp_1' → \"draft\", wanted \"published\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Publish the Webinar signup landing page",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31b1d3cc93b3d-BOM)",
+     "offered": [
+      "M37.A09",
+      "M37.A01",
+      "M36.A07",
+      "M37.A07",
+      "M37.A10",
+      "M37.A05",
+      "M37.A02",
+      "M36.A09",
+      "M35.A09",
+      "M23.A09",
+      "M40.A09",
+      "M36.A01",
+      "M36.A04",
+      "M42.A01",
+      "M35.A06",
+      "M15.A02",
+      "M15.A03",
+      "M08.A02",
+      "M18.A08",
+      "M38.A09",
+      "M19.A07",
+      "M41.A09",
+      "M46.A09",
+      "M39.A10",
+      "M35.A05",
+      "M18.A01",
+      "M23.A01",
+      "M35.A01",
+      "M38.A01",
+      "M23.A05"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2830,
+     "ms": 2830,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2830,
+    "firstReplyMs": 2830,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "w1-learner-progress",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "How far along is Priya Haddad in Sales 101?",
+     "status": "done",
+     "reply": "Enrollment: status active, completed 1, total 2.",
+     "offered": [
+      "M05.A01",
+      "M04.A01",
+      "M22.A08",
+      "M42.A09",
+      "M03.A07",
+      "M50.A07",
+      "M04.A08",
+      "M50.A05",
+      "M05.A04",
+      "M41.A07",
+      "M34.A01",
+      "M28.A06",
+      "M34.A09",
+      "M04.A09",
+      "M50.A04",
+      "M01.A02",
+      "M01.A03",
+      "M03.A02",
+      "M03.A03",
+      "M49.A02",
+      "M49.A03",
+      "M36.A01",
+      "M03.A10",
+      "M03.A01",
+      "M42.A03"
+     ],
+     "planned": [
+      "M42.A03",
+      "M42.A09"
+     ],
+     "calls": [
+      {
+       "action": "M42.A03",
+       "args": {
+        "courseId": "crs_1",
+        "contactId": "ct_12",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M42.A09",
+       "args": {
+        "enrollmentId": "enr_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5359,
+     "ms": 5359
+    }
+   ],
+   "metrics": {
+    "ms": 5359,
+    "firstReplyMs": 5359,
+    "plannerMs": 5338,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 11851,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 197,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-membership-grant",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "clarify, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M44.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M44.A07 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM membership_plans WHERE json_extract(data,'$.name')='Gold' → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM memberships WHERE json_extract(data,'$.contactId')='ct_11' AND json_extract(data,'$.status')='active' → \"SQL error: no such table: memberships\", wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Create a Gold membership plan and grant it to Jo Okafor",
+     "status": "clarify",
+     "reply": "What courses or communities should the Gold membership plan include?",
+     "offered": [
+      "M44.A01",
+      "M44.A07",
+      "M44.A09",
+      "M44.A05",
+      "M44.A04",
+      "M44.A10",
+      "M43.A05",
+      "M30.A01",
+      "M04.A01",
+      "M15.A01",
+      "M49.A05",
+      "M47.A01",
+      "M30.A06",
+      "M45.A02",
+      "M26.A01",
+      "M01.A02",
+      "M01.A03",
+      "M42.A01",
+      "M42.A07",
+      "M30.A09",
+      "M43.A06",
+      "M48.A06",
+      "M30.A03",
+      "M45.A04",
+      "M42.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4384,
+     "ms": 4384
+    }
+   ],
+   "metrics": {
+    "ms": 4384,
+    "firstReplyMs": 4384,
+    "plannerMs": 4341,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 11267,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 88,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-membership-revoke",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M44.A09 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM memberships WHERE id='mbr_1' → \"active\", wanted \"revoked\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Priya Haddad cancelled, so take her Gold membership away",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31b0b2efb4b61-BOM)",
+     "offered": [
+      "M21.A05",
+      "M44.A09",
+      "M30.A09",
+      "M44.A08",
+      "M24.A07",
+      "M30.A07",
+      "M44.A06",
+      "M45.A03",
+      "M32.A09",
+      "M48.A06",
+      "M12.A05",
+      "M42.A07",
+      "M41.A10",
+      "M24.A09",
+      "M38.A10",
+      "M01.A02",
+      "M01.A03",
+      "M03.A02",
+      "M03.A03",
+      "M44.A02",
+      "M44.A03",
+      "M06.A10",
+      "M42.A01",
+      "M43.A05",
+      "M43.A06",
+      "M30.A03",
+      "M45.A04",
+      "M32.A03",
+      "M12.A07",
+      "M42.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7312,
+     "ms": 7312,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 7312,
+    "firstReplyMs": 7312,
+    "plannerMs": 4471,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 12422,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 100,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-order-inactive-coupon",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Put the code OLD10 on Marco Patel's order",
+     "status": "failed",
+     "reply": "Failed for 1: ord_1 (This coupon is inactive).",
+     "offered": [
+      "M32.A07",
+      "M31.A01",
+      "M32.A04",
+      "M32.A03",
+      "M31.A09",
+      "M32.A01",
+      "M32.A08",
+      "M36.A05",
+      "M32.A10",
+      "M40.A06",
+      "M33.A02",
+      "M05.A08",
+      "M34.A09",
+      "M26.A06",
+      "M31.A04",
+      "M01.A02",
+      "M01.A03",
+      "M27.A07",
+      "M28.A04",
+      "M27.A04",
+      "M33.A03",
+      "M27.A03"
+     ],
+     "planned": [
+      "M32.A03",
+      "M32.A07"
+     ],
+     "calls": [
+      {
+       "action": "M32.A03",
+       "args": {
+        "contactId": "ct_4",
+        "status": "draft"
+       }
+      },
+      {
+       "action": "M32.A07",
+       "args": {
+        "orderId": "ord_1",
+        "couponId": "cou_1"
+       },
+       "error": "CONFLICT: This coupon is inactive"
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "requested operation M32.A07 is missing; prerequisite reads do not complete it",
+      "the requested outcome changes records, but this plan only reads; use look for prerequisites, then plan the final change"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9534,
+     "ms": 9534
+    }
+   ],
+   "metrics": {
+    "ms": 9534,
+    "firstReplyMs": 9534,
+    "plannerMs": 9507,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 23360,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 384,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-order-with-coupon",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "partial, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM orders WHERE json_extract(data,'$.contactId')='ct_4' → \"draft\", wanted \"submitted\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.discountTotal') FROM orders WHERE json_extract(data,'$.contactId')='ct_4' → 0, wanted 16"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.total') FROM orders WHERE json_extract(data,'$.contactId')='ct_4' → 0, wanted 64"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Start an order for Marco Patel with 2 Ceramic Mugs, put the code SPRING20 on it, and submit it",
+     "status": "partial",
+     "reply": "Done: Create draft order, already done earlier.\nCouldn't find product \"Ceramic Mugs\": no product matches \"Ceramic Mugs\".\nSkipped list product prices: an earlier step didn't complete.\nSkipped add order line item: an earlier step didn't complete.\nDone: Apply coupon to order, already done earlier.\nCouldn't submit order: Order ORD-1001 has no lines; add one before submitting.",
+     "offered": [
+      "M32.A01",
+      "M31.A04",
+      "M32.A08",
+      "M32.A09",
+      "M31.A01",
+      "M18.A09",
+      "M32.A07",
+      "M32.A04",
+      "M32.A10",
+      "M28.A01",
+      "M08.A06",
+      "M36.A05",
+      "M37.A09",
+      "M08.A01",
+      "M30.A10",
+      "M01.A02",
+      "M01.A03",
+      "M15.A02",
+      "M15.A03",
+      "M31.A09",
+      "M27.A01",
+      "M44.A04",
+      "M34.A09",
+      "M28.A07",
+      "M27.A08",
+      "M32.A03",
+      "M30.A03",
+      "M27.A03",
+      "M25.A03",
+      "M26.A01",
+      "M26.A06",
+      "M31.A03",
+      "M43.A02",
+      "M32.A05",
+      "M25.A05",
+      "M26.A03",
+      "M26.A02",
+      "M31.A10",
+      "M31.A08",
+      "M27.A07",
+      "M31.A02",
+      "M27.A04",
+      "M31.A05",
+      "M25.A01",
+      "M44.A01"
+     ],
+     "planned": [
+      "M32.A01",
+      "M26.A03",
+      "M32.A04",
+      "M32.A07",
+      "M32.A08"
+     ],
+     "calls": [
+      {
+       "action": "M32.A01",
+       "args": {
+        "contactId": "ct_4"
+       }
+      },
+      {
+       "action": "M32.A07",
+       "args": {
+        "orderId": "ord_1",
+        "couponId": "cou_1"
+       }
+      },
+      {
+       "action": "M32.A08",
+       "args": {
+        "orderId": "ord_1"
+       },
+       "error": "CONFLICT: Order ORD-1001 has no lines; add one before submitting"
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 16309,
+     "ms": 16313,
+     "confirmations": [
+      {
+       "stepId": "s8",
+       "planHash": "f86dbc31a29e60e2",
+       "targetsHash": "d8afdd0161825a38",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M32.A08",
+         "name": "Submit order",
+         "args": {
+          "orderId": "ord_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 16313,
+    "firstReplyMs": 16309,
+    "plannerMs": 16192,
+    "plannerRounds": 2,
+    "calls": 3,
+    "usage": {
+     "input": 40858,
+     "cachedRead": 22912,
+     "cacheWrite": 0,
+     "output": 508,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-quote-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Create a quote for Elena Costa for the Setup Package",
+     "status": "done",
+     "reply": "Done: Create quote.",
+     "offered": [
+      "M27.A01",
+      "M44.A01",
+      "M27.A10",
+      "M49.A01",
+      "M27.A09",
+      "M27.A04",
+      "M27.A03",
+      "M27.A08",
+      "M05.A01",
+      "M26.A01",
+      "M25.A01",
+      "M31.A01",
+      "M06.A01",
+      "M21.A01",
+      "M30.A01",
+      "M01.A02",
+      "M01.A03",
+      "M25.A02",
+      "M25.A03",
+      "M28.A01",
+      "M32.A01",
+      "M03.A10"
+     ],
+     "planned": [
+      "M27.A01"
+     ],
+     "calls": [
+      {
+       "action": "M27.A01",
+       "args": {
+        "contactId": "ct_2",
+        "lines": [
+         {
+          "productId": "prd_1"
+         }
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7087,
+     "ms": 7087
+    }
+   ],
+   "metrics": {
+    "ms": 7087,
+    "firstReplyMs": 7087,
+    "plannerMs": 7038,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 11929,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 162,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-quote-discount-followup",
+   "category": "followup",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.discount.value') FROM quotes WHERE id='qt_1' → null, wanted 10"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.total') FROM quotes WHERE id='qt_1' → 1000, wanted 900"
+    }
+   ],
+   "turns": [
+    {
+     "user": "What's on Elena Costa's quote?",
+     "status": "done",
+     "reply": "Elena Costa (quote): number QT-9139, status draft, subtotal 1000, total 1000, currency USD.",
+     "offered": [
+      "M27.A03",
+      "M27.A09",
+      "M27.A06",
+      "M27.A02",
+      "M27.A01",
+      "M27.A04",
+      "M25.A05",
+      "M23.A07",
+      "M11.A01",
+      "M11.A05",
+      "M29.A01",
+      "M26.A01",
+      "M26.A05",
+      "M27.A05",
+      "M27.A10",
+      "M01.A02",
+      "M01.A03",
+      "M28.A03",
+      "M32.A03",
+      "M04.A08",
+      "M31.A06",
+      "M11.A02"
+     ],
+     "planned": [
+      "M27.A03",
+      "M27.A02"
+     ],
+     "calls": [
+      {
+       "action": "M27.A03",
+       "args": {
+        "contactId": "ct_2"
+       }
+      },
+      {
+       "action": "M27.A02",
+       "args": {
+        "quoteId": "qt_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "compileErrors": [
+      "requested operation M27.A02 is missing; prerequisite reads do not complete it"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9930,
+     "ms": 9930
+    },
+    {
+     "user": "Give her 10% off",
+     "status": "failed",
+     "reply": "Couldn't apply quote discount: No quote with id qt_9139.",
+     "offered": [
+      "M27.A07",
+      "M27.A01",
+      "M27.A09",
+      "M27.A04",
+      "M27.A08",
+      "M27.A10",
+      "M31.A05",
+      "M31.A01",
+      "M32.A07",
+      "M24.A09",
+      "M06.A05",
+      "M47.A04",
+      "M27.A02",
+      "M27.A06",
+      "M27.A05",
+      "M27.A03",
+      "M28.A01",
+      "M32.A01",
+      "M04.A08",
+      "M32.A03"
+     ],
+     "planned": [
+      "M27.A07"
+     ],
+     "calls": [
+      {
+       "action": "M27.A07",
+       "args": {
+        "quoteId": "qt_9139",
+        "discount": {
+         "type": "percent",
+         "value": 10
+        }
+       },
+       "error": "NOT_FOUND: No quote with id qt_9139"
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4030,
+     "ms": 4030
+    }
+   ],
+   "metrics": {
+    "ms": 13960,
+    "firstReplyMs": 9930,
+    "plannerMs": 13824,
+    "plannerRounds": 3,
+    "calls": 3,
+    "usage": {
+     "input": 35377,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 397,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-quote-send-accept-convert",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM quotes WHERE id='qt_1' → \"accepted\", wanted \"converted\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM invoices WHERE id=(SELECT json_extract(data,'$.invoiceId') FROM quotes WHERE id='qt_1') AND json_extract(data,'$.contactId')='ct_2' → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM invoices → 9, wanted 10"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Send Elena Costa's quote, record that she accepted it, and turn it into an invoice",
+     "status": "failed",
+     "reply": "Couldn't send quote for acceptance: $s3.items has 0 items, no [0].\nSkipped record quote acceptance: an earlier step didn't complete.\nSkipped convert accepted quote to invoice: an earlier step didn't complete.",
+     "offered": [
+      "M27.A08",
+      "M27.A09",
+      "M27.A10",
+      "M27.A06",
+      "M29.A04",
+      "M28.A08",
+      "M27.A01",
+      "M07.A06",
+      "M12.A10",
+      "M27.A02",
+      "M13.A10",
+      "M28.A07",
+      "M13.A01",
+      "M07.A01",
+      "M28.A01",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03",
+      "M32.A08",
+      "M04.A08",
+      "M03.A10",
+      "M27.A03",
+      "M07.A03",
+      "M13.A07",
+      "M32.A03"
+     ],
+     "planned": [
+      "M27.A03",
+      "M27.A08",
+      "M27.A09",
+      "M27.A10"
+     ],
+     "calls": [
+      {
+       "action": "M27.A03",
+       "args": {
+        "contactId": "ct_2",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M27.A03",
+       "args": {
+        "contactId": "ct_2",
+        "limit": 50
+       }
+      },
+      {
+       "action": "M27.A08",
+       "args": {
+        "quoteId": "qt_1"
+       }
+      },
+      {
+       "action": "M27.A09",
+       "args": {
+        "quoteId": "qt_1"
+       }
+      },
+      {
+       "action": "M27.A03",
+       "args": {
+        "contactId": "ct_2",
+        "limit": 50
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 7202,
+     "ms": 7207,
+     "confirmations": [
+      {
+       "stepId": "s4",
+       "planHash": "0192e256879530d6",
+       "targetsHash": "f14c6df311d13ddc",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M27.A08",
+         "name": "Send quote for acceptance",
+         "args": {
+          "quoteId": "qt_1"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s6",
+       "planHash": "0192e256879530d6",
+       "targetsHash": "a1c4ee2aed699768",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M27.A10",
+         "name": "Convert accepted quote to invoice",
+         "args": {
+          "quoteId": "qt_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 7207,
+    "firstReplyMs": 7202,
+    "plannerMs": 7128,
+    "plannerRounds": 1,
+    "calls": 5,
+    "usage": {
+     "input": 12870,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 280,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-quote-to-invoice-payment",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "clarify, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M27.A10 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM quotes WHERE id='qt_1' → \"accepted\", wanted \"converted\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM payments WHERE json_extract(data,'$.contactId')='ct_3' AND json_extract(data,'$.amount')=500 → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Ana Ruiz's quote is accepted: invoice it and record her $500 card payment against that invoice",
+     "status": "clarify",
+     "reply": "Ana Ruiz has more than one accepted quote. Which one should I invoice?",
+     "offered": [
+      "M27.A09",
+      "M28.A03",
+      "M29.A04",
+      "M27.A10",
+      "M28.A07",
+      "M29.A10",
+      "M28.A08",
+      "M29.A07",
+      "M29.A05",
+      "M28.A09",
+      "M28.A04",
+      "M28.A10",
+      "M29.A01",
+      "M27.A08",
+      "M27.A01",
+      "M01.A02",
+      "M01.A03",
+      "M04.A08",
+      "M27.A03",
+      "M29.A06",
+      "M30.A03",
+      "M31.A03",
+      "M32.A03",
+      "M33.A01",
+      "M33.A09",
+      "M33.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6551,
+     "ms": 6551
+    }
+   ],
+   "metrics": {
+    "ms": 6551,
+    "firstReplyMs": 6551,
+    "plannerMs": 6452,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 12537,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 92,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-subscription-cancel-declined",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Cancel Yusuf Silva's subscription, he says it's too expensive",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M30.A09",
+      "M30.A07",
+      "M30.A04",
+      "M30.A10",
+      "M30.A01",
+      "M30.A08",
+      "M29.A03",
+      "M24.A07",
+      "M45.A03",
+      "M32.A09",
+      "M21.A05",
+      "M33.A08",
+      "M13.A05",
+      "M12.A05",
+      "M33.A01",
+      "M01.A02",
+      "M01.A03",
+      "M44.A09",
+      "M16.A09",
+      "M15.A08",
+      "M42.A05",
+      "M44.A04",
+      "M26.A07",
+      "M30.A03",
+      "M45.A04",
+      "M32.A03",
+      "M33.A03",
+      "M13.A07",
+      "M12.A07",
+      "M29.A06",
+      "M42.A03",
+      "M33.A04",
+      "M30.A02",
+      "M07.A07",
+      "M13.A10",
+      "M12.A10",
+      "M07.A06",
+      "M06.A10",
+      "M29.A04",
+      "M08.A08",
+      "M07.A01",
+      "M27.A09",
+      "M01.A05",
+      "M01.A01",
+      "M08.A06",
+      "M01.A09",
+      "M28.A02",
+      "M29.A02",
+      "M07.A03",
+      "M27.A03"
+     ],
+     "planned": [
+      "M30.A03",
+      "M30.A09"
+     ],
+     "calls": [
+      {
+       "action": "M30.A03",
+       "args": {
+        "contactId": "ct_5"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 13718,
+     "ms": 13718,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "2d55f4ee0c124308",
+       "targetsHash": "34a06b3c9711207f",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M30.A09",
+         "name": "Cancel subscription",
+         "args": {
+          "subscriptionId": "sub_1",
+          "reason": "Too expensive"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 13718,
+    "firstReplyMs": 13718,
+    "plannerMs": 13646,
+    "plannerRounds": 3,
+    "calls": 1,
+    "usage": {
+     "input": 45027,
+     "cachedRead": 10496,
+     "cacheWrite": 0,
+     "output": 397,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-subscription-change-plan",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "clarify, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M30.A04 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.priceId') FROM subscriptions WHERE id='sub_1' → \"prc_1\", wanted \"prc_2\""
+    }
+   ],
+   "turns": [
+    {
+     "user": "Move Yusuf Silva from Starter to Pro",
+     "status": "clarify",
+     "reply": "I found multiple opportunities named Starter and Pro. Which Starter deal for Yusuf Silva should I move to which Pro stage?",
+     "offered": [
+      "M39.A06",
+      "M04.A05",
+      "M41.A06",
+      "M18.A06",
+      "M21.A04",
+      "M30.A04",
+      "M05.A06",
+      "M05.A07",
+      "M49.A07",
+      "M04.A01",
+      "M49.A06",
+      "M28.A06",
+      "M04.A06",
+      "M37.A06",
+      "M06.A06",
+      "M01.A02",
+      "M01.A03",
+      "M04.A02",
+      "M04.A03",
+      "M25.A02",
+      "M25.A03",
+      "M05.A09",
+      "M05.A10",
+      "M40.A06",
+      "M40.A05",
+      "M30.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4442,
+     "ms": 4442
+    }
+   ],
+   "metrics": {
+    "ms": 4442,
+    "firstReplyMs": 4442,
+    "plannerMs": 4422,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 11191,
+     "cachedRead": 5248,
+     "cacheWrite": 0,
+     "output": 95,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-suspend-enrollment",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "turns": [
+    {
+     "user": "Jo Okafor is on leave, so pause her access to Sales 101 for now",
+     "status": "done",
+     "reply": "Suspend enrollment for 1 of 1: enr_1.",
+     "offered": [
+      "M43.A06",
+      "M42.A05",
+      "M11.A08",
+      "M30.A07",
+      "M30.A06",
+      "M15.A08",
+      "M30.A08",
+      "M16.A09",
+      "M48.A04",
+      "M42.A06",
+      "M42.A04",
+      "M38.A09",
+      "M13.A03",
+      "M48.A07",
+      "M31.A10",
+      "M01.A02",
+      "M01.A03",
+      "M49.A02",
+      "M49.A03",
+      "M44.A09",
+      "M49.A06",
+      "M07.A01",
+      "M47.A07",
+      "M43.A08",
+      "M42.A03",
+      "M11.A02",
+      "M30.A03",
+      "M13.A07"
+     ],
+     "planned": [
+      "M42.A03",
+      "M42.A05"
+     ],
+     "calls": [
+      {
+       "action": "M42.A03",
+       "args": {
+        "courseId": "crs_1",
+        "contactId": "ct_11",
+        "status": "active"
+       }
+      },
+      {
+       "action": "M42.A05",
+       "args": {
+        "enrollmentId": "enr_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6293,
+     "ms": 6293
+    }
+   ],
+   "metrics": {
+    "ms": 6293,
+    "firstReplyMs": 6293,
+    "plannerMs": 6259,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 12097,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 227,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-ticket-contact-task",
+   "category": "multi",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M47.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M06.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.contactId')='ct_1' AND json_extract(data,'$.priority')='high' AND json_extract(data,'$.title') LIKE '%Login loop%' → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_2' AND json_extract(data,'$.dueDate')='2026-10-21' AND json_extract(data,'$.title') LIKE '%login%' → 0, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Open a high-priority support ticket called Login loop for Rosa Ito, and create a task for Raj to look into it today",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31b04badb6ee9-BOM)",
+     "offered": [
+      "M47.A05",
+      "M06.A01",
+      "M47.A01",
+      "M06.A02",
+      "M06.A07",
+      "M06.A03",
+      "M47.A03",
+      "M06.A09",
+      "M47.A04",
+      "M47.A09",
+      "M47.A06",
+      "M07.A01",
+      "M06.A05",
+      "M05.A01",
+      "M47.A02",
+      "M01.A02",
+      "M01.A03",
+      "M48.A02",
+      "M48.A03",
+      "M21.A01",
+      "M01.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2542,
+     "ms": 2542,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 2542,
+    "firstReplyMs": 2542,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "w1-ticket-priority-note",
+   "category": "followup",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M47.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M47.A05 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M47.A07 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.contactId')='ct_4' AND json_extract(data,'$.title') LIKE '%invoice PDF%' → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.priority') FROM tickets WHERE json_extract(data,'$.contactId')='ct_4' AND json_extract(data,'$.title') LIKE '%invoice PDF%' → undefined, wanted \"urgent\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.notes')) FROM tickets WHERE json_extract(data,'$.contactId')='ct_4' AND json_extract(data,'$.title') LIKE '%invoice PDF%' → undefined, wanted 1"
+    }
+   ],
+   "turns": [
+    {
+     "user": "Open a support ticket for Marco Patel: the invoice PDF won't download",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31b17fc5c29ed-BOM)",
+     "offered": [
+      "M47.A01",
+      "M50.A09",
+      "M47.A03",
+      "M29.A09",
+      "M28.A07",
+      "M29.A01",
+      "M28.A09",
+      "M28.A02",
+      "M47.A09",
+      "M28.A03",
+      "M47.A06",
+      "M28.A08",
+      "M47.A08",
+      "M47.A07",
+      "M27.A10",
+      "M01.A02",
+      "M01.A03",
+      "M06.A01",
+      "M01.A01",
+      "M09.A08",
+      "M06.A03",
+      "M11.A02",
+      "M46.A03",
+      "M29.A06",
+      "M27.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3156,
+     "ms": 3156,
+     "infra": "provider"
+    },
+    {
+     "user": "Make it urgent and add an internal note that billing is looking into it",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a4f31b2c5d9999af-BOM)",
+     "offered": [
+      "M06.A07",
+      "M47.A07",
+      "M47.A05",
+      "M11.A08",
+      "M07.A01",
+      "M07.A06",
+      "M28.A04",
+      "M28.A07",
+      "M28.A10",
+      "M47.A10",
+      "M28.A01",
+      "M07.A08",
+      "M06.A01",
+      "M28.A03",
+      "M27.A10",
+      "M11.A02",
+      "M07.A03",
+      "M27.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3150,
+     "ms": 3150,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 6306,
+    "firstReplyMs": 3156,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "calls": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  }
+ ]
+}

@@ -150,6 +150,7 @@ const applyTag = defineAction({
   input: Record_,
   output: z.object({ recordId: z.string(), name: z.string(), tags: z.array(z.string()) }),
   entities: { consumes: ["tag", "contact"] },
+  typedIds: { recordId: "recordType" },
   example: () => ({ tagId: "tg_2", recordType: "contact", recordId: "ct_31" }),
   handler: ({ tagId, recordType, recordId }, { store }) => {
     const t = mustGet<Tag>(store, "tags", tagId, "tag");
@@ -168,6 +169,7 @@ const removeTag = defineAction({
   input: Record_,
   output: z.object({ recordId: z.string(), name: z.string(), tags: z.array(z.string()) }),
   entities: { consumes: ["tag", "contact"] },
+  typedIds: { recordId: "recordType" },
   example: (f) => ({ tagId: "tg_1", recordType: "contact", recordId: f.contact({ tags: ["vip"] }).id }),
   handler: ({ tagId, recordType, recordId }, { store }) => {
     const t = mustGet<Tag>(store, "tags", tagId, "tag");
@@ -201,6 +203,7 @@ const mergeTags = defineAction({
   description: "Merge one tag into another: every contact and lead with the source tag gets the target tag instead, and the source tag is deleted.",
   risk: "destructive",
   input: z.strictObject({ sourceTagId: TagId.describe("the tag to merge away"), targetTagId: TagId.describe("the tag to keep") }),
+  idTypes: { sourceTagId: ["tag"], targetTagId: ["tag"] },
   output: Tag.extend({ recordsUpdated: z.number(), deleted: Tag }),
   entities: { consumes: ["tag"] },
   example: (f) => ({ sourceTagId: f.tag({ name: "V.I.P." }).id, targetTagId: "tg_1" }),

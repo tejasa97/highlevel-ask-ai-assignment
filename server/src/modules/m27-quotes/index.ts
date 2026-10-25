@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { atLeastOne, cents, contains, inDateRange, Limit, listOf, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { ownedResolver } from "../../registry/lookup.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import { localDate } from "../../store/clock.js";
 import type { Store } from "../../store/db.js";
@@ -290,6 +291,7 @@ const sendQuote = defineAction({
   output: Quote,
   siblings: ["M28.A07"],
   entities: { consumes: ["quote"] },
+  destination: { id: "email", label: "Email" },
   example: (f) => ({ quoteId: f.quote().id }),
   handler: ({ quoteId }, { store, clock, actorId }) => {
     requirePermission(store, actorId, "billing.manage");
@@ -377,4 +379,5 @@ const convertQuote = defineAction({
 
 export default {
   actions: [createQuote, getQuote, searchQuotes, addLine, updateLine, setExpiry, applyDiscount, sendQuote, acceptQuote, convertQuote],
+  resolvers: { quote: ownedResolver<Quote>({ table: "quotes", noun: "quote", state: (q) => q.status, label: (_, q) => q.number, detail: (q) => `${q.status}, $${q.total}` }) },
 } satisfies ModuleExports;

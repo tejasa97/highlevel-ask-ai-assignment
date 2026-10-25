@@ -58,7 +58,7 @@ const createRefund = defineAction({
   }),
   output: Refund,
   siblings: ["M29.A04"],
-  entities: { produces: "refund" },
+  entities: { produces: "refund", consumes: ["payment"] },
   example: (f) => ({ paymentId: f.payment({ amount: 25, unallocated: 25 }).id, reason: "Duplicate charge" }),
   handler: (a, { store, clock, actorId }) => {
     const payment = refundablePayment(store, a.paymentId);

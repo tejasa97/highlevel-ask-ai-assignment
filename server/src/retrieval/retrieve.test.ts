@@ -24,6 +24,20 @@ const ids = (x: { picks: { id: string }[] }) => x.picks.map((p) => p.id);
 const QUERIES = fileURLToPath(new URL("../../../eval/retrieval/queries.jsonl", import.meta.url));
 
 describe("cards", () => {
+  test("module-owned paraphrases and dependency metadata are available to both retrieval modes", () => {
+    assert.ok(cards.find((c) => c.id === "M06.A05")!.synonyms.includes("transfer workload"));
+    assert.ok(cards.find((c) => c.id === "M49.A05")!.synonyms.includes("temporary team membership"));
+    assert.deepEqual(cards.find((c) => c.id === "M33.A01")!.consumes, ["payment"]);
+    assert.deepEqual(cards.find((c) => c.id === "M06.A01")!.consumes, []);
+    assert.ok(cards.find((c) => c.id === "M06.A01")!.optionalConsumes!.includes("user"));
+  });
+  test("discovery metadata distinguishes read-only lookup from create and ID-only get", () => {
+    for (const [id, entity] of [["M50.A03", "report"], ["M20.A03", "calendar"], ["M14.A03", "template"], ["M43.A02", "community"]])
+      assert.equal(cards.find((c) => c.id === id)!.lookupFor, entity);
+    for (const id of ["M50.A01", "M50.A02", "M50.A07", "M20.A01", "M20.A02"])
+      assert.equal(cards.find((c) => c.id === id)!.lookupFor, null);
+    for (const c of cards.filter((c) => c.lookupFor)) assert.equal(registry.get(c.id)!.risk, "read", c.id);
+  });
   test("module card metadata describes returned records and implemented capabilities", () => {
     for (const id of ["M47.A07", "M47.A08"]) assert.equal(cards.find(c=>c.id===id)!.produces,"ticket",`${id} returns a ticket, not a standalone note/email`);
     for (const [id, unsupported] of [["M45.A02","text review link"],["M46.A07","holiday hours"],["M47.A06","mark ticket pending"],["M47.A10","time to resolve"]]) {
@@ -65,6 +79,20 @@ describe("cards", () => {
 });
 
 describe("retrieve", () => {
+  test("a selected create action never substitutes for the existing-record discovery dependency", () => {
+    const retriever = new Retriever(cards, { k: 0, siblings: 0 });
+    const result = retriever.retrieve({ message: "run report", resolvable: [], context: { prev: ["M50.A07", "M50.A01"] } });
+    assert.ok(result.picks.some((p) => p.id === "M50.A03" && p.why === "producer" && p.via === "M50.A07"));
+    assert.ok(result.picks.filter((p) => p.why === "producer").every((p) => registry.get(p.id)!.risk === "read"));
+  });
+  test("named-record helpers use a standalone search, not every related list of that entity", () => {
+    const retriever = new Retriever(cards, { k: 0, siblings: 0 });
+    const result = retriever.retrieve({ message: "Sarah Johnson", mentions: [{ entity: "contact" }], resolvable: registry.resolverEntities() });
+    assert.ok(ids(result).includes("M01.A02"));
+    assert.ok(ids(result).includes("M01.A03"));
+    assert.ok(!ids(result).includes("M02.A10"), "listing a company's contacts first needs a company ID");
+    assert.ok(!ids(result).includes("M08.A08"), "finding contacts by tag first needs a tag ID");
+  });
   test("trace mode follows actual rankings rather than whether an embedder was configured", async () => {
     assert.equal(r.retrieve({message:"create support ticket"}).mode,"bm25");
     const good = new Retriever(cards,{}, {rank:async()=>[[{id:"M47.A01",score:1}]]});

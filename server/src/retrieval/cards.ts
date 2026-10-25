@@ -13,7 +13,7 @@ export const ENTITY_TYPES = [
   "quote", "invoice", "payment", "payment_request", "subscription", "coupon", "order", "refund", "tax_rule",
   "website", "funnel", "landing_page", "blog_post", "media_asset", "course", "lesson", "enrollment",
   "community", "community_post", "membership_plan", "review", "review_request", "listing", "ticket", "user",
-  "team", "report",
+  "team", "report", "form_field", "community_channel",
 ] as const;
 
 export interface CardMeta {
@@ -38,7 +38,12 @@ export interface SearchCard {
   description: string;
   synonyms: string[];
   produces: string | null;
+  /** Read-only discovery of existing records; unlike produces, never a create or an ID-only get. */
+  lookupFor?: string | null;
+  /** Prefer standalone discovery over a related-record listing needing extra input arguments. */
+  lookupRequired?: number;
   consumes: string[];
+  optionalConsumes?: string[];
   siblings: string[];
   /** Has a handler in this build. Unavailable actions are still retrieved, so the agent can say so. */
   available: boolean;
@@ -59,6 +64,10 @@ export function buildCards(registry: Registry, meta = loadCardMeta()): SearchCar
     m.actions.map((a) => {
       const g = meta[a.id];
       const impl = registry.get(a.id);
+      const produced = impl?.entities?.produces ?? g?.produces ?? null;
+      const props = impl?.outputSchema.properties as Record<string, unknown> | undefined;
+      const list = props?.items as { type?: string; items?: { properties?: Record<string, unknown> } } | undefined;
+      const discovery = impl?.risk === "read" && list?.type === "array" && list.items?.properties?.id ? produced : null;
       return {
         id: a.id,
         name: a.name,
@@ -66,9 +75,12 @@ export function buildCards(registry: Registry, meta = loadCardMeta()): SearchCar
         module: m.name,
         moduleDescription: m.description,
         description: impl?.description ?? g?.description ?? "",
-        synonyms: g?.synonyms ?? [],
-        produces: impl?.entities?.produces ?? g?.produces ?? null,
-        consumes: impl?.entities?.consumes ?? g?.consumes ?? [],
+        synonyms: [...new Set([...(g?.synonyms ?? []), ...(impl?.synonyms ?? [])])],
+        produces: produced,
+        lookupFor: impl?.risk === "read" ? impl.entities?.lookup ?? discovery : null,
+        lookupRequired: ((impl?.inputSchema.required ?? []) as string[]).length,
+        consumes: (impl?.entities?.consumes ?? g?.consumes ?? []).filter((e) => !impl?.entities?.optionalConsumes?.includes(e)),
+        optionalConsumes: impl?.entities?.optionalConsumes ?? [],
         siblings: [...new Set([...(impl?.siblings ?? []), ...(g?.siblings ?? [])])],
         available: impl !== undefined,
       };

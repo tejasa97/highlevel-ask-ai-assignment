@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { atLeastOne, contains, Limit, listOf, Name, page, requireState } from "../../registry/helpers.js";
@@ -296,5 +297,8 @@ const getInventory = defineAction({
 });
 
 export default {
+  resolvers: {
+    product: tableResolver("products", "name", {"sku":"sku"}),
+  },
   actions: [createProduct, getProduct, searchProducts, updateProduct, archiveProduct, addVariant, updateVariant, setSku, setInventory, getInventory],
 } satisfies ModuleExports;

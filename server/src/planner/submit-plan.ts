@@ -9,6 +9,30 @@ import { z } from "zod";
 const nullable = (t: string) => ({ type: [t, "null"] });
 const strings = { type: ["array", "null"], items: { type: "string" } };
 
+const outcome = {
+  type: "object", additionalProperties: false,
+  required: ["effect", "actions", "destination"],
+  properties: {
+    effect: { enum: ["read", "change"] },
+    actions: { type: "array", items: { type: "string" }, description: "Catalog IDs of the final requested operations, not prerequisite reads. Empty only while searching for the final action." },
+    destination: { ...nullable("string"), description: "Explicit delivery surface ID from delivery_surfaces; preserve an unsupported platform's name instead of substituting a supported surface. Null when not a delivery request." },
+  },
+};
+const lookup = {
+  type: ["object", "null"], additionalProperties: false,
+  required: ["entity", "name", "whereJson"],
+  properties: { entity: { type: "string" }, name: { type: "string" }, whereJson: nullable("string") },
+};
+const missing = {
+  type: ["object", "null"], additionalProperties: false,
+  required: ["action", "argument", "argsJson"],
+  properties: {
+    action: { type: "string", description: "Offered action whose input is missing or ambiguous" },
+    argument: { type: "string", description: "Concrete input path, e.g. title, teamId, answers[0].fieldId" },
+    argsJson: { type: "string", description: "Known arguments as a JSON object. Preserve given names as $lookup values, including the ambiguous argument." },
+  },
+};
+
 const actionCall = {
   type: "object",
   additionalProperties: false,
@@ -30,12 +54,13 @@ const step = {
     {
       type: "object",
       additionalProperties: false,
-      required: ["id", "kind", "entity", "name"],
+      required: ["id", "kind", "entity", "name", "whereJson"],
       properties: {
         id: { type: "string" },
         kind: { enum: ["resolve"] },
         entity: { type: "string", description: "contact | lead | user | team | ..." },
         name: { type: "string" },
+        whereJson: { ...nullable("string"), description: "Exact lookup qualifiers as a JSON object, e.g. {\"company\":\"Brightside\"}; null if none" },
       },
     },
     {
@@ -60,7 +85,7 @@ const step = {
 export const SUBMIT_PLAN_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["type", "steps", "question", "options", "reason", "alternatives", "query", "text"],
+  required: ["type", "steps", "question", "options", "reason", "alternatives", "query", "text", "outcome", "clarification", "lookup", "missing"],
   properties: {
     type: { enum: ["plan", "look", "clarify", "unsupported", "answer", "search_tools"] },
     steps: { type: ["array", "null"], items: step },
@@ -70,6 +95,10 @@ export const SUBMIT_PLAN_SCHEMA = {
     alternatives: strings,
     query: nullable("string"),
     text: nullable("string"),
+    outcome,
+    clarification: { enum: ["identity", "content", "choice", null] },
+    lookup,
+    missing,
   },
 } as const;
 
@@ -77,7 +106,7 @@ export const SUBMIT_PLAN_SCHEMA = {
 const ActionCall = z.object({ action: z.string(), argsJson: z.string() });
 const Step = z.discriminatedUnion("kind", [
   z.object({ id: z.string(), kind: z.literal("action"), ...ActionCall.shape }),
-  z.object({ id: z.string(), kind: z.literal("resolve"), entity: z.string(), name: z.string() }),
+  z.object({ id: z.string(), kind: z.literal("resolve"), entity: z.string(), name: z.string(), whereJson: z.string().nullable().optional() }),
   z.object({
     id: z.string(),
     kind: z.literal("op"),
@@ -100,6 +129,11 @@ export const SubmitPlan = z.object({
   alternatives: z.array(z.string()).nullable(),
   query: z.string().nullable(),
   text: z.string().nullable(),
+  // Optional at the internal boundary for existing saved replies; every new provider call requires these on wire.
+  outcome: z.object({ effect: z.enum(["read", "change"]), actions: z.array(z.string()), destination: z.string().nullable() }).nullable().optional(),
+  clarification: z.enum(["identity", "content", "choice"]).nullable().optional(),
+  lookup: z.object({ entity: z.string(), name: z.string(), whereJson: z.string().nullable() }).nullable().optional(),
+  missing: z.object({ action: z.string(), argument: z.string(), argsJson: z.string() }).nullable().optional(),
 });
 export type SubmitPlan = z.infer<typeof SubmitPlan>;
 export type Step = z.infer<typeof Step>;

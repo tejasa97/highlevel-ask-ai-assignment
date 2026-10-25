@@ -32,7 +32,8 @@ const createTask = defineAction({
     relatedTo: z.strictObject(Related.shape).optional(),
   }),
   output: Task,
-  entities: { produces: "task" },
+  entities: { produces: "task", optionalConsumes: ["user", "contact", "lead", "opportunity"] },
+  typedIds: { "relatedTo.id": "relatedTo.type" },
   example: () => ({ title: "Call back about pricing", assigneeId: "us_4", dueDate: "2026-10-23", relatedTo: { type: "contact", id: "ct_1" } }),
   handler: (a, { store, clock, actorId }) => {
     if (a.assigneeId) activeUser(store, a.assigneeId, "be assigned tasks");
@@ -88,6 +89,7 @@ const searchTasks = defineAction({
   }),
   output: listOf(Task),
   entities: { produces: "task" },
+  typedIds: { relatedId: "relatedType" },
   example: () => ({ assigneeId: "us_3", overdue: true }),
   handler: (a, { store, clock }) => {
     const today = localDate(clock.now());
@@ -128,6 +130,7 @@ const updateDescription = defineAction({
 const assignTask = defineAction({
   id: "M06.A05",
   description: "Give an open task to a staff user (or take it from whoever has it).",
+  synonyms: ["reassign tasks", "cover a colleague's tasks", "transfer workload", "handoff open work"],
   risk: "write",
   input: z.strictObject({ taskId: TaskId, assigneeId: z.string().describe("user id") }),
   output: Task,

@@ -19,7 +19,15 @@ export interface Candidate {
 }
 
 /** Turns a name ("Sales", "Jo Park") into matching records of one entity type. */
-export type Resolver = (store: Store, name: string) => Candidate[];
+export type LookupWhere = Record<string, string>;
+export type Resolver = ((store: Store, name: string, where?: LookupWhere) => Candidate[]) & {
+  /** Exact-match qualifiers understood by this resolver (never silently ignored). */
+  qualifiers?: readonly string[];
+  /** Titles/configuration labels should only be linked when the full label was mentioned. */
+  exactMention?: boolean;
+  /** At least one of these parent qualifiers must be supplied for child lookup. */
+  parentQualifiers?: readonly string[];
+};
 
 export interface ModuleExports {
   actions: ActionDef[];
@@ -42,6 +50,7 @@ export class Registry {
 
   register(mod: ModuleExports): void {
     for (const def of mod.actions) {
+      if (def.query && (def.risk === "external" || def.risk === "destructive")) throw new Error(`${def.id}: query metadata cannot hide external or destructive effects`);
       const entry = CATALOG_ACTIONS.get(def.id);
       if (!entry) throw new Error(`${def.id} is not in the catalog`);
       if (this.actions.has(def.id)) throw new Error(`${def.id} is registered twice`);
@@ -74,6 +83,22 @@ export class Registry {
 
   resolverEntities(): string[] {
     return [...this.resolvers.keys()].sort();
+  }
+
+  resolverQualifiers(): Record<string, readonly string[]> {
+    return Object.fromEntries([...this.resolvers].filter(([, r]) => r.qualifiers?.length).map(([e, r]) => [e, r.qualifiers!]));
+  }
+
+  deliverySurfaces(): { id: string; label: string; actions: string[] }[] {
+    const surfaces = new Map<string, { id: string; label: string; actions: string[] }>();
+    for (const action of this.list()) {
+      if (!action.destination) continue;
+      const { id, label } = action.destination;
+      const surface = surfaces.get(id) ?? { id, label, actions: [] };
+      surface.actions.push(action.id);
+      surfaces.set(id, surface);
+    }
+    return [...surfaces.values()];
   }
 }
 

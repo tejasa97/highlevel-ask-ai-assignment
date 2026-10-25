@@ -110,6 +110,38 @@ test("completed appointments → distinct contacts → review drafts → confirm
   assert.equal(w.store.all("emails").length, emails + 2);
 });
 
+test("one loop creates each review request and sends it through $prev, replay-safe", async () => {
+  const w = world();
+  w.f.appointment({ contactId: "ct_35", status: "completed", startAt: "2026-10-20T18:00:00.000Z" });
+  const p = compiled([
+    action("s1", "M21.A03", { status: "completed", from: "2026-10-19", to: "2026-10-21" }),
+    each("s2", "$s1.items", [
+      ["M45.A01", { contactId: "$item.contactId", subject: "Your visit", body: "Please review your visit" }],
+      ["M45.A02", { requestId: "$prev.id" }],
+    ]),
+  ]);
+  const requests = w.store.all("review_requests").length,
+    emails = w.store.all("emails").length;
+  const first = await execute(p, registry, w, { executionId: "prev-reviews" });
+  assert.equal(first.status, "awaiting_confirmation");
+  assert.match(JSON.stringify(first.pending!.preview), /\(from create review request\)/);
+  assert.equal(w.store.all("review_requests").length, requests, "the preview creates nothing");
+  const done = await execute(p, registry, w, { executionId: "prev-reviews", approvals: [first.pending!] });
+  assert.equal(done.status, "done", JSON.stringify(done));
+  const sent = w.store.all<{ status: string }>("review_requests").slice(requests);
+  assert.ok(sent.length > 0 && sent.every((r) => r.status === "sent"), JSON.stringify(sent));
+  assert.equal(w.store.all("emails").length, emails + sent.length);
+  await execute(p, registry, w, { executionId: "prev-reviews", approvals: [first.pending!] });
+  assert.equal(w.store.all("review_requests").length, requests + sent.length);
+  assert.equal(w.store.all("emails").length, emails + sent.length);
+});
+
+test("$prev only works after an earlier call in the same do", () => {
+  const p: SubmitPlan = { type: "plan", steps: [action("s1", "M21.A03", {}), each("s2", "$s1.items", [["M45.A02", { requestId: "$prev.id" }]])], question: null, options: null, reason: null, alternatives: null, query: null, text: null };
+  const r = compile(p, registry);
+  assert.ok(!r.ok && r.errors.some((e) => /\$prev is the previous call's output/.test(e)), JSON.stringify(r));
+});
+
 test("overdue invoices ∩ recent inbound conversations → one support ticket per contact", async () => {
   const w = world();
   // A second overdue invoice must not produce a second ticket for the same customer.
@@ -210,4 +242,21 @@ test("a new ticket in the bulk target set invalidates the old approval before an
   assert.equal(changed.pending!.changed, true);
   assert.equal(changed.pending!.count, first.pending!.count + 1);
   assert.equal(w.store.all("emails").length, before);
+});
+
+test("a page added to a new website is made its home page through pages[-1], then the site publishes", async () => {
+  const w = world();
+  const p = compiled([
+    action("s1", "M35.A01", { name: "Bakery Site" }),
+    action("s2", "M35.A05", { websiteId: "$s1.id", title: "Home", slug: "home" }),
+    action("s3", "M35.A06", { websiteId: "$s1.id", pageId: "$s2.pages[-1].id" }),
+    action("s4", "M35.A09", { websiteId: "$s1.id" }),
+  ]);
+  const first = await execute(p, registry, w, { executionId: "site" });
+  assert.equal(first.status, "awaiting_confirmation");
+  const r = await execute(p, registry, w, { executionId: "site", approvals: [first.pending!] });
+  assert.equal(r.status, "done", JSON.stringify(r));
+  const site = w.store.all<{ name: string; homePageId: string; pages: { id: string }[]; status: string }>("websites").find((x) => x.name === "Bakery Site")!;
+  assert.equal(site.homePageId, site.pages.at(-1)!.id);
+  assert.equal(site.status, "published");
 });

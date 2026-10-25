@@ -4,7 +4,10 @@ import { ActionError, type ActionContext } from "../registry/define.js";
 import { DEFAULT_ACTOR, invoke } from "../registry/invoke.js";
 import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
-import { parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
+import { norm } from "../registry/helpers.js";
+import { normalizeDateTimes } from "./datetimes.js";
+import { OTHER_THAN } from "./lookups.js";
+import { collectRefs, parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
 
 // Stage 2: run a compiled plan.
 // - Refs are substituted, then the concrete args are parsed with the action's Zod schema.
@@ -36,7 +39,17 @@ export interface Pending extends Approval {
   blockedCount?: number;
 }
 
-type ConcreteCall = { call: Call; args: Record<string, unknown>; label?: string; binding?: Record<string, unknown> };
+type ConcreteCall = {
+  call: Call;
+  args: Record<string, unknown>;
+  label?: string;
+  binding?: Record<string, unknown>;
+  /** Args that use $prev: filled in from the previous call's result just before this call runs. */
+  late?: (prev: unknown) => Record<string, unknown>;
+};
+
+/** What $prev shows in a preview, before the call it refers to has run. */
+const LATER = (call: Call) => `(from ${call.action.name.toLowerCase()})`;
 
 export interface Clarification {
   stepId: string;
@@ -97,6 +110,9 @@ export interface ExecOptions {
 
 export async function execute(plan: CompiledPlan, registry: Registry, ctx: ActionContext, opts: ExecOptions): Promise<RunResult> {
   const outputs = new Map<string, unknown>();
+  // What each search was asked for by name, and how long each filter's input was: for the guards below.
+  const searched = new Map<string, { query: string; entity: string }>();
+  const filteredFrom = new Map<string, number>();
   const results: StepResult[] = [];
   const bad = new Set<string>(); // failed or skipped: dependents are skipped
   // Consecutive independent preflight-capable sends share one approval, including known exclusions.
@@ -111,15 +127,68 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   });
 
   const lookup =
-    (scope: { item?: unknown; rr?: unknown } = {}) =>
+    (scope: { item?: unknown; rr?: unknown; prev?: unknown } = {}) =>
     (ref: Ref): unknown => {
       const label = `$${ref.root}`;
       if (ref.root === "item") return valueAt(scope.item, ref.path, label);
       if (ref.root === "rr") return valueAt(scope.rr, ref.path, label);
+      if (ref.root === "prev") return typeof scope.prev === "function" ? (scope.prev as () => string)() : valueAt(scope.prev, ref.path, label);
       if (!outputs.has(ref.root)) throw new RefError(`${label} has no output`);
       return valueAt(outputs.get(ref.root), ref.path, label);
     };
   const refValue = (raw: string, scope?: { item?: unknown; rr?: unknown }) => lookup(scope)(parseRef(raw)!);
+
+  /** A name search that found several records, used as if it found one: ask which, never take the first. */
+  const several = (raw: string): Clarification | undefined => {
+    const ref = parseRef(raw);
+    const search = ref && searched.get(ref.root);
+    const items = (outputs.get(ref?.root ?? "") as { items?: unknown[] } | undefined)?.items;
+    if (!search || !Array.isArray(items) || items.length < 2) return undefined;
+    const candidates = items.slice(0, 20).map((x, i) => ({ id: itemKey(x, i), name: labelOf(x) ?? itemKey(x, i), ...(detailOf(x) ? { detail: detailOf(x) } : {}) }));
+    return { stepId: ref!.root, entity: search.entity, name: search.query, candidates };
+  };
+  const pickedFirst = (step: CStep & { kind: "action" }) => {
+    for (const { ref } of collectRefs(step.call.args)) {
+      const r = parseRef(ref);
+      if (r?.path[0] && "field" in r.path[0] && r.path[0].field === "items" && r.path[1] && "index" in r.path[1]) {
+        const c = several(ref);
+        if (c) return c;
+      }
+    }
+    return undefined;
+  };
+  // Looping a change over a search for one name that found several records with exactly that name.
+  const sameNamed = (raw: string, list: unknown[]) => {
+    const c = several(raw);
+    if (!c || !/\.items$/.test(raw)) return undefined;
+    return list.filter((x) => norm(labelOf(x) ?? "") === norm(c.name)).length >= 2 ? c : undefined;
+  };
+  /** Fills each arg the compiler marked as one value of a list, or says why the list doesn't hold exactly one. */
+  const onlyOne = (call: Call): { call: Call } | { error: StepError } | { ask: Clarification } => {
+    if (!call.one?.length) return { call };
+    const args = structuredClone(call.args);
+    for (const at of call.one) {
+      const parent = at.slice(0, -1).reduce<any>((o, k) => o[k], args);
+      const raw = parent[at.at(-1)!] as string;
+      const values = asList(refValue(raw), raw);
+      if (values.length === 1) {
+        parent[at.at(-1)!] = values[0];
+        continue;
+      }
+      if (values.length === 0) return { error: { code: "NOT_FOUND", message: `${raw} found nothing, so there is no ${at.at(-1)} to ${call.action.name.toLowerCase()} with` } };
+      const ref = parseRef(raw)!;
+      const items = asList(valueAt(outputs.get(ref.root), ref.path.slice(0, ref.path.findIndex((p) => "all" in p)), `$${ref.root}`), raw);
+      const candidates = items.slice(0, 20).map((x, i) => ({ id: itemKey(x, i), name: labelOf(x) ?? itemKey(x, i), ...(detailOf(x) ? { detail: detailOf(x) } : {}) }));
+      const search = searched.get(ref.root);
+      return { ask: { stepId: ref.root, entity: search?.entity ?? call.action.entities?.consumes?.[0] ?? "record", name: search?.query ?? String(at.at(-1)), candidates } };
+    }
+    return { call: { ...call, args } };
+  };
+  const ask = (step: CStep, clarification: Clarification) => {
+    results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });
+    emit({ type: "clarify.required", clarification });
+    return finish("needs_clarification", { clarification });
+  };
 
   for (const step of plan.steps) {
     if (step.deps.some((d) => bad.has(d))) {
@@ -148,16 +217,18 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     try {
       switch (step.kind) {
         case "resolve": {
-          const all = registry.resolver(step.entity)!(ctx.store, step.name);
+          const { [OTHER_THAN]: other, ...where } = substitute(step.where ?? {}, lookup()) as Record<string, string>;
+          // The same name in two arguments of one call (merge the two Sarah Johnsons) means two different records.
+          const all = registry.resolver(step.entity)!(ctx.store, step.name, where).filter((c) => c.id !== other);
           const found = all.filter((c) => !c.inactive);
           if (found.length === 0 && all.length > 0) {
             // Only unusable records match (a deactivated user, a closed deal): say so, rather than "no match".
             fail({ code: "CONFLICT", message: all.map((c) => `${c.name} is ${c.inactive}`).join("; ") });
           } else if (found.length === 0) {
             // The planner sometimes guesses the wrong record type for a name; say where the name does exist.
-            const elsewhere = registry
+            const elsewhere = Object.keys(where).length ? [] : registry
               .resolverEntities()
-              .filter((e) => e !== step.entity && registry.resolver(e)!(ctx.store, step.name).some((c) => !c.inactive));
+              .filter((e) => e !== step.entity && !registry.resolver(e)!.parentQualifiers?.length && registry.resolver(e)!(ctx.store, step.name).some((c) => !c.inactive));
             const hint = elsewhere.length ? ` (but a ${elsewhere.join(" and a ")} does)` : "";
             fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"${hint}` });
           } else if (found.length > 1) {
@@ -174,6 +245,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         case "filter": {
           const list = asList(refValue(step.in), step.in);
           const where = substitute(step.where, lookup()) as Record<string, unknown>;
+          filteredFrom.set(step.id, list.length);
           done(list.filter((x) => matches(x, where)));
           break;
         }
@@ -186,11 +258,19 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         }
 
         case "action": {
-          const args = concreteArgs(step.call, lookup());
+          const single = onlyOne(step.call);
+          if ("ask" in single) return ask(step, single.ask);
+          if ("error" in single) {
+            fail(single.error);
+            break;
+          }
+          const args = concreteArgs(single.call, lookup());
           if (!args.ok) {
             fail(args.error);
             break;
           }
+          const picked = step.call.action.risk === "read" ? undefined : pickedFirst(step);
+          if (picked) return ask(step, picked);
           if (step.call.action.preflight && !checkedActions.has(step.id)) {
             const group: { step: CStep; calls: ConcreteCall[]; error?: StepError }[] = [];
             for (const next of plan.steps.slice(plan.steps.indexOf(step))) {
@@ -218,7 +298,11 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           }
           const r = runItem(ctx, opts.executionId, step.id, "-", [{ call: step.call, args: args.value }]);
           if (r.status === "failed") fail(r.error!);
-          else done(r.results![0], r.replayed ? { items: [r] } : {});
+          else {
+            const query = args.value.query ?? args.value.name;
+            if (step.call.action.risk === "read" && typeof query === "string" && query.trim()) searched.set(step.id, { query, entity: step.call.action.entities?.produces ?? "record" });
+            done(r.results![0], r.replayed ? { items: [r] } : {});
+          }
           break;
         }
 
@@ -229,16 +313,32 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             fail({ code: "INVALID", message: `round-robin list ${step.roundRobin} is empty, so there is no one to assign to` });
             break;
           }
+          const writes = step.calls.some((c) => c.action.risk !== "read");
+          const duplicate = writes ? sameNamed(step.in, list) : undefined;
+          if (duplicate) return ask(step, duplicate);
+          const root = parseRef(step.in)?.root;
+          if (writes && list.length === 0 && root && filteredFrom.get(root)) {
+            fail({ code: "NOT_FOUND", message: `the filter ${root} kept none of the ${filteredFrom.get(root)} records found, so nothing was changed; check its conditions against the found records` });
+            break;
+          }
           // Resolve every item's args first: the preview shows exactly these, and the hash binds them.
           const prepared: { key: string; label?: string; item: unknown; calls: ConcreteCall[]; error?: StepError }[] = [];
           list.forEach((item, i) => {
             const scope = { item, rr: rr ? rr[i % rr.length] : undefined };
             const key = itemKey(item, i);
             const calls: ConcreteCall[] = [];
-            for (const call of step.calls) {
-              const a = concreteArgs(call, lookup(scope));
+            for (const [n, call] of step.calls.entries()) {
+              const earlier = step.calls[n - 1];
+              const a = concreteArgs(call, lookup({ ...scope, ...(earlier ? { prev: () => LATER(earlier) } : {}) }));
               if (!a.ok) return prepared.push({ key, label: labelOf(item), item, calls, error: a.error });
-              calls.push({ call, args: a.value });
+              const late = collectRefs(call.args).some((r) => parseRef(r.ref)?.root === "prev")
+                ? (prev: unknown) => {
+                    const b = concreteArgs(call, lookup({ ...scope, prev }));
+                    if (!b.ok) throw new RefError(b.error.message);
+                    return b.value;
+                  }
+                : undefined;
+              calls.push({ call, args: a.value, ...(late ? { late } : {}) });
             }
             // Only a single call can be checked against the current state: earlier calls in a
             // transactional item may create/change prerequisites for later calls.
@@ -287,7 +387,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
 
 function concreteArgs(call: Call, lookup: (r: Ref) => unknown): { ok: true; value: Record<string, unknown> } | { ok: false; error: StepError } {
   try {
-    const raw = substitute(call.args, lookup);
+    const raw = normalizeDateTimes(substitute(call.args, lookup), call.action.inputSchema);
     const parsed = (call.action.input as z.ZodType).safeParse(raw);
     if (!parsed.success) {
       const msg = parsed.error.issues.map((i) => `${i.path.join(".") || "(args)"}: ${i.message}`).join("; ");
@@ -300,24 +400,22 @@ function concreteArgs(call: Call, lookup: (r: Ref) => unknown): { ok: true; valu
 }
 
 /** Runs one item's calls in one transaction, replaying any write the ledger already has. */
-function runItem(ctx: ActionContext, executionId: string, stepId: string, key: string, calls: { call: Call; args: Record<string, unknown> }[]): ItemResult {
+function runItem(ctx: ActionContext, executionId: string, stepId: string, key: string, calls: ConcreteCall[]): ItemResult {
   let replayed = 0;
   try {
     const results = ctx.store.tx(() =>
-      calls.map(({ call, args }, i) => {
+      calls.reduce<unknown[]>((done, { call, args, late }, i) => {
         const writes = call.action.risk !== "read";
         const ledgerKey = `${executionId}:${stepId}:${key}:${i}`;
-        if (writes) {
-          const prior = ctx.store.recordedWrite(ledgerKey);
-          if (prior !== undefined) {
-            replayed++;
-            return prior;
-          }
+        const prior = writes ? ctx.store.recordedWrite(ledgerKey) : undefined;
+        if (prior !== undefined) {
+          replayed++;
+          return [...done, prior];
         }
-        const value = invoke(call.action, args, ctx);
+        const value = invoke(call.action, late ? late(done[i - 1]) : args, ctx);
         if (writes) ctx.store.recordWrite(ledgerKey, call.action.id, value, ctx.clock.now());
-        return value;
-      }),
+        return [...done, value];
+      }, []),
     );
     return { key, status: "done", results, ...(replayed ? { replayed } : {}) };
   } catch (e) {
@@ -419,8 +517,16 @@ function itemKey(item: unknown, i: number): string {
 
 function labelOf(item: unknown): string | undefined {
   const o = item as Record<string, unknown> | null;
-  const name = o?.name ?? o?.title;
+  const name = o?.name ?? o?.title ?? o?.number;
   return typeof name === "string" ? name : undefined;
+}
+
+/** A couple of short descriptive fields, so same-named records can be told apart: "Austin, active". */
+function detailOf(item: unknown): string | undefined {
+  const o = (item ?? {}) as Record<string, unknown>;
+  const skip = /^(id|name|title|createdAt|updatedAt)$|Id$|At$/;
+  const parts = Object.entries(o).filter(([k, v]) => !skip.test(k) && typeof v === "string" && v && v.length <= 40).map(([, v]) => v as string);
+  return parts.slice(0, 2).join(", ") || undefined;
 }
 
 function toError(e: unknown): StepError {

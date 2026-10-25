@@ -1,8 +1,8 @@
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
+import { namedResolver } from "../../registry/lookup.js";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import {
-  candidates,
   contains,
   Limit,
   listOf,
@@ -217,6 +217,7 @@ const categories = defineAction({
 const unreachable = (directory: string) => /down/i.test(directory);
 const publish = defineAction({
   id: "M46.A09",
+  destination: { id: "business_listing", label: "Simulated business directory listing" },
   description:
     "Publish or sync the latest version of a business listing to its simulated directory. This publishes a business profile, not a customer review response. No real directory is contacted. A directory whose name contains \"down\" is simulated as unreachable: the sync is recorded as failed with its reason (status failed in Check listing sync), the published version stays as it was, and publishing again retries.",
   risk: "external",
@@ -299,12 +300,10 @@ export default {
     sync,
   ],
   resolvers: {
-    listing: (store, name) =>
-      candidates(
-        store.all<Listing>("listings"),
-        name,
-        (l) => `${l.name} ${l.directory}`,
-        (l) => l.address,
-      ),
+    listing: namedResolver<Listing>({
+      records: (store) => store.all<Listing>("listings"),
+      name: (l) => `${l.name} ${l.directory}`, detail: (l) => l.address,
+      qualifiers: { directory: (l) => l.directory },
+    }),
   },
 } satisfies ModuleExports;

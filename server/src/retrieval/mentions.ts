@@ -10,6 +10,8 @@ export interface Mention {
   name: string;
   entity: string;
   count: number;
+  /** The contact, named in the same message, whose record this is: "Starter" for Yusuf Silva is his subscription. */
+  of?: string;
 }
 
 /** Record types whose names are titles, not names of people or teams: too noisy to link. */
@@ -22,8 +24,11 @@ export function mentions(message: string, registry: Registry, store: Store): Men
     let found = false;
     for (const entity of registry.resolverEntities()) {
       if (SKIP.has(entity)) continue;
-      const hits = registry.resolver(entity)!(store, name).filter((c) => {
+      const resolver = registry.resolver(entity)!;
+      if (resolver.parentQualifiers?.length) continue; // A child label alone cannot identify its parent.
+      const hits = resolver(store, name).filter((c) => {
         if (c.inactive) return false;
+        if (resolver.exactMention) return norm(c.name) === norm(name);
         const have = norm(c.name).split(" ");
         return words.every((w) => have.includes(w));
       });
@@ -35,7 +40,22 @@ export function mentions(message: string, registry: Registry, store: Store): Men
   };
   // A run that opens a sentence may start with an ordinary word: "Call Ana Ruiz" → try "Ana Ruiz" if nothing matched.
   // Only there: mid-sentence, "Jo Park" is one name, and an unknown Jo Park mustn't link to some user Park.
-  for (const { name, opens } of nameRuns(message)) if (!link(name) && opens && name.includes(" ")) link(name.slice(name.indexOf(" ") + 1));
+  const runs = nameRuns(message);
+  for (const { name, opens } of runs) if (!link(name) && opens && name.includes(" ")) link(name.slice(name.indexOf(" ") + 1));
+  // Records with no name of their own (a subscription, a quote) are named by their owner and what they hold.
+  // "Move Yusuf Silva from Starter to Pro": Starter alone is a product, but Yusuf's Starter is his subscription.
+  for (const owner of out.filter((m) => m.entity === "contact" && m.count === 1).map((m) => m.name)) {
+    for (const { name } of runs) {
+      if (name === owner || owner.includes(name)) continue;
+      const words = norm(name).split(" ");
+      for (const entity of registry.resolverEntities()) {
+        const resolver = registry.resolver(entity)!;
+        if (!resolver.qualifiers?.includes("contact")) continue;
+        const hits = resolver(store, name, { contact: owner }).filter((c) => !c.inactive && words.every((w) => norm(c.name).split(" ").includes(w)));
+        if (hits.length && !out.some((m) => m.name === name && m.entity === entity)) out.push({ name, entity, count: hits.length, of: owner });
+      }
+    }
+  }
   return out;
 }
 

@@ -1,3 +1,4 @@
+import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { contains, freshId, Limit, listOf, page, requireState } from "../../registry/helpers.js";
@@ -270,6 +271,7 @@ const setBranching = defineAction({
 
 const publishSurvey = defineAction({
   id: "M19.A07",
+  destination: { id: "survey", label: "Survey" },
   description: "Makes a draft survey live so respondents can answer it. Opposite of Close survey, which stops collecting answers. Unlike M18.A08 Publish form, this opens a survey rather than a form.",
   risk: "external",
   input: z.strictObject({ surveyId: SurveyId }),
@@ -479,5 +481,8 @@ const summary = defineAction({
 });
 
 export default {
+  resolvers: {
+    survey: tableResolver("surveys"),
+  },
   actions: [createSurvey, getSurvey, listSurveys, addQuestion, updateQuestion, setBranching, publishSurvey, closeSurvey, submitResponse, summary],
 } satisfies ModuleExports;

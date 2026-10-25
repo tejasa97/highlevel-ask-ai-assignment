@@ -51,6 +51,18 @@ describe("mentions", () => {
     assert.deepEqual(linked("what's Ángel Núñez's phone?", ctx), ["Ángel Núñez: contact"]);
   });
 
+  test("a word naming what a mentioned contact's own record holds links to that record, with its owner", () => {
+    const ctx = world();
+    const owner = ctx.f.contact({ firstName: "Una", lastName: "Owner" });
+    const starter = ctx.f.product({ name: "Starterish" });
+    const price = ctx.f.price({ productId: starter.id, label: "Monthly", amount: 49, interval: "month" });
+    ctx.f.subscription({ contactId: owner.id, productId: starter.id, priceId: price.id });
+    const all = mentions("Move Una Owner from Starterish to Pro", registry, ctx.store);
+    assert.ok(all.some((m) => m.name === "Starterish" && m.entity === "subscription" && m.of === "Una Owner"), JSON.stringify(all));
+    // Without the owner in the message, the subscription is not linked by its product's name alone.
+    assert.ok(!mentions("Move from Starterish to Pro", registry, ctx.store).some((m) => m.entity === "subscription"));
+  });
+
   test("runs are split off possessives and know whether they open a sentence", () => {
     assert.deepEqual(nameRuns("What is Sarah Johnson's status? Ask Tom."), [
       { name: "What", opens: true },

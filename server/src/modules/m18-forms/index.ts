@@ -1,3 +1,4 @@
+import { namedResolver, tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
 import { contains, freshId, fullName, inDateRange, Limit, listOf, page, requireState, sameEmail } from "../../registry/helpers.js";
@@ -178,6 +179,7 @@ const addField = defineAction({
 
 const updateField = defineAction({
   id: "M18.A05",
+  argumentLookups: { fieldId: { entity: "form_field", scope: { formId: "formId" } } },
   description: "Changes an existing field on a form, such as its label, type, placeholder or required setting. Does not add new fields or change their order.",
   risk: "write",
   input: z.strictObject({
@@ -233,6 +235,7 @@ const updateField = defineAction({
 
 const reorderFields = defineAction({
   id: "M18.A06",
+  argumentLookups: { "fieldIds[]": { entity: "form_field", scope: { formId: "formId" } } },
   description: "Changes the order in which fields appear on a form. Use to move fields up or down; it does not edit field content.",
   risk: "write",
   input: z.strictObject({ formId: FormId, fieldIds: z.array(z.string().min(1)) }),
@@ -267,6 +270,7 @@ const reorderFields = defineAction({
 
 const setValidation = defineAction({
   id: "M18.A07",
+  argumentLookups: { fieldId: { entity: "form_field", scope: { formId: "formId" } } },
   description: "Sets rules that submitted answers must meet, like required fields, formats or length limits. Applies to the whole form's validation, not field content or layout.",
   risk: "write",
   input: z.strictObject({
@@ -306,6 +310,7 @@ const setValidation = defineAction({
 
 const publishForm = defineAction({
   id: "M18.A08",
+  destination: { id: "form", label: "Form" },
   description: "Makes a form live so people can fill it out. Use once the fields and rules are ready; it does not collect responses itself.",
   risk: "external",
   input: z.strictObject({ formId: FormId }),
@@ -329,12 +334,15 @@ const publishForm = defineAction({
 
 const submitForm = defineAction({
   id: "M18.A09",
-  description: "Submits a test response to a form as if a visitor filled it in, for trying out the form. Creates a submission record.",
+  description: "Submit a simulated form response. Give either values keyed by real field IDs, or answers entries with fieldId and value. answers fieldId supports a named form_field lookup scoped automatically to formId; do not use a label as an ID or a values key. Creates a submission record; required-field and validation rules still apply.",
   risk: "write",
   input: z.strictObject({
     formId: FormId,
-    values: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
+    values: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+    answers: z.array(z.strictObject({ fieldId: FieldId, value: z.union([z.string(), z.number(), z.boolean()]) })).optional(),
   }),
+  inputAlternatives: [["formId", "values"], ["formId", "answers"]],
+  argumentLookups: { "answers[].fieldId": { entity: "form_field", scope: { formId: "formId" } } },
   output: FormSubmission,
   entities: { consumes: ["form"], produces: "form_submission" },
   example: (f) => {
@@ -346,16 +354,19 @@ const submitForm = defineAction({
     return { formId: form.id, values: { field_email: "submit@example.com" } };
   },
   handler: (a, { store, clock }) => {
+    if ((a.values === undefined) === (a.answers === undefined)) throw new ActionError("INVALID", "Give either values or answers, not both or neither");
+    if (a.answers && new Set(a.answers.map((x) => x.fieldId)).size !== a.answers.length) throw new ActionError("INVALID", "Each answer fieldId must occur once");
+    const values = a.values ?? Object.fromEntries(a.answers!.map((x) => [x.fieldId, x.value]));
     const form = mustGet<Form>(store, "forms", a.formId, "form");
     requireState(`Form "${form.name}"`, form.status, ["published"], "take submissions");
     const known = new Set(form.fields.map((field) => field.id));
-    for (const key of Object.keys(a.values)) {
+    for (const key of Object.keys(values)) {
       if (!known.has(key)) throw new ActionError("INVALID", `Unknown field ${key}`);
     }
-    for (const field of form.fields) checkAnswer(field, a.values[field.id]);
+    for (const field of form.fields) checkAnswer(field, values[field.id]);
     const now = iso(clock);
-    const contactId = linkContact(store, form, a.values, now);
-    return store.insert("form_submissions", "fms", { formId: form.id, values: a.values, contactId, submittedAt: now });
+    const contactId = linkContact(store, form, values, now);
+    return store.insert("form_submissions", "fms", { formId: form.id, values, contactId, submittedAt: now });
   },
 });
 
@@ -459,5 +470,13 @@ const listSubmissions = defineAction({
 });
 
 export default {
+  resolvers: {
+    form: tableResolver("forms"),
+    form_field: namedResolver({
+      records: (store) => store.all<Form>("forms").flatMap((f) => f.fields.map((field) => ({ ...field, formId: f.id, form: f.name }))),
+      name: (f) => f.label, detail: (f) => f.form,
+      qualifiers: { formId: (f) => f.formId, form: (f) => f.form }, parentQualifiers: ["formId", "form"],
+    }),
+  },
   actions: [createForm, getForm, listForms, addField, updateField, reorderFields, setValidation, publishForm, submitForm, listSubmissions],
 } satisfies ModuleExports;
