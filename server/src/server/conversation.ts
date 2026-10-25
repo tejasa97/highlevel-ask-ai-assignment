@@ -2,6 +2,7 @@
 // The HTTP app streams its events to the web UI; the scenario evals drive it headless, so both take the same path.
 import type { CompiledPlan, CStep } from "../core/compile.js";
 import { execute, type Approval, type Pending, type RunResult } from "../core/execute.js";
+import { runtimeNoMatch } from "../core/no-match.js";
 import { shownRecords, summarize, type Shown } from "../core/summarize.js";
 import { type Carry, type InfraKind, planTurn } from "../planner/turn.js";
 import type { Planner, Tier } from "../planner/types.js";
@@ -26,6 +27,8 @@ export interface ConversationDeps {
 interface Turn {
   id: string;
   message: string;
+  /** The message with the ones it answers ("the one at Umbrella" after "move Zoe Costa…"), for telling names apart. */
+  request: string;
   plan: CompiledPlan;
   executionId: string;
   /** The planner's verdict on a question, said above what the reads found. */
@@ -62,10 +65,11 @@ export class Conversation {
     const turnId = `t${this.turns.size + 1}_${Date.now().toString(36)}`;
     emit("turn", { turnId, message });
     const context = this.history.length ? this.history.slice(-HISTORY_TURNS).map((h) => `user: ${h.user}\nassistant: ${h.assistant}`).join("\n") : undefined;
+    const request = this.answering ? `${this.answering}\n${message}` : message;
     // A look runs reads only (planTurn checks), as this user, before the real plan.
     const look = async (plan: CompiledPlan) => {
       const onCall = (c: CallTrace) => emit("call", { ...c, ms: Math.round(c.ms * 10) / 10 });
-      const r = await execute(plan, registry, { ...this.world, actorId, onCall }, { executionId: `look_${turnId}` });
+      const r = await execute(plan, registry, { ...this.world, actorId, onCall }, { executionId: `look_${turnId}`, request });
       const steps = r.steps.map((s) => ({ id: s.id, ...(s.error ? { error: s.error.message } : { output: s.output }) }));
       const c = r.clarification;
       return c ? [...steps, { id: c.stepId, error: `more than one ${c.entity} matches "${c.name}": ${c.candidates.map((x) => x.name).join(", ")}` }] : steps;
@@ -83,7 +87,7 @@ export class Conversation {
       if (outcome.kind === "reply") return this.finish(message, outcome.status, outcome.text, emit, outcome.options, outcome.infra);
       this.carry = outcome.carry;
       const id = attempt ? `${turnId}_retry` : turnId;
-      const turn: Turn = { id, message, plan: outcome.plan, executionId: `ex_${id}`, answer: outcome.answer };
+      const turn: Turn = { id, message, request, plan: outcome.plan, executionId: `ex_${id}`, answer: outcome.answer };
       this.turns.set(id, turn);
       emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
       failed = await this.run(turn, actorId, emit, undefined, attempt === 0);
@@ -118,7 +122,7 @@ export class Conversation {
       turn.plan,
       this.deps.registry,
       { ...this.world, actorId, onCall },
-      { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e) },
+      { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e), request: turn.request },
     );
     emit("run", { status: result.status, ms: Math.round(performance.now() - t), steps: result.steps });
     this.records = rememberRecords(this.records, turn.plan, result);
@@ -155,15 +159,17 @@ const FIXABLE = new Set(["NOT_FOUND", "INVALID"]);
 const prerequisite = (e: { code: string; message: string }) => e.code === "CONFLICT" && /\bfirst\b/i.test(e.message);
 
 /** The failed plan and its errors, when the run failed only on errors a different plan could fix. */
-function retryable(plan: CompiledPlan, result: RunResult): string | undefined {
-  if (result.status !== "failed") return undefined;
-  const errors = result.steps.flatMap((s) => {
+export function retryable(plan: CompiledPlan, result: RunResult): string | undefined {
+  // What a lookup that found nothing searched for, so the next plan can widen or correct it.
+  const noMatch = runtimeNoMatch(plan, result);
+  const attempt = (errors: string[]) => JSON.stringify({ steps: plan.steps.map(describeStep), errors: noMatch ? [...errors, noMatch] : errors });
+  const errors = result.status !== "failed" ? [] : result.steps.flatMap((s) => {
     if (s.status !== "failed" || !s.error) return [];
     if (s.error.code === "ALL_FAILED") return (s.items ?? []).filter((i) => i.error).slice(0, 3).map((i) => ({ step: s.id, ...i.error! }));
     return [{ step: s.id, ...s.error }];
   });
-  if (!errors.length || !errors.every((e) => FIXABLE.has(e.code) || prerequisite(e))) return undefined;
-  return JSON.stringify({ steps: plan.steps.map(describeStep), errors: errors.map((e) => `${e.step}: ${e.message}`) });
+  if (errors.length && errors.every((e) => FIXABLE.has(e.code) || prerequisite(e))) return attempt(errors.map((e) => `${e.step}: ${e.message}`));
+  return noMatch ? attempt([]) : undefined;
 }
 
 function describeStep(s: CStep) {

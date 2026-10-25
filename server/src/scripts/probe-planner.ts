@@ -1,7 +1,7 @@
 // Day-2 probe: does the planner reliably emit the submit_plan format?
 // Sends a few requests with the registry's action cards and checks each reply
 // parses, passes Zod, and has valid argsJson. Run: npm run probe:planner [-- fast|strong]
-// Plans through PLANNER (default claude-cli, dev only, uses the Claude subscription).
+// Plans through PLANNER (default claude-cli; codex-cli and qwen also work, see README).
 import { makePlanner } from "../planner/index.js";
 import { formatCost } from "../planner/usage.js";
 import { SYSTEM, userBlock } from "../planner/prompt.js";

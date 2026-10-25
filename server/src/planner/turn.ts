@@ -1,4 +1,5 @@
 import { compile, type CompiledPlan } from "../core/compile.js";
+import { narrowByRequest } from "../core/execute.js";
 import { lowerLookups } from "../core/lookups.js";
 import { card } from "../registry/card.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
@@ -6,6 +7,7 @@ import { type Mention, mentions } from "../retrieval/mentions.js";
 import type { Retrieval, Retriever } from "../retrieval/retrieve.js";
 import type { Clock } from "../store/clock.js";
 import type { Store } from "../store/db.js";
+import { readOnlyIntentError } from "./completion.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
@@ -13,10 +15,10 @@ import { emptyTargets, outcomeErrors, type Outcome } from "./contracts.js";
 import { assessClarification } from "./clarification.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
-//   retrieve a shortlist → prompt → plan, with at most one search_tools round (a second retrieval for what the
-//   planner says is missing), at most one look round (read-only steps run now, their results fed back, so a
-//   value can be worked out from a record: "same time, on Monday") and at most one repair round (compile errors
-//   fed back), plus at most one repair of a malformed clarification (its own allowance, so it can't use up the plan's) and at most
+//   retrieve a shortlist → prompt → plan, with at most two search_tools rounds (a second retrieval for what the
+//   planner says is missing), at most two look rounds (read-only steps run now, their results fed back, so a
+//   value can be worked out from a record: "same time, on Monday"; a second may build on the first) and at most
+//   one repair round (compile errors fed back), plus at most one repair of a malformed clarification (its own allowance, so it can't use up the plan's) and at most
 //   one grounded identity clarification retry → a compiled plan or a reply. At most six calls. The plan may only use
 //   actions the planner was shown.
 
@@ -112,8 +114,10 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
 async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: TurnEvent) => void): Promise<TurnOutcome> {
   const { registry, retriever, planner, clock, store } = deps;
   const resolvable = registry.resolverEntities();
-  const named: Mention[] = store ? mentions(input.answering ? `${input.answering}\n${input.message}` : input.message, registry, store) : [];
+  const request = input.answering ? `${input.answering}\n${input.message}` : input.message;
+  const named: Mention[] = store ? mentions(request, registry, store) : [];
   const allChars = registry.list().map(card).join("\n").length;
+  const exists = (id: string) => !store || store.holds(id);
 
   const offered: RegisteredAction[] = [];
   const notAvailable: string[] = [];
@@ -164,7 +168,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     return r;
   };
 
-  await shortlist("retrieve", input.answering ? `${input.answering}\n${input.message}` : input.message, input.carry, named);
+  await shortlist("retrieve", request, input.carry, named);
   let user = prompt();
   let reply = await call(user, "plan");
   let searched = false;
@@ -175,11 +179,16 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let emptyChecked = false;
   let lookPlan: CompiledPlan | undefined;
   let lookSteps: Step[] = [];
+  let looks = 0;
+  let lookClosed = false;
   const runLook = async (plan: CompiledPlan, steps: Step[]) => {
+    looks++;
     lookPlan = plan;
     // <looked> contains compiler-generated resolve IDs too. Preserve those exact read steps so
-    // the next plan can reference them just like any explicit look step.
-    lookSteps = lowerLookups(steps, registry).steps;
+    // the next plan can reference them just like any explicit look step. A second look reruns the first's steps it
+    // needs; the ones it doesn't stay available to the plan.
+    const lowered = lowerLookups(steps, registry).steps;
+    lookSteps = [...lookSteps.filter((l) => !lowered.some((s) => s.id === l.id)), ...lowered];
     lookResults = await deps.look!(plan);
     looked = JSON.stringify(lookResults);
     if (looked.length > LOOKED_MAX) looked = `${looked.slice(0, LOOKED_MAX)}…(cut)`;
@@ -188,7 +197,15 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   // or a reply for the user. The repair prompt may itself say "reply search_tools" or "reply unsupported".
   for (;;) {
     const parsed = SubmitPlan.safeParse(reply.json);
-    if (!parsed.success) return failed(`The planner's reply didn't match submit_plan: ${parsed.error.message}`);
+    if (!parsed.success) {
+      // A malformed reply is repaired like a plan that doesn't compile: the errors go back once.
+      const errors = parsed.error.issues.map((i) => `submit_plan ${i.path.join(".") || "(reply)"}: ${i.message}`);
+      emit({ type: "compile.errors", data: { errors } });
+      if (repaired) return failed(`The planner's reply still didn't match submit_plan after one repair:\n${errors.join("\n")}`);
+      repaired = true;
+      reply = await call(repairBlock(user, reply.json, errors), "repair");
+      continue;
+    }
     const d = parsed.data;
     // Freeze the first stated outcome across all subsequent reads, searches and repairs. A search may
     // initially lack action IDs; fill those once discovered, but never downgrade a change into a read.
@@ -261,11 +278,20 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       // Reads only, run now; a write waits for the real plan (and its approval). A bad look is repaired like a plan.
       // Asked for a verdict, a model may want to look again: the reads it has are the answer, so they run as the plan.
       if (looked !== undefined && lookPlan && outcome?.effect === "read") return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
-      const compiled = compile({ ...d, type: "plan" }, registry, new Set(offered.map((a) => a.id)));
+      if (deps.look && looks >= LOOKS_MAX && !lookClosed) {
+        // One plain nudge, so asking for a third look doesn't spend the one repair.
+        lookClosed = true;
+        user = prompt();
+        reply = await call(`${user}\n<errors>You already looked twice; plan with the results in <looked>.</errors>`, "plan after look limit");
+        continue;
+      }
+      // A second look builds on the first (a contact found, then its invoices), so it may refer to the first's steps.
+      const lookSource = withLookSteps({ ...d, type: "plan" }, lookSteps);
+      const compiled = compile(lookSource, registry, new Set(offered.map((a) => a.id)));
       const errors = !deps.look
         ? ["look isn't available here; reply with a plan or a question"]
-        : looked !== undefined
-          ? ["you already looked; plan with the results in <looked>"]
+        : looks >= LOOKS_MAX
+          ? ["you already looked twice; plan with the results in <looked>"]
           : !compiled.ok
             ? compiled.errors
             : [...compiled.plan.steps.flatMap((s) => callsOf(s).filter((a) => a.risk !== "read").map((a) => `${s.id}: ${a.id} is a ${a.risk} action; a look may only read`)), ...staffInQuery(compiled.plan, named)];
@@ -276,7 +302,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         reply = await call(repairBlock(user, reply.json, errors), "repair");
         continue;
       }
-      await runLook(compiled.plan, d.steps ?? []);
+      await runLook(compiled.plan, lookSource.steps ?? []);
       user = prompt();
       reply = await call(user, "plan after look");
       continue;
@@ -286,7 +312,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     // summary stays. A question that only reads ("is that the only one?") also keeps the planner's verdict on
     // top, unless it leaks raw ids.
     if (d.type === "answer" && (lookPlan || outcome?.effect === "change") && !emptyChecked) {
-      const errors = lookPlan ? outcomeErrors(lookPlan, outcome) : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
+      const errors = lookPlan ? [...outcomeErrors(lookPlan, outcome), ...(outcome ? [] : readOnlyIntentError(input.message, lookPlan, offered, registry))] : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
       if (!errors.length && lookPlan) {
         const answer = outcome?.effect !== "change" ? d.text?.trim() : undefined;
         return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry), ...(answer && !RAW_ID.test(answer) ? { answer } : {}) };
@@ -296,6 +322,17 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       emit({ type: "compile.errors", data: { errors } });
       user = prompt();
       reply = await call(repairBlock(user, reply.json, errors), "repair incomplete outcome");
+      continue;
+    }
+
+    // An answer is what <context> already says. With no earlier turn, no remembered records and nothing looked up, there
+    // is nothing to answer from, so the account must be read first ("Has tic_1 breached its SLA?"). One nudge; a
+    // second answer stands.
+    if (d.type === "answer" && !input.context && !input.records?.length && !lookPlan && !repaired && offered.some((a) => a.risk === "read")) {
+      const errors = ["there is no <context> or <looked> to answer from; if a listed action reads or checks what was asked, plan it (its result is the answer); otherwise reply answer again"];
+      emit({ type: "compile.errors", data: { errors } });
+      repaired = true;
+      reply = await call(repairBlock(user, reply.json, errors), "repair");
       continue;
     }
 
@@ -320,9 +357,17 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     // A plan that only finds records does nothing the user can see: run, it would end "done" with no reply.
     const errors = !compiled.ok
       ? compiled.errors
-      : compiled.plan.steps.some((s) => callsOf(s).length)
-        ? [...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }), ...duplicateCreates(compiled.plan, named, input.message), ...staffInQuery(compiled.plan, named)]
-        : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
+      : inventedIds(compiled.plan, user, exists).length
+        ? inventedIds(compiled.plan, user, exists)
+        : compiled.plan.steps.some((s) => callsOf(s).length)
+          ? [
+              ...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }),
+              // Without a stated outcome, the message's own verbs are the only sign a write was asked for.
+              ...(outcome ? [] : readOnlyIntentError(input.message, compiled.plan, offered, registry)),
+              ...duplicateCreates(compiled.plan, named, input.message),
+              ...staffInQuery(compiled.plan, named),
+            ]
+          : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
     if (compiled.ok && !errors.length) {
       // The reads found nothing to change: say so (once the planner has had the chance to widen its search or answer),
       // rather than run a loop over nothing.
@@ -335,7 +380,11 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         reply = await call(user, "answer after look");
         continue;
       }
-      if (!empty.length) return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
+      if (!empty.length) {
+        const which = store && oneOfSameNamed(compiled.plan, named, registry, store, request);
+        if (which) return { kind: "reply", status: "clarify", ...which };
+        return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
+      }
       if (emptyChecked) return { kind: "reply", status: "answer", text: "Nothing matched, so nothing was changed." };
       emptyChecked = true;
       const errors = empty.map((e) => `${e.step}: ${e.list} was already read and is empty, so this changes nothing. If the search was too narrow, plan again with a wider search inside the plan; if nothing should match, reply with type answer saying so`);
@@ -426,8 +475,61 @@ export function renameReusedIds(plan: SubmitPlan, lookIds: ReadonlySet<string> =
 
 /** Characters of look results shown to the planner. */
 const LOOKED_MAX = 6000;
+const LOOKS_MAX = 2;
 /** A record id such as rv_12 or ct_3: users never see these. */
 const RAW_ID = /\b[a-z]{2,4}_\d+\b/;
+
+/** A record id is short letters, an underscore, then the rest: ct_31, tic_1, us_5. */
+const ID_SHAPED = /^[a-z]{2,4}_[A-Za-z0-9_]+$/;
+
+/**
+ * Literal ids the planner wrote that appear nowhere it was shown (the message, <context>, <looked>, the cards) and
+ * that no record has: "tk_placeholder", "ct_sarah_johnson_1". Each would fail as "not found" at run time.
+ * Only id-valued args (…Id, …Ids, id) and literal forEach lists are checked, so enum values like "in_progress" pass.
+ */
+export function inventedIds(plan: CompiledPlan, shown: string, exists: (id: string) => boolean = () => false): string[] {
+  const found = new Set<string>();
+  const invented = (v: string) => ID_SHAPED.test(v) && !shown.includes(v) && !exists(v);
+  const visit = (v: unknown, key: string) => {
+    if (typeof v === "string") {
+      if (/(?:^id|Ids?)$/.test(key) && invented(v)) found.add(v);
+    } else if (Array.isArray(v)) v.forEach((x) => visit(x, key));
+    else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) visit(x, k);
+  };
+  for (const s of plan.steps) {
+    for (const a of s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : []) visit(a.args, "");
+    if (s.kind === "forEach") [s.in, s.roundRobin].forEach((l) => Array.isArray(l) && l.filter(invented).forEach((x) => found.add(x)));
+  }
+  return [...found].map((id) => `"${id}" is not an id from the message, <context> or <looked>; never invent ids. Resolve the name, read the record with a listed action (or look), or use a $ref to an earlier step.`);
+}
+
+/**
+ * A write that names one of several same-named records by id ("Maple Dental" twice; it looked and took bl_1) when
+ * the user's words don't say which: the user is asked, as a resolve step would. Writing to all of them is a choice.
+ */
+export function oneOfSameNamed(plan: CompiledPlan, named: Mention[], registry: Registry, store: Store, request: string): { text: string; options: string[] } | undefined {
+  const ids = new Set<string>();
+  const visit = (v: unknown): void => {
+    if (typeof v === "string") ids.add(v);
+    else if (Array.isArray(v)) v.forEach(visit);
+    else if (v && typeof v === "object") Object.values(v).forEach(visit);
+  };
+  for (const s of plan.steps) {
+    const calls = s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : [];
+    if (calls.some((c) => c.action.risk !== "read")) {
+      calls.forEach((c) => visit(c.args));
+      if (s.kind === "forEach" && Array.isArray(s.in)) visit(s.in);
+    }
+  }
+  for (const m of named.filter((n) => n.count > 1)) {
+    const found = (registry.resolver(m.entity)?.(store, m.name) ?? []).filter((c) => !c.inactive);
+    const hit = found.filter((c) => ids.has(c.id));
+    if (found.length < 2 || !hit.length || hit.length === found.length || narrowByRequest(found, request).length === 1) continue;
+    const options = found.map((c) => (c.detail ? `${c.name} (${c.detail})` : c.name));
+    return { text: `More than one ${m.entity} matches "${m.name}": ${options.join(", ")}. Which one?`, options };
+  }
+  return undefined;
+}
 
 /** "Is that the only one?", "how many deals are open?", "who owns it?": not "can you list…?" or "show me…". */
 export const isQuestion = (message: string) => {

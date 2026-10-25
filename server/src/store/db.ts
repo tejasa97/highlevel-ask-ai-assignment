@@ -83,6 +83,11 @@ export class Store {
     return row ? (JSON.parse(row.data) as T) : undefined;
   }
 
+  /** Whether a record has this id, or holds a part with it (a channel inside its community). */
+  holds(id: string): boolean {
+    return this.tables().some((t) => this.db.prepare(`SELECT 1 FROM ${this.table(t)} WHERE id = ? OR instr(data, ?) > 0 LIMIT 1`).get(id, JSON.stringify(id)) !== undefined);
+  }
+
   all<T = Doc>(entity: string): T[] {
     const rows = this.db.prepare(`SELECT data FROM ${this.table(entity)} ORDER BY rowid`).all() as { data: string }[];
     return rows.map((r) => JSON.parse(r.data) as T);

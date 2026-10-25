@@ -42,6 +42,8 @@ export function replayPlanner(inner: Planner, file: string, opts: { refresh?: bo
   const stats: ReplayStats = { hits: 0, live: 0, liveUsd: 0, savedUsd: 0 };
   return {
     name: inner.name,
+    billing: inner.billing,
+    models: inner.models,
     stats,
     async plan(req) {
       const key = promptKey(req, opts.salt);

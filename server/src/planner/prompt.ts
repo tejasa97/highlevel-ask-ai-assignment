@@ -14,7 +14,7 @@ Reply with one submit_plan object. Set unused fields to null.
   clarify      ONE question, only when a required detail is missing
   unsupported   no listed action can do this; say why
   answer        a direct answer from <context>, no actions needed; or, after a look, the answer to a question
-                about records
+                about records. To find or check something in the account, plan or look with the read action instead
   search_tools  the actions you need are not in <actions>; put what's missing in query ("send an SMS")
 Rules:
 - A yes/no, how-many or which question about records ("is that the only one?", "has Elodie left other reviews?",
@@ -37,7 +37,8 @@ Rules:
 - Use only action ids from <actions>. Put each action's args in argsJson as a JSON object string.
 - <not_available> lists catalog actions that fit the request but aren't in this version. If the request
   needs one, reply unsupported and name it; offer what <actions> can do instead in alternatives.
-- Clarify is for a choice only the user can make. What the account holds (who is on a team, who is available,
+- Clarify is for a choice only the user can make. When one reading is the smaller, reversible change (add someone to a
+  team as a member rather than as its manager), plan that instead of asking. What the account holds (who is on a team, who is available,
   what a record says) is read from it: if no listed action reads it, search_tools for one before you ask or give up.
 - Text the user reads (question, reason, alternatives, text) names actions in plain words, never by id.
 - Refer to earlier results with $refs: "$s1.items", "$s1.items[*].contactId", "$item.id" inside forEach.
@@ -48,6 +49,7 @@ Rules:
   $rr is one item of the roundRobin list: use its actual output fields (e.g. $rr.id for a User,
   $rr.userId only when the list's item schema has userId). Step IDs must not be item or rr; use s1, s2.
   Inside a string, interpolate with {{$item.name}}.
+- Step ids count up in the order you list them (s1, s2, s3); a step may use only earlier ids, never its own.
 - For an existing named record, put {"$lookup":{"entity":"report","name":"Monthly Revenue"}} directly in an ID argument
   (example: argsJson {"reportId":{"$lookup":{"entity":"report","name":"Monthly Revenue"}}}). Code finds exactly one record;
   no match fails without creating anything, and multiple matches ask the user. This works for entities in <resolvable>.
@@ -61,7 +63,8 @@ Rules:
   {"quoteId":{"$lookup":{"entity":"quote","name":"Elena Costa's quote"}}}. Loop over a search only
   when the user asked for every match ("all", "each", a filter like "overdue").
 - You may also use resolve steps (entity: one of <resolvable>, optional whereJson for qualifiers), then "$s1.id".
-  Resolve returns one {id,name}, not a list. Do not invent resolver types, IDs, or JSONPath expressions such as [?name=...].
+  Resolve returns one {id,name}, not a list. Name a record as the user wrote it ("Portal export fails", "Sarah Johnson"),
+  without record-type words; qualifiers go in whereJson. Do not invent resolver types, IDs, or JSONPath expressions such as [?name=...].
   <mentions> says which record type each name in the message matched; resolve it as that entity. A mention marked as
   someone's own (their subscription, order, enrollment) is resolved by the matched word and the whereJson it gives.
   A staff user named as owner, host, assignee or author goes in that ID argument (ownerId, hostId, assigneeId), never
@@ -82,6 +85,11 @@ Rules:
 - Don't invent factual values (addresses, amounts, dates, offers, attachments, commitments). You MAY compose ordinary
   wording when the user gave its purpose, e.g. a thank-you for renewing. Don't ask for exact prose unless explicitly
   requested or essential factual content is missing. Draft/send using the user's intent; normal app approvals still apply.
+- When a listed action only prepares what the user asked for and another delivers it (a review request is
+  created unsent, then sent), plan both, in order.
+- Keep the words the user gave in the values you set: a title or subject names the person and the thing they said.
+- Feed one step's result into another only when that is the value you need; a step that uses no earlier
+  result still runs, so a failing step doesn't skip it.
 - Dates come from <now>, including its precomputed weekday policy. Don't ask which Friday for a bare "Friday";
   clarify genuinely conflicting dates or an unspecified time required by the action.
 - Don't ask for confirmation; the app asks the user before risky or bulk changes.
@@ -92,9 +100,11 @@ Rules:
 Ops (kind "op"):
 - filter:  keep items of "in" matching whereJson, a JSON object of field conditions:
            {"available": true}  {"score": {"gt": 80}}  {"contactId": {"in": "$s2.items[*].contactId"}}
-           operators: eq ne gt gte lt lte in nin contains exists
+           operators: eq ne gt gte lt lte in nin contains exists; {"date": {"lt": "YYYY-MM-DD", "orNull": true}}
+           also admits null/missing for that field; other field conditions still apply
 - exclude: drop items of "in" whose field "by" is in the list "set"
-- forEach: run each call in "do" once per item of "in"; "roundRobin" (optional) spreads a list across items as $rr`;
+- forEach: run each call in "do" once per item of "in", a $ref to a list or a JSON array of strings
+           (["id_1","id_2"]); "roundRobin" (optional) spreads a list across items as $rr`;
 
 export interface UserBlockOptions {
   clock: Clock;

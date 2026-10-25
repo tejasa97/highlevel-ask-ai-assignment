@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { z } from "zod";
+import type { Pending } from "../core/execute.js";
 import type { Planner, Tier, Usage } from "../planner/types.js";
 import { sumUsd } from "../planner/usage.js";
 import type { Registry } from "../registry/registry.js";
@@ -8,7 +9,7 @@ import { BaselineConversation } from "../server/baseline.js";
 import { Conversation } from "../server/conversation.js";
 import type { Fixtures } from "../store/fixtures.js";
 import { world } from "../store/world.js";
-import type { Pending } from "../core/execute.js";
+import { classifyFailure, type FailureClass } from "./failure-class.js";
 
 // End-to-end scenarios (eval/scenarios/*.json): each one starts from a fresh seeded database, sends its
 // messages through the same Conversation the web app uses, approves what asks for approval, then checks
@@ -84,6 +85,14 @@ export interface Failure {
   detail: string;
 }
 
+export interface PlannerReplyTrace {
+  tier: Tier;
+  /** The round the reply answered: plan, repair, plan after search_tools, ... */
+  round: string;
+  /** The parsed submit_plan object, before Zod validation. */
+  reply: unknown;
+}
+
 export interface TurnTrace {
   user: string;
   status: string;
@@ -93,6 +102,8 @@ export interface TurnTrace {
   planned: string[];
   calls: { action: string; args: Record<string, unknown>; error?: string }[];
   plannerRounds: number;
+  /** Every raw planner reply, with only the request's tier and round kept. */
+  planner: PlannerReplyTrace[];
   compileErrors: string[];
   errors: string[];
   approvals: number;
@@ -124,6 +135,8 @@ export interface ScenarioRun {
   /** The run hit an infrastructure failure (see TurnTrace.infra): it measures nothing about the app. */
   infra?: string;
   failures: Failure[];
+  /** The first system layer that failed; null on a pass or an infra run. See failure-class.ts. */
+  failureClass?: FailureClass | null;
   turns: TurnTrace[];
   metrics: RunMetrics;
   /** Models the planner replied with, in order of first use. */
@@ -160,20 +173,24 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
   }
   const chat = deps.agent === "baseline" ? new BaselineConversation(deps, w) : new Conversation(deps, w);
   const turns: TurnTrace[] = [];
-  const subscription = deps.planner.name === "codex-cli";
+  const subscription = deps.planner.billing === "subscription";
   const usage: Usage = { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: subscription ? null : 0, billing: subscription ? "subscription" : "none" };
   let plannerMs = 0;
   let changes = 0;
   const models: string[] = [];
 
   for (const t of s.turns) {
-    const trace: TurnTrace = { user: t.user, status: "", reply: "", offered: [], planned: [], calls: [], plannerRounds: 0, compileErrors: [], errors: [], approvals: 0, firstReplyMs: 0, ms: 0 };
+    const trace: TurnTrace = { user: t.user, status: "", reply: "", offered: [], planned: [], calls: [], plannerRounds: 0, planner: [], compileErrors: [], errors: [], approvals: 0, firstReplyMs: 0, ms: 0 };
     const started = performance.now();
     let pendingTurn: string | undefined;
+    let roundTier: Tier = deps.tier ?? "strong";
     const emit = (event: string, data: any) => {
-      if (event === "planner.request") trace.offered.push(...data.actions.filter((a: string) => !trace.offered.includes(a)));
-      else if (event === "planner.reply") {
+      if (event === "planner.request") {
+        roundTier = data.tier;
+        trace.offered.push(...data.actions.filter((a: string) => !trace.offered.includes(a)));
+      } else if (event === "planner.reply") {
         trace.plannerRounds++;
+        trace.planner.push({ tier: roundTier, round: data.label, reply: data.json });
         plannerMs += data.latencyMs;
         if (data.model && !models.includes(data.model)) models.push(data.model);
         const next: Usage = data.usage;
@@ -222,12 +239,14 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
 
   const failures = check(s, turns, changes, (sql) => (Object.values((w.store.db.prepare(sql).get() as Record<string, unknown> | undefined) ?? {})[0]));
   w.store.close();
+  const infra = turns.find((t) => t.infra)?.infra;
   return {
     id: s.id,
     category: s.category,
     pass: failures.length === 0,
-    ...(turns.some((t) => t.infra) ? { infra: turns.find((t) => t.infra)!.infra } : {}),
+    ...(infra ? { infra } : {}),
     failures,
+    failureClass: infra ? null : classifyFailure({ category: s.category, expectedActions: s.expect.actions?.includes ?? [], failures, turns }),
     turns,
     metrics: {
       ms: turns.reduce((a, t) => a + t.ms, 0),

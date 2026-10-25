@@ -16,6 +16,17 @@ interface Options {
   timeoutMs?: number;
   /** Qwen3 hybrid models think by default; planning doesn't need it and it costs latency and tokens. */
   thinking?: boolean;
+  /** Pin the format; unset lets the model decide (a model without json_schema gets "json_object", schema in the prompt). */
+  responseFormat?: "json_schema" | "json_object";
+}
+
+/**
+ * The Token Plan rejects json_schema for some models: deepseek-v4.1-flash-1017 answers HTTP 400
+ * "This response_format type is unavailable now" (checked 2026-10-25). Asking anyway fails every turn,
+ * so the model picks the format before the first call, and a 400 teaches the client the rest.
+ */
+export function needsJsonObject(model: string): boolean {
+  return /^deepseek/i.test(model.trim());
 }
 
 /** Raw, tool-free calls to an OpenAI-compatible endpoint (Qwen Token Plan by default). */
@@ -29,35 +40,90 @@ export class QwenPlanner implements Planner {
 
   constructor(private readonly options: Options) {
     const apiKey = options.apiKey.trim();
-    if (!apiKey) throw new Error("Qwen: an API key is required");
+    if (!apiKey) throw new Error("Token Plan: an API key is required");
     this.apiKey = apiKey;
     this.models = options.models;
     this.endpoint = `${(options.baseUrl ?? QWEN_DEFAULT_BASE_URL).replace(/\/+$/, "")}/chat/completions`;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
+  /** Models this process found to reject json_schema; the format retry adds them at runtime. */
+  private readonly noSchema = new Set<string>();
+
   async plan(req: PlanRequest): Promise<PlanResult> {
     const model = this.options.models[req.tier];
+    const fail = (message: string, kind: PlannerError["kind"] = "provider", text?: string) => failure(model, message, kind, text);
     const signal = AbortSignal.any([
       ...(req.signal ? [req.signal] : []),
       AbortSignal.timeout(this.timeoutMs),
     ]);
-    if (signal.aborted) throw failure("request cancelled", "timeout");
+    if (signal.aborted) throw fail("request cancelled", "timeout");
 
     const started = performance.now();
-    const payload = JSON.stringify({
+    const strict = this.strictFor(model);
+    let { response, raw, body } = await this.send(model, req, signal);
+    // A model can lose json_schema without warning, and failing every turn over the format is worse than
+    // asking without it: retry once as json_object and remember the model for the rest of the process.
+    if (response.status === 400 && strict && formatRejected(raw, body)) {
+      this.noSchema.add(model);
+      ({ response, raw, body } = await this.send(model, req, signal));
+    }
+
+    if (!response.ok) {
+      const detail = errorMessage(body) ?? raw.trim().slice(0, 500);
+      throw fail(`HTTP ${response.status}${detail ? `: ${detail}` : ""}`, rateLimited(response.status, detail));
+    }
+    if (body === undefined) throw fail("the reply is not JSON");
+
+    const choice = record(choiceAt(body));
+    const finish = choice?.finish_reason;
+    if (finish === "content_filter") throw fail("the reply was blocked by the content filter");
+    const message = record(choice?.message);
+    const content = typeof message?.content === "string" ? message.content : "";
+    if (!content.trim()) throw fail("the reply has no message content", "bad_json", raw.slice(0, 500));
+
+    let json: unknown;
+    try {
+      json = JSON.parse(unfence(content));
+    } catch {
+      const why = finish === "length" ? `cut off at ${MAX_TOKENS} tokens` : "not valid JSON";
+      throw fail(`the reply was ${why}`, "bad_json", content);
+    }
+
+    return {
+      model,
+      json,
+      text: content,
+      latencyMs: performance.now() - started,
+      usage: { ...parseUsage(record(body)?.usage), billing: "subscription", costUsd: null },
+    };
+  }
+
+  /** json_schema unless the model can't enforce it: an explicit setting wins, then the model, then a 400. */
+  private strictFor(model: string): boolean {
+    if (this.noSchema.has(model)) return false;
+    if (this.options.responseFormat) return this.options.responseFormat === "json_schema";
+    return !needsJsonObject(model);
+  }
+
+  private payload(model: string, req: PlanRequest, strict: boolean): string {
+    return JSON.stringify({
       model,
       messages: [
-        { role: "system", content: req.system },
+        { role: "system", content: strict ? req.system : `${req.system}\n\nReply with one JSON object that matches this JSON Schema:\n${JSON.stringify(req.schema)}` },
         { role: "user", content: req.user },
       ],
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: "submit_plan", strict: true, schema: req.schema },
-      },
+      response_format: strict
+        ? { type: "json_schema", json_schema: { name: "submit_plan", strict: true, schema: req.schema } }
+        : { type: "json_object" },
       max_tokens: MAX_TOKENS,
       enable_thinking: this.options.thinking ?? false,
     });
+  }
+
+  /** One request with the transport retries; the body is parsed here so a format 400 can be read. */
+  private async send(model: string, req: PlanRequest, signal: AbortSignal) {
+    const payload = this.payload(model, req, this.strictFor(model));
     // One retry for a dropped connection, a gateway error or a short rate-limit wait;
     // a quota or a bad request fails at once, so the caller sees it.
     let response: Response | undefined;
@@ -78,14 +144,14 @@ export class QwenPlanner implements Planner {
         await reply.body?.cancel().catch(() => {});
         retryIn = delay;
       } catch (err) {
-        if (signal.aborted) throw failure("request cancelled or timed out", "timeout");
-        if (attempt >= RETRIES) throw failure(`request failed: ${(err as Error).message}`);
+        if (signal.aborted) throw failure(model, "request cancelled or timed out", "timeout");
+        if (attempt >= RETRIES) throw failure(model, `request failed: ${(err as Error).message}`);
         retryIn = RETRY_MS;
       }
       try {
         await sleep(retryIn, signal);
       } catch {
-        throw failure("request cancelled or timed out", "timeout");
+        throw failure(model, "request cancelled or timed out", "timeout");
       }
     }
 
@@ -93,10 +159,10 @@ export class QwenPlanner implements Planner {
     try {
       raw = await response.text();
     } catch (err) {
-      if (signal.aborted) throw failure("request cancelled or timed out", "timeout");
-      throw failure(`could not read the reply: ${(err as Error).message}`);
+      if (signal.aborted) throw failure(model, "request cancelled or timed out", "timeout");
+      throw failure(model, `could not read the reply: ${(err as Error).message}`);
     }
-    if (Buffer.byteLength(raw) > MAX_BYTES) throw failure("response exceeds 4 MiB limit");
+    if (Buffer.byteLength(raw) > MAX_BYTES) throw failure(model, "response exceeds 4 MiB limit");
 
     let body: unknown;
     try {
@@ -104,35 +170,7 @@ export class QwenPlanner implements Planner {
     } catch {
       body = undefined;
     }
-    if (!response.ok) {
-      const detail = errorMessage(body) ?? raw.trim().slice(0, 500);
-      const message = `HTTP ${response.status}${detail ? `: ${detail}` : ""}`;
-      throw failure(message, rateLimited(response.status, detail));
-    }
-    if (body === undefined) throw failure("reply is not JSON", "provider");
-
-    const choice = record(choiceAt(body));
-    const finish = choice?.finish_reason;
-    if (finish === "content_filter") throw failure("the reply was blocked by the content filter");
-    const message = record(choice?.message);
-    const content = typeof message?.content === "string" ? message.content : "";
-    if (!content.trim()) throw new PlannerError("Qwen returned no message content", "bad_json", raw.slice(0, 500));
-
-    let json: unknown;
-    try {
-      json = JSON.parse(unfence(content));
-    } catch {
-      const why = finish === "length" ? `the reply was cut off at ${MAX_TOKENS} tokens` : "invalid JSON";
-      throw new PlannerError(`Qwen returned ${why}`, "bad_json", content);
-    }
-
-    return {
-      model,
-      json,
-      text: content,
-      latencyMs: performance.now() - started,
-      usage: { ...parseUsage(record(body)?.usage), billing: "subscription", costUsd: null },
-    };
+    return { response, raw, body };
   }
 }
 
@@ -198,6 +236,11 @@ function record(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === "object" ? (value as Record<string, unknown>) : undefined;
 }
 
-function failure(message: string, kind: PlannerError["kind"] = "provider"): PlannerError {
-  return new PlannerError(`Qwen: ${message.slice(0, 500)}`, kind);
+/** A 400 that blames the response format rather than the request's content. */
+function formatRejected(raw: string, body: unknown): boolean {
+  return /response_format|json_schema|structured output/i.test(`${errorMessage(body) ?? ""} ${raw.slice(0, 500)}`);
+}
+
+function failure(model: string, message: string, kind: PlannerError["kind"] = "provider", text?: string): PlannerError {
+  return new PlannerError(`${model}: ${message.slice(0, 500)}`, kind, text);
 }

@@ -137,7 +137,7 @@ describe("model-independent named arguments", () => {
     assert.equal((named.steps[0] as { name: string }).name, "Monthly Revenue");
     const id = compiled(plan([action("run", "M50.A07", { reportId: "rpt_1" })]));
     assert.deepEqual(id.steps.map((s) => s.kind), ["action"]);
-    const ref = compiled(plan([action("find", "M01.A03", {}), action("run", "M50.A07", { reportId: "$find.items[0].id" })]));
+    const ref = compiled(plan([action("find", "M50.A03", {}), action("run", "M50.A07", { reportId: "$find.items[0].id" })]));
     assert.equal(ref.steps.filter((s) => s.kind === "resolve").length, 0);
     // fieldId means a custom field in one module and a form field in another: never guessed from a label.
     const label = compile(plan([action("sim", "M18.A09", { formId: "fm_1", values: {}, fieldId: "email" })]), registry);

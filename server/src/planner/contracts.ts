@@ -41,7 +41,7 @@ export function emptyTargets(plan: CompiledPlan, looked: { id: string; output?: 
   const byId = new Map(looked.filter((l) => !l.error && l.output !== undefined).map((l) => [l.id, l.output]));
   const out: { step: string; list: string }[] = [];
   for (const step of plan.steps) {
-    if (step.kind !== "forEach" || step.calls.every((c) => c.action.risk === "read")) continue;
+    if (step.kind !== "forEach" || typeof step.in !== "string" || step.calls.every((c) => c.action.risk === "read")) continue;
     const ref = parseRef(step.in);
     if (!ref || !byId.has(ref.root)) continue;
     try {

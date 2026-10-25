@@ -8,11 +8,12 @@ import { execute, type RunResult } from "../core/execute.js";
 import { summarize } from "../core/summarize.js";
 import { makePlanner } from "../planner/index.js";
 import { formatCost } from "../planner/usage.js";
-import { planTurn } from "../planner/turn.js";
+import { planTurn, type TurnEvent } from "../planner/turn.js";
 import { loadRegistry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
 import { loadDense } from "../retrieval/embed.js";
 import { Retriever } from "../retrieval/retrieve.js";
+import { retryable } from "../server/conversation.js";
 import { devStore } from "../store/dev.js";
 import { world } from "../store/world.js";
 
@@ -32,7 +33,7 @@ const timings: string[] = [];
 
 const cards = buildCards(registry);
 const retriever = new Retriever(cards, {}, await loadDense(cards, debug ? console.log : () => {}));
-const outcome = await planTurn({ message, tier }, { registry, retriever, planner, clock, store }, (e) => {
+const onTurn = (e: TurnEvent) => {
   if (e.type === "planner.reply") timings.push(`${e.data.label} ${e.data.latencyMs} ms (${e.data.model}, in ${e.data.usage.input}, out ${e.data.usage.output}, ${formatCost(e.data.usage.costUsd, e.data.usage.billing)})`);
   if (e.type === "compile.errors") console.log(`\nplan rejected:\n  ${e.data.errors.join("\n  ")}`);
   if (!debug) return;
@@ -42,19 +43,34 @@ const outcome = await planTurn({ message, tier }, { registry, retriever, planner
     console.log(`\n${r.label}: ${r.picks.length} cards (${r.promptChars.sent} of ${r.promptChars.allImplemented} chars)${r.noMatch ? " · no match" : ""}`);
     for (const p of r.picks) console.log(`  ${p.available ? " " : "×"} ${p.id} ${p.name.padEnd(34)} ${p.why}${p.via ? ` ← ${p.via}` : ""}${p.score ? ` ${p.score}` : ""}`);
   }
-});
+};
+const deps = { registry, retriever, planner, clock, store };
+const outcome = await planTurn({ message, tier }, deps, onTurn);
 if (outcome.kind === "reply") {
   console.log(`\n[${outcome.status}] ${outcome.text}`);
   if (outcome.options?.length) console.log(`options: ${outcome.options.join(" | ")}`);
   done(outcome.status === "failed" ? 1 : 0);
 }
-const plan: CompiledPlan = outcome.plan;
+let plan: CompiledPlan = outcome.plan;
 printPlan(plan);
 
-const executionId = `ex_${plan.hash}_${Date.now().toString(36)}`;
+let executionId = `ex_${plan.hash}_${Date.now().toString(36)}`;
 let t = performance.now();
 let run: RunResult = await execute(plan, registry, { store, clock }, { executionId, onEvent: debug ? (e) => console.log("  ·", JSON.stringify(e)) : undefined });
 timings.push(`execute ${Math.round(performance.now() - t)} ms`);
+// As in the app: a run that failed before any write, on something another plan could fix, gets one more plan.
+const failed = run.writesAttempted === false ? retryable(plan, run) : undefined;
+if (failed) {
+  const retry = await planTurn({ message, tier, failed }, deps, onTurn);
+  if (retry.kind === "reply") {
+    console.log(`\n[${retry.status}] ${retry.text}`);
+    done(retry.status === "failed" ? 1 : 0);
+  }
+  plan = retry.plan;
+  executionId += "_replan";
+  printPlan(plan);
+  run = await execute(plan, registry, { store, clock }, { executionId });
+}
 
 while (run.status === "awaiting_confirmation") {
   console.log(`\n${summarize(plan, run, registry)}`);
