@@ -3,19 +3,19 @@ import { CodexCliPlanner, type Reasoning } from "./codex-cli.js";
 import { QwenPlanner } from "./qwen.js";
 import type { Planner } from "./types.js";
 
+const HAIKU = "claude-haiku-5-5";
+
 /** Local development providers: Claude (default), opt-in Codex subscription access, or Qwen Token Plan. */
 export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner {
   if (kind === "claude-cli") {
-    // The default path runs Haiku, for cost. The alias rather than an id: CLI 2.1.284 ships
-    // claude-haiku-4-5-20251001 and tags claude-haiku-5-5 as unrecognized_model, so "haiku" tracks whichever
-    // Haiku the installed CLI actually supports. Through claude -p it always thinks (~1k tokens;
-    // MAX_THINKING_TOKENS=0 and --effort low only trim it), and a regression run measured 23.9 s p50 at 91.3%
-    // against ~6 s for the Sonnet-era recordings: set CLAUDE_MODEL=claude-sonnet-5-5 to trade cost for latency,
-    // and CLAUDE_FAST_MODEL to vary the fast tier.
+    // The default path runs Haiku 5.5, for cost, by its full id. Not the "haiku" alias: CLI 2.1.284 maps that to
+    // claude-haiku-4-5-20251001, which measured 91.3% on regression at 23.9 s p50, against 100% (8x) at 7.2 s for
+    // claude-haiku-5-5. The CLI logs claude-haiku-5-5 as unrecognized_model on stderr but serves it.
+    // Set CLAUDE_MODEL=claude-sonnet-5-5 for the strong tier, and CLAUDE_FAST_MODEL to vary the fast tier.
     return new ClaudeCliPlanner({
       // `||`, not `??`: a blank `CLAUDE_MODEL=` line must fall back, or the CLI gets an empty --model.
-      strong: process.env.CLAUDE_MODEL || "haiku",
-      fast: process.env.CLAUDE_FAST_MODEL || "haiku",
+      strong: process.env.CLAUDE_MODEL || HAIKU,
+      fast: process.env.CLAUDE_FAST_MODEL || HAIKU,
     });
   }
   if (kind === "codex-cli") {

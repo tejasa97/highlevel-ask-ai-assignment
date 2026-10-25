@@ -13,18 +13,18 @@ afterEach(() => {
 });
 
 describe("makePlanner defaults", () => {
-  it("runs claude-cli on haiku for both tiers", () => {
+  it("runs claude-cli on Haiku 5.5 for both tiers, by its full id", () => {
     delete process.env.CLAUDE_MODEL;
     delete process.env.CLAUDE_FAST_MODEL;
     const planner = makePlanner("claude-cli");
     assert.equal(planner.name, "claude-cli");
-    assert.deepEqual(planner.models, { strong: "haiku", fast: "haiku" });
+    assert.deepEqual(planner.models, { strong: "claude-haiku-5-5", fast: "claude-haiku-5-5" });
   });
 
   it("lets CLAUDE_MODEL pick another model per tier", () => {
     process.env.CLAUDE_MODEL = "claude-sonnet-5-5";
     delete process.env.CLAUDE_FAST_MODEL;
-    assert.deepEqual(makePlanner("claude-cli").models, { strong: "claude-sonnet-5-5", fast: "haiku" });
+    assert.deepEqual(makePlanner("claude-cli").models, { strong: "claude-sonnet-5-5", fast: "claude-haiku-5-5" });
 
     process.env.CLAUDE_FAST_MODEL = "claude-sonnet-5-5";
     assert.deepEqual(makePlanner("claude-cli").models, { strong: "claude-sonnet-5-5", fast: "claude-sonnet-5-5" });
@@ -35,7 +35,7 @@ describe("makePlanner defaults", () => {
     // character" on every turn.
     process.env.CLAUDE_MODEL = "";
     process.env.CLAUDE_FAST_MODEL = "";
-    assert.deepEqual(makePlanner("claude-cli").models, { strong: "haiku", fast: "haiku" });
+    assert.deepEqual(makePlanner("claude-cli").models, { strong: "claude-haiku-5-5", fast: "claude-haiku-5-5" });
 
     process.env.CODEX_MODEL = "";
     assert.deepEqual(makePlanner("codex-cli").models, { strong: "gpt-6.1-sol", fast: "gpt-6.1-sol" });
