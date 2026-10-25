@@ -6,11 +6,14 @@ import type { Planner } from "./types.js";
 /** Local development providers: Claude (default), opt-in Codex subscription access, or Qwen Token Plan. */
 export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner {
   if (kind === "claude-cli") {
+    // The default path runs Haiku, for cost. The alias rather than an id: CLI 2.1.284 ships
+    // claude-haiku-4-5-20251001 and tags claude-haiku-5-5 as unrecognized_model, so "haiku" tracks whichever
+    // Haiku the installed CLI actually supports. Through claude -p it always thinks (~1k tokens;
+    // MAX_THINKING_TOKENS=0 and --effort low only trim it), so it is ~2x slower than Sonnet: set
+    // CLAUDE_MODEL=claude-sonnet-5-5 to trade cost for latency, and CLAUDE_FAST_MODEL to vary the fast tier.
     return new ClaudeCliPlanner({
-      strong: process.env.CLAUDE_MODEL ?? "claude-sonnet-5-5",
-      // Sonnet for both tiers: through claude -p, Haiku 5.5 always thinks (~1k tokens; MAX_THINKING_TOKENS=0
-      // and --effort low only trim it), so it is ~2x slower than Sonnet here. Set CLAUDE_FAST_MODEL to compare.
-      fast: process.env.CLAUDE_FAST_MODEL ?? "claude-sonnet-5-5",
+      strong: process.env.CLAUDE_MODEL ?? "haiku",
+      fast: process.env.CLAUDE_FAST_MODEL ?? "haiku",
     });
   }
   if (kind === "codex-cli") {
@@ -32,10 +35,10 @@ export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner
       throw new Error("PLANNER=qwen needs QWEN_API_KEY (or ALIBABA_TOKEN_PLAN_API_KEY) in the environment");
     }
     const timeout = Number(process.env.QWEN_TIMEOUT_MS);
-    // Default measured 2026-10-25 over 68 scenarios: 95.7% of regression and 97.8% of development, at a third
-    // of the turn latency, against 90.9% and 97.8% for qwen3.8-flash. It has no json_schema on the Token Plan,
-    // so the client infers json_object from the model name and QWEN_RESPONSE_FORMAT stays an override.
-    const strong = process.env.QWEN_MODEL || "deepseek-v4.1-flash-1017";
+    // This adapter defaults to the Qwen flagship. DeepSeek measured 95.7% on regression against 90.9% here, at a
+    // third of the turn latency (97.8% on development for both), and is one variable away: point QWEN_MODEL at
+    // deepseek-v4.1-flash-1017. No format flag is needed, because the client infers json_object from the name.
+    const strong = process.env.QWEN_MODEL || "qwen3.8-flash";
     return new QwenPlanner({
       apiKey,
       baseUrl: process.env.QWEN_BASE_URL || undefined,

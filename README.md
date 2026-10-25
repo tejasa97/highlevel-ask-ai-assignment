@@ -37,7 +37,7 @@ All messages, payments, review publications and directory syncs are **simulated*
 
 ## Run locally
 
-Use a Node release supporting `node:sqlite` (this branch was tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Configure the planner using the existing environment settings; `claude-cli` requires an authenticated Claude CLI with available quota, and `qwen` needs a Qwen Token Plan key (see below).
+Use a Node release supporting `node:sqlite` (this branch was tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Configure the planner using the existing environment settings; `claude-cli` requires an authenticated Claude CLI with available quota, and `qwen` needs a Qwen Token Plan key (see below). `claude-cli` is the default provider and runs `haiku` for both tiers (the CLI's alias for the Haiku it ships); set `CLAUDE_MODEL` (and optionally `CLAUDE_FAST_MODEL`) for another model. Haiku 5.5 always thinks through `claude -p`, so it is the cheap choice rather than the fast one.
 
 In `server/`, run `npm run db:reset` to recreate **this checkout's** demo database, then `npm run serve`. In `web/`, run `npm run dev`. Defaults: API 8787, web 5173. For isolated concurrent work, set `PORT` for the API and matching `API_PORT` for Vite. Reset erases the local demo database; it is not a migration of saved user data.
 
@@ -121,7 +121,7 @@ PLANNER=qwen npm run ask -- "create a task to call Jo"
 ```
 
 `QWEN_MODEL` and `QWEN_FAST_MODEL` select the strong/fast models (`QWEN_MODEL` defaults to
-`deepseek-v4.1-flash-1017`, `QWEN_FAST_MODEL` to `QWEN_MODEL`). Thinking is off (`enable_thinking: false`);
+`qwen3.8-flash`, `QWEN_FAST_MODEL` to `QWEN_MODEL`). Thinking is off (`enable_thinking: false`);
 set `QWEN_THINKING=1` to turn it on. `QWEN_BASE_URL` defaults to
 `https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1`; use
 `QWEN_BASE_URL=https://token-plan.maas.qwencloudapi.com/compatible-mode/v1` for QwenCloud.
@@ -141,7 +141,7 @@ rest of the process. `QWEN_RESPONSE_FORMAT=json_schema|json_object` pins the cho
 Plans are validated and repaired either way.
 
 ```sh
-QWEN_MODEL=qwen3.8-flash QWEN_FAST_MODEL=qwen3.8-flash npm run serve   # the alternative
+QWEN_MODEL=deepseek-v4.1-flash-1017 npm run serve   # DeepSeek on the same key; no format flag needed
 ```
 
 Measured 2026-10-25 on the module scenarios with real list rates (regression: 23 scenarios x 3
@@ -149,8 +149,8 @@ repeats; development: 45 scenarios):
 
 | model | regression | development | median turn | $/turn |
 | --- | --- | --- | --- | --- |
-| deepseek-v4.1-flash-1017 (default) | 95.7% | 97.8% | 1.9 s / 1.1 s | 0.00048 / 0.00065 |
-| qwen3.8-flash | 90.9% | 97.8% | 5.0 s / 3.2 s | 0.00044 / 0.00063 |
+| qwen3.8-flash (adapter default) | 90.9% | 97.8% | 5.0 s / 3.2 s | 0.00044 / 0.00063 |
+| deepseek-v4.1-flash-1017 | 95.7% | 97.8% | 1.9 s / 1.1 s | 0.00048 / 0.00065 |
 
 DeepSeek's regression figure is the lower of two batches (the other was 98.6%) and Qwen's is a
 four-batch mean; a single batch moves by 1-3 points, so read gaps under ~5 points as noise. Batches:
