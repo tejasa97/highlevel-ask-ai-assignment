@@ -113,6 +113,20 @@ describe("preflight subset approval", () => {
     assert.match(r.steps[0]!.error!.message, /email address/);
     assert.equal(ctx.store.all("emails").length, baseline);
   });
+  test("one approval over a run of sends names every step it covers", async () => {
+    const ctx = fresh();
+    const p = compiled(plan([
+      action("s1", "M47.A08", { ticketId: "tic_4", body: "Update" }),
+      action("s2", "M47.A08", { ticketId: "tic_1", body: "Update" }),
+      action("s3", "M06.A01", { title: "Follow up" }),
+    ]));
+    const r = await execute(p, registry, ctx, { executionId: "covers" });
+    assert.equal(r.status, "awaiting_confirmation");
+    assert.deepEqual(r.pending?.covers, ["s1", "s2"]);
+    assert.equal(r.pending?.blockedCount, 1);
+    const single = await execute(compiled(plan([action("s1", "M47.A08", { ticketId: "tic_1", body: "Update" })])), registry, fresh(), { executionId: "single" });
+    assert.equal(single.pending?.covers, undefined);
+  });
   test("a revoked permission after preview blocks delivery despite the old approval", async () => {
     const ctx = { ...fresh(), actorId: "us_1" }, p = tickets(), baseline = ctx.store.all("emails").length;
     const first = await execute(p, registry, ctx, { executionId: "revoked" });

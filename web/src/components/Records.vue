@@ -27,6 +27,7 @@ const titleOf = (o, noun) => o[titleKey(o)] ?? cap(noun);
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const words = (k) => cap(k.replace(/Id$/, "").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " ").toLowerCase());
 const userName = (id) => props.users.find((u) => u.id === id)?.name;
+const WEEKDAY = /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/;
 const empty = (v) => v === null || v === undefined || v === "" || (Array.isArray(v) && !v.length) || (typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length);
 const tone = (v) => (OK.has(v) ? "ok" : WARN.has(v) ? "warn" : BAD.has(v) ? "bad" : "");
 
@@ -67,8 +68,10 @@ function layout(rec) {
     else if (Array.isArray(v) && v.every((x) => typeof x !== "object")) chips.push({ k, v: v.map((x) => (ID.test(x) ? userName(x) ?? x : x)) });
     else if (Array.isArray(v)) lists.push({ k, rows: v.slice(0, 8).map((o) => row(o, rec)), more: v.length - 8 });
     else if (typeof v === "object") {
-      const parts = Object.entries(v).filter(([a, x]) => !empty(x) && !(typeof x === "string" && ID.test(x)) && a !== "type" && a !== "id");
-      if (parts.length) grid.push({ k: words(k), sub: parts.map(([a, x]) => ({ k: words(a), v: plain(a, x, rec) })) });
+      // In opening hours a day with no interval is closed, not unknown.
+      const closed = (a, x) => x === null && WEEKDAY.test(a);
+      const parts = Object.entries(v).filter(([a, x]) => (closed(a, x) || !empty(x)) && !(typeof x === "string" && ID.test(x)) && a !== "type" && a !== "id");
+      if (parts.length) grid.push({ k: words(k), sub: parts.map(([a, x]) => ({ k: words(a), v: closed(a, x) ? "Closed" : plain(a, x, rec) })) });
     } else {
       const text = plain(k, v, rec);
       grid.push({ k: words(k), v: text, href: k === "email" || k.endsWith("Email") ? `mailto:${v}` : k === "phone" ? `tel:${v}` : /^https?:\/\//.test(v) ? v : null });

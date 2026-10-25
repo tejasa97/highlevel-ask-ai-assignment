@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from
 import { getJson, post, stream } from "./api.js";
 import Changes from "./components/Changes.vue";
 import DataBrowser from "./components/DataBrowser.vue";
-import Json from "./components/Json.vue";
+import ApprovalPreview from "./components/ApprovalPreview.vue";
 import Records from "./components/Records.vue";
 import Trace from "./components/Trace.vue";
 
@@ -39,6 +39,8 @@ const tab = ref("trace");
 const dataVersion = ref(0);
 const chatEl = ref(null);
 const inputEl = ref(null);
+const debugEl = ref(null);
+const metaError = ref(null);
 
 const turn = computed(() => (selected.value === null ? null : turns[selected.value]));
 // What the running turn is doing right now, for the typing bubble.
@@ -62,6 +64,8 @@ const replyMeta = (m) => {
 function openTurn(i, to = "trace") {
   selected.value = i;
   tab.value = to;
+  // Below 900px the panel sits under the chat, so bring it into view.
+  if (matchMedia("(max-width: 900px)").matches) nextTick(() => debugEl.value?.scrollIntoView({ behavior: "smooth" }));
 }
 
 // The composer grows with its text up to a few lines.
@@ -79,10 +83,19 @@ function onGlobalKey(e) {
 }
 onMounted(() => window.addEventListener("keydown", onGlobalKey));
 onUnmounted(() => window.removeEventListener("keydown", onGlobalKey));
+// Action ids look like M45.A06; the part before the dot is the module.
+const moduleCount = computed(() => new Set((meta.value?.actions ?? []).map((a) => a.id.split(".")[0])).size);
+// Only the newest reply's options still answer the question the server is waiting on.
+const lastAssistant = computed(() => messages.findLastIndex((m) => m.role !== "user"));
 const changedIds = computed(() => new Set((turn.value?.changes ?? []).map((c) => c.id)));
 
 async function loadMeta() {
-  meta.value = await getJson("/api/meta");
+  try {
+    meta.value = await getJson("/api/meta");
+    metaError.value = null;
+  } catch (err) {
+    metaError.value = err.message;
+  }
 }
 onMounted(loadMeta);
 
@@ -128,18 +141,21 @@ function onEvent(t, name, d) {
       t.audit.push(...d.audit);
       break;
     case "confirm": t.pending = d.pending; break;
-    case "reply":
+    case "reply": {
+      const pending = d.status === "awaiting_confirmation" ? t.pending : null;
       messages.push({
-        role: "assistant", status: d.status, options: d.options, turn: turns.indexOf(t), records: d.records ?? [],
-        // Lines the record cards say again in full are shown as the cards instead.
-        text: d.text.split("\n").filter((l) => !(d.records ?? []).some((r) => r.replaces === l)).join("\n"),
-        pending: d.status === "awaiting_confirmation" ? t.pending : null,
+        role: "assistant", status: d.status, options: d.options, turn: turns.indexOf(t), records: d.records ?? [], pending,
+        // Lines the record cards or the approval preview say again in full are shown there instead.
+        text: d.text.split("\n").filter((l) => !(d.records ?? []).some((r) => r.replaces === l) && !(pending && /^Can(not)? proceed for \d+:/.test(l))).join("\n"),
+        // The planner timed out or its provider failed: the same message may well work a moment later.
+        retry: d.infra ? t.request : null,
       });
       scrollChat();
       break;
+    }
     case "error":
       t.error = d.message;
-      messages.push({ role: "error", text: d.message, turn: turns.indexOf(t) });
+      messages.push({ role: "error", text: d.message, turn: turns.indexOf(t), retry: t.request });
       scrollChat();
       break;
     case "done": t.ms += d.ms; t.live = false; break;
@@ -149,6 +165,7 @@ function onEvent(t, name, d) {
 async function run(path, body, t) {
   busy.value = true;
   t.live = true;
+  t.request = { path, body };
   try {
     await stream(path, { ...body, tier: tier.value, actorId: actorId.value }, (name, d) => onEvent(t, name, d));
   } catch (err) {
@@ -178,6 +195,15 @@ async function answer(msg, approve) {
   const t = turns[msg.turn];
   selected.value = msg.turn;
   await run("/api/confirm", { turnId: t.id, approve }, t);
+}
+
+// Send a failed request again: a new turn for a message, the same turn for an approval.
+async function retry(m) {
+  if (busy.value) return;
+  m.retried = true;
+  const { path, body } = m.retry;
+  if (path === "/api/ask") await send(body.message);
+  else await run(path, body, turns[m.turn]);
 }
 
 async function reset() {
@@ -221,15 +247,20 @@ const tabs = computed(() => [
     </div>
   </header>
 
+  <div v-if="metaError" class="banner" role="alert">
+    Can't reach the API server ({{ metaError }}). Start it with <span class="mono">npm run serve</span> in server/, then
+    <button class="link" @click="loadMeta">try again</button>.
+  </div>
+
   <main class="layout">
     <section class="chat">
-      <div class="messages" ref="chatEl">
+      <div class="messages" ref="chatEl" role="log" aria-live="polite" aria-label="Conversation">
         <div v-if="!messages.length" class="welcome">
           <div class="hero">
             <div class="hero-logo">✦</div>
             <h1>What should we get done?</h1>
             <p class="muted">Ask in plain words. The planner picks actions, the code runs them, and the panel on the right shows the plan, every tool call and every row it changed.</p>
-            <p class="muted small">{{ meta?.actions.length ?? "…" }} actions live across 18 modules</p>
+            <p class="muted small">{{ meta?.actions.length ?? "…" }} actions live across {{ meta ? moduleCount : "…" }} modules</p>
           </div>
           <div v-for="g in EXAMPLES" :key="g.group" class="example-group">
             <div class="example-head">{{ g.group }}</div>
@@ -245,20 +276,7 @@ const tabs = computed(() => [
             <div v-if="m.text" class="text">{{ m.text }}</div>
             <Records v-if="m.records?.length" :shown="m.records" :users="meta?.users ?? []" />
             <div v-if="m.pending" class="pending">
-              <div class="pending-list">
-                <div v-if="m.pending.blockedCount" class="pending-row">
-                  <b>Cannot proceed for {{ m.pending.blockedCount }}:</b>
-                  <div v-for="(b, j) in m.pending.blocked" :key="j">{{ b.label }} — {{ b.error.message }}</div>
-                  <div v-if="m.pending.blockedCount > (m.pending.blocked?.length ?? 0)" class="muted small">Additional blocked targets omitted.</div>
-                  <div>Approve only the eligible actions below.</div>
-                </div>
-                <div v-for="(p, j) in m.pending.preview" :key="j" class="pending-row">
-                  <span class="mono">{{ p.action }}</span> {{ p.name }}<span v-if="p.label"> · <b>{{ p.label }}</b></span>
-                  <Json :value="p.args" />
-                  <Json v-if="p.target" :value="p.target" />
-                </div>
-                <div v-if="m.pending.count > m.pending.preview.length" class="muted small">…and {{ m.pending.count - m.pending.preview.length }} more</div>
-              </div>
+              <ApprovalPreview :pending="m.pending" :turn="turns[m.turn]" :users="meta?.users ?? []" />
               <div v-if="!m.answered" class="row">
                 <button class="primary" @click.stop="answer(m, true)" :disabled="busy">{{ m.pending.blockedCount ? 'Approve eligible only' : 'Approve' }}</button>
                 <button class="ghost" @click.stop="answer(m, false)" :disabled="busy">Cancel</button>
@@ -266,7 +284,10 @@ const tabs = computed(() => [
               <div v-else class="muted small">{{ m.answered }}</div>
             </div>
             <div v-if="m.options?.length" class="chips">
-              <button v-for="o in m.options" :key="o" class="chip" @click.stop="send(o)" :disabled="busy">{{ o }}</button>
+              <button v-for="o in m.options" :key="o" class="chip" @click.stop="send(o)" :disabled="busy || i !== lastAssistant">{{ o }}</button>
+            </div>
+            <div v-if="m.retry && !m.retried && i === lastAssistant" class="row">
+              <button class="primary small" @click.stop="retry(m)" :disabled="busy">↻ Retry</button>
             </div>
             <div v-if="m.role === 'assistant' && replyMeta(m)" class="reply-meta">
               <span>{{ replyMeta(m) }}</span>
@@ -289,7 +310,7 @@ const tabs = computed(() => [
       </form>
     </section>
 
-    <section class="debug">
+    <section class="debug" ref="debugEl">
       <nav class="tabs">
         <button v-for="t in tabs" :key="t.id" :class="{ on: tab === t.id }" @click="tab = t.id">
           {{ t.label }}<span v-if="t.count !== null && t.count !== undefined" class="count">{{ t.count }}</span>
