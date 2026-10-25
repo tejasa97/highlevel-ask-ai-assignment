@@ -46,7 +46,6 @@ test("review requests respect marketing consent and reachability; failures roll 
     { email: null },
     { preferences: { email: false, sms: true, call: true, dnd: false } },
     { preferences: { email: true, sms: true, call: true, dnd: true } },
-    { email: "bad@bounce.example" },
   ]) {
     const w = await testWorld(),
       c = w.f.contact(patch),
@@ -66,6 +65,33 @@ test("review requests respect marketing consent and reachability; failures roll 
     failure(() => w.call("M45.A02", { requestId: r.id })).message,
     /unsubscribed/,
   );
+});
+test("a bounced review request is kept as failed with its email, is not sent, and can be sent again", async () => {
+  const w = await testWorld(),
+    c = w.f.contact({ email: "bad@bounce.example" }),
+    r = w.f.reviewRequest({ contactId: c.id });
+  const failed = w.call("M45.A02", { requestId: r.id });
+  assert.equal(failed.status, "failed");
+  assert.equal(failed.sentAt, null);
+  assert.match(failed.failureReason, /hard bounce/);
+  assert.equal(w.call("M13.A06", { emailId: failed.emailId }).status, "bounced");
+  assert.equal(w.call("M45.A04", { status: "failed" }).items.length, 1);
+  assert.equal(
+    failure(() => w.call("M45.A05", { requestId: r.id, rating: 5, body: "Great" })).code,
+    "CONFLICT",
+    "a request that never reached the customer cannot be fulfilled",
+  );
+  // The address is fixed: the same request goes out, clears the failure and gets a new email.
+  w.store.update("contacts", c.id, { email: "good@example.com" });
+  const sent = w.call("M45.A02", { requestId: r.id });
+  assert.equal(sent.status, "sent");
+  assert.equal(sent.failureReason, null);
+  assert.notEqual(sent.emailId, failed.emailId);
+  assert.ok(sent.sentAt);
+  // A failed request can also be given up on.
+  const g = w.f.reviewRequest({ contactId: w.f.contact({ email: "x@bounce.example" }).id });
+  w.call("M45.A02", { requestId: g.id });
+  assert.equal(w.call("M45.A03", { requestId: g.id }).status, "cancelled");
 });
 test("record review fulfills a sent request once, validates contact, rating and content", async () => {
   const w = await testWorld(),

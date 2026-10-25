@@ -17,7 +17,10 @@ export function ownedEmailBlocker(kind: string): string | undefined {
       : undefined;
 }
 
-/** Called inside the owning action's transaction. A failed delivery rolls back its domain changes too. */
+/**
+ * Called inside the owning action's transaction. Unmet preconditions throw and roll everything back;
+ * a bounce does not: the email row stays as the trail, and the caller records what a bounce means for its own record.
+ */
 export function sendOwnedEmail(
   ctx: ActionContext,
   a: {
@@ -50,10 +53,7 @@ export function sendOwnedEmail(
     createdBy: ctx.actorId ?? "us_1",
     createdAt: at,
   }) as Email;
-  const out = deliverEmail(ctx.store, e, at);
-  if (out.status !== "delivered")
-    throw new ActionError("UNAVAILABLE", out.failureReason ?? "The email was not delivered");
-  return out;
+  return deliverEmail(ctx.store, e, at);
 }
 
 /** Same eligibility rules as delivery, without creating records or attempting a send. */
