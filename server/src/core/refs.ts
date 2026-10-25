@@ -19,7 +19,10 @@ const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)((?:\.[A-Za-z_][A-Za-z0-9_]*|\[\*\]|\[\d
 const TEMPLATE = /\{\{\s*(\$[^}\s]+)\s*\}\}/g;
 export const RESERVED_ROOTS = new Set(["item", "rr", "ctx"]);
 
-/** A literal forEach input (array or JSON array string), undefined for a ref, null after an error. */
+/**
+ * A written-out forEach input (array or JSON array string), undefined for a ref, null after an error. Elements are
+ * literal strings or $refs to single values (["$s1", "$s2.id"]); the caller types the refs.
+ */
 export function literalList(raw: string | string[], err: (m: string) => void, field = "in"): string[] | null | undefined {
   let value: unknown = raw;
   if (typeof raw === "string") {
@@ -33,11 +36,6 @@ export function literalList(raw: string | string[], err: (m: string) => void, fi
   }
   if (!Array.isArray(value) || value.some((x) => typeof x !== "string" || !x.length)) {
     err(`"${field}" must be a JSON array of non-empty strings, e.g. ["id_1","id_2"]`);
-    return null;
-  }
-  const ref = (value as string[]).find((x) => x.startsWith("$"));
-  if (ref) {
-    err(`"${field}" element "${ref}" is a $ref inside a JSON array; give "${field}" the $ref to a list itself ("$s1.items"), or call the action directly, without forEach, for one record`);
     return null;
   }
   return value as string[];

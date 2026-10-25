@@ -1,0 +1,602 @@
+{
+ "summary": {
+  "label": "qf-tp-dev-fails-after1",
+  "planner": "qwen",
+  "model": "qwen3.8-flash",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "304c0a9819bc",
+  "tier": "strong",
+  "scenarios": 3,
+  "repeat": 1,
+  "runs": 3,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 66.7,
+  "allPass": 2,
+  "measured": 3,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 16729,
+   "p95": 16935
+  },
+  "firstReplyMs": {
+   "p50": 16729,
+   "p95": 16935
+  },
+  "plannerRoundsPerRun": 2.33,
+  "callsPerRun": 2,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 17056
+ },
+ "runs": [
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M21.A02",
+      "M21.A03",
+      "M45.A08",
+      "M45.A06",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Your feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Dorian Vale"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\": \"$s1.id\", \"subject\": \"Your feedback\", \"body\": \"Please review your visit.\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M45.A02",
+          "argsJson": "{\"requestId\": \"$s2.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4432,
+     "ms": 4436,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "eb72a5840712254e",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4436,
+    "firstReplyMs": 4432,
+    "plannerMs": 4286,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 4104,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 229,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M45.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M45.A02 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM review_requests WHERE json_extract(data,'$.subject')='Visit feedback' AND json_extract(data,'$.body')='Please review your visit.' AND json_extract(data,'$.status')='sent' → 0, wanted 2"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(DISTINCT json_extract(data,'$.contactId')) FROM review_requests WHERE json_extract(data,'$.subject')='Visit feedback' AND json_extract(data,'$.body')='Please review your visit.' AND json_extract(data,'$.status')='sent' → 0, wanted 2"
+    }
+   ],
+   "failureClass": "ref-grammar",
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "failed",
+     "reply": "The plan was still invalid after one repair:\nstep s1: $s2 is not an earlier step; there are no earlier steps yet. Refs can only point back to a step id.\nstep s2 do[1]: $results is not an earlier step; your steps are s1 (filter). Refs can only point back to a step id.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "look",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\": \"completed\", \"from\": \"2026-10-19\", \"to\": \"2026-10-25\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\": {\"exists\": true}}",
+          "by": "contactId",
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s2",
+          "whereJson": null,
+          "by": "contactId",
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "look",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\": \"completed\", \"from\": \"2026-10-19\", \"to\": \"2026-10-25\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\": {\"exists\": true}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after look",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2",
+          "whereJson": "{\"contactId\": {\"exists\": true}}",
+          "by": "contactId",
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items[*].contactId",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A01",
+            "argsJson": "{\"contactId\": \"$item\", \"subject\": \"Visit feedback\", \"body\": \"Please review your visit.\"}"
+           },
+           {
+            "action": "M45.A02",
+            "argsJson": "{\"requestId\": \"$results[0].id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s3: exclude needs \"by\" (a field of each item) and \"set\" (a $ref to a list)",
+      "step s1: $s2 is not an earlier step; there are no earlier steps yet. Refs can only point back to a step id.",
+      "step s2 do[1]: $results is not an earlier step; your steps are s1 (filter). Refs can only point back to a step id."
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 16729,
+     "ms": 16729
+    }
+   ],
+   "metrics": {
+    "ms": 16729,
+    "firstReplyMs": 16729,
+    "plannerMs": 16484,
+    "plannerRounds": 3,
+    "calls": 1,
+    "usage": {
+     "input": 14233,
+     "cachedRead": 9216,
+     "cacheWrite": 0,
+     "output": 873,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "tickets-from-invoices-messages",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "For contacts who have an overdue invoice and an inbound reply in the last 7 days, open one support ticket per contact titled 'Overdue invoice follow-up' with description 'Check the invoice and recent reply.'",
+     "status": "done",
+     "reply": "Create support ticket for 1 of 1: #0.",
+     "offered": [
+      "M28.A03",
+      "M13.A09",
+      "M28.A08",
+      "M28.A10",
+      "M12.A09",
+      "M28.A02",
+      "M47.A08",
+      "M11.A10",
+      "M28.A07",
+      "M28.A01",
+      "M47.A09",
+      "M47.A10",
+      "M47.A02",
+      "M11.A02",
+      "M13.A01",
+      "M13.A03",
+      "M47.A01",
+      "M47.A03",
+      "M47.A07",
+      "M47.A04",
+      "M47.A05",
+      "M47.A06",
+      "M03.A01",
+      "M06.A01",
+      "M03.A03",
+      "M06.A03",
+      "M07.A01",
+      "M11.A08"
+     ],
+     "planned": [
+      "M28.A10",
+      "M11.A10",
+      "M47.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {}
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "team",
+        "personType": "contact"
+       }
+      },
+      {
+       "action": "M47.A01",
+       "args": {
+        "title": "Overdue invoice follow-up",
+        "body": "Check the invoice and recent reply.",
+        "contactId": "ct_31"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "create support ticket",
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\": \"team\", \"personType\": \"contact\", \"lastMessageFrom\": \"2026-10-15\", \"lastMessageTo\": \"2026-10-21\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2.items",
+          "whereJson": "{\"contactId\": {\"in\": \"$s1.items[*].contactId\"}}",
+          "by": "contactId",
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A01",
+            "argsJson": "{\"title\": \"Overdue invoice follow-up\", \"body\": \"Check the invoice and recent reply.\", \"contactId\": \"{{$item.contactId}}\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\": \"team\", \"personType\": \"contact\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2.items",
+          "whereJson": "{\"contactId\": {\"in\": \"$s1.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A01",
+            "argsJson": "{\"title\": \"Overdue invoice follow-up\", \"body\": \"Check the invoice and recent reply.\", \"contactId\": \"{{$item.contactId}}\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s2: M11.A10 arg (args): Unrecognized keys: \"lastMessageFrom\", \"lastMessageTo\""
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 16935,
+     "ms": 16935
+    }
+   ],
+   "metrics": {
+    "ms": 16935,
+    "firstReplyMs": 16935,
+    "plannerMs": 16539,
+    "plannerRounds": 3,
+    "calls": 3,
+    "usage": {
+     "input": 21924,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 896,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  }
+ ]
+}

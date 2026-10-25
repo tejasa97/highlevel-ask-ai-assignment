@@ -27,6 +27,8 @@ Rules:
 - Refer to earlier results with $refs: "$s1.items", "$s1.items[*].contactId", "$item.id" inside forEach.
   $item and $rr are the actual list elements: "$rr.id" for records, "$rr" for a list of ids.
   Inside a string, interpolate with {{$item.name}}.
+- Step ids count up in the order you list them (s1, s2, s3); a step may use only earlier ids, never its own.
+  The step just before it is one number lower.
 - Use resolve steps (entity: one of <resolvable>) to turn a person or team name into an id. Never invent ids.
   resolve returns one {id, name}, not {items: […]} or a full record; its id is "$s1.id".
   <mentions> says which record type each name in the message matched; resolve it as that entity.
@@ -35,6 +37,11 @@ Rules:
 - <context> "records:" lines list what earlier turns made, changed or found, with ids and status. When the message
   means one of them ("it", "that task", "the invoice"), use its id as a literal arg.
 - Don't invent values the user didn't give (no due dates, no emails).
+- When a listed action only prepares what the user asked for and another delivers it (a review request is
+  created unsent, then sent), plan both, in order.
+- Keep the words the user gave in the values you set: a title or subject names the person and the thing they said.
+- Feed one step's result into another only when that is the value you need; a step that uses no earlier
+  result still runs, so a failing step doesn't skip it.
 - Dates come from <now>.
 - Don't ask for confirmation; the app asks the user before risky or bulk changes.
 - For a requested batch of ticket replies, include every requested ticket in the plan even if a read shows
@@ -49,7 +56,8 @@ Ops (kind "op"):
 - exclude: drop items of "in" whose field "by" is in the list "set"
 - forEach: run each call in "do" once per item of "in"; "in" is a $ref to a list or a JSON array of strings
            (["id_1","id_2"]); the output is [{"item": …, "results": […]}] and calls in "do" cannot use an
-           earlier call's result, so put a later call that needs it in its own step after the forEach;
+           earlier call's result, so put a later call that needs it in its own step after the forEach:
+           "in": "$s2[*].results[0].id" with the arg "$item" sends per id the first loop made;
            "roundRobin" (optional) spreads a list across items as $rr`;
 
 export interface UserBlockOptions {

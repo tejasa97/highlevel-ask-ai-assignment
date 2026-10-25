@@ -1,0 +1,237 @@
+{
+ "summary": {
+  "label": "qf-tp-dev-fail2",
+  "planner": "qwen",
+  "model": "qwen3.8-flash",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "c1422551a2a2",
+  "tier": "strong",
+  "scenarios": 1,
+  "repeat": 1,
+  "runs": 1,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 1,
+  "measured": 1,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 8381,
+   "p95": 8381
+  },
+  "firstReplyMs": {
+   "p50": 8376,
+   "p95": 8376
+  },
+  "plannerRoundsPerRun": 1,
+  "callsPerRun": 6,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 8464
+ },
+ "runs": [
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Create review request for 2 of 2: ct_35, ct_36.\nSend review request for 2 of 2: rrq_4, rrq_5.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M21.A03",
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25"
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\":\"completed\",\"from\":\"2026-10-19\",\"to\":\"2026-10-25\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"exists\":true}}",
+          "by": "contactId",
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s2[*].contactId",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A01",
+            "argsJson": "{\"contactId\":\"$item\",\"subject\":\"Visit feedback\",\"body\":\"Please review your visit.\"}"
+           }
+          ]
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3[*].results[0].id",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A02",
+            "argsJson": "{\"requestId\":\"$item\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 8376,
+     "ms": 8381,
+     "confirmations": [
+      {
+       "stepId": "s4",
+       "planHash": "689e3497ddd96a21",
+       "targetsHash": "00b7d72ba17be50b",
+       "reason": "sends something outside the account",
+       "count": 2,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         },
+         "label": "rrq_4"
+        },
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         },
+         "label": "rrq_5"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8381,
+    "firstReplyMs": 8376,
+    "plannerMs": 8238,
+    "plannerRounds": 1,
+    "calls": 6,
+    "usage": {
+     "input": 4448,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 478,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  }
+ ]
+}

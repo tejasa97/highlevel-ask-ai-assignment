@@ -130,6 +130,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
       return valueAt(outputs.get(ref.root), ref.path, label);
     };
   const refValue = (raw: string, scope?: { item?: unknown; rr?: unknown }) => lookup(scope)(parseRef(raw)!);
+  // A written-out list holds plain strings and $refs to single values (["$s1", "us_2"]).
+  const written = (list: string[]): unknown[] => list.map((x) => (parseRef(x) ? refValue(x) : x));
 
   // Resolves have no deps, so running them first keeps every ref backward.
   const ordered = [...plan.steps.filter((s) => s.kind === "resolve"), ...plan.steps.filter((s) => s.kind !== "resolve")];
@@ -244,7 +246,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         }
 
         case "forEach": {
-          let list = Array.isArray(step.in) ? step.in : asList(refValue(step.in), step.in);
+          let list = Array.isArray(step.in) ? written(step.in) : asList(refValue(step.in), step.in);
           const same = !writesAttempted && writes(step) ? sameNamed(plan, step, outputs, registry, ctx, opts.request) : undefined;
           if (same) {
             const picked = narrowByRequest(same.candidates, opts.request!);
@@ -256,7 +258,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             }
             list = list.filter((x) => x === picked[0]!.id || (x as { id?: unknown } | null)?.id === picked[0]!.id);
           }
-          const rr = Array.isArray(step.roundRobin) ? step.roundRobin : step.roundRobin ? asList(refValue(step.roundRobin), step.roundRobin) : null;
+          const rr = Array.isArray(step.roundRobin) ? written(step.roundRobin) : step.roundRobin ? asList(refValue(step.roundRobin), step.roundRobin) : null;
           if (rr && rr.length === 0 && list.length > 0) {
             fail({ code: "INVALID", message: `round-robin list ${step.roundRobin} is empty, so there is no one to assign to` });
             break;

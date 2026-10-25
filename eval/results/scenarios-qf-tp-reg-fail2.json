@@ -1,0 +1,343 @@
+{
+ "summary": {
+  "label": "qf-tp-reg-fail2",
+  "planner": "qwen",
+  "model": "qwen3.8-flash",
+  "scenarioDir": "eval/scenarios",
+  "set": "d1ddee351fe0",
+  "tier": "strong",
+  "scenarios": 1,
+  "repeat": 1,
+  "runs": 1,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 1,
+  "measured": 1,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 16568,
+   "p95": 16568
+  },
+  "firstReplyMs": {
+   "p50": 16564,
+   "p95": 16564
+  },
+  "plannerRoundsPerRun": 3,
+  "callsPerRun": 9,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 16666
+ },
+ "runs": [
+  {
+   "id": "multi-facebook-leads",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Assign last week's Facebook leads to the available sales reps, round robin",
+     "status": "done",
+     "reply": "Assign lead owner for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A05",
+      "M49.A08",
+      "M04.A06",
+      "M01.A07",
+      "M03.A03",
+      "M11.A03",
+      "M21.A07",
+      "M21.A06",
+      "M21.A03",
+      "M46.A07",
+      "M03.A06",
+      "M49.A03",
+      "M49.A04",
+      "M49.A02",
+      "M49.A10",
+      "M49.A09",
+      "M49.A01",
+      "M48.A03",
+      "M01.A03",
+      "M47.A03",
+      "M46.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M49.A08",
+      "M03.A03",
+      "M49.A09",
+      "M03.A05"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads"
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads"
+       }
+      },
+      {
+       "action": "M49.A09",
+       "args": {
+        "teamId": "tm_1"
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads"
+       }
+      },
+      {
+       "action": "M49.A09",
+       "args": {
+        "teamId": "tm_1"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"source\": \"facebook_ads\", \"createdFrom\": \"2026-10-12\", \"createdTo\": \"2026-10-18\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "team",
+          "name": "sales reps"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M49.A08",
+          "argsJson": "{\"teamId\": \"$s2.id\", \"strategy\": \"round_robin\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"ownerId\": null}",
+          "by": "id",
+          "set": "$s4[*].id",
+          "roundRobin": "$s2.memberIds",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\": \"$item.id\", \"ownerId\": \"$rr\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "runtime replan: plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "find team by name",
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "runtime replan: plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"source\": \"facebook_ads\", \"createdFrom\": \"2026-10-12\", \"createdTo\": \"2026-10-18\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "team",
+          "name": "Sales"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M49.A09",
+          "argsJson": "{\"teamId\": \"$s2.id\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s3.members",
+          "whereJson": "{\"available\": true}",
+          "by": "userId",
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4[*].userId",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\": \"$item.id\", \"ownerId\": \"$rr\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 16564,
+     "ms": 16568,
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "9942d8b4e72b73ea",
+       "targetsHash": "8f5f103f8713d82b",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 16568,
+    "firstReplyMs": 16564,
+    "plannerMs": 16349,
+    "plannerRounds": 3,
+    "calls": 9,
+    "usage": {
+     "input": 13800,
+     "cachedRead": 8192,
+     "cacheWrite": 0,
+     "output": 913,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  }
+ ]
+}

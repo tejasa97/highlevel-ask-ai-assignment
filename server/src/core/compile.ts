@@ -3,7 +3,7 @@ import type { z } from "zod";
 import type { SubmitPlan } from "../planner/submit-plan.js";
 import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import type { JsonSchema, RegisteredAction, Registry } from "../registry/registry.js";
-import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, parseRef, RESERVED_ROOTS, type Ref, typeAt, unwrap, literalList } from "./refs.js";
+import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, literalList, looksLikeBrokenRef, parseRef, RESERVED_ROOTS, type Ref, typeAt, unwrap } from "./refs.js";
 
 // Stage 1 of validation: everything that can be checked before anything runs.
 // - structure: unique step ids, known actions that were offered to the planner this turn, JSON in argsJson/whereJson
@@ -49,9 +49,11 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
   if (plan.type !== "plan") return { ok: false, errors: [`expected type "plan", got "${plan.type}"`] };
   const raw = plan.steps ?? [];
   if (raw.length === 0) return { ok: false, errors: ["plan has no steps"] };
+  const ids = new Set(raw.map((s) => s.id));
 
   const types = new Map<string, JsonSchema>(); // step id → output type, filled in order
   const kinds = new Map<string, string>(); // step id → kind/op, for errors that list the legal steps
+  const ents = new Map<string, string>(); // step id → the record type it returns or lists, when known
   const steps: CStep[] = [];
 
   for (const s of raw) {
@@ -65,7 +67,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
       continue;
     }
     const deps = new Set<string>();
-    const scope: Scope = { types, kinds, deps, at, item: null, rr: null, offered };
+    const scope: Scope = { types, kinds, deps, at, self: s.id, all: ids, item: null, rr: null, offered, registry, ents, itemEnt: null, rrEnt: null };
     const err = (m: string) => errors.push(`${at}: ${m}`);
 
     // A step with errors still gets its output type, so later steps are checked against it
@@ -76,6 +78,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
         if (!call) continue;
         steps.push({ id: s.id, kind: "action", call, deps: [...deps], type: call.action.outputSchema });
         types.set(s.id, call.action.outputSchema);
+        if (call.action.entities?.produces) ents.set(s.id, call.action.entities.produces);
       } else if (s.kind === "resolve") {
         if (!registry.resolver(s.entity)) {
           err(`can't resolve entity "${s.entity}"; resolvable: ${registry.resolverEntities().join(", ")}`);
@@ -83,16 +86,20 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
         }
         steps.push({ id: s.id, kind: "resolve", entity: s.entity, name: s.name, deps: [], type: RESOLVED });
         types.set(s.id, RESOLVED);
+        ents.set(s.id, s.entity);
       } else {
         if (s.op !== "forEach" && Array.isArray(s.in)) {
           err(`"in" on ${s.op} must be a $ref to a list; a literal array is only for forEach`);
           continue;
         }
-        const literal = s.op === "forEach" ? literalList(s.in, err) : undefined;
+        const literal = s.op === "forEach" ? literalList(oneRecord(s.in, kinds), err) : undefined;
         if (literal === null) continue;
-        const inType = literal ? arrayOf({ type: "string" }) : listRef(s.in as string, scope, `"in"`, err);
+        const inType = literal ? writtenList(literal, scope, `"in"`, err) : listRef(s.in as string, scope, `"in"`, err);
         if (!inType) continue;
         const item = (unwrap(inType).items ?? ANY) as JsonSchema;
+        const itemEnt = literal ? writtenEnt(literal, scope) : listEnt(s.in as string, scope);
+        // A filter or exclude keeps the records it was given, so its result lists the same type.
+        if (s.op !== "forEach" && itemEnt && !itemEnt.ids) ents.set(s.id, itemEnt.entity);
 
         if (s.op === "filter") {
           const where = parseObject(s.whereJson, "whereJson", err);
@@ -118,17 +125,26 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
             continue;
           }
           let rr: JsonSchema | null = null;
+          let rrEnt: Ent | null = null;
           // Like "in", the people to rotate through may be written out: ["us_2","us_4"].
-          const rrLiteral = s.roundRobin ? literalList(s.roundRobin, err, "roundRobin") : undefined;
+          const rrLiteral = s.roundRobin ? literalList(oneRecord(s.roundRobin, kinds), err, "roundRobin") : undefined;
           if (rrLiteral === null) continue;
           if (s.roundRobin) {
-            const t = rrLiteral ? arrayOf({ type: "string" }) : listRef(s.roundRobin, scope, `"roundRobin"`, err);
+            const t = rrLiteral ? writtenList(rrLiteral, scope, `"roundRobin"`, err) : listRef(s.roundRobin, scope, `"roundRobin"`, err);
             if (!t) continue;
             rr = (unwrap(t).items ?? ANY) as JsonSchema;
+            rrEnt = rrLiteral ? writtenEnt(rrLiteral, scope) : listEnt(s.roundRobin, scope);
           }
-          const inner: Scope = { ...scope, item, rr };
+          const inner: Scope = { ...scope, item, rr, itemEnt, rrEnt };
+          const own = {
+            item: kindOf(item) === "scalar" ? ownNames(literal ?? s.in, itemEnt) : [],
+            rr: rr && kindOf(rr) === "scalar" ? ownNames(rrLiteral ?? s.roundRobin!, rrEnt) : [],
+          };
+          const actions = s.do.map((c) => c.action);
           const calls = s.do.map((c, i) =>
-            compileCall(c.action, c.argsJson, registry, { ...inner, at: `${at} do[${i}]` }, (m) => errors.push(`${at} do[${i}]: ${m}`)),
+            compileCall(c.action, ownField(c.argsJson, own), registry, { ...inner, at: `${at} do[${i}]`, inDo: { step: s.id, actions, index: i } }, (m) =>
+              errors.push(`${at} do[${i}]: ${m}`),
+            ),
           );
           if (calls.some((c) => !c)) continue;
           const out = arrayOf({ type: "object", properties: { item, results: arrayOf(ANY) } });
@@ -155,6 +171,107 @@ interface Scope {
   item: JsonSchema | null;
   rr: JsonSchema | null;
   offered?: ReadonlySet<string>;
+  registry: Registry;
+  ents: Map<string, string>;
+  itemEnt: Ent | null;
+  rrEnt: Ent | null;
+  /** The id of the step being compiled: a ref to it is the usual off-by-one, so the error can name the right id. */
+  self: string;
+  /** Every step id in the submitted plan, so a ref to a later step can say it comes later. */
+  all: ReadonlySet<string>;
+  /** Inside a forEach: the step, its "do" actions, and which one this call is. */
+  inDo?: { step: string; actions: string[]; index: number };
+}
+
+// ---------- record types of ids ----------
+// An id arg says which record it takes ("review request id (rrq_…)"); a step's records come from the action's
+// entities.produces or the resolve's entity. A ref that hands one record type's id to an arg that wants another
+// (an appointment's id as requestId) fails at run time with NOT_FOUND, so compile says so first. Only ids whose
+// type is known on both sides are checked.
+
+/** What a ref or list holds: records of `entity`, or (ids) their ids. */
+type Ent = { entity: string; ids: boolean };
+
+const words = (s: string) => s.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_\s-]+/g, " ").trim().toLowerCase();
+
+/** The known entity a phrase names: itself, or its last words ("support ticket" → ticket). */
+function entityNamed(phrase: string, registry: Registry): string | null {
+  const p = words(phrase);
+  let best: string | null = null;
+  for (const e of knownEntities(registry)) {
+    const w = words(e);
+    if ((p === w || p.endsWith(` ${w}`)) && (!best || w.length > words(best).length)) best = e;
+  }
+  return best;
+}
+
+const KNOWN = new WeakMap<Registry, string[]>();
+function knownEntities(registry: Registry): string[] {
+  let k = KNOWN.get(registry);
+  if (!k) {
+    const s = new Set(registry.resolverEntities());
+    for (const a of registry.list()) {
+      if (a.entities?.produces) s.add(a.entities.produces);
+      for (const c of a.entities?.consumes ?? []) s.add(c);
+    }
+    KNOWN.set(registry, (k = [...s]));
+  }
+  return k;
+}
+
+/** The type a ref (or a list ref) holds. "$s1.items" → records; "$s1.items[*].id", "$item.contactId" → ids. */
+function listEnt(raw: string, scope: Scope): Ent | null {
+  const ref = parseRef(raw.trim());
+  if (!ref) return null;
+  const root = ref.root === "item" ? scope.itemEnt : ref.root === "rr" ? scope.rrEnt : scope.ents.has(ref.root) ? { entity: scope.ents.get(ref.root)!, ids: false } : null;
+  let path = ref.path;
+  if (root && !root.ids) {
+    if (path[0] && "field" in path[0] && path[0].field === "items") path = path.slice(1);
+    if (path[0] && !("field" in path[0])) path = path.slice(1);
+  }
+  if (!path.length) return root;
+  const last = path.at(-1)!;
+  if (!("field" in last)) return null;
+  if (last.field === "id") return path.length === 1 && root && !root.ids ? { entity: root.entity, ids: true } : null;
+  const named = /^(.+)Id$/.exec(last.field);
+  const entity = named ? entityNamed(named[1]!, scope.registry) : null;
+  return entity ? { entity, ids: true } : null;
+}
+
+function writtenEnt(list: string[], scope: Scope): Ent | null {
+  const all = list.map((x) => (parseRef(x) ? listEnt(x, scope) : null));
+  const first = all[0];
+  return first && all.every((e) => e && e.entity === first.entity && e.ids === first.ids) ? first : null;
+}
+
+/** The record type an id arg takes, from its description: "contact id (ct_…)", "user ids". */
+function argEntity(action: RegisteredAction, at: (string | number)[], registry: Registry): string | null {
+  const desc = (s: JsonSchema | null) => (s ? ((s.description ?? unwrap(s).description) as string | undefined) : undefined);
+  const d = desc(schemaAt(action.inputSchema, at)) ?? (typeof at.at(-1) === "number" ? desc(schemaAt(action.inputSchema, at.slice(0, -1))) : undefined);
+  const m = d && /^(?:the |a |an )?([A-Za-z][A-Za-z ]*?) ids?\b/.exec(d.trim());
+  return m ? entityNamed(m[1]!, registry) : null;
+}
+
+/** The path to an action result's own id ("id", "request.id"), or null. */
+function idPath(schema: JsonSchema): string | null {
+  if (fieldsOf(schema).includes("id")) return "id";
+  const props = (unwrap(schema).properties ?? {}) as Record<string, JsonSchema>;
+  const f = Object.keys(props).find((k) => fieldsOf(props[k]!).includes("id"));
+  return f ? `${f}.id` : null;
+}
+
+function idTypeError(id: string, at: (string | number)[], raw: string, have: string, want: string, scope: Scope): string {
+  const article = (e: string) => (/^[aeio]/i.test(words(e)) ? "an" : "a");
+  let msg = `${id} arg ${at.join(".")} takes ${article(want)} ${words(want)} id, but ${raw} is ${article(have)} ${words(have)} id.`;
+  const d = scope.inDo;
+  const k = d ? d.actions.findIndex((a, i) => i !== d.index && scope.registry.get(a)?.entities?.produces === want) : -1;
+  if (d && k >= 0) {
+    const path = idPath(scope.registry.get(d.actions[k]!)!.outputSchema);
+    msg += ` Calls in one "do" can't use each other's results: move ${id} into its own forEach step after ${d.step}, with "in": "$${d.step}[*].results[${k}]${path ? `.${path}` : ""}" (the ${words(want)} ids ${d.actions[k]} returned) and the arg set to "$item".`;
+  } else {
+    msg += ` Use the id of ${article(want)} ${words(want)} record, from a step that finds or creates one.`;
+  }
+  return msg;
 }
 
 /** Static type of a ref, or null after reporting why it's wrong. */
@@ -193,8 +310,18 @@ function rootType(ref: Ref, scope: Scope, err: (m: string) => void): JsonSchema 
   if (!t) {
     const steps = [...scope.kinds].map(([id, kind]) => `${id} (${kind})`);
     const context = new Set(["looked", "mentions", "context", "actions", "now"]);
+    const prev = [...scope.kinds.keys()].at(-1);
+    // Counting from 0, or naming the step being written, is what this error usually is: name the id to use instead.
+    const off = ref.root === "s0"
+      ? " Step ids count from s1, so the first step is s1."
+      : ref.root === scope.self
+        ? ` $${ref.root} is the step you are writing; a step can only use earlier ids${prev ? `, and the step just before it is $${prev}` : ""}.${scope.inDo ? ` Inside "do", the current item is $item.` : ""}`
+        : scope.all.has(ref.root)
+          ? ` $${ref.root} comes later in your plan; list it before this step, or use the step that already has the value.`
+          : "";
     err(
       `$${ref.root} is not an earlier step; ${steps.length ? `your steps are ${steps.join(", ")}` : "there are no earlier steps yet"}. Refs can only point back to a step id.` +
+        off +
         (context.has(ref.root) ? ` <${ref.root}> is a prompt block, not a step: copy the value you need into args as plain text.` : ""),
     );
     return null;
@@ -214,6 +341,79 @@ function listRef(raw: string, scope: Scope, what: string, err: (m: string) => vo
     return null;
   }
   return t;
+}
+
+/**
+ * A resolve finds one record, but models loop over it as if it found a list: "in": "$s1", "$s1.items",
+ * "$s1.items[*].id". That is a list of the one record (or of its field), written out as ["$s1"] / ["$s1.id"].
+ */
+function oneRecord(raw: string | string[], kinds: Map<string, string>): string | string[] {
+  if (typeof raw !== "string") return raw;
+  const ref = parseRef(raw.trim());
+  if (!ref || kinds.get(ref.root) !== "resolve") return raw;
+  let path = ref.path;
+  if (path[0] && "field" in path[0] && path[0].field === "items") path = path.slice(1);
+  if (path[0] && ("all" in path[0] || ("index" in path[0] && path[0].index === 0))) path = path.slice(1);
+  if (path.length > 1 || (path[0] && !("field" in path[0]))) return raw;
+  return [path[0] ? `$${ref.root}.${path[0].field}` : `$${ref.root}`];
+}
+
+/** The field a list of values was taken from: "userId" for "$s1.items[*].userId" or ["$u1.userId"], else null. */
+function elementField(raw: string | string[]): string | null {
+  const fields = (typeof raw === "string" ? [raw] : raw).map((x) => {
+    const last = parseRef(x)?.path.at(-1);
+    return last && "field" in last ? last.field : null;
+  });
+  return fields.length && fields.every((f) => f && f === fields[0]) ? fields[0]! : null;
+}
+
+/**
+ * The fields that name a scalar element itself: the field it was projected from ("userId" for
+ * "$s1.items[*].userId"), ".id" on a list of ids, and ".<type>Id" on ids of a known type ("$rr.userId" over user ids).
+ */
+function ownNames(raw: string | string[], ent: Ent | null): string[] {
+  const f = elementField(raw);
+  const names = new Set<string>();
+  if (f) names.add(f);
+  if (f && /id$/i.test(f)) names.add("id");
+  if (ent?.ids) {
+    const camel = words(ent.entity).replace(/ (\w)/g, (_, c: string) => c.toUpperCase());
+    names.add("id").add(`${camel}Id`);
+  }
+  return [...names];
+}
+
+/**
+ * Over a list of values projected from records ("$s1.items[*].userId"), "$rr.userId" names the value it already is;
+ * so do the other ownNames. All are written as the bare "$rr" / "$item". Any other field stays an error.
+ */
+function ownField(argsJson: string, own: { item: string[]; rr: string[] }): string {
+  let out = argsJson;
+  for (const root of ["item", "rr"] as const) {
+    const names = own[root];
+    if (!names.length) continue;
+    out = out.replace(new RegExp(`\\$${root}\\.(?:${names.join("|")})(?![\\w.\\[])`, "g"), () => `$${root}`);
+  }
+  return out;
+}
+
+/** The type of a written-out list: strings, single-value $refs, or $refs to records of one shape. */
+function writtenList(list: string[], scope: Scope, what: string, err: (m: string) => void): JsonSchema | null {
+  let item: JsonSchema | null = null;
+  for (const x of list) {
+    const t = parseRef(x) ? refType(x, scope, err) : looksLikeBrokenRef(x) ? (err(`${what} element "${x}" is not a valid $ref`), null) : { type: "string" };
+    if (!t) return null;
+    if (kindOf(t) === "array") {
+      err(`${what} element "${x}" is a list; give ${what} that $ref itself instead of a JSON array around it`);
+      return null;
+    }
+    if (item && kindOf(item) !== kindOf(t) && kindOf(t) !== "any" && kindOf(item) !== "any") {
+      err(`${what} mixes records and plain values; list only ids ("$s1.id", "us_2") or only records`);
+      return null;
+    }
+    item ??= t;
+  }
+  return arrayOf(item ?? { type: "string" });
 }
 
 function checkField(item: JsonSchema, field: string, what: string, err: (m: string) => void): void {
@@ -300,6 +500,13 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
       err(
         `${id} arg ${r.at.join(".")} needs a ${need === "scalar" ? "single value" : need}, but ${r.ref} is ${have === "scalar" ? "a single value" : `a ${have}`}`,
       );
+      ok = false;
+      continue;
+    }
+    const held = listEnt(r.ref, scope);
+    const wanted = held?.ids ? argEntity(action, r.at, registry) : null;
+    if (held?.ids && wanted && held.entity !== wanted) {
+      err(idTypeError(id, r.at, r.ref, held.entity, wanted, scope));
       ok = false;
     }
   }
