@@ -39,6 +39,8 @@ export interface Pending extends Approval {
   /** Known ineligible targets; never included in the approved send subset. */
   blocked?: { label: string; error: StepError }[];
   blockedCount?: number;
+  /** Every step this one approval decides, when it covers a run of steps (several sends checked together). */
+  covers?: string[];
 }
 
 type ConcreteCall = {
@@ -305,7 +307,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             }
             const blocked = group.filter((g) => g.error).map((g) => ({ label: `${g.calls[0]?.call.action.name ?? "action"} (${g.calls[0]?.args.ticketId ?? g.step.id})`, error: g.error! }));
             const eligible = group.filter((g) => !g.error).flatMap((g) => g.calls);
-            const gate = gateFor(step, eligible, plan.hash, opts.approvals, eligible.length, blocked);
+            const gate = gateFor(step, eligible, plan.hash, opts.approvals, eligible.length, blocked, group.map((g) => g.step.id));
             for (const g of group) checkedActions.set(g.step.id, { error: g.error, gate });
           }
           const checked = checkedActions.get(step.id);
@@ -490,6 +492,7 @@ function gateFor(
   approvals: Approval[] = [],
   count = calls.length,
   blocked: { label: string; error: StepError }[] = [],
+  covers: string[] = [step.id],
 ): Pending | null {
   const risks = new Set(calls.map((c) => c.call.action.risk));
   const writes = calls.filter((c) => c.call.action.risk !== "read");
@@ -514,6 +517,7 @@ function gateFor(
       .map((c) => ({ action: c.call.action.id, name: c.call.action.name, args: c.args, ...(c.label ? { label: c.label } : {}), ...(c.binding ? { target: c.binding } : {}) })),
     ...(blocked.length ? { blocked: blocked.slice(0, PREVIEW_MAX), blockedCount: blocked.length } : {}),
     ...(prior ? { changed: true } : {}),
+    ...(covers.length > 1 ? { covers } : {}),
   };
 }
 
