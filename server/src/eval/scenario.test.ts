@@ -104,7 +104,7 @@ describe("runScenario", () => {
   test("a read run in a look round counts as done, a failed one or one never run does not", () => {
     const s = scenario({ turns: [{ user: "x" }], expect: { actions: { includes: ["M28.A10", "M47.A01"] } } });
     const turn = (calls: { action: string; args: Record<string, unknown>; error?: string }[]) => ({
-      user: "x", status: "done", reply: "", offered: ["M28.A10", "M47.A01"], planned: ["M47.A01"], calls, plannerRounds: 2, compileErrors: [], errors: [], approvals: 0, firstReplyMs: 1, ms: 1,
+      user: "x", status: "done", reply: "", offered: ["M28.A10", "M47.A01"], planned: ["M47.A01"], calls, plannerRounds: 2, planner: [], compileErrors: [], errors: [], approvals: 0, firstReplyMs: 1, ms: 1,
     });
     const detail = (calls: Parameters<typeof turn>[0]) => check(s, [turn(calls)], 0, () => 0).map((f) => f.detail);
     assert.deepEqual(detail([{ action: "M28.A10", args: {} }, { action: "M47.A01", args: {} }]), []);

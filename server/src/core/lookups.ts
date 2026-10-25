@@ -10,6 +10,8 @@ import { collectRefs, parseRef, unwrap } from "./refs.js";
 // ID fields that more than one module uses for different records: a name there can't be mapped to one entity.
 const AMBIGUOUS = new Set(["fieldId", "postId", "pageId"]);
 const ID_SHAPE = /^[a-z]{1,6}_\d+(_\d+)*$/i;
+// An id prefix with a made-up tail ("us_sarah_johnson_1") is an invented id, not a name: the planner hears so at compile.
+const ID_PREFIXED = /^[a-z]{2,4}_[A-Za-z0-9_]+$/;
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
 /** Resolve qualifier holding a record the lookup must skip; set by code, never one of an entity's own qualifiers. */
@@ -70,7 +72,7 @@ export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; 
       // A name written where an ID belongs ("stageId": "Negotiation") is a lookup the model forgot to ask for. Not an
       // ID-shaped string, a $ref or a template, one unambiguous entity with a resolver, and no parent needed: look it up.
       if (typeof value === "string" && schema.type === "string" && !rule && value.trim() && !value.includes("$") && !value.includes("{{") &&
-          !ID_SHAPE.test(value.trim()) && !AMBIGUOUS.has(path.split(".").at(-1)!)) {
+          !ID_SHAPE.test(value.trim()) && !ID_PREFIXED.test(value.trim()) && !AMBIGUOUS.has(path.split(".").at(-1)!)) {
         const entities = argumentEntities(def, path, parsedArgs);
         if (entities.length === 1 && registry.resolver(entities[0]!)) {
           const id = nextId();

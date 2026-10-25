@@ -3,25 +3,30 @@ import { CodexCliPlanner, type Reasoning } from "./codex-cli.js";
 import { QwenPlanner } from "./qwen.js";
 import type { Planner } from "./types.js";
 
+const HAIKU = "claude-haiku-5-5";
+
 /** Local development providers: Claude (default), opt-in Codex subscription access, or Qwen Token Plan. */
 export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner {
   if (kind === "claude-cli") {
+    // The default path runs Haiku 5.5, for cost, by its full id. Not the "haiku" alias: CLI 2.1.284 maps that to
+    // claude-haiku-4-5-20251001, which measured 91.3% on regression at 23.9 s p50, against 100% (8x) at 7.2 s for
+    // claude-haiku-5-5. The CLI logs claude-haiku-5-5 as unrecognized_model on stderr but serves it.
+    // Set CLAUDE_MODEL=claude-sonnet-5-5 for the strong tier, and CLAUDE_FAST_MODEL to vary the fast tier.
     return new ClaudeCliPlanner({
-      strong: process.env.CLAUDE_MODEL ?? "claude-sonnet-5-5",
-      // Sonnet for both tiers: through claude -p, Haiku 5.5 always thinks (~1k tokens; MAX_THINKING_TOKENS=0
-      // and --effort low only trim it), so it is ~2x slower than Sonnet here. Set CLAUDE_FAST_MODEL to compare.
-      fast: process.env.CLAUDE_FAST_MODEL ?? "claude-sonnet-5-5",
+      // `||`, not `??`: a blank `CLAUDE_MODEL=` line must fall back, or the CLI gets an empty --model.
+      strong: process.env.CLAUDE_MODEL || HAIKU,
+      fast: process.env.CLAUDE_FAST_MODEL || HAIKU,
     });
   }
   if (kind === "codex-cli") {
     return new CodexCliPlanner({
-      strong: process.env.CODEX_MODEL ?? "gpt-6.1-sol",
-      fast: process.env.CODEX_FAST_MODEL ?? process.env.CODEX_MODEL ?? "gpt-6.1-sol",
+      strong: process.env.CODEX_MODEL || "gpt-6.1-sol",
+      fast: process.env.CODEX_FAST_MODEL || process.env.CODEX_MODEL || "gpt-6.1-sol",
     }, {
       executable: process.env.CODEX_BIN,
       reasoning: {
-        strong: (process.env.CODEX_REASONING ?? "low") as Reasoning,
-        fast: (process.env.CODEX_FAST_REASONING ?? process.env.CODEX_REASONING ?? "low") as Reasoning,
+        strong: (process.env.CODEX_REASONING || "low") as Reasoning,
+        fast: (process.env.CODEX_FAST_REASONING || process.env.CODEX_REASONING || "low") as Reasoning,
       },
     });
   }
@@ -32,6 +37,9 @@ export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner
       throw new Error("PLANNER=qwen needs QWEN_API_KEY (or ALIBABA_TOKEN_PLAN_API_KEY) in the environment");
     }
     const timeout = Number(process.env.QWEN_TIMEOUT_MS);
+    // This adapter defaults to the Qwen flagship. DeepSeek measured 95.7% on regression against 90.9% here, at a
+    // third of the turn latency (97.8% on development for both), and is one variable away: point QWEN_MODEL at
+    // deepseek-v4.1-flash-1017. No format flag is needed, because the client infers json_object from the name.
     const strong = process.env.QWEN_MODEL || "qwen3.8-flash";
     return new QwenPlanner({
       apiKey,
@@ -39,7 +47,13 @@ export function makePlanner(kind = process.env.PLANNER ?? "claude-cli"): Planner
       models: { strong, fast: process.env.QWEN_FAST_MODEL || strong },
       timeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : undefined,
       thinking: process.env.QWEN_THINKING === "1" || process.env.QWEN_THINKING === "true",
+      responseFormat: pinnedFormat(process.env.QWEN_RESPONSE_FORMAT),
     });
   }
   throw new Error(`unknown PLANNER "${kind}"; supported: claude-cli, codex-cli, qwen`);
+}
+
+/** `QWEN_RESPONSE_FORMAT` pins the reply format; blank or anything else leaves it to the model. */
+function pinnedFormat(value: string | undefined): "json_schema" | "json_object" | undefined {
+  return value === "json_schema" || value === "json_object" ? value : undefined;
 }

@@ -24,6 +24,7 @@ const DISABLED = [
 /** Local development only: use the CLI's ChatGPT login, never inherited API credentials. */
 export class CodexCliPlanner implements Planner {
   readonly name = "codex-cli";
+  readonly billing = "subscription";
   /** Set once the ChatGPT login check has passed, so later calls skip the extra process. */
   private signedIn = false;
 

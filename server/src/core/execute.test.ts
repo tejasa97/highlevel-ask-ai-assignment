@@ -4,7 +4,7 @@ import type { SubmitPlan } from "../planner/submit-plan.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile, type CompiledPlan } from "./compile.js";
-import { execute } from "./execute.js";
+import { execute, matches, narrowByRequest } from "./execute.js";
 import { valueAt } from "./refs.js";
 
 let registry: Registry;
@@ -18,7 +18,7 @@ const action = (id: string, act: string, args: unknown) => ({ id, kind: "action"
 const op = (
   id: string,
   o: "filter" | "exclude" | "forEach",
-  fields: { in: string; where?: unknown; by?: string; set?: string; roundRobin?: string; do?: { action: string; args: unknown }[] },
+  fields: { in: string | string[]; where?: unknown; by?: string; set?: string; roundRobin?: string; do?: { action: string; args: unknown }[] },
 ) => ({
   id,
   kind: "op" as const,
@@ -199,6 +199,16 @@ describe("compile errors the planner can act on", () => {
     assert.deepEqual(valueAt([{ items: [1] }], [{ index: 0 }, { field: "items" }], "$f"), [1]);
   });
 
+  test("a filter's result is the list itself, and .items on it reads as that list", () => {
+    const p = plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.items[*].id", ownerId: "us_2" })]);
+    const one = compile(p, registry);
+    assert.ok(one.ok, "a list in a single-value arg must hold exactly one value when it runs");
+    assert.deepEqual(one.ok && one.plan.steps[2]!.kind === "action" ? one.plan.steps[2]!.call.one : null, [["leadId"]]);
+    assert.equal(compile(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), op("g", "filter", { in: "$f.items", where: { score: { gte: 0 } } })]), registry).ok, true);
+    const e = errs(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.nope", ownerId: "us_2" })]));
+    assert.match(e, /already the list of records/);
+  });
+
   test("forward ref", () => {
     assert.match(errs(plan([action("s1", "M03.A05", { leadId: "$s2.id", ownerId: "us_2" }), action("s2", "M03.A03", {})])), /not an earlier step/);
   });
@@ -235,7 +245,63 @@ describe("compile errors the planner can act on", () => {
   });
 });
 
+describe("forEach over a literal list of ids", () => {
+  test("each occurrence runs once and resuming does not duplicate writes", async () => {
+    const ctx = fresh();
+    const p = compiled(plan([op("s1", "forEach", { in: ["repeated", "repeated"], do: [{ action: "M06.A01", args: { title: "$item" } }] })]));
+    await execute(p, registry, ctx, { executionId: "literal-repeat" });
+    await execute(p, registry, ctx, { executionId: "literal-repeat" });
+    assert.equal(ctx.store.all<{ title: string }>("tasks").filter((t) => t.title === "repeated").length, 2);
+  });
+
+  test("runs once per id, with $item set to the string", async () => {
+    const ctx = fresh();
+    const p = compiled(plan([op("s1", "forEach", { in: ["literal_alpha", "literal_beta"], do: [{ action: "M06.A01", args: { title: "$item" } }] })]));
+    const r = await execute(p, registry, ctx, { executionId: "ids" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps[0]));
+    assert.deepEqual(r.steps[0]!.items!.map((i) => i.label), ["literal_alpha", "literal_beta"]);
+    assert.deepEqual((r.steps[0]!.output as { item: string }[]).map((x) => x.item), ["literal_alpha", "literal_beta"]);
+    assert.deepEqual(ctx.store.all<{ title: string }>("tasks").filter((t) => t.title === "literal_alpha" || t.title === "literal_beta").map((t) => t.title).sort(), ["literal_alpha", "literal_beta"]);
+  });
+});
+
+describe("null-aware filters", () => {
+  test("orNull admits null and missing values but preserves bounds and other fields", async () => {
+    const ctx = fresh();
+    const empty = ctx.f.task({ title: "Nullfilter fixture", dueDate: null });
+    const early = ctx.f.task({ title: "Nullfilter fixture", dueDate: "2026-01-01" });
+    ctx.f.task({ title: "Nullfilter fixture", dueDate: "2027-01-01" });
+    ctx.f.task({ title: "Nullfilter fixture", dueDate: null, status: "completed" });
+    assert.equal(matches({}, { dueDate: { lt: "2026-06-01", orNull: true } }), true);
+    assert.equal(matches({}, { dueDate: { lt: "2026-06-01" } }), false);
+    const run = async (orNull: boolean) => execute(compiled(plan([
+      action("s1", "M06.A03", { query: "Nullfilter fixture" }),
+      op("s2", "filter", { in: "$s1.items", where: { dueDate: { lt: "2026-06-01", orNull }, status: "open" } }),
+    ])), registry, ctx, { executionId: `null-${orNull}` });
+    const yes = await run(true), no = await run(false);
+    assert.deepEqual((yes.steps[1]!.output as { id: string }[]).map((x) => x.id).sort(), [empty.id, early.id].sort());
+    assert.deepEqual((no.steps[1]!.output as { id: string }[]).map((x) => x.id), [early.id]);
+  });
+
+  test("orNull must be a literal boolean", () => {
+    const r = compile(plan([action("s1", "M06.A03", {}), op("s2", "filter", { in: "$s1.items", where: { dueDate: { lt: "2026-06-01", orNull: "yes" } } })]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /orNull must be a boolean/);
+  });
+});
+
 describe("runtime outcomes", () => {
+  test("a filter read through .items gives the same records as read directly", async () => {
+    const ctx = fresh();
+    const viaItems = compiled(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), op("g", "filter", { in: "$f.items", where: { score: { gte: 0 } } })]));
+    const direct = compiled(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), op("g", "filter", { in: "$f", where: { score: { gte: 0 } } })]));
+    const a = await execute(viaItems, registry, ctx, { executionId: "alias-a" });
+    const b = await execute(direct, registry, ctx, { executionId: "alias-b" });
+    assert.equal(a.status, "done");
+    assert.ok((a.steps.at(-1)!.output as unknown[]).length > 0);
+    assert.deepEqual(a.steps.at(-1)!.output, b.steps.at(-1)!.output);
+  });
+
   test("a name that isn't the asked-for type says which type it is", async () => {
     const ctx = fresh();
     ctx.f.lead({ firstName: "Quinn", lastName: "Leadonly" });
@@ -269,6 +335,55 @@ describe("runtime outcomes", () => {
       r.steps.map((s) => s.status),
       ["failed", "skipped"],
     );
+  });
+
+  test("a name that finds nothing stops every write, even one that doesn't use it", async () => {
+    const ctx = fresh();
+    const before = ctx.store.all("tasks").length;
+    const p = compiled(plan([action("s1", "M06.A01", { title: "Prep" }), { id: "s2", kind: "resolve", entity: "contact", name: "Nobody Atall" }]));
+    const r = await execute(p, registry, ctx, { executionId: "name-first" });
+    assert.equal(r.status, "failed");
+    assert.equal(ctx.store.all("tasks").length, before);
+    const s1 = r.steps.find((s) => s.id === "s1")!;
+    assert.equal(s1.status, "skipped");
+    assert.match(s1.error!.message, /no contact matches "Nobody Atall", so nothing was changed/);
+  });
+
+  test("same names are told apart by what else the request says", async () => {
+    const ctx = fresh();
+    const p = compiled(plan([{ id: "s1", kind: "resolve", entity: "contact", name: "Sarah Johnson" }]));
+    const vague = await execute(p, registry, ctx, { executionId: "two-sarahs", request: "email Sarah Johnson" });
+    assert.equal(vague.status, "needs_clarification");
+    const r = await execute(p, registry, ctx, { executionId: "brightside-sarah", request: "email Sarah Johnson at Brightside" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps));
+    assert.equal((r.steps[0]!.output as { id: string }).id, "ct_31");
+  });
+
+  test("a write loop over a search for one shared name asks which one, or runs on the one the request picks", async () => {
+    const ctx = fresh();
+    const before = ctx.store.all("tasks").length;
+    const p = compiled(plan([
+      action("s1", "M01.A03", { query: "Sarah Johnson" }),
+      op("s2", "forEach", { in: "$s1.items", do: [{ action: "M06.A01", args: { title: "$item.name" } }] }),
+    ]));
+    const vague = await execute(p, registry, ctx, { executionId: "loop-sarahs", request: "make a call task for Sarah Johnson" });
+    assert.equal(vague.status, "needs_clarification", JSON.stringify(vague.steps));
+    assert.equal(vague.clarification?.candidates.length, 2);
+    assert.equal(ctx.store.all("tasks").length, before);
+    const r = await execute(p, registry, ctx, { executionId: "loop-brightside", request: "make a call task for Sarah Johnson\nthe one at Brightside" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps));
+    assert.equal(ctx.store.all("tasks").length, before + 1);
+    const bare = await execute(p, registry, fresh(), { executionId: "loop-no-request" });
+    assert.equal(bare.status, "needs_clarification", "without the user's words nothing picks one, so it still asks");
+  });
+
+  test("narrowing needs exactly one candidate with a detail the request names and the others lack", () => {
+    const c = (id: string, detail: string) => ({ id, name: "Sarah Johnson", detail });
+    const two = [c("a", "Brightside, sarah@b.example"), c("b", "sj@gmail.example")];
+    assert.deepEqual(narrowByRequest(two, "email Sarah at brightside").map((x) => x.id), ["a"]);
+    assert.equal(narrowByRequest(two, "email Sarah").length, 2);
+    const shared = [c("a", "Acme, x"), c("b", "Acme, y")];
+    assert.equal(narrowByRequest(shared, "Sarah at Acme").length, 2);
   });
 
   test("one bad item doesn't stop the others", async () => {

@@ -165,6 +165,14 @@ describe("retrieve", () => {
 });
 
 describe("module cap", () => {
+  test("only cards whose nonempty consumes/produces types are all mentioned bypass the cap", () => {
+    const make = (id: string, consumes: string[], produces: string | null) => ({ ...cards[0]!, id, name: "fixture operation", module: id.slice(0, 3), description: "fixture operation", synonyms: [], consumes, produces, siblings: [] });
+    const rs = new Retriever([make("M90.A01", [], null), make("M90.A02", ["user"], "task"), make("M90.A03", ["contact"], "task"), make("M91.A01", [], null)], { k: 2, moduleCap: 1, siblings: 0, producers: false });
+    const input = { message: "fixture operation", mentions: [{ entity: "user" }, { entity: "task" }] };
+    assert.deepEqual(ids(rs.retrieve(input)), ["M90.A01", "M90.A02"]);
+    assert.deepEqual(ids(rs.retrieve({ ...input, mentions: [{ entity: "user" }] })), ["M90.A01", "M91.A01"]);
+    assert.deepEqual(ids(rs.retrieve({ message: input.message })), ["M90.A01", "M91.A01"]);
+  });
   test("other modules go first, but slots nothing else fills go back to the capped cards", () => {
     // Only 4 cards outside Reviews clear the score floor, so all 10 review actions still fit in k=15.
     const ranked = r.retrieve({ message: "answer the 2-star review from yesterday" }, { moduleCap: 1 }).picks.filter((p) => p.why === "bm25");

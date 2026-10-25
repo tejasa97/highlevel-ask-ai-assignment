@@ -17,7 +17,7 @@ const ID = /^[a-z]{2,4}_\d+$/;
 export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry): string {
   const byId = new Map(plan.steps.map((s) => [s.id, s]));
   const lines: string[] = [];
-  const used = new Set(plan.steps.flatMap((s) => [...s.deps, ...("in" in s ? [rootOf(s.in)] : []), ...(s.kind === "exclude" ? [rootOf(s.set)] : [])]));
+  const used = new Set(plan.steps.flatMap((s) => [...s.deps, ...("in" in s ? rootsOf(s.in) : []), ...(s.kind === "exclude" ? [rootOf(s.set)] : [])]));
 
   for (const r of run.steps) {
     const step = byId.get(r.id)!;
@@ -73,7 +73,7 @@ const SHOWN_MAX = 25;
 /** The records behind the reply's text: what each answering read returned, and the record each write produced. */
 export function shownRecords(plan: CompiledPlan, run: RunResult, registry: Registry): Shown[] {
   const byId = new Map(plan.steps.map((s) => [s.id, s]));
-  const used = new Set(plan.steps.flatMap((s) => [...s.deps, ...("in" in s ? [rootOf(s.in)] : []), ...(s.kind === "exclude" ? [rootOf(s.set)] : [])]));
+  const used = new Set(plan.steps.flatMap((s) => [...s.deps, ...("in" in s ? (Array.isArray(s.in) ? s.in : [s.in]).map(rootOf) : []), ...(s.kind === "exclude" ? [rootOf(s.set)] : [])]));
   const out: Shown[] = [];
   const add = (noun: string, heading: string, total: number, items: unknown[], replaces?: string | null) => {
     const rows = items.filter(isRecord).slice(0, SHOWN_MAX);
@@ -111,7 +111,7 @@ export function shownRecords(plan: CompiledPlan, run: RunResult, registry: Regis
 
 function describe(step: CStep, r: StepResult, registry: Registry, used: Set<string>): string | null {
   if (r.status === "awaiting_confirmation" || r.status === "needs_clarification") return null;
-  if (r.status === "skipped") return `Skipped ${what(step, registry)}: an earlier step didn't complete.`;
+  if (r.status === "skipped") return `Skipped ${what(step, registry)}: ${r.error?.code === "NOT_RUN" ? r.error.message : "an earlier step didn't complete"}.`;
   if (r.status === "failed" && !r.items) return `Couldn't ${what(step, registry)}: ${r.error!.message}.`;
 
   if (step.kind === "action") {
@@ -258,6 +258,7 @@ const shown = (v: unknown) =>
 const named = (v: unknown): v is Record<string, unknown>[] =>
   Array.isArray(v) && v.length > 0 && v.every((e) => !!e && typeof e === "object" && !Array.isArray(e) && !!titleOf(e as Record<string, unknown>));
 const rootOf = (ref: string) => parseRef(ref)?.root ?? ref.replace(/^\$/, "").split(/[.[]/)[0]!;
+const rootsOf = (v: string | string[]) => (Array.isArray(v) ? [] : [rootOf(v)]);
 const plural = (noun: string, n: number) => (n === 1 ? noun : noun.endsWith("s") ? noun : noun.endsWith("y") ? `${noun.slice(0, -1)}ies` : `${noun}s`);
 const words = (k: string) => k.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -278,4 +279,35 @@ function what(step: CStep, registry: Registry): string {
 function list(names: string[], total: number): string {
   const shown = names.slice(0, NAMES_MAX);
   return total > shown.length ? `${shown.join(", ")} and ${total - shown.length} more` : shown.join(", ");
+}
+
+const RECORDS_MAX = 8;
+
+/**
+ * The records a run created, changed or found, with their ids, for the next turn's <context>: the reply the user
+ * reads leaves ids out, but "give it to Aisha" needs the id of the task just made. Undefined when there are none.
+ */
+export function touchedRecords(plan: CompiledPlan, run: RunResult): string | undefined {
+  const byId = new Map(plan.steps.map((s) => [s.id, s]));
+  const out = new Map<string, string>();
+  const add = (x: unknown, noun: string) => {
+    const o = x && typeof x === "object" ? (x as Record<string, unknown>) : undefined;
+    if (!o || typeof o.id !== "string" || out.has(o.id)) return;
+    const title = titleOf(o);
+    out.set(o.id, `${noun} ${o.id}${title ? ` ${JSON.stringify(title)}` : ""}${typeof o.status === "string" ? ` (${o.status})` : ""}`);
+  };
+  const addAll = (v: unknown, noun: string) => {
+    const items = v && typeof v === "object" && Array.isArray((v as { items?: unknown }).items) ? (v as { items: unknown[] }).items : [v];
+    items.forEach((x) => add(x, noun));
+  };
+  for (const r of run.steps) {
+    const step = byId.get(r.id);
+    if (!step || r.output === undefined) continue;
+    if (step.kind === "resolve") add(r.output, step.entity);
+    else if (step.kind === "action") addAll(r.output, step.call.action.entities?.produces ?? "record");
+    else if (step.kind === "forEach")
+      for (const each of r.output as { results?: unknown[] }[]) (each.results ?? []).forEach((x, i) => addAll(x, step.calls[i]?.action.entities?.produces ?? "record"));
+  }
+  const all = [...out.values()];
+  return all.length ? `${all.slice(0, RECORDS_MAX).join("; ")}${all.length > RECORDS_MAX ? `; and ${all.length - RECORDS_MAX} more` : ""}` : undefined;
 }
