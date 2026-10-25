@@ -1,0 +1,4800 @@
+{
+ "summary": {
+  "label": "dev-smoke-compilerfix",
+  "planner": "qwen",
+  "model": "qwen3.8-flash",
+  "scenarioDir": "eval/module-scenarios/m45-m47/development",
+  "set": "51f56e2dbc48",
+  "tier": "strong",
+  "scenarios": 45,
+  "repeat": 1,
+  "runs": 45,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 97.8,
+  "allPass": 44,
+  "measured": 45,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 3207,
+   "p95": 13579
+  },
+  "firstReplyMs": {
+   "p50": 3199,
+   "p95": 13575
+  },
+  "plannerRoundsPerRun": 1.16,
+  "callsPerRun": 1.1,
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 50503
+ },
+ "runs": [
+  {
+   "id": "listing-ambiguous",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Change Maple Dental's listing phone to +15550987654",
+     "status": "clarify",
+     "reply": "Which Maple Dental listing would you like to update? I found two: one on Google and one on Yelp.",
+     "offered": [
+      "M46.A06",
+      "M46.A05",
+      "M01.A04",
+      "M46.A07",
+      "M46.A04",
+      "M03.A04",
+      "M48.A04",
+      "M04.A04",
+      "M46.A08",
+      "M12.A10",
+      "M46.A02",
+      "M46.A10",
+      "M46.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "look",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "listing",
+          "name": "Maple Dental"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after look",
+       "reply": {
+        "type": "clarify",
+        "steps": [],
+        "question": "Which Maple Dental listing would you like to update? I found two: one on Google and one on Yelp.",
+        "options": [
+         "Google listing",
+         "Yelp listing"
+        ],
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5801,
+     "ms": 5801
+    }
+   ],
+   "metrics": {
+    "ms": 5801,
+    "firstReplyMs": 5801,
+    "plannerMs": 5784,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 8469,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 212,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "listing-provider-down",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Publish listing bl_3",
+     "status": "failed",
+     "reply": "Couldn't publish listing to simulated directory: Directory unavailable.",
+     "offered": [
+      "M46.A09",
+      "M46.A08",
+      "M46.A10",
+      "M46.A05",
+      "M46.A06",
+      "M46.A04",
+      "M45.A09"
+     ],
+     "planned": [
+      "M46.A09"
+     ],
+     "calls": [
+      {
+       "action": "M46.A09",
+       "args": {
+        "listingId": "bl_3"
+       },
+       "error": "UNAVAILABLE: Directory unavailable"
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A09",
+          "argsJson": "{\"listingId\": \"bl_3\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 2800,
+     "ms": 2802,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c7ebd0924f2ea637",
+       "targetsHash": "d75831d40456f872",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M46.A09",
+         "name": "Publish listing to simulated directory",
+         "args": {
+          "listingId": "bl_3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 2802,
+    "firstReplyMs": 2800,
+    "plannerMs": 2745,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 2947,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 114,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m45-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a review request for Elodie Mercer with subject 'Visit feedback' and body 'How was your visit?'",
+     "status": "done",
+     "reply": "Done: Create review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A02",
+      "M45.A05",
+      "M45.A07",
+      "M45.A04",
+      "M45.A09",
+      "M21.A01",
+      "M29.A01",
+      "M21.A02",
+      "M01.A02",
+      "M01.A03",
+      "M29.A04"
+     ],
+     "planned": [
+      "M45.A01"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "How was your visit?"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Elodie Mercer"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\": \"$s1.id\", \"subject\": \"Visit feedback\", \"body\": \"How was your visit?\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3762,
+     "ms": 3762
+    }
+   ],
+   "metrics": {
+    "ms": 3762,
+    "firstReplyMs": 3762,
+    "plannerMs": 3693,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3612,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 172,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M21.A02",
+      "M21.A03",
+      "M45.A08",
+      "M45.A06",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Your feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "op",
+          "op": "filter",
+          "in": "$resolve:contact:Dorian Vale",
+          "whereJson": "{}",
+          "by": "name",
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\": \"$s1.id\", \"subject\": \"Your feedback\", \"body\": \"Please review your visit.\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M45.A02",
+          "argsJson": "{\"requestId\": \"$s2.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Dorian Vale"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\": \"$s1.id\", \"subject\": \"Your feedback\", \"body\": \"Please review your visit.\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M45.A02",
+          "argsJson": "{\"requestId\": \"$s2.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s1: \"$resolve:contact:Dorian Vale\" is not a valid $ref (forms: $s1.items, $s1.items[*].id, $item.id, $rr.userId)"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 13575,
+     "ms": 13579,
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "eb72a5840712254e",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 13579,
+    "firstReplyMs": 13575,
+    "plannerMs": 13475,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 8496,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 497,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m45-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Cancel Elodie Mercer's unsent review request rrq_1",
+     "status": "done",
+     "reply": "Done: Cancel unsent review request.",
+     "offered": [
+      "M45.A03",
+      "M29.A03",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A01",
+      "M13.A05",
+      "M12.A05",
+      "M29.A02",
+      "M01.A02",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [
+      {
+       "action": "M45.A03",
+       "args": {
+        "requestId": "rrq_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A03",
+          "argsJson": "{\"requestId\": \"rrq_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 2934,
+     "ms": 2937,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "9d6e18686f04ab63",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 2937,
+    "firstReplyMs": 2934,
+    "plannerMs": 2827,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3291,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 118,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m45-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "List the draft review requests",
+     "status": "done",
+     "reply": "Found 1 review_request: Elodie Mercer: status draft, subject How was your visit?, body Please tell us about your experience..",
+     "offered": [
+      "M45.A04",
+      "M45.A02",
+      "M45.A01",
+      "M45.A03",
+      "M45.A08",
+      "M45.A07",
+      "M13.A02",
+      "M28.A05",
+      "M28.A01",
+      "M46.A01",
+      "M46.A09",
+      "M15.A03"
+     ],
+     "planned": [
+      "M45.A04"
+     ],
+     "calls": [
+      {
+       "action": "M45.A04",
+       "args": {
+        "status": "draft"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A04",
+          "argsJson": "{\"status\": \"draft\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2358,
+     "ms": 2358
+    }
+   ],
+   "metrics": {
+    "ms": 2358,
+    "firstReplyMs": 2358,
+    "plannerMs": 2235,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3684,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 111,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m45-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Record a 4-star customer review from Dorian Vale for request rrq_2: 'Friendly service.'",
+     "status": "done",
+     "reply": "Done: Record simulated customer review.",
+     "offered": [
+      "M45.A05",
+      "M45.A06",
+      "M45.A01",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M47.A07",
+      "M47.A01",
+      "M47.A08",
+      "M47.A06",
+      "M47.A03",
+      "M01.A02",
+      "M01.A03",
+      "M29.A04"
+     ],
+     "planned": [
+      "M45.A05"
+     ],
+     "calls": [
+      {
+       "action": "M45.A05",
+       "args": {
+        "requestId": "rrq_2",
+        "rating": 4,
+        "body": "Friendly service."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A05",
+          "argsJson": "{\"requestId\": \"rrq_2\", \"rating\": 4, \"body\": \"Friendly service.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4906,
+     "ms": 4906
+    }
+   ],
+   "metrics": {
+    "ms": 4906,
+    "firstReplyMs": 4906,
+    "plannerMs": 4872,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4497,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 128,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m45-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Find customer reviews rated two stars",
+     "status": "done",
+     "reply": "Found 1 review: Elodie Mercer: rating 2, body The wait was too long..",
+     "offered": [
+      "M45.A06",
+      "M45.A05",
+      "M45.A10",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M45.A02",
+      "M45.A09",
+      "M45.A03",
+      "M45.A08"
+     ],
+     "planned": [
+      "M45.A06"
+     ],
+     "calls": [
+      {
+       "action": "M45.A06",
+       "args": {
+        "minRating": 2,
+        "maxRating": 2
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A06",
+          "argsJson": "{\"minRating\": 2, \"maxRating\": 2}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2521,
+     "ms": 2521
+    }
+   ],
+   "metrics": {
+    "ms": 2521,
+    "firstReplyMs": 2521,
+    "plannerMs": 2502,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 2781,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 101,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m45-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show review rv_1 in full",
+     "status": "done",
+     "reply": "Nisha Khatri (review_request): rating 5, body Helpful staff and a smooth appointment..",
+     "offered": [
+      "M45.A07",
+      "M45.A04",
+      "M45.A05",
+      "M45.A08",
+      "M45.A06",
+      "M45.A02"
+     ],
+     "planned": [
+      "M45.A07"
+     ],
+     "calls": [
+      {
+       "action": "M45.A07",
+       "args": {
+        "reviewId": "rv_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A07",
+          "argsJson": "{\"reviewId\": \"rv_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4084,
+     "ms": 4084
+    }
+   ],
+   "metrics": {
+    "ms": 4084,
+    "firstReplyMs": 4084,
+    "plannerMs": 4065,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 2392,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 117,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m45-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Draft this response to review rv_2: 'Thank you. We will improve our waiting times.'",
+     "status": "done",
+     "reply": "Done: Draft review response.",
+     "offered": [
+      "M45.A08",
+      "M45.A09",
+      "M11.A10",
+      "M45.A01",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M47.A05",
+      "M47.A10",
+      "M28.A06"
+     ],
+     "planned": [
+      "M45.A08"
+     ],
+     "calls": [
+      {
+       "action": "M45.A08",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you. We will improve our waiting times."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A08",
+          "argsJson": "{\"reviewId\": \"rv_2\", \"body\": \"Thank you. We will improve our waiting times.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2895,
+     "ms": 2895
+    }
+   ],
+   "metrics": {
+    "ms": 2895,
+    "firstReplyMs": 2895,
+    "plannerMs": 2841,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3131,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 130,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m45-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Publish this response to review rv_2: 'We appreciate your feedback.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M45.A08",
+      "M45.A02",
+      "M45.A01",
+      "M45.A07",
+      "M45.A05",
+      "M47.A08"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "We appreciate your feedback."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A09",
+          "argsJson": "{\"reviewId\": \"rv_2\", \"body\": \"We appreciate your feedback.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3088,
+     "ms": 3091,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "45992f16470f7ceb",
+       "targetsHash": "a96afee2e72f516c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "We appreciate your feedback."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3091,
+    "firstReplyMs": 3088,
+    "plannerMs": 3043,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 2612,
+     "cachedRead": 1792,
+     "cacheWrite": 0,
+     "output": 123,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m45-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "What is our average customer review rating and how many reviews do we have?",
+     "status": "done",
+     "reply": "Review_request: count 2, average rating 3.5.",
+     "offered": [
+      "M45.A10",
+      "M45.A06",
+      "M45.A05",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M08.A10",
+      "M45.A02",
+      "M45.A08",
+      "M45.A09",
+      "M45.A03"
+     ],
+     "planned": [
+      "M45.A10"
+     ],
+     "calls": [
+      {
+       "action": "M45.A10",
+       "args": {}
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A10",
+          "argsJson": "{}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2806,
+     "ms": 2806
+    }
+   ],
+   "metrics": {
+    "ms": 2806,
+    "firstReplyMs": 2806,
+    "plannerMs": 2775,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 2872,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 109,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m46-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a business listing for Pine Studio on google at 30 Forest Lane with phone +15550123457",
+     "status": "done",
+     "reply": "Done: Create business listing (Pine Studio).",
+     "offered": [
+      "M46.A06",
+      "M46.A01",
+      "M46.A02",
+      "M46.A07",
+      "M46.A05",
+      "M46.A04",
+      "M45.A01",
+      "M08.A01",
+      "M07.A01",
+      "M47.A02"
+     ],
+     "planned": [
+      "M46.A01"
+     ],
+     "calls": [
+      {
+       "action": "M46.A01",
+       "args": {
+        "name": "Pine Studio",
+        "directory": "google",
+        "address": "30 Forest Lane",
+        "phone": "+15550123457"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A01",
+          "argsJson": "{\"name\": \"Pine Studio\", \"directory\": \"google\", \"address\": \"30 Forest Lane\", \"phone\": \"+15550123457\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3255,
+     "ms": 3255
+    }
+   ],
+   "metrics": {
+    "ms": 3255,
+    "firstReplyMs": 3255,
+    "plannerMs": 3234,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3815,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 145,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m46-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show the details of listing bl_3",
+     "status": "done",
+     "reply": "Harbor Optics (listing): directory google, address 20 Bay Street, phone +15550123456, categories professional_services, timezone America/New_York, version 1.",
+     "offered": [
+      "M46.A02",
+      "M04.A02",
+      "M03.A02",
+      "M46.A08",
+      "M08.A08",
+      "M46.A06",
+      "M47.A02",
+      "M01.A02"
+     ],
+     "planned": [
+      "M46.A02"
+     ],
+     "calls": [
+      {
+       "action": "M46.A02",
+       "args": {
+        "listingId": "bl_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A02",
+          "argsJson": "{\"listingId\": \"bl_3\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2395,
+     "ms": 2395
+    }
+   ],
+   "metrics": {
+    "ms": 2395,
+    "firstReplyMs": 2395,
+    "plannerMs": 2368,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3149,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 117,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m46-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Find all Maple Dental business listings",
+     "status": "done",
+     "reply": "Found 2 listings matching query Maple Dental: Maple Dental, +15550123456, Maple Dental, +15550123456.",
+     "offered": [
+      "M46.A03",
+      "M46.A01",
+      "M46.A02",
+      "M46.A07",
+      "M46.A05",
+      "M46.A06",
+      "M46.A04",
+      "M08.A08",
+      "M01.A03",
+      "M04.A03",
+      "M28.A03",
+      "M12.A07",
+      "M11.A02",
+      "M47.A03",
+      "M47.A02"
+     ],
+     "planned": [
+      "M46.A03"
+     ],
+     "calls": [
+      {
+       "action": "M46.A03",
+       "args": {
+        "query": "Maple Dental"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A03",
+          "argsJson": "{\"query\":\"Maple Dental\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2536,
+     "ms": 2536
+    }
+   ],
+   "metrics": {
+    "ms": 2536,
+    "firstReplyMs": 2536,
+    "plannerMs": 2517,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5353,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 111,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m46-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Rename listing bl_3 to Harbor Eyecare",
+     "status": "done",
+     "reply": "Done: Update listing name (Harbor Eyecare).",
+     "offered": [
+      "M46.A04",
+      "M46.A08",
+      "M49.A04",
+      "M46.A01",
+      "M46.A05",
+      "M08.A03",
+      "M46.A06",
+      "M46.A07"
+     ],
+     "planned": [
+      "M46.A04"
+     ],
+     "calls": [
+      {
+       "action": "M46.A04",
+       "args": {
+        "listingId": "bl_3",
+        "name": "Harbor Eyecare"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A04",
+          "argsJson": "{\"listingId\": \"bl_3\", \"name\": \"Harbor Eyecare\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2563,
+     "ms": 2563
+    }
+   ],
+   "metrics": {
+    "ms": 2563,
+    "firstReplyMs": 2563,
+    "plannerMs": 2540,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3333,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 126,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m46-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Change listing bl_3's address to 21 Bay Street",
+     "status": "done",
+     "reply": "Done: Update listing address (Harbor Optics).",
+     "offered": [
+      "M46.A05",
+      "M46.A06",
+      "M46.A04",
+      "M46.A08",
+      "M46.A01",
+      "M46.A07",
+      "M46.A02"
+     ],
+     "planned": [
+      "M46.A05"
+     ],
+     "calls": [
+      {
+       "action": "M46.A05",
+       "args": {
+        "listingId": "bl_3",
+        "address": "21 Bay Street"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A05 Update listing address",
+          "argsJson": "{\"listingId\": \"bl_3\", \"address\": \"21 Bay Street\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2549,
+     "ms": 2549
+    }
+   ],
+   "metrics": {
+    "ms": 2549,
+    "firstReplyMs": 2549,
+    "plannerMs": 2531,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3382,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 132,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m46-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Change listing bl_3's phone to +15550987654",
+     "status": "done",
+     "reply": "Done: Update listing phone (Harbor Optics).",
+     "offered": [
+      "M46.A06",
+      "M46.A04",
+      "M46.A05",
+      "M01.A04",
+      "M46.A08",
+      "M03.A04",
+      "M46.A07",
+      "M47.A06",
+      "M01.A07",
+      "M11.A03",
+      "M46.A02",
+      "M12.A10"
+     ],
+     "planned": [
+      "M46.A06"
+     ],
+     "calls": [
+      {
+       "action": "M46.A06",
+       "args": {
+        "listingId": "bl_3",
+        "phone": "+15550987654"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A06 Update listing phone",
+          "argsJson": "{\"listingId\":\"bl_3\",\"phone\":\"+15550987654\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3030,
+     "ms": 3030
+    }
+   ],
+   "metrics": {
+    "ms": 3030,
+    "firstReplyMs": 3030,
+    "plannerMs": 3011,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4234,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 131,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m46-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Set listing bl_3's business hours to Monday through Friday 10am to 6pm, closed Saturday and Sunday",
+     "status": "done",
+     "reply": "Done: Set listing business hours (Harbor Optics).",
+     "offered": [
+      "M46.A07",
+      "M04.A07",
+      "M46.A08",
+      "M46.A06",
+      "M46.A02",
+      "M04.A09",
+      "M04.A10",
+      "M46.A05",
+      "M47.A05",
+      "M06.A06"
+     ],
+     "planned": [
+      "M46.A07"
+     ],
+     "calls": [
+      {
+       "action": "M46.A07",
+       "args": {
+        "listingId": "bl_3",
+        "hours": {
+         "monday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "tuesday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "wednesday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "thursday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "friday": {
+          "open": "10:00",
+          "close": "18:00"
+         },
+         "saturday": null,
+         "sunday": null
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A07",
+          "argsJson": "{\"listingId\":\"bl_3\",\"hours\":{\"monday\":{\"open\":\"10:00\",\"close\":\"18:00\"},\"tuesday\":{\"open\":\"10:00\",\"close\":\"18:00\"},\"wednesday\":{\"open\":\"10:00\",\"close\":\"18:00\"},\"thursday\":{\"open\":\"10:00\",\"close\":\"18:00\"},\"friday\":{\"open\":\"10:00\",\"close\":\"18:00\"},\"saturday\":null,\"sunday\":null}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5415,
+     "ms": 5415
+    }
+   ],
+   "metrics": {
+    "ms": 5415,
+    "firstReplyMs": 5415,
+    "plannerMs": 5285,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3599,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 221,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m46-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Set listing bl_3's categories to optician and eyewear",
+     "status": "done",
+     "reply": "Done: Set listing categories (Harbor Optics).",
+     "offered": [
+      "M46.A08",
+      "M46.A02",
+      "M46.A07",
+      "M08.A08",
+      "M01.A03",
+      "M46.A03",
+      "M46.A06",
+      "M04.A03",
+      "M47.A02"
+     ],
+     "planned": [
+      "M46.A08"
+     ],
+     "calls": [
+      {
+       "action": "M46.A08",
+       "args": {
+        "listingId": "bl_3",
+        "categories": [
+         "optician",
+         "eyewear"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A08 Set listing categories",
+          "argsJson": "{\"listingId\": \"bl_3\", \"categories\": [\"optician\", \"eyewear\"]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2798,
+     "ms": 2798
+    }
+   ],
+   "metrics": {
+    "ms": 2798,
+    "firstReplyMs": 2798,
+    "plannerMs": 2766,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3649,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 132,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m46-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Publish the Harbor Optics listing bl_3 to its simulated directory",
+     "status": "done",
+     "reply": "Done: Publish listing to simulated directory (Harbor Optics).",
+     "offered": [
+      "M46.A09",
+      "M46.A01",
+      "M46.A08",
+      "M46.A10",
+      "M46.A04",
+      "M46.A05",
+      "M46.A06",
+      "M46.A02",
+      "M45.A09",
+      "M46.A03",
+      "M46.A07",
+      "M48.A03",
+      "M49.A03"
+     ],
+     "planned": [
+      "M46.A09"
+     ],
+     "calls": [
+      {
+       "action": "M46.A09",
+       "args": {
+        "listingId": "bl_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A09",
+          "argsJson": "{\"listingId\": \"bl_3\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3199,
+     "ms": 3201,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c7ebd0924f2ea637",
+       "targetsHash": "d75831d40456f872",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M46.A09",
+         "name": "Publish listing to simulated directory",
+         "args": {
+          "listingId": "bl_3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3201,
+    "firstReplyMs": 3199,
+    "plannerMs": 3178,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4391,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 118,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m46-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Check the directory sync status of listing bl_3",
+     "status": "done",
+     "reply": "Harbor Optics (listing): directory google, status never_published, version 1.",
+     "offered": [
+      "M46.A10",
+      "M46.A09",
+      "M46.A04",
+      "M46.A02",
+      "M46.A06",
+      "M46.A08",
+      "M47.A10",
+      "M29.A06",
+      "M48.A03",
+      "M12.A08",
+      "M12.A07"
+     ],
+     "planned": [
+      "M46.A10"
+     ],
+     "calls": [
+      {
+       "action": "M46.A10",
+       "args": {
+        "listingId": "bl_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A10",
+          "argsJson": "{\"listingId\": \"bl_3\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3242,
+     "ms": 3242
+    }
+   ],
+   "metrics": {
+    "ms": 3242,
+    "firstReplyMs": 3242,
+    "plannerMs": 3220,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3826,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 114,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m47-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Open a support ticket for Elodie Mercer titled 'Billing screen blank' with description 'The billing screen is blank.'",
+     "status": "done",
+     "reply": "Done: Create support ticket (Billing screen blank).",
+     "offered": [
+      "M47.A01",
+      "M47.A02",
+      "M47.A03",
+      "M47.A05",
+      "M47.A08",
+      "M47.A09",
+      "M29.A01",
+      "M06.A04",
+      "M01.A02",
+      "M01.A03",
+      "M03.A01",
+      "M06.A01",
+      "M03.A02",
+      "M06.A02",
+      "M03.A03",
+      "M06.A03"
+     ],
+     "planned": [
+      "M47.A01"
+     ],
+     "calls": [
+      {
+       "action": "M47.A01",
+       "args": {
+        "title": "Billing screen blank",
+        "body": "The billing screen is blank.",
+        "contactId": "ct_35"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Elodie Mercer"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A01",
+          "argsJson": "{\"title\": \"Billing screen blank\", \"body\": \"The billing screen is blank.\", \"contactId\": \"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3908,
+     "ms": 3908
+    }
+   ],
+   "metrics": {
+    "ms": 3908,
+    "firstReplyMs": 3908,
+    "plannerMs": 3882,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5394,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 174,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m47-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show support ticket tic_1",
+     "status": "done",
+     "reply": "Portal export fails (ticket): body Please investigate this issue., requester email elodie@cedar.example, priority normal, status open, person name Elodie Mercer.",
+     "offered": [
+      "M47.A01",
+      "M47.A08",
+      "M47.A02",
+      "M47.A10",
+      "M47.A03",
+      "M47.A06",
+      "M21.A09",
+      "M47.A09",
+      "M47.A05",
+      "M47.A04",
+      "M47.A07",
+      "M03.A01",
+      "M06.A01",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A02"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A02",
+          "argsJson": "{\"ticketId\": \"tic_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2824,
+     "ms": 2824
+    }
+   ],
+   "metrics": {
+    "ms": 2824,
+    "firstReplyMs": 2824,
+    "plannerMs": 2805,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5507,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 117,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m47-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "List open high-priority support tickets",
+     "status": "done",
+     "reply": "Found 1 ticket: Workspace login: body Please investigate this issue., requester email nisha@cedar.example, priority high, status open, person name Nisha Khatri.",
+     "offered": [
+      "M47.A05",
+      "M47.A01",
+      "M47.A03",
+      "M47.A02",
+      "M47.A06",
+      "M47.A10",
+      "M06.A07",
+      "M06.A03",
+      "M46.A07",
+      "M46.A02",
+      "M47.A09",
+      "M47.A08",
+      "M47.A07",
+      "M47.A04",
+      "M03.A01",
+      "M06.A01",
+      "M03.A03"
+     ],
+     "planned": [
+      "M47.A03"
+     ],
+     "calls": [
+      {
+       "action": "M47.A03",
+       "args": {
+        "priority": "high",
+        "status": "open"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A03",
+          "argsJson": "{\"status\": \"open\", \"priority\": \"high\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3149,
+     "ms": 3149
+    }
+   ],
+   "metrics": {
+    "ms": 3149,
+    "firstReplyMs": 3149,
+    "plannerMs": 3122,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5847,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 117,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m47-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Assign support ticket tic_1 to Raj Iyer",
+     "status": "done",
+     "reply": "Done: Assign ticket owner (Portal export fails).",
+     "offered": [
+      "M47.A04",
+      "M47.A01",
+      "M47.A05",
+      "M47.A08",
+      "M47.A02",
+      "M47.A06",
+      "M06.A05",
+      "M48.A05",
+      "M03.A05",
+      "M47.A10",
+      "M47.A09",
+      "M47.A03",
+      "M48.A02",
+      "M03.A01",
+      "M06.A01",
+      "M06.A07"
+     ],
+     "planned": [
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A04",
+       "args": {
+        "ticketId": "tic_1",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Raj Iyer"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A04 Assign ticket owner",
+          "argsJson": "{\"ticketId\": \"tic_1\", \"ownerId\": \"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2758,
+     "ms": 2758
+    }
+   ],
+   "metrics": {
+    "ms": 2758,
+    "firstReplyMs": 2758,
+    "plannerMs": 2736,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5109,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 170,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m47-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Make support ticket tic_1 urgent",
+     "status": "done",
+     "reply": "Done: Set ticket priority (Portal export fails).",
+     "offered": [
+      "M47.A05",
+      "M47.A10",
+      "M47.A01",
+      "M47.A03",
+      "M47.A08",
+      "M47.A02",
+      "M06.A07",
+      "M47.A06",
+      "M47.A09",
+      "M47.A04",
+      "M47.A07",
+      "M03.A01",
+      "M06.A01"
+     ],
+     "planned": [
+      "M47.A05"
+     ],
+     "calls": [
+      {
+       "action": "M47.A05",
+       "args": {
+        "ticketId": "tic_1",
+        "priority": "urgent"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A05",
+          "argsJson": "{\"ticketId\": \"tic_1\", \"priority\": \"urgent\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2924,
+     "ms": 2924
+    }
+   ],
+   "metrics": {
+    "ms": 2924,
+    "firstReplyMs": 2924,
+    "plannerMs": 2907,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4613,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 123,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m47-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Resolve the Portal export fails support ticket tic_1",
+     "status": "done",
+     "reply": "Done: Update ticket status (Portal export fails).",
+     "offered": [
+      "M47.A06",
+      "M47.A08",
+      "M47.A01",
+      "M47.A03",
+      "M47.A09",
+      "M47.A10",
+      "M47.A05",
+      "M47.A07",
+      "M47.A02",
+      "M47.A04",
+      "M06.A08",
+      "M06.A09",
+      "M11.A06",
+      "M13.A03",
+      "M12.A03",
+      "M03.A01",
+      "M06.A01"
+     ],
+     "planned": [
+      "M47.A06"
+     ],
+     "calls": [
+      {
+       "action": "M47.A06",
+       "args": {
+        "ticketId": "tic_1",
+        "status": "resolved"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A06",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"status\":\"resolved\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2779,
+     "ms": 2779
+    }
+   ],
+   "metrics": {
+    "ms": 2779,
+    "firstReplyMs": 2779,
+    "plannerMs": 2760,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5463,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 117,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m47-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Add an internal note to support ticket tic_1: 'Reproduced on Safari.'",
+     "status": "done",
+     "reply": "Done: Add internal ticket note (Portal export fails).",
+     "offered": [
+      "M47.A07",
+      "M47.A02",
+      "M47.A01",
+      "M47.A09",
+      "M47.A10",
+      "M47.A08",
+      "M11.A08",
+      "M07.A06",
+      "M07.A01",
+      "M29.A04",
+      "M46.A09",
+      "M03.A02",
+      "M06.A02",
+      "M03.A01",
+      "M06.A01",
+      "M29.A01"
+     ],
+     "planned": [
+      "M47.A07"
+     ],
+     "calls": [
+      {
+       "action": "M47.A07",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "Reproduced on Safari."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A07",
+          "argsJson": "{\"ticketId\": \"tic_1\", \"body\": \"Reproduced on Safari.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3330,
+     "ms": 3330
+    }
+   ],
+   "metrics": {
+    "ms": 3330,
+    "firstReplyMs": 3330,
+    "plannerMs": 3293,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5007,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 126,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m47-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reply to support ticket tic_1: 'We are investigating the export issue.'",
+     "status": "done",
+     "reply": "Done: Reply to ticket requester (Portal export fails).",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M47.A01",
+      "M47.A06",
+      "M47.A10",
+      "M11.A02",
+      "M28.A07",
+      "M04.A01",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We are investigating the export issue."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\": \"tic_1\", \"body\": \"We are investigating the export issue.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 2460,
+     "ms": 2462,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "2c33b519262ea326",
+       "targetsHash": "43e1b68e750cf3cd",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We are investigating the export issue."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 2462,
+    "firstReplyMs": 2460,
+    "plannerMs": 2428,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4639,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 125,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m47-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Link support ticket tic_1 to Dorian Vale",
+     "status": "done",
+     "reply": "Done: Link ticket to contact (Portal export fails).",
+     "offered": [
+      "M47.A09",
+      "M47.A01",
+      "M47.A06",
+      "M47.A08",
+      "M47.A02",
+      "M47.A10",
+      "M47.A03",
+      "M47.A05",
+      "M47.A07",
+      "M47.A04",
+      "M01.A02",
+      "M01.A03",
+      "M03.A01",
+      "M06.A01",
+      "M06.A08",
+      "M06.A09",
+      "M11.A06"
+     ],
+     "planned": [
+      "M47.A09"
+     ],
+     "calls": [
+      {
+       "action": "M47.A09",
+       "args": {
+        "ticketId": "tic_1",
+        "contactId": "ct_36"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Dorian Vale"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A09",
+          "argsJson": "{\"ticketId\": \"tic_1\", \"contactId\": \"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4198,
+     "ms": 4198
+    }
+   ],
+   "metrics": {
+    "ms": 4198,
+    "firstReplyMs": 4198,
+    "plannerMs": 4179,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5392,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 164,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "m47-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Has support ticket tic_1 breached its first-response SLA?",
+     "status": "done",
+     "reply": "Portal export fails (ticket): status breached, policy first_response, time basis elapsed, priority normal, target hours 24, due at 2026-10-20T14:00:00.000Z.",
+     "offered": [
+      "M47.A10",
+      "M47.A08",
+      "M47.A06",
+      "M47.A05",
+      "M47.A07",
+      "M47.A03",
+      "M47.A01",
+      "M47.A04",
+      "M47.A02",
+      "M47.A09",
+      "M13.A03",
+      "M12.A03",
+      "M06.A08",
+      "M06.A09",
+      "M11.A06"
+     ],
+     "planned": [
+      "M47.A10"
+     ],
+     "calls": [
+      {
+       "action": "M47.A10",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A10",
+          "argsJson": "{\"ticketId\": \"tic_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2658,
+     "ms": 2658
+    }
+   ],
+   "metrics": {
+    "ms": 2658,
+    "firstReplyMs": 2658,
+    "plannerMs": 2640,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4919,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 107,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "partial-ticket-replies",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reply to support tickets tic_1 and tic_4 with 'We received your report.'",
+     "status": "partial",
+     "reply": "Done: Reply to ticket requester (Portal export fails).\nCouldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A10",
+      "M47.A06",
+      "M47.A03",
+      "M13.A09",
+      "M12.A09",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We received your report."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"body\":\"We received your report.\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\":\"tic_4\",\"body\":\"We received your report.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4400,
+     "ms": 4403,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "c201d215b4922fea",
+       "targetsHash": "a988d0cb30a77f27",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We received your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ],
+       "blocked": [
+        {
+         "label": "Reply to ticket requester (tic_4)",
+         "error": {
+          "code": "CONFLICT",
+          "message": "Owen Hale has no email address"
+         }
+        }
+       ],
+       "blockedCount": 1
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4403,
+    "firstReplyMs": 4400,
+    "plannerMs": 4307,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 4383,
+     "cachedRead": 2048,
+     "cacheWrite": 0,
+     "output": 182,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "review-cancel-declined",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Cancel review request rrq_1",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M45.A03",
+      "M45.A04",
+      "M45.A02",
+      "M29.A03",
+      "M45.A01",
+      "M45.A05",
+      "M45.A07",
+      "M13.A05",
+      "M06.A10",
+      "M21.A05",
+      "M29.A02",
+      "M29.A04"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A03",
+          "argsJson": "{\"requestId\": \"rrq_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3094,
+     "ms": 3094,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "9d6e18686f04ab63",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3094,
+    "firstReplyMs": 3094,
+    "plannerMs": 3059,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 3316,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 117,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "review-publish-not-listing",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Make this response public on the two-star review rv_2: 'Thank you for telling us.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M45.A08",
+      "M47.A08",
+      "M45.A05",
+      "M45.A07",
+      "M45.A01",
+      "M45.A02",
+      "M47.A07",
+      "M11.A10",
+      "M13.A03",
+      "M12.A03"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you for telling us."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A09",
+          "argsJson": "{\"reviewId\": \"rv_2\", \"body\": \"Thank you for telling us.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3241,
+     "ms": 3244,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "5bbc6f1fcbffa026",
+       "targetsHash": "9c1003ce540c374e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "Thank you for telling us."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3244,
+    "firstReplyMs": 3241,
+    "plannerMs": 3211,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 3567,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 124,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Create review request for 2 of 2: Cedar onboarding 7, Cedar onboarding 8.\nSend review request for 2 of 2: rrq_4, rrq_5.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M45.A02",
+      "M21.A10",
+      "M01.A01",
+      "M28.A08",
+      "M45.A05",
+      "M45.A04",
+      "M47.A09",
+      "M21.A01",
+      "M45.A09",
+      "M21.A07",
+      "M13.A02",
+      "M01.A09",
+      "M06.A03"
+     ],
+     "planned": [
+      "M21.A03",
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25"
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M21.A03 Search appointments",
+          "argsJson": "{\"status\": \"completed\", \"from\": \"2026-10-19\", \"to\": \"2026-10-25\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\": {\"exists\": true}}",
+          "by": "contactId",
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s2",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A01 Create review request",
+            "argsJson": "{\"contactId\": \"$item.contactId\", \"subject\": \"Visit feedback\", \"body\": \"Please review your visit.\"}"
+           },
+           {
+            "action": "M45.A02 Send review request",
+            "argsJson": "{\"requestId\": \"$s3.results[0].id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M21.A03 Search appointments",
+          "argsJson": "{\"status\": \"completed\", \"from\": \"2026-10-19\", \"to\": \"2026-10-25\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\": {\"exists\": true}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s2",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A01 Create review request",
+            "argsJson": "{\"contactId\": \"$item.contactId\", \"subject\": \"Visit feedback\", \"body\": \"Please review your visit.\"}"
+           }
+          ]
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3[*].results[0].id",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A02 Send review request",
+            "argsJson": "{\"requestId\": \"$item\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s3 do[1]: $s3 is not an earlier step; your steps are s1 (action), s2 (filter). Refs can only point back to a step id. $s3 is the step you are writing; a step can only use earlier ids, and the step just before it is $s2. Inside \"do\", the current item is $item."
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 14325,
+     "ms": 14328,
+     "confirmations": [
+      {
+       "stepId": "s4",
+       "planHash": "a06599a3433e8860",
+       "targetsHash": "00b7d72ba17be50b",
+       "reason": "sends something outside the account",
+       "count": 2,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         },
+         "label": "rrq_4"
+        },
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         },
+         "label": "rrq_5"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 14328,
+    "firstReplyMs": 14325,
+    "plannerMs": 14267,
+    "plannerRounds": 2,
+    "calls": 6,
+    "usage": {
+     "input": 9262,
+     "cachedRead": 5120,
+     "cacheWrite": 0,
+     "output": 899,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "ticket-followup-priority",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show support ticket tic_1",
+     "status": "done",
+     "reply": "Portal export fails (ticket): body Please investigate this issue., requester email elodie@cedar.example, priority normal, status open, person name Elodie Mercer.",
+     "offered": [
+      "M47.A01",
+      "M47.A08",
+      "M47.A02",
+      "M47.A10",
+      "M47.A03",
+      "M47.A06",
+      "M21.A09",
+      "M47.A09",
+      "M47.A05",
+      "M47.A04",
+      "M47.A07",
+      "M03.A01",
+      "M06.A01",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A02"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A02",
+          "argsJson": "{\"ticketId\": \"tic_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2539,
+     "ms": 2539
+    },
+    {
+     "user": "Make that urgent",
+     "status": "done",
+     "reply": "Done: Set ticket priority (Portal export fails).",
+     "offered": [
+      "M06.A07",
+      "M47.A05",
+      "M47.A10",
+      "M47.A03",
+      "M06.A06",
+      "M06.A01",
+      "M06.A09",
+      "M15.A07",
+      "M21.A04",
+      "M06.A03",
+      "M28.A06",
+      "M12.A04",
+      "M47.A02"
+     ],
+     "planned": [
+      "M47.A05"
+     ],
+     "calls": [
+      {
+       "action": "M47.A05",
+       "args": {
+        "ticketId": "tic_1",
+        "priority": "urgent"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A05",
+          "argsJson": "{\"ticketId\": \"tic_1\", \"priority\": \"urgent\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 2840,
+     "ms": 2840
+    }
+   ],
+   "metrics": {
+    "ms": 5379,
+    "firstReplyMs": 2539,
+    "plannerMs": 5347,
+    "plannerRounds": 2,
+    "calls": 2,
+    "usage": {
+     "input": 9728,
+     "cachedRead": 6400,
+     "cacheWrite": 0,
+     "output": 240,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "ticket-note-not-contact",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Keep this private on the Portal export fails support ticket: 'Customer prefers an afternoon call.'",
+     "status": "done",
+     "reply": "Done: Add internal ticket note (Portal export fails).",
+     "offered": [
+      "M47.A07",
+      "M01.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A05",
+      "M47.A08",
+      "M47.A03",
+      "M45.A08",
+      "M45.A02",
+      "M47.A06",
+      "M47.A10",
+      "M47.A02",
+      "M21.A01",
+      "M07.A01",
+      "M11.A08",
+      "M12.A10",
+      "M13.A10",
+      "M03.A01",
+      "M06.A01"
+     ],
+     "planned": [
+      "M47.A07"
+     ],
+     "calls": [
+      {
+       "action": "M47.A07",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "Customer prefers an afternoon call."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "Portal export fails"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A07",
+          "argsJson": "{\"ticketId\": \"$s1.id\", \"body\": \"Customer prefers an afternoon call.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3312,
+     "ms": 3312
+    }
+   ],
+   "metrics": {
+    "ms": 3312,
+    "firstReplyMs": 3312,
+    "plannerMs": 3236,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5626,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 167,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "ticket-owner-not-task",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Raj should take over the Portal export fails support issue.",
+     "status": "done",
+     "reply": "Done: Assign ticket owner (Portal export fails).",
+     "offered": [
+      "M47.A01",
+      "M47.A04",
+      "M47.A08",
+      "M47.A06",
+      "M47.A02",
+      "M47.A07",
+      "M47.A10",
+      "M47.A05",
+      "M48.A05",
+      "M28.A07",
+      "M12.A08",
+      "M29.A10",
+      "M48.A02",
+      "M47.A03",
+      "M03.A01",
+      "M06.A01",
+      "M03.A05",
+      "M06.A05",
+      "M13.A03",
+      "M12.A03",
+      "M29.A06"
+     ],
+     "planned": [
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A04",
+       "args": {
+        "ticketId": "tic_1",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Raj"
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "Portal export fails"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M47.A04",
+          "argsJson": "{\"ticketId\": \"$s2.id\", \"ownerId\": \"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3849,
+     "ms": 3849
+    }
+   ],
+   "metrics": {
+    "ms": 3849,
+    "firstReplyMs": 3849,
+    "plannerMs": 3770,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 6112,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 210,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "ticket-owner-unavailable",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Assign support ticket tic_1 to Eva Rossi",
+     "status": "failed",
+     "reply": "Couldn't assign ticket owner: Eva Rossi must be available and have tickets.manage to own support tickets.",
+     "offered": [
+      "M47.A04",
+      "M47.A01",
+      "M47.A08",
+      "M47.A02",
+      "M47.A05",
+      "M47.A06",
+      "M21.A06",
+      "M48.A05",
+      "M06.A05",
+      "M03.A05",
+      "M47.A09",
+      "M47.A03",
+      "M48.A02",
+      "M03.A01",
+      "M06.A01",
+      "M13.A03",
+      "M12.A03"
+     ],
+     "planned": [
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A04",
+       "args": {
+        "ticketId": "tic_1",
+        "ownerId": "us_7"
+       },
+       "error": "CONFLICT: Eva Rossi must be available and have tickets.manage to own support tickets"
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Eva Rossi"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A04",
+          "argsJson": "{\"ticketId\": \"tic_1\", \"ownerId\": \"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3207,
+     "ms": 3207
+    }
+   ],
+   "metrics": {
+    "ms": 3207,
+    "firstReplyMs": 3207,
+    "plannerMs": 3190,
+    "plannerRounds": 1,
+    "calls": 1,
+    "usage": {
+     "input": 5469,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 164,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "ticket-reply-declined",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reply to ticket tic_1: 'We have your report.'",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A01",
+      "M47.A04",
+      "M47.A06",
+      "M47.A03",
+      "M11.A10",
+      "M45.A09",
+      "M15.A10",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\": \"tic_1\", \"body\": \"We have your report.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3429,
+     "ms": 3429,
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "1a531b8f44720596",
+       "targetsHash": "168c6b85c6d50cd9",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We have your report."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3429,
+    "firstReplyMs": 3429,
+    "plannerMs": 3379,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 4460,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 126,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "ticket-reply-no-address",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reply to Owen Hale's Mailbox delivery support ticket: 'We are investigating.'",
+     "status": "failed",
+     "reply": "Couldn't reply to ticket requester: Owen Hale has no email address.",
+     "offered": [
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M13.A08",
+      "M47.A01",
+      "M47.A09",
+      "M47.A06",
+      "M47.A10",
+      "M47.A07",
+      "M47.A05",
+      "M13.A09",
+      "M11.A02",
+      "M15.A10",
+      "M12.A08",
+      "M13.A03",
+      "M12.A03",
+      "M03.A02",
+      "M06.A02",
+      "M03.A03",
+      "M06.A03"
+     ],
+     "planned": [
+      "M47.A08"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "Owen Hale Mailbox"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\": \"$s1.id\", \"body\": \"We are investigating.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3248,
+     "ms": 3248
+    }
+   ],
+   "metrics": {
+    "ms": 3248,
+    "firstReplyMs": 3248,
+    "plannerMs": 3214,
+    "plannerRounds": 1,
+    "calls": 0,
+    "usage": {
+     "input": 6069,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 167,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "ticket-reply-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reply to Elodie Mercer's Portal export fails ticket: 'We are investigating.' Then create a task for Noah Park titled 'Follow up on Elodie export' due tomorrow.",
+     "status": "done",
+     "reply": "Done: Reply to ticket requester (Portal export fails).\nDone: Create task (Follow up on Elodie export).",
+     "offered": [
+      "M47.A08",
+      "M06.A01",
+      "M47.A02",
+      "M06.A03",
+      "M47.A03",
+      "M47.A01",
+      "M45.A02",
+      "M47.A06",
+      "M47.A09",
+      "M47.A07",
+      "M47.A10",
+      "M47.A05",
+      "M48.A02",
+      "M01.A02",
+      "M01.A03",
+      "M13.A03",
+      "M12.A03",
+      "M07.A01",
+      "M21.A01",
+      "M03.A02",
+      "M06.A02"
+     ],
+     "planned": [
+      "M47.A08",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_1",
+        "body": "We are investigating."
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up on Elodie export",
+        "assigneeId": "us_6",
+        "dueDate": "2026-10-22"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "Elodie Mercer Portal"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\": \"$s1.id\", \"body\": \"We are investigating.\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Noah Park"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M06.A01",
+          "argsJson": "{\"title\": \"Follow up on Elodie export\", \"assigneeId\": \"$s3.id\", \"dueDate\": \"2026-10-22\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5451,
+     "ms": 5455,
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "7097fc4e8b638bf4",
+       "targetsHash": "ac6bbefd7837584f",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_1",
+          "body": "We are investigating."
+         },
+         "target": {
+          "ticketId": "tic_1",
+          "contactId": "ct_35",
+          "to": "elodie@cedar.example"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5455,
+    "firstReplyMs": 5451,
+    "plannerMs": 5396,
+    "plannerRounds": 1,
+    "calls": 2,
+    "usage": {
+     "input": 6337,
+     "cachedRead": 1024,
+     "cacheWrite": 0,
+     "output": 287,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "tickets-from-invoices-messages",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.title')='Overdue invoice follow-up' AND json_extract(data,'$.contactId')='ct_31' → 0, wanted 1"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "For contacts who have an overdue invoice and an inbound reply in the last 7 days, open one support ticket per contact titled 'Overdue invoice follow-up' with description 'Check the invoice and recent reply.'",
+     "status": "done",
+     "reply": "Create support ticket: nothing matched, so nothing was changed.",
+     "offered": [
+      "M28.A03",
+      "M13.A09",
+      "M28.A08",
+      "M28.A10",
+      "M12.A09",
+      "M28.A02",
+      "M47.A08",
+      "M11.A10",
+      "M28.A07",
+      "M28.A01",
+      "M47.A09",
+      "M47.A10",
+      "M47.A02",
+      "M11.A02",
+      "M13.A01",
+      "M13.A03",
+      "M47.A01",
+      "M47.A03",
+      "M47.A07",
+      "M47.A04",
+      "M47.A05",
+      "M47.A06",
+      "M03.A01",
+      "M06.A01",
+      "M03.A03",
+      "M06.A03",
+      "M07.A01",
+      "M11.A08"
+     ],
+     "planned": [
+      "M28.A10",
+      "M11.A10",
+      "M47.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "minDaysOverdue": 1,
+        "limit": 50
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "team",
+        "personType": "contact",
+        "minHours": 168,
+        "limit": 50
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "create support ticket",
+        "text": "I need an action to create new support tickets. The current list includes actions to reply to, get details for, and link existing tickets, but no action to open a new one."
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{\"minDaysOverdue\": 1, \"limit\": 50}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\": \"team\", \"personType\": \"contact\", \"lastMessageFrom\": \"2026-10-15\", \"lastMessageTo\": \"2026-10-21\", \"limit\": 50}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\": {\"in\": \"$s2.items[*].contactId\"}}",
+          "by": "contactId",
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A01",
+            "argsJson": "{\"title\": \"Overdue invoice follow-up\", \"body\": \"Check the invoice and recent reply.\", \"contactId\": \"$item.contactId\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{\"minDaysOverdue\": 1, \"limit\": 50}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\": \"team\", \"personType\": \"contact\", \"minHours\": 168, \"limit\": 50}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\": {\"in\": \"$s2.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A01",
+            "argsJson": "{\"title\": \"Overdue invoice follow-up\", \"body\": \"Check the invoice and recent reply.\", \"contactId\": \"$item.contactId\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s2: M11.A10 arg (args): Unrecognized keys: \"lastMessageFrom\", \"lastMessageTo\""
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 15515,
+     "ms": 15515
+    }
+   ],
+   "metrics": {
+    "ms": 15515,
+    "firstReplyMs": 15515,
+    "plannerMs": 15431,
+    "plannerRounds": 3,
+    "calls": 2,
+    "usage": {
+     "input": 22033,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 994,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  },
+  {
+   "id": "unsupported-delete-review",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Permanently delete customer review rv_2",
+     "status": "unsupported",
+     "reply": "There is no action to permanently delete a customer review. The available actions allow searching, getting details, recording simulated reviews, drafting/publishing responses, and managing review requests, but not deleting existing reviews.\nAlternatives: You can publish a response to the review using 'Publish review response'.; If you meant to cancel an associated review request, you can use 'Cancel unsent review request' if it hasn't been sent yet.",
+     "offered": [
+      "M45.A03",
+      "M45.A05",
+      "M45.A06",
+      "M45.A01",
+      "M45.A04",
+      "M07.A05",
+      "M45.A07",
+      "M07.A03",
+      "M45.A02",
+      "M29.A03",
+      "M45.A08",
+      "M45.A09",
+      "M45.A10",
+      "M13.A02",
+      "M07.A07",
+      "M08.A05",
+      "M12.A10",
+      "M47.A08",
+      "M07.A01"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "unsupported",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": "The available actions do not include a way to permanently delete a customer review. You can search for reviews or record simulated ones, but there is no 'delete review' action.",
+        "alternatives": [
+         "You could create a new review with the desired content using M45.A05 if you want to replace it (though this doesn't remove rv_2).",
+         "If rv_2 was part of a review request, you might be able to cancel that request using M45.A03, but this only affects unsent drafts or failed requests."
+        ],
+        "query": null,
+        "text": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "unsupported",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": "There is no action to permanently delete a customer review. The available actions allow searching, getting details, recording simulated reviews, drafting/publishing responses, and managing review requests, but not deleting existing reviews.",
+        "alternatives": [
+         "You can publish a response to the review using 'Publish review response'.",
+         "If you meant to cancel an associated review request, you can use 'Cancel unsent review request' if it hasn't been sent yet."
+        ],
+        "query": null,
+        "text": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8208,
+     "ms": 8208
+    }
+   ],
+   "metrics": {
+    "ms": 8208,
+    "firstReplyMs": 8208,
+    "plannerMs": 7880,
+    "plannerRounds": 2,
+    "calls": 0,
+    "usage": {
+     "input": 7015,
+     "cachedRead": 3072,
+     "cacheWrite": 0,
+     "output": 337,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "qwen3.8-flash"
+   ]
+  }
+ ]
+}

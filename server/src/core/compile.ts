@@ -74,6 +74,25 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
     // instead of all reporting "not an earlier step".
     try {
       if (s.kind === "action") {
+        // The action variant has no id enum, so a planner sometimes names "resolve" there and puts the entity
+        // and name in argsJson. That is a resolve step written the other way round: take it as one.
+        if (s.action.trim().toLowerCase() === "resolve") {
+          const args = parseObject(s.argsJson, "argsJson", err);
+          if (!args) continue;
+          const [entity, name] = [args.entity, args.name];
+          if (typeof entity !== "string" || typeof name !== "string" || !entity || !name) {
+            err(`"resolve" needs "entity" and "name" in argsJson, e.g. {"entity": "contact", "name": "Zoe Costa"}; or write kind "resolve" with entity and name`);
+            continue;
+          }
+          if (!registry.resolver(entity)) {
+            err(`can't resolve entity "${entity}"; resolvable: ${registry.resolverEntities().join(", ")}`);
+            continue;
+          }
+          steps.push({ id: s.id, kind: "resolve", entity, name, deps: [], type: RESOLVED });
+          types.set(s.id, RESOLVED);
+          ents.set(s.id, entity);
+          continue;
+        }
         const call = compileCall(s.action, s.argsJson, registry, scope, err);
         if (!call) continue;
         steps.push({ id: s.id, kind: "action", call, deps: [...deps], type: call.action.outputSchema });
@@ -285,11 +304,17 @@ function refType(raw: string, scope: Scope, err: (m: string) => void): JsonSchem
   if (!root) return null;
   const t = typeAt(root, ref.path, `$${ref.root}`);
   if ("error" in t) {
-    const hint = scope.kinds.get(ref.root) === "resolve"
-      ? ` Resolve returns one {id, name}, not a list or a full record; use $${ref.root}.id for its id. Read other record fields with a listed action.`
-      : (ref.root === "item" || ref.root === "rr") && kindOf(root) === "scalar"
-        ? ` $${ref.root} is the scalar element of its input list; use $${ref.root} directly, without a field.`
-        : "";
+    const kind = scope.kinds.get(ref.root);
+    // "[*].results" is the forEach shape; reaching for it on a filter or an action is the same mistake as
+    // "does this step give me a list", so say which step kind the ref actually names.
+    const star = ref.path[0] !== undefined && "all" in ref.path[0];
+    const hint = kind === "resolve"
+      ? ` Resolve returns one {id, name}, not a list or a full record; use $${ref.root}.id for its id. Read other record fields with a listed action: plan that read as its own step, then take a field of every item from "$sN.items[*].id"; if no listed action reads it, reply search_tools.`
+      : star && kind !== "forEach"
+        ? ` "[*]" walks a list, and only a forEach step has "results": $${ref.root} is ${kind ? `${/^[aeiou]/.test(kind) ? "an" : "a"} ${kind} step` : "not a forEach step"}, so a field of each of its items is "$${ref.root}[*].<field>".`
+        : (ref.root === "item" || ref.root === "rr") && kindOf(root) === "scalar"
+          ? ` $${ref.root} is the scalar element of its input list; use $${ref.root} directly, without a field.`
+          : "";
     err(t.error + hint);
     return null;
   }
@@ -299,7 +324,16 @@ function refType(raw: string, scope: Scope, err: (m: string) => void): JsonSchem
 function rootType(ref: Ref, scope: Scope, err: (m: string) => void): JsonSchema | null {
   if (ref.root === "item" || ref.root === "rr") {
     const t = ref.root === "item" ? scope.item : scope.rr;
-    if (!t) err(ref.root === "item" ? `$item only works inside forEach "do"` : `$rr needs "roundRobin" on the forEach: set the forEach's "roundRobin" to the list to rotate through, a $ref ("$s2[*].userId") or a JSON array of ids`);
+    if (!t) {
+      // Name a step the plan already has: the old example ("$s2[*].userId") was the step being written,
+      // which is the one ref the compiler refuses.
+      const people = [...scope.ents].filter(([id, e]) => e === "user" && scope.types.get(id)).at(-1)?.[0];
+      err(
+        ref.root === "item"
+          ? `$item only works inside forEach "do"; the action that runs once per item belongs in that "do", and a step after the loop reads what it made with "$sN[*].results[0].<field>"`
+          : `$rr needs "roundRobin" on the forEach: set it to the list to rotate through${people ? `, like "$${people}.items[*].id" (the people $${people} returned)` : `, a $ref like "$s1.items[*].id"`}, or write the ids out as a JSON array`,
+      );
+    }
     return t;
   }
   if (ref.root === "ctx") {
@@ -337,7 +371,11 @@ function listRef(raw: string, scope: Scope, what: string, err: (m: string) => vo
   if (k === "any") return arrayOf(ANY);
   if (k !== "array") {
     const fields = fieldsOf(t).filter((f) => kindOf(((unwrap(t).properties ?? {}) as Record<string, JsonSchema>)[f]!) === "array");
-    err(`${what} ${raw} is not a list${fields.length ? `; did you mean ${fields.map((f) => `${raw}.${f}`).join(" or ")}?` : ""}`);
+    const resolve = scope.kinds.get(parseRef(raw.trim())?.root ?? "") === "resolve";
+    err(
+      `${what} ${raw} is not a list${fields.length ? `; did you mean ${fields.map((f) => `${raw}.${f}`).join(" or ")}?` : ""}` +
+        (resolve ? ` A resolve names one record already: use "${raw}.id" where you need it, and filter only a list a read action returned.` : ""),
+    );
     return null;
   }
   return t;

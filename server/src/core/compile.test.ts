@@ -140,6 +140,49 @@ describe("ref errors name the legal steps", () => {
     }
   });
 
+  test("reaching for [*].results on a step that isn't a forEach names the step kind", () => {
+    const r = compile(plan([
+      action("s1", "M01.A03", {}),
+      action("s2", "M06.A01", { title: "$s1[*].results[0].id" }),
+    ]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /only a forEach step has "results": \$s1 is an action step/);
+  });
+
+  test("filtering the single record a resolve returns points at its id", () => {
+    const r = compile(plan([
+      { id: "s1", kind: "resolve", entity: "contact", name: "Ana" },
+      op("s2", "filter", { in: "$s1", where: { status: "active" } }),
+    ]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /A resolve names one record already: use "\$s1\.id"/);
+  });
+
+  test("resolve written in the action variant is still a resolve step", () => {
+    const ok = compile(plan([
+      { id: "s1", kind: "action", action: "resolve", argsJson: JSON.stringify({ entity: "contact", name: "Zoe Costa" }) },
+      action("s2", "M06.A01", { title: "Call $s1.name" }),
+    ] as Step[]), registry);
+    assert.ok(ok.ok, JSON.stringify(ok.ok ? [] : ok.errors));
+    assert.equal(ok.plan.steps[0]!.kind, "resolve");
+
+    const bad = compile(plan([
+      { id: "s1", kind: "action", action: "resolve", argsJson: JSON.stringify({ entity: "contact" }) },
+    ] as Step[]), registry);
+    assert.ok(!bad.ok);
+    assert.match(bad.errors.join("\n"), /"resolve" needs "entity" and "name" in argsJson/);
+  });
+
+  test("a forgotten roundRobin names the list the plan already has", () => {
+    const r = compile(plan([
+      action("s1", "M48.A03", {}),
+      action("s2", "M03.A03", {}),
+      op("s3", "forEach", { in: "$s2.items", do: [{ action: "M03.A05", args: { leadId: "$item.id", ownerId: "$rr" } }] }),
+    ]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /\$rr needs "roundRobin".*"\$s1\.items\[\*\]\.id" \(the people \$s1 returned\)/);
+  });
+
   test("projected list elements use bare $item or $rr, not a record field", () => {
     for (const root of ["item", "rr"]) {
       const r = compile(plan([
