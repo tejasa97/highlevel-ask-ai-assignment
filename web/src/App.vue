@@ -5,6 +5,7 @@ import Changes from "./components/Changes.vue";
 import DataBrowser from "./components/DataBrowser.vue";
 import ApprovalPreview from "./components/ApprovalPreview.vue";
 import Records from "./components/Records.vue";
+import StepList from "./components/StepList.vue";
 import Trace from "./components/Trace.vue";
 
 const EXAMPLES = [
@@ -47,8 +48,6 @@ const turn = computed(() => (selected.value === null ? null : turns[selected.val
 const phase = computed(() => {
   const t = turns.at(-1);
   if (!t) return "Thinking";
-  const running = Object.entries(t.steps).find(([, s]) => s.status === "running");
-  if (running) return `Running ${running[0]}`;
   if (t.plan) return "Running the plan";
   if (t.compileErrors.length) return "Repairing the plan";
   if (t.planner.length) return "Planning";
@@ -98,6 +97,15 @@ async function loadMeta() {
   }
 }
 onMounted(loadMeta);
+// The chat on screen starts empty, so the server's chat has to as well: a reload would otherwise leave it waiting
+// on a question, or an approval, that nobody can see.
+onMounted(async () => {
+  try {
+    await post("/api/conversation/new");
+  } catch {
+    // The meta banner already says the API is down.
+  }
+});
 
 function scrollChat() {
   nextTick(() => chatEl.value?.scrollTo({ top: chatEl.value.scrollHeight, behavior: "smooth" }));
@@ -143,10 +151,14 @@ function onEvent(t, name, d) {
     case "confirm": t.pending = d.pending; break;
     case "reply": {
       const pending = d.status === "awaiting_confirmation" ? t.pending : null;
+      const options = d.options?.length ? d.options : undefined;
+      // The planner's questions and the executor's read the same to a person.
+      const asked = d.status === "clarify" || d.status === "needs_clarification";
       messages.push({
-        role: "assistant", status: d.status, options: d.options, turn: turns.indexOf(t), records: d.records ?? [], pending,
-        // Lines the record cards or the approval preview say again in full are shown there instead.
-        text: d.text.split("\n").filter((l) => !(d.records ?? []).some((r) => r.replaces === l) && !(pending && /^Can(not)? proceed for \d+:/.test(l))).join("\n"),
+        role: "assistant", status: asked ? "clarify" : d.status, options, turn: turns.indexOf(t), records: d.records ?? [], pending,
+        // What the record cards, the approval preview or the option chips say again in full is shown there instead.
+        text: d.text.split("\n").filter((l) => !(d.records ?? []).some((r) => r.replaces === l) && !(pending && /^Can(not)? proceed for \d+:/.test(l)) && !(options && /^Alternatives: /.test(l))).join("\n")
+          .replace(options && asked ? `: ${options.join(", ")}` : "\0", ""),
         // The planner timed out or its provider failed: the same message may well work a moment later.
         retry: d.infra ? t.request : null,
       });
@@ -272,7 +284,7 @@ const tabs = computed(() => [
         <div v-for="(m, i) in messages" :key="i" class="msg" :class="[m.role, { picked: m.turn === selected }]" @click="selected = m.turn">
           <div v-if="m.role !== 'user'" class="avatar" :class="m.role">{{ m.role === "error" ? "!" : "✦" }}</div>
           <div class="bubble">
-            <div v-if="m.status && m.role === 'assistant'" class="status" :class="m.status">{{ m.status.replace(/_/g, " ") }}</div>
+            <div v-if="m.status && m.role === 'assistant'" class="status" :class="m.status">{{ m.status === "clarify" ? "needs your answer" : m.status.replace(/_/g, " ") }}</div>
             <div v-if="m.text" class="text">{{ m.text }}</div>
             <Records v-if="m.records?.length" :shown="m.records" :users="meta?.users ?? []" />
             <div v-if="m.pending" class="pending">
@@ -283,9 +295,11 @@ const tabs = computed(() => [
               </div>
               <div v-else class="muted small">{{ m.answered }}</div>
             </div>
+            <StepList v-if="m.role === 'assistant' && !m.pending && turns[m.turn]?.plan?.steps.length > 1" :turn="turns[m.turn]" />
             <div v-if="m.options?.length" class="chips">
               <button v-for="o in m.options" :key="o" class="chip" @click.stop="send(o)" :disabled="busy || i !== lastAssistant">{{ o }}</button>
             </div>
+            <div v-if="m.options?.length && m.status === 'clarify' && i === lastAssistant" class="muted small">Pick one, or type your own answer.</div>
             <div v-if="m.retry && !m.retried && i === lastAssistant" class="row">
               <button class="primary small" @click.stop="retry(m)" :disabled="busy">↻ Retry</button>
             </div>
@@ -298,7 +312,10 @@ const tabs = computed(() => [
         </div>
         <div v-if="busy" class="msg assistant">
           <div class="avatar assistant spinning">✦</div>
-          <div class="bubble thinking"><span>{{ phase }}</span><span class="dots"><i></i><i></i><i></i></span></div>
+          <div class="bubble thinking">
+            <div class="thinking-line"><span>{{ phase }}</span><span class="dots"><i></i><i></i><i></i></span></div>
+            <StepList v-if="turns.at(-1)?.plan" :turn="turns.at(-1)" />
+          </div>
         </div>
       </div>
       <form class="composer" @submit.prevent="send()">

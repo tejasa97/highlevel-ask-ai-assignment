@@ -192,3 +192,16 @@ table.grid tbody tr { cursor: pointer; }
 table.grid tbody tr:hover { background: var(--surface-2); }
 table.grid tr.changed { background: var(--warn-bg); }
 table.grid tr.detail td { white-space: normal; max-width: none; cursor: default; }
+
+.thinking { flex-direction: column; align-items: stretch; gap: 8px; }
+.thinking-line { display: flex; align-items: center; gap: 6px; }
+.steplist { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 3px; font-size: 13px; }
+.thinking .steplist { margin: 0; }
+.steplist li { display: flex; gap: 8px; align-items: baseline; color: var(--muted); }
+.steplist .mark { width: 14px; flex: none; text-align: center; font-weight: 600; }
+.steplist .note { color: var(--muted); }
+.steplist li.done, .steplist li.running { color: var(--text); }
+.steplist li.done .mark { color: var(--ok); }
+.steplist li.partial .mark, .steplist li.awaiting_confirmation .mark, .steplist li.needs_clarification .mark { color: var(--warn); }
+.steplist li.failed, .steplist li.failed .mark { color: var(--bad); }
+.steplist li.running .mark { color: var(--info); }

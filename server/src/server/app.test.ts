@@ -416,3 +416,38 @@ describe("POST /api/reset", () => {
     assert.doesNotMatch(user, /What should the task say\?/);
   });
 });
+
+describe("POST /api/conversation/new", () => {
+  test("forgets the open question but keeps the data", async () => {
+    const planner = scripted(reply({ type: "clarify", missing: { action: "M06.A01", argument: "title", argsJson: "{}" }, question: "What should the task say?" }), reply({ type: "answer", text: "Hello" }));
+    const app = await start(planner);
+    await app.ask("create a task");
+    const before = app.world();
+    assert.equal((await app.post("/api/conversation/new", {})).status, 200);
+    assert.equal(app.world(), before);
+    await app.ask("hello");
+    assert.doesNotMatch(planner.requests[1]!.user, /What should the task say\?/);
+  });
+
+  test("is refused while a request is running", async () => {
+    let release!: (p: SubmitPlan) => void;
+    const held = new Promise<SubmitPlan>((ok) => (release = ok));
+    const app = await start(scripted(held));
+    const first = app.post("/api/ask", { message: "create a task to call Ana" });
+    for (let i = 0; i < 100 && !(await busyNow(app)); i++) await new Promise((ok) => setTimeout(ok, 10));
+    assert.equal((await app.post("/api/conversation/new", {})).status, 409);
+    release(action("M06.A01", { title: "Call Ana" }));
+    await events(await first);
+  });
+});
+
+describe("unsupported replies", () => {
+  test("offer their alternatives as options", async () => {
+    const no = () => reply({ type: "unsupported", reason: "I can't fax.", alternatives: ["Send an email", "Create a task"] });
+    // The planner is asked again once the shortlist is widened, and says the same.
+    const evs = await (await start(scripted(no(), no()))).ask("fax Ana the contract");
+    const r = last(evs, "reply");
+    assert.equal(r.status, "unsupported");
+    assert.deepEqual(r.options, ["Send an email", "Create a task"]);
+  });
+});

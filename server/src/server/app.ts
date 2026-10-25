@@ -84,6 +84,12 @@ export function createApp({ registry, planner, retriever, openWorld }: AppDeps):
         return json(res, 200, world.store.all(table[1]!));
       }
       if (req.method === "GET" && path === "/api/audit") return json(res, 200, world.store.audit().slice(0, Number(url.searchParams.get("limit") ?? 200)));
+      // A new chat over the same data: the page asks for one when it loads, since the chat it showed is gone.
+      if (req.method === "POST" && path === "/api/conversation/new") {
+        if (busy) return json(res, 409, { error: "A request is still running" });
+        chat.reset(world);
+        return json(res, 200, { ok: true });
+      }
       if (req.method === "POST" && path === "/api/reset") {
         if (busy) return json(res, 409, { error: "A request is still running" });
         world.store.close();
