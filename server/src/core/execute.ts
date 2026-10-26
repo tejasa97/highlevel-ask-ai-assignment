@@ -5,9 +5,10 @@ import { norm } from "../registry/helpers.js";
 import { DEFAULT_ACTOR, invoke } from "../registry/invoke.js";
 import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
+import { ENTITIES } from "../store/entities.js";
 import { normalizeDateTimes } from "./datetimes.js";
 import { OTHER_THAN } from "./lookups.js";
-import { collectRefs, parseRef, RefError, type Ref, substitute, valueAt } from "./refs.js";
+import { collectRefs, parseRef, pathOf, RefError, type Ref, substitute, valueAt } from "./refs.js";
 
 // Stage 2: run a compiled plan.
 // - Refs are substituted, then the concrete args are parsed with the action's Zod schema.
@@ -65,6 +66,7 @@ export interface Clarification {
 export interface StepError {
   code: string;
   message: string;
+  details?: Record<string, unknown>;
 }
 
 export type StepStatus = "done" | "partial" | "failed" | "skipped" | "awaiting_confirmation" | "needs_clarification";
@@ -86,6 +88,8 @@ export interface StepResult {
   output?: unknown;
   error?: StepError;
   items?: ItemResult[];
+  /** A create that found its record already there, whose existing record the later steps used instead. */
+  existing?: StepError;
 }
 
 export type RunStatus = "done" | "partial" | "failed" | "awaiting_confirmation" | "needs_clarification";
@@ -278,7 +282,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         case "exclude": {
           const list = asList(refValue(step.in), step.in);
           const set = new Set(asList(refValue(step.set), step.set).map(String));
-          done(list.filter((x) => !set.has(String((x as Record<string, unknown>)?.[step.by]))));
+          done(list.filter((x) => !set.has(String(fieldOf(x, step.by)))));
           break;
         }
 
@@ -323,7 +327,9 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           }
           if (step.call.action.risk !== "read") writesAttempted = true;
           const r = runItem(ctx, opts.executionId, step.id, "-", [{ call: step.call, args: args.value }]);
-          if (r.status === "failed") fail(r.error!);
+          const existing = r.status === "failed" ? alreadyThere(step, r.error!, plan, ctx) : undefined;
+          if (existing) done(existing, { existing: r.error! });
+          else if (r.status === "failed") fail(r.error!);
           else {
             const query = args.value.query ?? args.value.name;
             if (step.call.action.risk === "read" && typeof query === "string" && query.trim()) searched.set(step.id, { query, entity: step.call.action.entities?.produces ?? "record" });
@@ -420,6 +426,22 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   return finish("partial");
 }
 
+/**
+ * "Tag Omar as a partner" planned as create the tag, then apply it, when a "partner" tag already exists: the
+ * create was only a way to get a tag to apply, so the steps after it use the one that's there. A create nothing
+ * later builds on still reports the duplicate, and an existing record of another type (a lead's email that
+ * belongs to a contact) is never taken for it.
+ */
+function alreadyThere(step: CStep & { kind: "action" }, error: StepError, plan: CompiledPlan, ctx: ActionContext): unknown {
+  const entity = step.call.action.entities?.produces;
+  const id = error.details?.existingId;
+  if (error.code !== "DUPLICATE" || !entity || typeof id !== "string") return undefined;
+  if (error.details?.kind !== undefined && error.details.kind !== entity) return undefined;
+  if (!plan.steps.some((s) => s.deps.includes(step.id))) return undefined;
+  const table = Object.entries(ENTITIES).find(([, d]) => id.startsWith(`${d.prefix}_`))?.[0];
+  return (table && ctx.store.get(table, id)) ?? { id };
+}
+
 const isWrite = (s: CStep) =>
   (s.kind === "action" && s.call.action.risk !== "read") || (s.kind === "forEach" && s.calls.some((c) => c.action.risk !== "read"));
 
@@ -440,7 +462,7 @@ export function narrowByRequest(found: Candidate[], request: string): Candidate[
 
 function concreteArgs(call: Call, lookup: (r: Ref) => unknown): { ok: true; value: Record<string, unknown> } | { ok: false; error: StepError } {
   try {
-    const raw = normalizeDateTimes(substitute(call.args, lookup), call.action.inputSchema);
+    const raw = normalizeDateTimes(dropMissing(call, substitute(call.args, lookup)), call.action.inputSchema);
     const parsed = (call.action.input as z.ZodType).safeParse(raw);
     if (!parsed.success) {
       const msg = parsed.error.issues.map((i) => `${i.path.join(".") || "(args)"}: ${i.message}`).join("; ");
@@ -451,6 +473,31 @@ function concreteArgs(call: Call, lookup: (r: Ref) => unknown): { ok: true; valu
     return { ok: false, error: toError(e) };
   }
 }
+
+/**
+ * An optional argument set from a reference that came out empty ("assigneeId": "$item.ownerId" for a lead with no
+ * owner) is left out, as if it weren't given, unless the field takes null.
+ */
+function dropMissing(call: Call, value: unknown): unknown {
+  const args = call.args as Record<string, unknown> | undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value) || !args) return value;
+  const schema = call.action.inputSchema as { required?: string[]; properties?: Record<string, unknown> };
+  const out = { ...(value as Record<string, unknown>) };
+  for (const [k, v] of Object.entries(out)) {
+    if (v !== null && v !== undefined) continue;
+    const from = args[k];
+    if (typeof from !== "string" || !parseRef(from) || schema.required?.includes(k) || takesNull(schema.properties?.[k])) continue;
+    delete out[k];
+  }
+  return out;
+}
+
+const takesNull = (s: unknown): boolean => {
+  const o = s as { type?: unknown; anyOf?: unknown[]; oneOf?: unknown[] } | undefined;
+  if (!o) return true;
+  if (o.type === "null" || (Array.isArray(o.type) && o.type.includes("null"))) return true;
+  return [...(o.anyOf ?? []), ...(o.oneOf ?? [])].some(takesNull);
+};
 
 /** Runs one item's calls in one transaction, replaying any write the ledger already has. */
 function runItem(ctx: ActionContext, executionId: string, stepId: string, key: string, calls: ConcreteCall[]): ItemResult {
@@ -521,10 +568,14 @@ function gateFor(
   };
 }
 
+/** An item's field, or a dotted path into it ("relatedTo.id"). */
+export function fieldOf(x: unknown, field: string): unknown {
+  return pathOf(field).reduce<unknown>((v, k) => (v && typeof v === "object" ? (v as Record<string, unknown>)[k] : undefined), x);
+}
+
 export function matches(x: unknown, where: Record<string, unknown>): boolean {
-  const obj = (x ?? {}) as Record<string, unknown>;
   return Object.entries(where).every(([field, cond]) => {
-    const v = obj[field];
+    const v = fieldOf(x, field);
     const conds = cond && typeof cond === "object" && !Array.isArray(cond) ? Object.entries(cond) : [["eq", cond] as const];
     // orNull admits null/missing for this field only; non-null values must still meet every condition.
     if ((v === null || v === undefined) && conds.some(([op, want]) => op === "orNull" && want === true)) return true;
@@ -591,7 +642,7 @@ function detailOf(item: unknown): string | undefined {
 }
 
 function toError(e: unknown): StepError {
-  if (e instanceof ActionError) return { code: e.code, message: e.message };
+  if (e instanceof ActionError) return { code: e.code, message: e.message, ...(e.details ? { details: e.details } : {}) };
   if (e instanceof RefError) return { code: "INVALID", message: e.message };
   return { code: "INTERNAL", message: e instanceof Error ? e.message : String(e) };
 }

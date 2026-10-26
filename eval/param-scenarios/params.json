@@ -1,0 +1,2160 @@
+[
+  {
+    "id": "param-create-contact",
+    "category": "direct",
+    "modules": [
+      "M01"
+    ],
+    "turns": [
+      {
+        "user": "Add a new contact: Lena Fischer, lena.fischer@northwind.example, phone +15550199001, works at Northwind"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M01.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M01.A01",
+          "match": {
+            "firstName": "Lena",
+            "lastName": "Fischer",
+            "email": "lena.fischer@northwind.example",
+            "phone": "+15550199001",
+            "company": "Northwind"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM contacts WHERE json_extract(data,'$.email')='lena.fischer@northwind.example' AND json_extract(data,'$.company')='Northwind'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-update-contact-email",
+    "category": "direct",
+    "modules": [
+      "M01"
+    ],
+    "turns": [
+      {
+        "user": "Rosa Ito has a new email address: rosa@acme-corp.example. Update it please."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M01.A04"
+        ]
+      },
+      "args": [
+        {
+          "action": "M01.A04",
+          "match": {
+            "contactId": "ct_1",
+            "email": "rosa@acme-corp.example"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.email') FROM contacts WHERE id='ct_1'",
+          "equals": "rosa@acme-corp.example"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-contact-sms-off",
+    "category": "direct",
+    "modules": [
+      "M01"
+    ],
+    "turns": [
+      {
+        "user": "Victor Brown asked us to stop texting him. Turn off SMS for him, email is still fine."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M01.A08"
+        ]
+      },
+      "args": [
+        {
+          "action": "M01.A08",
+          "match": {
+            "contactId": "ct_8",
+            "sms": false
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.preferences.sms') FROM contacts WHERE id='ct_8'",
+          "equals": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-contact-owner",
+    "category": "direct",
+    "modules": [
+      "M01",
+      "M48"
+    ],
+    "turns": [
+      {
+        "user": "Make Tom Becker the owner of Omar Larsen"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M01.A07"
+        ]
+      },
+      "args": [
+        {
+          "action": "M01.A07",
+          "match": {
+            "contactId": "ct_7",
+            "ownerId": "us_4"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.ownerId') FROM contacts WHERE id='ct_7'",
+          "equals": "us_4"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-create-company",
+    "category": "direct",
+    "modules": [
+      "M02"
+    ],
+    "turns": [
+      {
+        "user": "Create a company record for Northwind Traders: domain northwind.example, logistics industry, 51-200 employees"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M02.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M02.A01",
+          "match": {
+            "name": "Northwind Traders",
+            "domain": "northwind.example",
+            "industry": {
+              "$contains": "logistics"
+            },
+            "size": "51-200"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM companies WHERE json_extract(data,'$.name')='Northwind Traders' AND json_extract(data,'$.size')='51-200'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-create-lead",
+    "category": "direct",
+    "modules": [
+      "M03"
+    ],
+    "turns": [
+      {
+        "user": "We met Carla Mendes at the Riverside expo yesterday. Add her as a lead: carla@mendesdesign.example, company Mendes Design, score 70."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M03.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M03.A01",
+          "match": {
+            "firstName": "Carla",
+            "lastName": "Mendes",
+            "email": "carla@mendesdesign.example",
+            "company": "Mendes Design",
+            "source": "event",
+            "score": 70
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM leads WHERE json_extract(data,'$.email')='carla@mendesdesign.example' AND json_extract(data,'$.source')='event' AND json_extract(data,'$.score')=70",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-qualify-lead",
+    "category": "direct",
+    "modules": [
+      "M03"
+    ],
+    "turns": [
+      {
+        "user": "Record qualification for Ben Haddad: budget $15k, he's the decision maker, he needs automation, timeline is this quarter. Mark him qualified."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M03.A07"
+        ]
+      },
+      "args": [
+        {
+          "action": "M03.A07",
+          "match": {
+            "leadId": "ld_2",
+            "budget": {
+              "$contains": "15"
+            },
+            "need": {
+              "$contains": "automation"
+            },
+            "timeline": {
+              "$contains": "quarter"
+            },
+            "markQualified": true
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM leads WHERE id='ld_2'",
+          "equals": "qualified"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-disqualify-lead",
+    "category": "direct",
+    "modules": [
+      "M03"
+    ],
+    "turns": [
+      {
+        "user": "Disqualify Wen Okafor, they signed with a competitor last week"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M03.A09"
+        ]
+      },
+      "args": [
+        {
+          "action": "M03.A09",
+          "match": {
+            "leadId": "ld_6",
+            "reason": "competitor"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM leads WHERE id='ld_6'",
+          "equals": "disqualified"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-convert-lead",
+    "category": "direct",
+    "modules": [
+      "M03",
+      "M04"
+    ],
+    "turns": [
+      {
+        "user": "Convert Hiro Reyes into an opportunity worth $18,000, expected to close on December 15, 2026"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M03.A10"
+        ]
+      },
+      "args": [
+        {
+          "action": "M03.A10",
+          "match": {
+            "leadId": "ld_1",
+            "value": 18000,
+            "expectedCloseDate": "2026-12-15"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM opportunities WHERE json_extract(data,'$.value')=18000 AND json_extract(data,'$.expectedCloseDate')='2026-12-15'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-opportunity-value",
+    "category": "direct",
+    "modules": [
+      "M04"
+    ],
+    "turns": [
+      {
+        "user": "The Initech - Agency plan deal is now worth $7,250"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M04.A04"
+        ]
+      },
+      "args": [
+        {
+          "action": "M04.A04",
+          "match": {
+            "opportunityId": "op_4",
+            "value": 7250
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.value') FROM opportunities WHERE id='op_4'",
+          "equals": 7250
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-opportunity-close-date",
+    "category": "direct",
+    "modules": [
+      "M04"
+    ],
+    "turns": [
+      {
+        "user": "Push the expected close date on the Hooli - Agency plan deal to November 20th 2026"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M04.A07"
+        ]
+      },
+      "args": [
+        {
+          "action": "M04.A07",
+          "match": {
+            "opportunityId": "op_7",
+            "expectedCloseDate": "2026-11-20"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.expectedCloseDate') FROM opportunities WHERE id='op_7'",
+          "equals": "2026-11-20"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-pipeline-stage",
+    "category": "direct",
+    "modules": [
+      "M05"
+    ],
+    "turns": [
+      {
+        "user": "Add a stage called Contract Sent to the Sales Pipeline with an 80% win probability"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M05.A06"
+        ]
+      },
+      "args": [
+        {
+          "action": "M05.A06",
+          "match": {
+            "pipelineId": "pl_1",
+            "name": "Contract Sent",
+            "probability": 80
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM pipelines, json_each(json_extract(pipelines.data,'$.stages')) s WHERE pipelines.id='pl_1' AND json_extract(s.value,'$.name')='Contract Sent'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-create-task",
+    "category": "direct",
+    "modules": [
+      "M06"
+    ],
+    "turns": [
+      {
+        "user": "Create a high priority task for Aisha Bello to send the renewal contract to Femi Schmidt, due October 28"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M06.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M06.A01",
+          "match": {
+            "assigneeId": "us_5",
+            "priority": "high",
+            "dueDate": "2026-10-28",
+            "title": {
+              "$contains": "contract"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_5' AND json_extract(data,'$.dueDate')='2026-10-28' AND json_extract(data,'$.priority')='high' AND json_extract(data,'$.status')='open'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-task-due-tomorrow",
+    "category": "direct",
+    "modules": [
+      "M06"
+    ],
+    "turns": [
+      {
+        "user": "Move the 'Call back Dev Ruiz' task to tomorrow"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M06.A06"
+        ]
+      },
+      "args": [
+        {
+          "action": "M06.A06",
+          "match": {
+            "taskId": "tk_9",
+            "dueDate": "2026-10-22"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.dueDate') FROM tasks WHERE id='tk_9'",
+          "equals": "2026-10-22"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-task-priority",
+    "category": "direct",
+    "modules": [
+      "M06"
+    ],
+    "turns": [
+      {
+        "user": "Bump 'Check in with Lena Larsen' to urgent"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M06.A07"
+        ]
+      },
+      "args": [
+        {
+          "action": "M06.A07",
+          "match": {
+            "taskId": "tk_6",
+            "priority": "urgent"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.priority') FROM tasks WHERE id='tk_6'",
+          "equals": "urgent"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-pinned-note",
+    "category": "direct",
+    "modules": [
+      "M07"
+    ],
+    "turns": [
+      {
+        "user": "Add a pinned note on Ana Ruiz: prefers calls after 3pm Eastern"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M07.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M07.A01",
+          "match": {
+            "body": {
+              "$contains": "3pm"
+            },
+            "pinned": true,
+            "attachTo": {
+              "type": "contact",
+              "id": "ct_3"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM notes WHERE json_extract(data,'$.body') LIKE '%3pm%' AND json_extract(data,'$.pinned')=1",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-create-tag",
+    "category": "direct",
+    "modules": [
+      "M08"
+    ],
+    "turns": [
+      {
+        "user": "Create a purple tag called trade-show-2026, for leads we meet at expos"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M08.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M08.A01",
+          "match": {
+            "name": "trade-show-2026",
+            "color": "purple"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.color') FROM tags WHERE json_extract(data,'$.name')='trade-show-2026'",
+          "equals": "purple"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-apply-tag",
+    "category": "direct",
+    "modules": [
+      "M08"
+    ],
+    "turns": [
+      {
+        "user": "Tag Omar Larsen as a partner"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M08.A06"
+        ]
+      },
+      "args": [
+        {
+          "action": "M08.A06",
+          "match": {
+            "tagId": "tg_4",
+            "recordType": "contact",
+            "recordId": "ct_7"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM contacts, json_each(json_extract(contacts.data,'$.tags')) t WHERE contacts.id='ct_7' AND t.value='partner'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-custom-dropdown",
+    "category": "direct",
+    "modules": [
+      "M10"
+    ],
+    "turns": [
+      {
+        "user": "Add a dropdown field on contacts called Preferred Language, with the options English, Spanish and French"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M10.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M10.A01",
+          "match": {
+            "label": "Preferred Language",
+            "module": "contact",
+            "type": "dropdown",
+            "options": [
+              {
+                "label": "English"
+              },
+              {
+                "label": "Spanish"
+              },
+              {
+                "label": "French"
+              }
+            ]
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_array_length(json_extract(data,'$.options')) FROM custom_fields WHERE json_extract(data,'$.label')='Preferred Language'",
+          "equals": 3
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-schedule-sms",
+    "category": "direct",
+    "modules": [
+      "M12"
+    ],
+    "turns": [
+      {
+        "user": "Schedule a text to Ben Brown for tomorrow at 9am: \"Your demo is confirmed for Thursday at 2pm\""
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M12.A04"
+        ]
+      },
+      "args": [
+        {
+          "action": "M12.A04",
+          "match": {
+            "contactId": "ct_6",
+            "body": {
+              "$contains": "confirmed for Thursday at 2pm"
+            },
+            "sendAt": {
+              "$contains": "2026-10-22"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM sms WHERE json_extract(data,'$.contactId')='ct_6' AND json_extract(data,'$.body') LIKE '%Thursday at 2pm%'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-send-email-subject",
+    "category": "direct",
+    "modules": [
+      "M13"
+    ],
+    "turns": [
+      {
+        "user": "Email Tara Larsen with the subject \"Your Q4 renewal\" saying we'd like to book a short call next week to go over it"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M13.A03"
+        ]
+      },
+      "args": [
+        {
+          "action": "M13.A03",
+          "match": {
+            "contactId": "ct_9",
+            "subject": "Your Q4 renewal"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM emails WHERE json_extract(data,'$.contactId')='ct_9' AND json_extract(data,'$.subject')='Your Q4 renewal' AND json_extract(data,'$.status')<>'draft'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-sms-template",
+    "category": "direct",
+    "modules": [
+      "M14"
+    ],
+    "turns": [
+      {
+        "user": "Create an SMS template named Appointment reminder with the body: Hi {{firstName}}, see you at {{time}} tomorrow"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M14.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M14.A01",
+          "match": {
+            "name": "Appointment reminder",
+            "channel": "sms",
+            "body": {
+              "$contains": "{{firstName}}"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.channel') FROM message_templates WHERE json_extract(data,'$.name')='Appointment reminder'",
+          "equals": "sms"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-create-campaign",
+    "category": "direct",
+    "modules": [
+      "M15"
+    ],
+    "turns": [
+      {
+        "user": "Set up an email campaign called Black Friday 2026, owned by Liam Walsh"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M15.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M15.A01",
+          "match": {
+            "name": "Black Friday 2026",
+            "channel": "email",
+            "ownerId": "us_8"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.ownerId') FROM campaigns WHERE json_extract(data,'$.name')='Black Friday 2026'",
+          "equals": "us_8"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-form-field",
+    "category": "direct",
+    "modules": [
+      "M18"
+    ],
+    "setup": [
+      {
+        "fixture": "form",
+        "with": {
+          "name": "Contact Us"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Add a required email field labeled Work email to the Contact Us form"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M18.A04"
+        ]
+      },
+      "args": [
+        {
+          "action": "M18.A04",
+          "match": {
+            "formId": "fm_1",
+            "label": "Work email",
+            "type": "email",
+            "required": true
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM forms, json_each(json_extract(forms.data,'$.fields')) f WHERE forms.id='fm_1' AND json_extract(f.value,'$.label')='Work email' AND json_extract(f.value,'$.required')=1",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-survey-question",
+    "category": "direct",
+    "modules": [
+      "M19"
+    ],
+    "setup": [
+      {
+        "fixture": "survey",
+        "with": {
+          "name": "NPS"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Add a required rating question to the NPS survey: How likely are you to recommend us?"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M19.A04"
+        ]
+      },
+      "args": [
+        {
+          "action": "M19.A04",
+          "match": {
+            "surveyId": "sv_1",
+            "type": "rating",
+            "required": true,
+            "text": {
+              "$contains": "recommend us"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_array_length(json_extract(data,'$.questions')) FROM surveys WHERE id='sv_1'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-calendar-duration-buffer",
+    "category": "multi",
+    "modules": [
+      "M20"
+    ],
+    "setup": [
+      {
+        "fixture": "calendar",
+        "with": {
+          "name": "Demo Calls"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Make Demo Calls appointments 45 minutes long with a 15 minute buffer between them"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M20.A07",
+          "M20.A08"
+        ]
+      },
+      "args": [
+        {
+          "action": "M20.A07",
+          "match": {
+            "calendarId": "cal_1",
+            "durationMinutes": 45
+          }
+        },
+        {
+          "action": "M20.A08",
+          "match": {
+            "calendarId": "cal_1",
+            "bufferMinutes": 15
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.durationMinutes') * 100 + json_extract(data,'$.bufferMinutes') FROM calendars WHERE id='cal_1'",
+          "equals": 4515
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-calendar-timezone",
+    "category": "direct",
+    "modules": [
+      "M20"
+    ],
+    "setup": [
+      {
+        "fixture": "calendar",
+        "with": {
+          "name": "Demo Calls"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Set the Demo Calls calendar to Pacific time"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M20.A05"
+        ]
+      },
+      "args": [
+        {
+          "action": "M20.A05",
+          "match": {
+            "calendarId": "cal_1",
+            "timezone": "America/Los_Angeles"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.timezone') FROM calendars WHERE id='cal_1'",
+          "equals": "America/Los_Angeles"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-book-appointment",
+    "category": "direct",
+    "modules": [
+      "M21"
+    ],
+    "turns": [
+      {
+        "user": "Book a 30 minute intro call for Kofi Brown with Raj Iyer on October 28 at 3pm"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M21.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M21.A01",
+          "match": {
+            "contactId": "ct_14",
+            "hostId": "us_2",
+            "startAt": {
+              "$contains": "2026-10-28"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM appointments WHERE json_extract(data,'$.contactId')='ct_14' AND json_extract(data,'$.hostId')='us_2' AND json_extract(data,'$.startAt') LIKE '2026-10-28%' AND (julianday(json_extract(data,'$.endAt')) - julianday(json_extract(data,'$.startAt'))) * 1440 BETWEEN 29.9 AND 30.1",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-block-time",
+    "category": "direct",
+    "modules": [
+      "M22"
+    ],
+    "setup": [
+      {
+        "fixture": "calendar",
+        "with": {
+          "name": "Demo Calls"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Block 12:00 to 13:30 on October 30 on the Demo Calls calendar for the team offsite"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M22.A05"
+        ]
+      },
+      "args": [
+        {
+          "action": "M22.A05",
+          "match": {
+            "calendarId": "cal_1",
+            "date": "2026-10-30",
+            "start": "12:00",
+            "end": "13:30"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-booking-confirmation",
+    "category": "direct",
+    "modules": [
+      "M23"
+    ],
+    "setup": [
+      {
+        "fixture": "bookingPage",
+        "with": {
+          "title": "Book a demo",
+          "slug": "demo"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "On the Book a demo page, set the confirmation message to: Thanks! Check your inbox for the invite."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M23.A07"
+        ]
+      },
+      "args": [
+        {
+          "action": "M23.A07",
+          "match": {
+            "bookingPageId": "bkp_1",
+            "confirmationMessage": {
+              "$contains": "Check your inbox for the invite"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM booking_pages WHERE id='bkp_1' AND json_extract(data,'$.confirmationMessage') LIKE '%Check your inbox%'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-create-event",
+    "category": "direct",
+    "modules": [
+      "M24"
+    ],
+    "turns": [
+      {
+        "user": "Create an event called Customer Summit on November 12 from 9am to 5pm at Harbor Hall, capacity 120"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M24.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M24.A01",
+          "match": {
+            "title": "Customer Summit",
+            "capacity": 120,
+            "location": {
+              "$contains": "Harbor Hall"
+            },
+            "startsAt": {
+              "$contains": "2026-11-12"
+            },
+            "endsAt": {
+              "$contains": "2026-11-12"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.capacity') FROM events WHERE json_extract(data,'$.title')='Customer Summit'",
+          "equals": 120
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-product-price",
+    "category": "direct",
+    "modules": [
+      "M26"
+    ],
+    "setup": [
+      {
+        "fixture": "product",
+        "with": {
+          "name": "Setup Package"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Add a $49 per month price called Monthly to the Setup Package, with a 14 day free trial"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M26.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M26.A01",
+          "match": {
+            "productId": "prd_1",
+            "label": "Monthly",
+            "amount": 49,
+            "interval": "month",
+            "trialDays": 14
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM prices WHERE json_extract(data,'$.productId')='prd_1' AND json_extract(data,'$.amount')=49 AND json_extract(data,'$.interval')='month' AND json_extract(data,'$.trialDays')=14",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-create-invoice",
+    "category": "direct",
+    "modules": [
+      "M28"
+    ],
+    "turns": [
+      {
+        "user": "Create an invoice for Yusuf Silva for 3 hours of consulting at $150 an hour, due November 15"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M28.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M28.A01",
+          "match": {
+            "contactId": "ct_5",
+            "dueDate": "2026-11-15",
+            "lineItems": [
+              {
+                "quantity": 3,
+                "unitPrice": 150
+              }
+            ]
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM invoices WHERE json_extract(data,'$.contactId')='ct_5' AND json_extract(data,'$.total')=450",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-invoice-due-date",
+    "category": "direct",
+    "modules": [
+      "M28"
+    ],
+    "turns": [
+      {
+        "user": "Give Marco Patel until November 30 to pay his open invoice"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M28.A06"
+        ]
+      },
+      "args": [
+        {
+          "action": "M28.A06",
+          "match": {
+            "invoiceId": "inv_4",
+            "dueDate": "2026-11-30"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.dueDate') FROM invoices WHERE id='inv_4'",
+          "equals": "2026-11-30"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-record-payment",
+    "category": "direct",
+    "modules": [
+      "M29"
+    ],
+    "turns": [
+      {
+        "user": "Ana Ruiz paid her open invoice in full by bank transfer, $450. Record it."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M29.A04"
+        ]
+      },
+      "args": [
+        {
+          "action": "M29.A04",
+          "match": {
+            "contactId": "ct_3",
+            "method": "bank_transfer",
+            "invoiceId": "inv_3"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM invoices WHERE id='inv_3'",
+          "equals": "paid"
+        },
+        {
+          "sql": "SELECT json_extract(data,'$.amount') FROM payments WHERE json_extract(data,'$.contactId')='ct_3' ORDER BY rowid DESC LIMIT 1",
+          "equals": 450
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-subscription-seats",
+    "category": "direct",
+    "modules": [
+      "M30"
+    ],
+    "setup": [
+      {
+        "fixture": "product",
+        "with": {
+          "name": "Team Plan"
+        }
+      },
+      {
+        "fixture": "price",
+        "with": {
+          "productId": "prd_1",
+          "label": "Per seat",
+          "amount": 20,
+          "interval": "month"
+        }
+      },
+      {
+        "fixture": "subscription",
+        "with": {
+          "contactId": "ct_5",
+          "productId": "prd_1",
+          "priceId": "prc_1",
+          "quantity": 2
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Yusuf Silva is adding three more people. Take his subscription from 2 seats to 5."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M30.A05"
+        ]
+      },
+      "args": [
+        {
+          "action": "M30.A05",
+          "match": {
+            "subscriptionId": "sub_1",
+            "quantity": 5
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.quantity') FROM subscriptions WHERE id='sub_1'",
+          "equals": 5
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-create-coupon",
+    "category": "direct",
+    "modules": [
+      "M31"
+    ],
+    "turns": [
+      {
+        "user": "Create a coupon BLACKFRIDAY25 for 25% off, valid through November 30, limited to 200 redemptions"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M31.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M31.A01",
+          "match": {
+            "code": "BLACKFRIDAY25",
+            "discount": {
+              "type": "percent",
+              "value": 25
+            },
+            "maxRedemptions": 200
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.maxRedemptions') FROM coupons WHERE json_extract(data,'$.code')='BLACKFRIDAY25'",
+          "equals": 200
+        },
+        {
+          "sql": "SELECT json_extract(data,'$.validUntil') >= '2026-11-30' AND json_extract(data,'$.validUntil') < '2026-12-01T12' FROM coupons WHERE json_extract(data,'$.code')='BLACKFRIDAY25'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-partial-refund",
+    "category": "direct",
+    "modules": [
+      "M33"
+    ],
+    "turns": [
+      {
+        "user": "Elena Costa was double charged for shipping. Start a refund of $120 on her $300 payment."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M33.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M33.A01",
+          "match": {
+            "paymentId": "pay_4",
+            "amount": 120
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM refunds WHERE json_extract(data,'$.paymentId')='pay_4' AND json_extract(data,'$.amount')=120",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-tax-rule",
+    "category": "direct",
+    "modules": [
+      "M34"
+    ],
+    "turns": [
+      {
+        "user": "Add a tax rule called Texas Sales Tax: 6.25% for region US-TX"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M34.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M34.A01",
+          "match": {
+            "name": "Texas Sales Tax",
+            "rate": 6.25,
+            "region": "US-TX"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.rate') FROM tax_rules WHERE json_extract(data,'$.name')='Texas Sales Tax'",
+          "equals": 6.25
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-landing-seo",
+    "category": "direct",
+    "modules": [
+      "M37"
+    ],
+    "setup": [
+      {
+        "fixture": "landingPage",
+        "with": {
+          "title": "Webinar signup",
+          "slug": "webinar"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Set the SEO title on the Webinar signup page to \"Free Growth Webinar\" and the description to \"Join us live on November 5\""
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M37.A08"
+        ]
+      },
+      "args": [
+        {
+          "action": "M37.A08",
+          "match": {
+            "landingPageId": "lp_1",
+            "title": "Free Growth Webinar",
+            "description": {
+              "$contains": "November 5"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.seo.title') FROM landing_pages WHERE id='lp_1'",
+          "equals": "Free Growth Webinar"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-schedule-post",
+    "category": "direct",
+    "modules": [
+      "M38"
+    ],
+    "setup": [
+      {
+        "fixture": "blogPost",
+        "with": {
+          "title": "Fall product update",
+          "slug": "fall-update",
+          "body": "What's new this fall."
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Schedule the Fall product update post to go live on November 2"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M38.A08"
+        ]
+      },
+      "args": [
+        {
+          "action": "M38.A08",
+          "match": {
+            "postId": "blg_1",
+            "publishAt": {
+              "$contains": "2026-11-02"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM blog_posts WHERE id='blg_1' AND json_extract(data,'$.publishAt') LIKE '2026-11-02%'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-asset-alt-text",
+    "category": "direct",
+    "modules": [
+      "M39"
+    ],
+    "setup": [
+      {
+        "fixture": "mediaAsset",
+        "with": {
+          "name": "hero.jpg",
+          "mimeType": "image/jpeg"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Set the alt text on hero.jpg to: Team photo at the 2026 summit"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M39.A05"
+        ]
+      },
+      "args": [
+        {
+          "action": "M39.A05",
+          "match": {
+            "assetId": "md_1",
+            "altText": "Team photo at the 2026 summit"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.altText') FROM media_assets WHERE id='md_1'",
+          "equals": "Team photo at the 2026 summit"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-enroll-with-expiry",
+    "category": "direct",
+    "modules": [
+      "M42"
+    ],
+    "setup": [
+      {
+        "fixture": "course",
+        "with": {
+          "title": "Onboarding Basics",
+          "status": "published"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Enroll Uma Novak in Onboarding Basics, with access ending January 31, 2027"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M42.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M42.A01",
+          "match": {
+            "courseId": "crs_1",
+            "contactId": "ct_28",
+            "expiresAt": {
+              "$contains": "2027-01-31"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM enrollments WHERE json_extract(data,'$.contactId')='ct_28' AND json_extract(data,'$.expiresAt') LIKE '2027-01-31%'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-grant-membership",
+    "category": "direct",
+    "modules": [
+      "M44"
+    ],
+    "setup": [
+      {
+        "fixture": "membershipPlan",
+        "with": {
+          "name": "Gold"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Give Dev Larsen the Gold membership until the end of June 2027"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M44.A07"
+        ]
+      },
+      "args": [
+        {
+          "action": "M44.A07",
+          "match": {
+            "planId": "mpl_1",
+            "contactId": "ct_17",
+            "expiresAt": {
+              "$contains": "2027-06-30"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM memberships WHERE json_extract(data,'$.contactId')='ct_17' AND json_extract(data,'$.planId')='mpl_1'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-listing-phone",
+    "category": "direct",
+    "modules": [
+      "M46"
+    ],
+    "turns": [
+      {
+        "user": "Harbor Optics has a new phone number, +15550188877. Update the listing."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M46.A06"
+        ]
+      },
+      "args": [
+        {
+          "action": "M46.A06",
+          "match": {
+            "listingId": "bl_3",
+            "phone": "+15550188877"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.phone') FROM listings WHERE id='bl_3'",
+          "equals": "+15550188877"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-create-ticket",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Open an urgent support ticket for Marcus Lee titled \"Invoice PDF is blank\": the PDF download shows an empty page. Assign it to Noah Park."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M47.A01",
+          "match": {
+            "title": "Invoice PDF is blank",
+            "contactId": "ct_33",
+            "priority": "urgent",
+            "ownerId": "us_6"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.contactId')='ct_33' AND json_extract(data,'$.priority')='urgent' AND json_extract(data,'$.ownerId')='us_6'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-ticket-status",
+    "category": "direct",
+    "modules": [
+      "M47"
+    ],
+    "turns": [
+      {
+        "user": "Noah has started on the Workspace login ticket, mark it in progress"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M47.A06"
+        ]
+      },
+      "args": [
+        {
+          "action": "M47.A06",
+          "match": {
+            "ticketId": "tic_3",
+            "status": "in_progress"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.status') FROM tickets WHERE id='tic_3'",
+          "equals": "in_progress"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-user-role",
+    "category": "direct",
+    "modules": [
+      "M48"
+    ],
+    "turns": [
+      {
+        "user": "Give Liam Walsh the manager role as well"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M48.A05"
+        ]
+      },
+      "args": [
+        {
+          "action": "M48.A05",
+          "match": {
+            "userId": "us_8",
+            "role": "manager"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM users, json_each(json_extract(users.data,'$.roles')) r WHERE users.id='us_8' AND r.value IN ('manager','marketing')",
+          "equals": 2
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-team-strategy",
+    "category": "direct",
+    "modules": [
+      "M49"
+    ],
+    "turns": [
+      {
+        "user": "Switch the Support team to round robin assignment"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M49.A08"
+        ]
+      },
+      "args": [
+        {
+          "action": "M49.A08",
+          "match": {
+            "teamId": "tm_2",
+            "strategy": "round_robin"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.strategy') FROM teams WHERE id='tm_2'",
+          "equals": "round_robin"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-report-range",
+    "category": "direct",
+    "modules": [
+      "M50"
+    ],
+    "setup": [
+      {
+        "fixture": "savedReport",
+        "with": {
+          "name": "Monthly Revenue",
+          "metric": "revenue"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "user": "Set the Monthly Revenue report to cover September 2026"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M50.A05"
+        ]
+      },
+      "args": [
+        {
+          "action": "M50.A05",
+          "match": {
+            "reportId": "rpt_1",
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.dateRange.from') || '/' || json_extract(data,'$.dateRange.to') FROM saved_reports WHERE id='rpt_1'",
+          "equals": "2026-09-01/2026-09-30"
+        }
+      ]
+    }
+  },
+  {
+    "id": "param-assign-lead-and-task",
+    "category": "multi",
+    "modules": [
+      "M03",
+      "M06"
+    ],
+    "turns": [
+      {
+        "user": "Assign Grace Patel to Aisha Bello and create a task for Aisha to call her by this Friday"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M03.A05",
+          "M06.A01"
+        ]
+      },
+      "args": [
+        {
+          "action": "M03.A05",
+          "match": {
+            "leadId": "ld_5",
+            "ownerId": "us_5"
+          }
+        },
+        {
+          "action": "M06.A01",
+          "match": {
+            "assigneeId": "us_5",
+            "dueDate": "2026-10-23",
+            "relatedTo": {
+              "type": "lead",
+              "id": "ld_5"
+            }
+          }
+        }
+      ],
+      "state": [
+        {
+          "sql": "SELECT json_extract(data,'$.ownerId') FROM leads WHERE id='ld_5'",
+          "equals": "us_5"
+        },
+        {
+          "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_5' AND json_extract(data,'$.dueDate')='2026-10-23' AND json_extract(data,'$.relatedTo.id')='ld_5'",
+          "equals": 1
+        }
+      ]
+    }
+  }
+]

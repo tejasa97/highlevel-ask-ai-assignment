@@ -7,7 +7,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { duplicateCreates, inventedIds, isQuestion, oneOfSameNamed, planTurn, staffInQuery, renameReusedIds, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
+import { carryOf, duplicateCreates, inventedIds, isQuestion, oneOfSameNamed, planTurn, staffInQuery, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -118,12 +118,105 @@ describe("grounded outcomes and clarifications", () => {
     assert.match(planner.requests[2]!.user, /only reads/);
   });
 
+  test("a rejected first reply's read outcome gives way to the repair's change", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const stepless = reply({ type: "look", steps: null, outcome: read });
+    const planner = scripted(stepless, { ...tasks("look"), outcome: change }, createTask());
+    const { out } = await run("Look at my tasks and create one like them", planner, {}, async () => []);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.match(planner.requests[2]!.user, /requested_outcome.*M06.A01/);
+  });
+
+  test("a look that calls its own reads the outcome doesn't hold the change asked for after it to them", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("look"), outcome: read }, createTask());
+    const { out } = await run("Look at my tasks and create one like them", planner, {}, async () => []);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+  });
+
+  test("a question that goes on to ask for a change gets the change the reply after its look states", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const asked = scripted({ ...tasks("look"), outcome: read }, tasks("look"), createTask());
+    const { out } = await run("Which tasks are open? Give Ana one more like them.", asked, {}, async () => []);
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A01"), JSON.stringify(out));
+    assert.equal(asked.requests.length, 3);
+    const only = scripted({ ...tasks("look"), outcome: read }, tasks("look"));
+    const answered = await run("Which tasks are open?", only, {}, async () => []);
+    assert.ok(answered.out.kind === "plan" && answered.out.plan.steps.every((s) => s.kind !== "action" || s.call.action.risk === "read"));
+    assert.equal(only.requests.length, 2);
+  });
+
+  test("a command whose looks each call themselves reads is not answered with those reads when it looks again", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const looks = scripted({ ...tasks("look"), outcome: read }, { ...tasks("look"), outcome: read }, { ...createTask(), outcome: change });
+    const { out } = await run("Find my open tasks and create one more like them for Ana", looks, {}, async () => []);
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A01"), JSON.stringify(out));
+    assert.equal(looks.requests.length, 3);
+  });
+
+  test("a plan of reads it calls a read, for a message that asks and then tells, is sent back for the change", async () => {
+    const read = { effect: "read" as const, actions: [], destination: null };
+    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...createTask(), outcome: change });
+    const { out } = await run("Which tasks are open? Give Ana one more like them.", planner, {}, async () => []);
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A01"), JSON.stringify(out));
+    assert.match(planner.requests[1]!.user, /only finds records/);
+  });
+
+  test("a follow-up that makes again what the last turn made is asked once which it means", async () => {
+    const last = { carry: { prev: ["M06.A01"], entities: ["task"], made: ["task"] }, records: [{ entity: "task", id: "tsk_90", name: "Call Ana" }] };
+    const again = scripted(createTask(), createTask());
+    const out = await planTurn({ message: "Only the Austin ones, and make those due Friday", tier: "fast", ...last }, { registry, retriever, planner: again, clock: frozenClock() });
+    assert.equal(out.kind, "plan");
+    assert.equal(again.requests.length, 2);
+    assert.match(again.requests[1]!.user, /already made 1 task record \(Call Ana \(tsk_90\)\)/);
+    const more = scripted(createTask());
+    assert.equal((await planTurn({ message: "Make one for Tom too", tier: "fast", ...last }, { registry, retriever, planner: more, clock: frozenClock() })).kind, "plan");
+    assert.equal(more.requests.length, 1);
+  });
+
+  test("asked about a remake, a reply that says it will change those records but makes them again is not let through", async () => {
+    const last = { carry: { prev: ["M06.A01"], entities: ["task"], made: ["task"] }, records: [{ entity: "task", id: "tsk_90", name: "Call Ana", for: "ld_4" }] };
+    const message = "Only the Austin ones, and make those due Friday";
+    const said = (actions: string[]) => ({ ...createTask(), outcome: { effect: "change" as const, actions, destination: null } });
+    const contradicts = scripted(said(["M06.A01"]), said(["M06.A06"]));
+    const out = await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner: contradicts, clock: frozenClock() });
+    assert.ok(out.kind === "reply" && out.status === "failed", JSON.stringify(out));
+    assert.match(contradicts.requests[1]!.user, /Call Ana \(tsk_90, for ld_4\)/);
+    const means = scripted(said(["M06.A01"]), said(["M06.A01"]));
+    assert.equal((await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner: means, clock: frozenClock() })).kind, "plan");
+  });
+
+  test("the reply after a look may name the change's actions afresh, but not turn it into a read", async () => {
+    const guess = { effect: "change" as const, actions: ["M06.A01", "M06.A06"], destination: null };
+    const planner = scripted({ ...tasks("look"), outcome: guess }, { ...createTask(), outcome: change });
+    const { out } = await run("Create a task like my other tasks", planner, {}, async () => []);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+
+    const reads = scripted({ ...tasks("look"), outcome: guess }, { ...tasks("plan"), outcome: { effect: "read", actions: ["M06.A03"], destination: null } }, createTask(), createTask());
+    await run("Create a task like my other tasks", reads, {}, async () => []);
+    assert.match(reads.requests[2]!.user, /only reads/);
+  });
+
   test("a change cannot end with a prose-only answer, and retries are bounded", async () => {
     const answer = reply({ type: "answer", text: "Done", outcome: change });
     const planner = scripted(answer, answer);
     const { out } = await run("Create a task", planner);
     assert.ok(out.kind === "reply" && out.status === "failed");
     assert.equal(planner.requests.length, 2);
+  });
+
+  test("a plan gets a second repair only when the first left fewer errors", async () => {
+    const two = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$nope", color: "red" }) }], outcome: change });
+    const one = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$nope" }) }], outcome: change });
+    const closer = scripted(two, one, createTask());
+    assert.equal((await run("Create a task", closer)).out.kind, "plan");
+    assert.equal(closer.requests.length, 3);
+    const stuck = scripted(one, one, createTask());
+    const { out } = await run("Create a task", stuck);
+    assert.ok(out.kind === "reply" && out.status === "failed");
+    assert.equal(stuck.requests.length, 2);
   });
 
   test("a genuine read-only look may still end with an answer", async () => {
@@ -183,6 +276,15 @@ describe("grounded outcomes and clarifications", () => {
     const { out } = await run("Has Ana got any tasks?", planner, {}, async () => []);
     assert.ok(out.kind === "plan" && out.answer === undefined, JSON.stringify(out));
     assert.equal(planner.requests.length, 2);
+  });
+
+  test("the next turn learns which record types this one made, not those it only changed", () => {
+    const made = compile(createTask(), registry);
+    assert.ok(made.ok);
+    assert.deepEqual(carryOf(made.plan, registry).made, ["task"]);
+    const changed = compile(reply({ steps: [{ id: "s1", kind: "action", action: "M06.A06", argsJson: JSON.stringify({ taskId: "tk_1", dueDate: "2026-10-22" }) }] }), registry);
+    assert.ok(changed.ok, JSON.stringify(changed));
+    assert.equal(carryOf(changed.plan, registry).made, undefined);
   });
 
   test("a staff user's name searched as text is sent back to go in the owner argument", () => {
@@ -283,6 +385,15 @@ describe("grounded outcomes and clarifications", () => {
     const out = await planTurn({ message: "Email Sarah Johnson", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
     assert.ok(out.kind === "reply" && out.status === "clarify");
     assert.equal(planner.requests.length, 1);
+  });
+
+  test("asked again after seeing the records, a question about a name that fits two of them goes to the user", async () => {
+    const ask = reply({ type: "clarify", missing: missing("M01.A07", "contactId", { ownerId: "us_5" }), clarification: "identity", question: "Which Zoe Costa?" });
+    const planner = scripted(ask, ask);
+    const w = world();
+    const out = await planTurn({ message: "Make Aisha the owner of Zoe Costa", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
+    assert.match(planner.requests[1]!.user, /ct_26.*ct_30|ct_30.*ct_26/);
   });
 
   test("unsupported destination is reported before asking for content or executing look", async () => {
@@ -407,7 +518,7 @@ describe("planTurn", () => {
     const planner = scripted(createTask());
     const { out, events } = await run("create a task to call Ana", planner);
     assert.equal(out.kind, "plan");
-    if (out.kind === "plan") assert.deepEqual(out.carry, { prev: ["M06.A01"], entities: ["task"] });
+    if (out.kind === "plan") assert.deepEqual(out.carry, { prev: ["M06.A01"], entities: ["task"], made: ["task"] });
     assert.equal(planner.requests.length, 1);
     assert.ok(offeredIn(planner.requests[0]!).includes("M06.A01"));
     assert.equal(events.filter((e) => e.type === "retrieval").length, 1);
@@ -550,6 +661,21 @@ describe("planTurn", () => {
       assert.equal(looks, 2);
       assert.match(planner.requests[1]!.user, /<looked>/);
       assert.match(planner.requests[3]!.user, /You already looked twice/);
+    });
+
+    test("a second look that reuses the first's ids for other reads keeps the first's results in view", async () => {
+      const others = reply({ type: "look", steps: [{ id: "s1", kind: "action", action: "M06.A03", argsJson: JSON.stringify({ query: "Bo" }) }] });
+      const planner = scripted(listTasks, others, createTask());
+      let looks = 0;
+      const { out } = await run("create a task like the Ana one", planner, {}, async (plan) => {
+        looks++;
+        return plan.steps.map((s) => ({ id: s.id, output: { items: [], total: looks === 1 ? "ana-first" : "bo-second" } }));
+      });
+      assert.equal(out.kind, "plan");
+      const third = planner.requests[2]!.user;
+      assert.match(third, /ana-first/);
+      assert.match(third, /bo-second/);
+      assert.match(third, /s1_2/);
     });
 
     test("asking for a third look is nudged without spending the repair", async () => {
@@ -784,5 +910,23 @@ describe("creating a record the message names", () => {
     assert.match(duplicateCreates(p, elodie, "Add Elodie Mercer, then post as her").join("\n"), /already exists as a contact/);
     assert.deepEqual(duplicateCreates(p, elodie, "Add a new contact Elodie Mercer"), []);
     assert.deepEqual(duplicateCreates(plan({ firstName: "Ana", lastName: "Mercer" }), elodie, "Add Ana Mercer"), []);
+  });
+
+  test("is not a duplicate when the name only matches part of an existing record's name", () => {
+    const sarahs = [{ name: "Sarah", entity: "contact", count: 2 }];
+    const fullNames = ["sarah johnson"];
+    const sameName = (_: string, name: string) => fullNames.includes(name);
+    assert.deepEqual(duplicateCreates(plan({ firstName: "Sarah" }), sarahs, "Create a contact named Sarah", sameName), []);
+    assert.match(duplicateCreates(plan({ firstName: "Sarah", lastName: "Johnson" }), [{ name: "Sarah Johnson", entity: "contact", count: 2 }], "Add Sarah Johnson", sameName).join("\n"), /already exists/);
+  });
+
+  test("leaving out a field the message says comes with it is sent back to be set or asked for", () => {
+    const sarah = plan({ firstName: "Sarah" });
+    assert.match(unfilledNamedFields(sarah, "Add Sarah as a new contact with the email I'm pasting.").join("\n"), /leaves out email.*clarify/);
+    assert.match(unfilledNamedFields(sarah, "Create a contact named Sarah with this email address.").join("\n"), /leaves out email/);
+    assert.deepEqual(unfilledNamedFields(plan({ firstName: "Sarah", email: "s@x.example" }), "Add Sarah with this email: s@x.example"), []);
+    assert.deepEqual(unfilledNamedFields(sarah, "Create a contact named Sarah"), []);
+    assert.deepEqual(unfilledNamedFields(sarah, "Email Sarah and create her as a contact"), []);
+    assert.deepEqual(unfilledNamedFields(sarah, "Create Sarah and send her an email"), []);
   });
 });

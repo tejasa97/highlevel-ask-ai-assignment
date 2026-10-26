@@ -10,7 +10,7 @@ type Check = ReturnType<typeof checkIdentity>;
 export type ClarificationCheck =
   | { kind: "question" }
   | { kind: "identity"; lookup: Lookup; check: Check }
-  | { kind: "facts"; digest: string };
+  | { kind: "facts"; digest: string; ambiguous: boolean };
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const present = (v: unknown) => v !== undefined && v !== "";
 
@@ -19,6 +19,20 @@ function selector(value: unknown): Lookup | undefined {
   const v = value.$lookup;
   if (Object.keys(value).length !== 1 || !object(v) || Object.keys(v).some((k) => !["entity", "name", "where"].includes(k)) || typeof v.entity !== "string" || typeof v.name !== "string") throw new Error("Invalid named argument selector");
   return { entity: v.entity, name: v.name, whereJson: v.where === undefined ? null : JSON.stringify(v.where) };
+}
+
+/**
+ * The message names this input as something it brings along, without (necessarily) giving it: "with this email
+ * address", "using the email I'm pasting", "with her phone number". A verb ("Email Sarah", "and email her") or a
+ * passing mention ("send her an email") does not.
+ */
+export function namesField(message: string, path: string): boolean {
+  const leaf = path.split(/[.[\]]/).filter(Boolean).pop() ?? "";
+  const words = leaf.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+  if (!words || /^\d+$/.test(words)) return false;
+  const brought = `\\b(with|using|including|plus|via)\\s+((the following|the|this|that|these|those|her|his|their|its|my|our)\\s+)?${words}\\b`;
+  const pointed = `\\b(this|that|these|those|the following)\\s+${words}\\b`;
+  return new RegExp(`${brought}|${pointed}`, "i").test(message);
 }
 
 class ParentChoice extends Error {
@@ -41,12 +55,15 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
   let lookup = inline ?? d.lookup ?? undefined;
   if (present(field.value) && !inline) throw new Error(`${path} is already supplied; use plan/look to validate or inspect it, not clarify`);
   const entities = argumentEntities(action, path, args).filter((e) => registry.resolver(e));
+  // A question about a plain value ("what time?") can't select a record, so a lookup sent with it is noise; the record it
+  // names stays in argsJson.
+  if (lookup && !inline && !entities.length) lookup = undefined;
   if (lookup && (!entities.includes(lookup.entity) || field.schema.type !== "string")) throw new Error(`Lookup entity does not match argument ${path}; expected ${entities.join(" or ") || "a non-identity input"}`);
   const alternatives = action.inputAlternatives ?? [];
   const has = (key: string) => present(args[key]);
   if (alternatives.some((group) => !group.some((key) => path === key || path.startsWith(`${key}.`) || path.startsWith(`${key}[`)) && group.every(has))) throw new Error("A complete input alternative is already supplied; do not ask for another route's inputs");
   const required = field.required || alternatives.some((group) => group.includes(path));
-  if (!required && !lookup) throw new Error(`${path} is optional; do not ask for an unspecified optional input`);
+  if (!required && !lookup && !namesField(message, path)) throw new Error(`${path} is optional; do not ask for an unspecified optional input`);
   const binding = action.argumentLookups?.[path.replace(/\[\d+\]/g, "[]")];
   const parent = (parentPath: string): string => {
     const value = argumentAt(action, args, parentPath).value;
@@ -74,7 +91,9 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
     if (store && entities.length && field.schema.type === "string") {
       const where = scopedWhere(binding, {}, parent);
       const facts = namedFacts(message, entities, where, registry, store);
-      if (facts.length) return { kind: "facts", digest: JSON.stringify({ action: id, argument: path, matches: facts, instruction: "These are account facts, not permission to choose a target. Preserve the user's full request and plan or clarify actual ambiguity." }) };
+      // The fullest name the message gives ("zoe costa", not "zoe") matching more than one record is real ambiguity.
+      const ambiguous = facts.some((f) => f.count > 1 && !facts.some((g) => g !== f && g.name.includes(f.name)));
+      if (facts.length) return { kind: "facts", ambiguous, digest: JSON.stringify({ action: id, argument: path, matches: facts, instruction: "These are account facts, not permission to choose a target. Preserve the user's full request and plan or clarify actual ambiguity." }) };
     }
   } catch (err) {
     if (err instanceof ParentChoice) return { kind: "identity", lookup: err.lookup, check: err.check };
@@ -87,9 +106,9 @@ const norm = (s: string) => s.normalize("NFKD").toLowerCase().replace(/[^\p{L}\p
 const STOP = new Set("a an the it me my we our i you your who which what to for of in on and or is are please".split(" "));
 
 /** Bounded mention scan for the argument's entity only. Never resolves a write target automatically. */
-function namedFacts(message: string, entities: string[], where: Record<string, string>, registry: Registry, store: Store): unknown[] {
+function namedFacts(message: string, entities: string[], where: Record<string, string>, registry: Registry, store: Store): { entity: string; name: string; count: number; candidates: unknown[]; truncated: boolean }[] {
   const words = norm(message).split(" ").slice(0, 64);
-  const facts: unknown[] = [], seen = new Set<string>();
+  const facts: ReturnType<typeof namedFacts> = [], seen = new Set<string>();
   for (let size = Math.min(6, words.length); size > 0; size--) for (let n = 0; n <= words.length - size; n++) {
     const span = words.slice(n, n + size);
     if (span.some((w) => STOP.has(w))) continue;

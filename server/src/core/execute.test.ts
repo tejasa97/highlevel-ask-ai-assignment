@@ -224,7 +224,7 @@ describe("compile errors the planner can act on", () => {
   });
 
   test("forward ref", () => {
-    assert.match(errs(plan([action("s1", "M03.A05", { leadId: "$s2.id", ownerId: "us_2" }), action("s2", "M03.A03", {})])), /not an earlier step/);
+    assert.match(errs(plan([action("s1", "M03.A05", { leadId: "$s2.id", ownerId: "us_2" }), action("s2", "M03.A05", { leadId: "$s1.leadId", ownerId: "us_2" })])), /not an earlier step/);
   });
 
   test("made-up param and bad enum", () => {
@@ -295,6 +295,25 @@ describe("null-aware filters", () => {
     const yes = await run(true), no = await run(false);
     assert.deepEqual((yes.steps[1]!.output as { id: string }[]).map((x) => x.id).sort(), [empty.id, early.id].sort());
     assert.deepEqual((no.steps[1]!.output as { id: string }[]).map((x) => x.id), [early.id]);
+  });
+
+  test("a dotted path reaches a field inside a field, in a filter and an exclude", async () => {
+    const ctx = fresh();
+    const lead = { type: "lead" as const, id: "ld_41" };
+    const mine = ctx.f.task({ title: "Dotted fixture", relatedTo: lead });
+    const other = ctx.f.task({ title: "Dotted fixture", relatedTo: { type: "lead" as const, id: "ld_3" } });
+    ctx.f.task({ title: "Dotted fixture", relatedTo: null });
+    const r = await execute(compiled(plan([
+      action("s1", "M06.A03", { query: "Dotted fixture" }),
+      op("s2", "filter", { in: "$s1.items", where: { "relatedTo.id": { in: ["ld_41"] } } }),
+      op("s3", "exclude", { in: "$s1.items", by: "relatedTo.id", set: "$s2[*].relatedTo.id" }),
+    ])), registry, ctx, { executionId: "dotted" });
+    assert.deepEqual((r.steps[1]!.output as { id: string }[]).map((x) => x.id), [mine.id]);
+    assert.ok(!(r.steps[2]!.output as { id: string }[]).some((x) => x.id === mine.id));
+    assert.ok((r.steps[2]!.output as { id: string }[]).some((x) => x.id === other.id));
+    const bad = compile(plan([action("s1", "M06.A03", {}), op("s2", "filter", { in: "$s1.items", where: { "relatedTo.lead": "ld_41" } })]), registry);
+    assert.ok(!bad.ok);
+    assert.match(bad.errors.join("\n"), /no field "relatedTo.lead"; fields of relatedTo: /);
   });
 
   test("orNull must be a literal boolean", () => {
@@ -440,5 +459,45 @@ describe("one value of a list in a single-ID argument", () => {
     const none = await execute(assign({ id: "nope" }), registry, w, { executionId: "no-lead" });
     assert.equal(none.status, "failed");
     assert.match(JSON.stringify(none.steps.at(-1)!.error), /NOT_FOUND.*found nothing/);
+  });
+});
+
+describe("optional arguments from empty references", () => {
+  test("a lead with no owner gets its task unassigned instead of failing", async () => {
+    const ctx = fresh();
+    const leads = ctx.store.all<{ id: string; ownerId: string | null; status: string }>("leads").filter((l) => l.status === "new");
+    assert.ok(leads.some((l) => !l.ownerId) && leads.some((l) => l.ownerId), "fixture has new leads with and without an owner");
+    const p = compiled(plan([
+      action("s1", "M03.A03", { status: "new", limit: 100 }),
+      op("s2", "forEach", { in: "$s1.items", do: [{ action: "M06.A01", args: { title: "Follow up with {{$item.name}}", assigneeId: "$item.ownerId", relatedTo: { type: "lead", id: "$item.id" } } }] }),
+    ]));
+    const asked = await execute(p, registry, ctx, { executionId: "unowned" });
+    assert.ok(asked.pending, "a bulk create waits for approval");
+    const r = await execute(p, registry, ctx, { executionId: "unowned", approvals: [asked.pending] });
+    assert.equal(r.status, "done");
+    const tasks = ctx.store.all<{ assigneeId?: string | null; relatedTo?: { id: string } }>("tasks").filter((t) => leads.some((l) => l.id === t.relatedTo?.id));
+    assert.equal(tasks.length, leads.length);
+    for (const t of tasks) assert.equal(t.assigneeId ?? null, leads.find((l) => l.id === t.relatedTo!.id)!.ownerId);
+  });
+});
+
+describe("a create whose record is already there", () => {
+  test("the steps after it use the existing record, and a create on its own still reports the duplicate", async () => {
+    const ctx = fresh();
+    const tag = ctx.store.all<{ id: string; name: string }>("tags")[0]!;
+    const contact = ctx.store.all<{ id: string; name: string; tags: string[] }>("contacts").find((c) => !c.tags.includes(tag.name))!;
+    const p = compiled(plan([
+      { id: "s1", kind: "resolve", entity: "contact", name: contact.name, whereJson: null } as never,
+      action("s2", "M08.A01", { name: tag.name }),
+      action("s3", "M08.A06", { tagId: "$s2.id", recordType: "contact", recordId: "$s1.id" }),
+    ]));
+    const r = await execute(p, registry, ctx, { executionId: "tag-again" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps));
+    assert.equal((r.steps.find((s) => s.id === "s2")!.output as { id: string }).id, tag.id);
+    assert.ok(ctx.store.get<{ tags: string[] }>("contacts", contact.id)!.tags.includes(tag.name));
+    assert.equal(ctx.store.all("tags").filter((t: any) => t.name === tag.name).length, 1);
+    const alone = await execute(compiled(plan([action("s1", "M08.A01", { name: tag.name })])), registry, ctx, { executionId: "tag-alone" });
+    assert.equal(alone.status, "failed");
+    assert.equal(alone.steps[0]!.error?.code, "DUPLICATE");
   });
 });

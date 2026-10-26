@@ -54,6 +54,20 @@ export function terms(text: string): string[] {
   return out;
 }
 
+/**
+ * The request without what it asks to be written: quoted text, and what a message is "saying" or "telling them".
+ * 'Email Tara "Your Q4 renewal" saying we'd like to book a call next week' is about sending an email, not
+ * booking or renewals. Kept whole when nothing would be left.
+ */
+export function withoutContent(message: string): string {
+  const out = message
+    .replace(/"[^"]*"|“[^”]*”/g, " ")
+    .replace(/\b(?:saying|that says|which says|telling (?:them|him|her)|to say|with the (?:message|text|body))\b.*?(?=[.;:!?](?:\s|$)|,|\s+(?:and then|then|and|but|also|plus)\s|$)/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return terms(out).length ? out : message;
+}
+
 /** Splits a multi-part request into clauses: "find X, assign them to Y and create Z" → 3 clauses. */
 export function clauses(message: string): string[] {
   return message

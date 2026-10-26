@@ -3,9 +3,10 @@ import type { z } from "zod";
 import type { SubmitPlan } from "../planner/submit-plan.js";
 import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import type { JsonSchema, RegisteredAction, Registry } from "../registry/registry.js";
-import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, literalList, looksLikeBrokenRef, parseRef, RESERVED_ROOTS, type Ref, typeAt, unwrap } from "./refs.js";
+import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, literalList, looksLikeBrokenRef, parseRef, pathOf, RESERVED_ROOTS, type Ref, typeAt, unwrap } from "./refs.js";
 import { normalizeDateTimes } from "./datetimes.js";
 import { lowerLookups, OTHER_THAN } from "./lookups.js";
+import { argumentEntities } from "../registry/arguments.js";
 
 // Stage 1 of validation: everything that can be checked before anything runs.
 // - structure: unique step ids, known actions that were offered to the planner this turn, JSON in argsJson/whereJson
@@ -53,7 +54,7 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
   if (plan.type !== "plan") return { ok: false, errors: [`expected type "plan", got "${plan.type}"`] };
   const lowered = lowerLookups(plan.steps ?? [], registry);
   errors.push(...lowered.errors);
-  const raw = lowered.steps;
+  const raw = tidy(lowered.steps);
   if (raw.length === 0) return { ok: false, errors: ["plan has no steps"] };
   const ids = new Set(raw.map((s) => s.id));
 
@@ -294,12 +295,18 @@ function writtenEnt(list: string[], scope: Scope): Ent | null {
   return first && all.every((e) => e && e.entity === first.entity && e.ids === first.ids) ? first : null;
 }
 
-/** The record type an id arg takes, from its description: "contact id (ct_…)", "user ids". */
-function argEntity(action: RegisteredAction, at: (string | number)[], registry: Registry): string | null {
+/** The record type an id arg takes: from its record-type sibling when it has one, else its description: "contact id (ct_…)", "user ids". */
+function argEntity(action: RegisteredAction, at: (string | number)[], args: Record<string, unknown>, registry: Registry): string | null {
+  const path = at.map((s, i) => (typeof s === "number" ? `[${s}]` : i ? `.${s}` : s)).join("");
+  if (action.typedIds?.[path.replace(/\[\d+\]/g, "[]")]) {
+    const [type] = argumentEntities(action, path, args);
+    return type && !parseRef(type) ? entityNamed(type, registry) : null;
+  }
   const desc = (s: JsonSchema | null) => (s ? ((s.description ?? unwrap(s).description) as string | undefined) : undefined);
   const d = desc(schemaAt(action.inputSchema, at)) ?? (typeof at.at(-1) === "number" ? desc(schemaAt(action.inputSchema, at.slice(0, -1))) : undefined);
   const m = d && /^(?:the |a |an )?([A-Za-z][A-Za-z ]*?) ids?\b/.exec(d.trim());
-  return m ? entityNamed(m[1]!, registry) : null;
+  // "contact or lead id" names no single type.
+  return m && !/\bor\b/.test(m[1]!) ? entityNamed(m[1]!, registry) : null;
 }
 
 /** The path to an action result's own id ("id", "request.id"), or null. */
@@ -378,7 +385,7 @@ function rootType(ref: Ref, scope: Scope, err: (m: string) => void): JsonSchema 
   const t = scope.types.get(ref.root);
   if (!t) {
     const steps = [...scope.kinds].map(([id, kind]) => `${id} (${kind})`);
-    const context = new Set(["looked", "mentions", "context", "actions", "now"]);
+    const context = new Set(["looked", "mentions", "context", "actions", "now", "recent_records"]);
     const prev = [...scope.kinds.keys()].at(-1);
     // Counting from 0, or naming the step being written, is what this error usually is: name the id to use instead.
     const off = ref.root === "s0"
@@ -391,7 +398,7 @@ function rootType(ref: Ref, scope: Scope, err: (m: string) => void): JsonSchema 
     err(
       `$${ref.root} is not an earlier step; ${steps.length ? `your steps are ${steps.join(", ")}` : "there are no earlier steps yet"}. Refs can only point back to a step id.` +
         off +
-        (context.has(ref.root) ? ` <${ref.root}> is a prompt block, not a step: copy the value you need into args as plain text.` : ""),
+        (context.has(ref.root) ? ` <${ref.root}> is a prompt block, not a step: copy the value you need into args as plain text${ref.root === "recent_records" ? ` (a loop over some of them is "in": ["tsk_1", "tsk_2"], their ids written out)` : ""}.` : ""),
     );
     return null;
   }
@@ -414,6 +421,35 @@ function listRef(raw: string, scope: Scope, what: string, err: (m: string) => vo
     return null;
   }
   return t;
+}
+
+type RawStep = NonNullable<SubmitPlan["steps"]>[number];
+
+/**
+ * Slips with only one reading, rewritten rather than sent back, so a repair round goes on what is really wrong:
+ * - an exclude whose "set" is written out (["ld_1"]) is a filter on "by" not in those values;
+ * - a step that reads a step listed after it runs after it: the plan is a graph, so the order it was written in is not
+ *   the order it must run in. A cycle is left for compile to report.
+ */
+export function tidy(steps: RawStep[]): RawStep[] {
+  const out = steps.map((s) => {
+    if (s.kind === "op" && s.op === "exclude" && s.by && s.set) {
+      const written = literalList(s.set, () => {}, "set");
+      if (written) return { ...s, op: "filter" as const, whereJson: JSON.stringify({ [s.by]: { nin: written } }), by: null, set: null };
+    }
+    return s;
+  });
+  const ids = new Set(out.map((s) => s.id));
+  const needs = new Map(out.map((s) => [s.id, new Set([...JSON.stringify(s).matchAll(/\$([A-Za-z_]\w*)/g)].map((m) => m[1]!).filter((r) => r !== s.id && ids.has(r)))]));
+  const order: RawStep[] = [];
+  const placed = new Set<string>();
+  while (order.length < out.length) {
+    const next = out.find((s) => !placed.has(s.id) && [...needs.get(s.id)!].every((r) => placed.has(r)));
+    if (!next) return out;
+    order.push(next);
+    placed.add(next.id);
+  }
+  return order;
 }
 
 /**
@@ -489,10 +525,23 @@ function writtenList(list: string[], scope: Scope, what: string, err: (m: string
   return arrayOf(item ?? { type: "string" });
 }
 
+/** A field of each item, or a dotted path into one ("relatedTo.id" on a task, "results[0].total" on a loop's). */
 function checkField(item: JsonSchema, field: string, what: string, err: (m: string) => void): void {
-  if (kindOf(item) !== "object") return;
-  const fields = fieldsOf(item);
-  if (fields.length && !fields.includes(field)) err(`${what}: items have no field "${field}"; fields: ${fields.join(", ")}`);
+  let cur = item;
+  const parts = pathOf(field);
+  for (const [i, part] of parts.entries()) {
+    if (/^\d+$/.test(part)) {
+      if (kindOf(cur) !== "array") return err(`${what}: "${field}" takes a position in ${parts.slice(0, i).join(".") || "the item"}, which is not a list`);
+      cur = (unwrap(cur).items ?? ANY) as JsonSchema;
+      continue;
+    }
+    if (kindOf(cur) !== "object") return;
+    const fields = fieldsOf(cur);
+    if (!fields.length) return;
+    const at = parts.slice(0, i).join(".");
+    if (!fields.includes(part)) return err(`${what}: items have no field "${field}"; fields${at ? ` of ${at}` : ""}: ${fields.join(", ")}`);
+    cur = ((unwrap(cur).properties ?? {}) as Record<string, JsonSchema>)[part]!;
+  }
 }
 
 function checkWhere(where: Record<string, unknown>, item: JsonSchema, scope: Scope, err: (m: string) => void): void {
@@ -584,7 +633,7 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
       continue;
     }
     const held = listEnt(r.ref, scope);
-    const wanted = held?.ids ? argEntity(action, r.at, registry) : null;
+    const wanted = held?.ids ? argEntity(action, r.at, args, registry) : null;
     if (held?.ids && wanted && held.entity !== wanted) {
       err(idTypeError(id, r.at, r.ref, held.entity, wanted, scope));
       ok = false;

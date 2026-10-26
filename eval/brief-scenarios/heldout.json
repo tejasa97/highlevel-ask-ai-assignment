@@ -1,0 +1,223 @@
+[
+  {
+    "id": "brief-heldout-quiet-leads",
+    "category": "multi",
+    "modules": [
+      "M03",
+      "M11",
+      "M05",
+      "M48",
+      "M06"
+    ],
+    "note": "Held out: reworded from brief-complex-quiet-leads, never tuned against. Same data and checks.",
+    "turns": [
+      {
+        "user": "Which leads that came in last week never got back to us? Leave out anyone who already has an appointment booked, split the rest between the sales reps who are available, and give each of them a follow-up task."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M03.A05",
+          "M06.A01"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM leads WHERE id IN ('ld_3','ld_41','ld_42','ld_43','ld_44') AND json_extract(data,'$.ownerId') IN ('us_2','us_4','us_5')",
+          "equals": 5
+        },
+        {
+          "sql": "SELECT count(DISTINCT json_extract(data,'$.relatedTo.id')) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.relatedTo.id') IN ('ld_3','ld_41','ld_42','ld_43','ld_44')",
+          "equals": 5
+        },
+        {
+          "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND (json_extract(data,'$.relatedTo.id') IS NULL OR json_extract(data,'$.relatedTo.id') NOT IN ('ld_3','ld_10','ld_24','ld_41','ld_42','ld_43','ld_44'))",
+          "equals": 0
+        },
+        {
+          "sql": "SELECT count(*) FROM leads WHERE id IN ('ld_12','ld_17','ld_30','ld_37') AND json_extract(data,'$.ownerId') IS NOT NULL",
+          "equals": 0
+        },
+        {
+          "sql": "SELECT json_extract(data,'$.ownerId') FROM leads WHERE id='ld_1'",
+          "equals": "us_5"
+        }
+      ]
+    }
+  },
+  {
+    "id": "brief-heldout-then-facebook",
+    "category": "followup",
+    "modules": [
+      "M03",
+      "M11",
+      "M05",
+      "M48",
+      "M06"
+    ],
+    "note": "Held out: reworded from brief-complex-then-facebook-only, never tuned against. Same data and checks.",
+    "turns": [
+      {
+        "user": "Which leads that came in last week never got back to us? Leave out anyone who already has an appointment booked, split the rest between the sales reps who are available, and give each of them a follow-up task.",
+        "status": [
+          "done"
+        ]
+      },
+      {
+        "user": "Actually, just the ones that came from Facebook ads, and have their tasks due tomorrow."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(DISTINCT json_extract(data,'$.relatedTo.id')) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND json_extract(data,'$.dueDate')='2026-10-22' AND json_extract(data,'$.relatedTo.id') IN ('ld_41','ld_42','ld_43','ld_44')",
+          "equals": 4
+        },
+        {
+          "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND json_extract(data,'$.relatedTo.id') IN ('ld_41','ld_42','ld_43','ld_44')",
+          "equals": 4
+        },
+        {
+          "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND (json_extract(data,'$.relatedTo.id') IS NULL OR json_extract(data,'$.relatedTo.id') NOT IN ('ld_41','ld_42','ld_43','ld_44'))",
+          "equals": 0
+        }
+      ]
+    }
+  },
+  {
+    "id": "brief-heldout-new-leads",
+    "category": "indirect",
+    "modules": [
+      "M03",
+      "M06"
+    ],
+    "note": "Held out: reworded from brief-indirect-new-leads, never tuned against. Same checks.",
+    "turns": [
+      {
+        "user": "New leads keep slipping through the cracks on my end. Can you help me stay on them?",
+        "answer": "Create a follow-up task due tomorrow for every lead that's still marked new."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M03.A03",
+          "M06.A01"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT count(*) > 0 FROM tasks t WHERE json_extract(t.data,'$.createdAt') >= '2026-10-21' AND json_extract(t.data,'$.relatedTo.id') IN (SELECT id FROM leads WHERE json_extract(data,'$.status')='new')",
+          "equals": 1
+        },
+        {
+          "sql": "SELECT count(*) FROM tasks t WHERE json_extract(t.data,'$.createdAt') >= '2026-10-21' AND (json_extract(t.data,'$.relatedTo.id') IS NULL OR json_extract(t.data,'$.relatedTo.id') NOT IN (SELECT id FROM leads WHERE json_extract(data,'$.status')='new'))",
+          "equals": 0
+        }
+      ]
+    }
+  },
+  {
+    "id": "brief-heldout-sarah-pasting",
+    "category": "ambiguous",
+    "modules": [
+      "M01"
+    ],
+    "note": "Held out: reworded from brief-direct-sarah-no-email, never tuned against. No this/that/her pointer word: tests whether it asks without the lexical rule.",
+    "turns": [
+      {
+        "user": "Add Sarah as a new contact with the email I'm pasting."
+      }
+    ],
+    "expect": {
+      "status": [
+        "clarify",
+        "needs_clarification"
+      ],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "brief-heldout-sarah-then-email",
+    "category": "ambiguous",
+    "modules": [
+      "M01"
+    ],
+    "note": "Held out: reworded from brief-direct-sarah-then-email, never tuned against. Same checks.",
+    "turns": [
+      {
+        "user": "Add Sarah as a new contact using this email.",
+        "status": [
+          "clarify",
+          "needs_clarification"
+        ]
+      },
+      {
+        "user": "sarah.kim@northwind.example"
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "actions": {
+        "includes": [
+          "M01.A01"
+        ]
+      },
+      "state": [
+        {
+          "sql": "SELECT count(*) FROM contacts WHERE json_extract(data,'$.email')='sarah.kim@northwind.example' AND json_extract(data,'$.firstName')='Sarah'",
+          "equals": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "brief-heldout-overdue-reminders",
+    "category": "multi",
+    "modules": [
+      "M28",
+      "M13"
+    ],
+    "note": "Held out: reworded from brief-conditional-overdue-reminders, never tuned against. Same data and checks.",
+    "turns": [
+      {
+        "user": "Draft payment reminders for any unpaid invoice more than 15 days past due, unless that customer was already reminded this week."
+      }
+    ],
+    "expect": {
+      "status": [
+        "done"
+      ],
+      "state": [
+        {
+          "sql": "SELECT count(DISTINCT json_extract(data,'$.contactId')) FROM emails WHERE json_extract(data,'$.status')='draft' AND json_extract(data,'$.contactId') IN ('ct_5','ct_31','ct_33')",
+          "equals": 3
+        },
+        {
+          "sql": "SELECT count(*) FROM emails WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.contactId') IN ('ct_3','ct_4')",
+          "equals": 0
+        },
+        {
+          "sql": "SELECT count(*) FROM emails WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status') <> 'draft'",
+          "equals": 0
+        },
+        {
+          "sql": "SELECT sum(json_array_length(json_extract(data,'$.reminders'))) FROM invoices",
+          "equals": 3
+        }
+      ]
+    }
+  }
+]

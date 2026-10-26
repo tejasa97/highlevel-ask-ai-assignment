@@ -15,8 +15,11 @@ const words = (s: string) => s.toLowerCase().match(/[a-z]+/g) ?? [];
 export function readOnlyIntentError(message: string, plan: CompiledPlan, offered: RegisteredAction[], catalog?: Catalog): string[] {
   const calls = plan.steps.flatMap((s) => s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []);
   if (!calls.length || calls.some((a) => a.risk !== "read")) return [];
-  // Informational questions aren't commands, even if they mention a write verb ("who sent the email?").
-  if (/^\s*(which|what|who|when|where|how|did|does|has|have|is|are|was|were)\b/i.test(message)) return [];
+  // Informational questions aren't commands, even if they mention a write verb ("who sent the email?"). A message can
+  // ask, then tell ("Which leads never replied? Split them between the reps"): its other sentences still count.
+  const told = toldPart(message);
+  if (!told) return [];
+  message = told;
   const writes = offered.filter((a) => a.risk !== "read");
   const verbs = new Set([...writes.map((a) => words(a.name)[0]!), ...INDIRECT]);
   const meta = loadCardMeta();
@@ -33,6 +36,12 @@ export function readOnlyIntentError(message: string, plan: CompiledPlan, offered
   return match ? ["the plan only finds records; add the action that does it, or reply unsupported if no listed action does"] : [];
 }
 
+/** The sentences of a message that aren't questions: "" when it only asks. */
+export function toldPart(message: string): string {
+  return message.split(/(?<=[?.!])\s+/).filter((s) => !/\?\s*$/.test(s) && !QUESTION.test(s)).join(" ").trim();
+}
+
+const QUESTION = /^\s*(which|what|who|when|where|how|did|does|has|have|is|are|was|were)\b/i;
 const IMPERATIVE_MIN = 5;
 const WRITE_SHARE = 0.9;
 type Catalog = { list(): RegisteredAction[] };

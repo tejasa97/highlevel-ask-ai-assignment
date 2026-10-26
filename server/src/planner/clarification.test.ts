@@ -34,6 +34,25 @@ test("unbound, unknown, unoffered, optional and already-supplied questions are r
   assert.throws(() => assessClarification(question("M06.A01", "title"), registry, new Set(), "Create a task", w.store), /<actions>/);
 });
 
+test("a lookup sent with a question about a plain value is ignored, not a reason to reject it", () => {
+  const w = world();
+  const post = named("blog_post", "Fall product update");
+  const ask = question("M38.A08", "publishAt", { postId: post }, { clarification: "content", lookup: { entity: "blog_post", name: "Fall product update", whereJson: null } });
+  assert.deepEqual(assessClarification(ask, registry, offered(), "Schedule the Fall product update post to go live on November 2", w.store), { kind: "question" });
+  const wrong = question("M01.A07", "contactId", {}, { clarification: "identity", lookup: { entity: "blog_post", name: "Fall product update", whereJson: null } });
+  assert.throws(() => assessClarification(wrong, registry, offered(), "Give Zoe to Aisha", w.store), /does not match/);
+});
+
+test("an optional input the message points at but never gives can be asked for", () => {
+  const w = world();
+  const ask = (message: string) => assessClarification(question("M01.A01", "email", { firstName: "Sarah" }), registry, offered(), message, w.store);
+  assert.deepEqual(ask("Create a contact named Sarah with this email address."), { kind: "question" });
+  assert.throws(() => ask("Create a contact named Sarah"), /optional/);
+  assert.equal(ask("Add Sarah as a new contact using the email I'm pasting.").kind, "question");
+  assert.throws(() => ask("Create Sarah and send her an email"), /optional/);
+  assert.throws(() => ask("Email Sarah and create her as a contact"), /optional/);
+});
+
 test("ID questions cannot bypass grounding by choosing the choice/content category", () => {
   const w = world();
   for (const clarification of ["choice", "content", "identity", null] as const) {

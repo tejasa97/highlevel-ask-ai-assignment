@@ -22,6 +22,7 @@ const createTask = defineAction({
   id: "M06.A01",
   description:
     "Create a to-do for a staff user, optionally about a contact, lead or opportunity. Leave dueDate out unless the user gave one; it can't be in the past.",
+  synonyms: ["follow up", "follow-up reminder", "remind me", "to-do", "don't forget", "keep track of", "stay on top of"],
   risk: "write",
   input: z.strictObject({
     title: z.string().min(1),
