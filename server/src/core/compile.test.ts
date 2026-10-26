@@ -33,6 +33,29 @@ const op = (id: string, o: "filter" | "exclude" | "forEach", fields: Partial<{ i
 const action = (id: string, action: string, args: unknown): Step => ({ id, kind: "action", action, argsJson: JSON.stringify(args) });
 
 describe("forEach over a literal list", () => {
+  test("a field read off a forEach's items, not its results, is told where the results are", () => {
+    const r = compile(plan([
+      op("s1", "forEach", { in: ["literal_alpha", "literal_beta"], do: [{ action: "M06.A01", args: { title: "$item" } }] }),
+      op("s2", "forEach", { in: "$s1.items[*].relatedTo", do: [{ action: "M06.A01", args: { title: "$item" } }] }),
+    ]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /has no field "relatedTo"; fields: item, results \(a forEach step's output.* is \$s1\[\*\]\.results\[0\]\.relatedTo/);
+  });
+
+  test("a filter over a forEach's items can name a field of one of its results by position", () => {
+    const r = compile(plan([
+      op("s1", "forEach", { in: ["literal_alpha", "literal_beta"], do: [{ action: "M06.A01", args: { title: "$item" } }] }),
+      op("s2", "filter", { in: "$s1", where: { "results[0].status": "open" } }),
+    ]), registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    const bad = compile(plan([
+      op("s1", "forEach", { in: ["literal_alpha"], do: [{ action: "M06.A01", args: { title: "$item" } }] }),
+      op("s2", "filter", { in: "$s1", where: { "item[0]": "x" } }),
+    ]), registry);
+    assert.ok(!bad.ok);
+    assert.match(bad.errors.join("\n"), /takes a position in item, which is not a list/);
+  });
+
   test("takes a JSON array of strings, with $item as the string", () => {
     const r = compile(plan([op("s1", "forEach", { in: ["literal_alpha", "literal_beta"], do: [{ action: "M06.A01", args: { title: "$item" } }] })]), registry);
     assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
@@ -227,21 +250,32 @@ describe("ref errors name the legal steps", () => {
     assert.match(loop.errors.join("\n"), /\$s2 is the step you are writing; a step can only use earlier ids, and the step just before it is \$s1\. Inside "do", the current item is \$item\./);
   });
 
-  test("a ref to a step listed later says it comes later", () => {
-    const r = compile(plan([action("s1", "M06.A01", { title: "$s2" }), action("s2", "M06.A01", { title: "later" })]), registry);
-    assert.ok(!r.ok);
-    assert.match(r.errors.join("\n"), /\$s2 comes later in your plan; list it before this step/);
+  test("a step that reads one listed after it runs after it; a cycle says which comes later", () => {
+    const r = compile(plan([action("s1", "M06.A01", { title: "{{$s2.title}}" }), action("s2", "M06.A01", { title: "first" })]), registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    assert.deepEqual(r.plan.steps.map((s) => s.id), ["s2", "s1"]);
+    const cycle = compile(plan([action("s1", "M06.A01", { title: "{{$s2.title}}" }), action("s2", "M06.A01", { title: "{{$s1.title}}" })]), registry);
+    assert.ok(!cycle.ok);
+    assert.match(cycle.errors.join("\n"), /\$s2 comes later in your plan; list it before this step/);
   });
 
   test("lists action kinds too, without offering forward references", () => {
-    const r = compile(plan([action("s1", "M06.A03", {}), action("s2", "M06.A01", { title: "$future" }), action("future", "M06.A01", { title: "later" })]), registry);
+    const r = compile(plan([action("s1", "M06.A03", {}), action("s2", "M06.A01", { title: "{{$future.title}}" }), action("future", "M06.A01", { title: "{{$s2.title}}" })]), registry);
     assert.ok(!r.ok);
     assert.match(r.errors.join("\n"), /your steps are s1 \(action\)/);
     assert.doesNotMatch(r.errors.join("\n"), /future \(action\)/);
   });
 
+  test("an exclude whose set is written out is a filter on values not in it", () => {
+    const r = compile(plan([action("s1", "M03.A03", {}), op("s2", "exclude", { in: "$s1.items", by: "id", set: JSON.stringify(["ld_1"]) })]), registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    const s2 = r.plan.steps[1]!;
+    assert.equal(s2.kind, "filter");
+    assert.deepEqual(s2.kind === "filter" ? s2.where : null, { id: { nin: ["ld_1"] } });
+  });
+
   test("says a prompt block is not a step and to copy its value in as plain text", () => {
-    for (const block of ["$looked", "$mentions", "$context"]) {
+    for (const block of ["$looked", "$mentions", "$context", "$recent_records"]) {
       const r = badRef(block);
       assert.ok(!r.ok);
       const errors = r.ok ? "" : r.errors.join("\n");
@@ -283,6 +317,12 @@ describe("ids carry their record type", () => {
   test("a field named for a type is that type, and matching types pass", () => {
     assert.equal(errorsOf([action("s1", "M21.A03", { status: "completed" }), op("s2", "forEach", { in: "$s1.items", do: [{ action: "M45.A01", args: { contactId: "$item.contactId", subject: "Review", body: "Thanks" } }] })]), "");
     assert.match(errorsOf([action("s1", "M21.A03", { status: "completed" }), op("s2", "forEach", { in: "$s1.items", do: [{ action: "M45.A01", args: { contactId: "$item.leadId", subject: "Review", body: "Thanks" } }] })]), /takes a contact id, but \$item\.leadId is a lead id/);
+  });
+
+  test("an id typed by a record-type arg takes that type, not a type its description lists", () => {
+    const tag = (recordType: string) => [action("s1", "M01.A03", { query: "Omar" }), action("s2", "M08.A06", { tagId: "tg_4", recordType, recordId: "$s1.items[0].id" })];
+    assert.equal(errorsOf(tag("contact")), "");
+    assert.match(errorsOf(tag("lead")), /M08\.A06 arg recordId takes a lead id, but \$s1\.items\[0\]\.id is a contact id/);
   });
 
   test("ids of unknown type, and args that don't name one, are not checked", () => {

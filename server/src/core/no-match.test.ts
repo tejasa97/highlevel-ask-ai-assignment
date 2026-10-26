@@ -28,6 +28,18 @@ test("a failed index after an empty read yields the step, concrete query and zer
   w.store.close();
 });
 
+test("a lookup miss says what the run's other reads found, and in which field", async () => {
+  const w = world();
+  const p = compiled(wire([
+    { id: "s1", kind: "resolve", entity: "company", name: "Wayne", whereJson: null } as Step,
+    action("s2", "M01.A03", { query: "Wayne" }),
+    action("s3", "M02.A05", { companyId: "$s1.id" }),
+  ]));
+  const r = await execute(p, registry, w, { executionId: "wayne" });
+  assert.match(runtimeNoMatch(p, r)!, /looked for "Wayne" and found nothing\. Step s2 \(M01\.A03\) did find \d+ items whose (\w+\/)*company(\/\w+)* contains "Wayne"/);
+  w.store.close();
+});
+
 test("successful empty reads, unrelated failures and any attempted write cannot replan", async () => {
   const w = world();
   const read = compiled(wire([action("s1", "M06.A03", { query: "Unmatched fixture wording" })]));

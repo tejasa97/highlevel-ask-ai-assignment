@@ -172,6 +172,7 @@ const updateLead = defineAction({
 const assignLeadOwner = defineAction({
   id: "M03.A05",
   description: "Make a staff user the owner of a lead. For contacts, use M01.A07 Assign contact owner.",
+  synonyms: ["distribute leads", "split leads between reps", "round-robin leads", "hand leads to sales"],
   risk: "write",
   input: z.strictObject({ leadId: LeadId, ownerId: z.string().describe("user id") }),
   output: Lead,

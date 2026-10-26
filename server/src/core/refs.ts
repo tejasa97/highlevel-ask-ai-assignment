@@ -105,6 +105,11 @@ export function fieldsOf(s: JsonSchema): string[] {
   return u.type === "object" ? Object.keys((u.properties ?? {}) as object) : [];
 }
 
+/** "relatedTo.id", or with list positions, "results[0].total" on a forEach's items. */
+export function pathOf(field: string): string[] {
+  return field.replace(/\[(\d+)\]/g, ".$1").split(".");
+}
+
 export function arrayOf(items: JsonSchema): JsonSchema {
   return { type: "array", items };
 }
@@ -134,7 +139,14 @@ export function typeAt(schema: JsonSchema, path: Seg[], label: string): { type: 
       const props = (s.properties ?? {}) as Record<string, JsonSchema>;
       if (Object.keys(props).length === 0) return { type: ANY }; // open object
       const next = props[seg.field];
-      if (!next) return { error: `${here} has no field "${seg.field}"; fields: ${Object.keys(props).join(", ")}` };
+      if (!next) {
+        // A forEach's output is [{item, results}]: what each "do" call returned sits under results[k], not on the item.
+        const loop = "item" in props && "results" in props && Object.keys(props).length === 2;
+        // ".items" on the loop's list was read as the list itself, so the path shown leaves it out.
+        const at = here.replace(/\.items(?=\[\*\])/g, "");
+        const tip = loop ? ` (a forEach step's output: "item" is the looped value and results[k] what its do[k] call returned, so a field of what do[0] returned is ${at}.results[0].${seg.field}, or ${at}.results[0].items[*].${seg.field} when it returned a list)` : "";
+        return { error: `${here} has no field "${seg.field}"; fields: ${Object.keys(props).join(", ")}${tip}` };
+      }
       cur = next;
     } else {
       if (kind !== "array") return { error: `${here} is not a list, so ${"all" in seg ? "[*]" : `[${seg.index}]`} doesn't apply` };

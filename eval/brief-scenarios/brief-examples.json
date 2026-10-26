@@ -1,0 +1,103 @@
+[
+  {
+    "id": "brief-complex-quiet-leads",
+    "category": "multi",
+    "modules": ["M03", "M11", "M05", "M48", "M06"],
+    "note": "The brief's complex example, verbatim. Last week (Mon 12 - Sun 18 Oct) has 12 leads. ld_12, ld_17, ld_30 and ld_37 replied; ld_1 has a booked appointment. That leaves ld_3 and ld_41-ld_44, who we wrote to and who never answered, plus ld_10 and ld_24, who were never messaged: either reading of \"have not replied\" is accepted for those two. Available sales reps: Raj, Tom, Aisha (Lucia is away, Dan is deactivated).",
+    "turns": [
+      { "user": "Find leads created last week who have not replied, exclude anyone with a booked appointment, assign the remaining leads to available sales reps, and create follow-up tasks." }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M03.A05", "M06.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM leads WHERE id IN ('ld_3','ld_41','ld_42','ld_43','ld_44') AND json_extract(data,'$.ownerId') IN ('us_2','us_4','us_5')", "equals": 5 },
+        { "sql": "SELECT count(DISTINCT json_extract(data,'$.relatedTo.id')) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.relatedTo.id') IN ('ld_3','ld_41','ld_42','ld_43','ld_44')", "equals": 5 },
+        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND (json_extract(data,'$.relatedTo.id') IS NULL OR json_extract(data,'$.relatedTo.id') NOT IN ('ld_3','ld_10','ld_24','ld_41','ld_42','ld_43','ld_44'))", "equals": 0 },
+        { "sql": "SELECT count(*) FROM leads WHERE id IN ('ld_12','ld_17','ld_30','ld_37') AND json_extract(data,'$.ownerId') IS NOT NULL", "equals": 0 },
+        { "sql": "SELECT json_extract(data,'$.ownerId') FROM leads WHERE id='ld_1'", "equals": "us_5" }
+      ]
+    }
+  },
+  {
+    "id": "brief-complex-then-facebook-only",
+    "category": "followup",
+    "modules": ["M03", "M11", "M05", "M48", "M06"],
+    "note": "The brief's follow-up to the complex example. Of the leads found, ld_41-ld_44 came from Facebook ads (there is no campaign named Facebook; the source is facebook_ads). Their tasks move to tomorrow, 22 Oct; any task made for another lead (ld_3, and ld_10 or ld_24 if they were included) should no longer be open, and no Facebook lead is left with two open tasks.",
+    "turns": [
+      { "user": "Find leads created last week who have not replied, exclude anyone with a booked appointment, assign the remaining leads to available sales reps, and create follow-up tasks.", "status": ["done"] },
+      { "user": "Only include leads from the Facebook campaign, and make those tasks due tomorrow." }
+    ],
+    "expect": {
+      "status": ["done"],
+      "state": [
+        { "sql": "SELECT count(DISTINCT json_extract(data,'$.relatedTo.id')) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND json_extract(data,'$.dueDate')='2026-10-22' AND json_extract(data,'$.relatedTo.id') IN ('ld_41','ld_42','ld_43','ld_44')", "equals": 4 },
+        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND json_extract(data,'$.relatedTo.id') IN ('ld_41','ld_42','ld_43','ld_44')", "equals": 4 },
+        { "sql": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND (json_extract(data,'$.relatedTo.id') IS NULL OR json_extract(data,'$.relatedTo.id') NOT IN ('ld_41','ld_42','ld_43','ld_44'))", "equals": 0 }
+      ]
+    }
+  },
+  {
+    "id": "brief-indirect-new-leads",
+    "category": "indirect",
+    "modules": ["M03", "M06"],
+    "note": "The brief's indirect example, verbatim. It may ask what to do first; the scripted answer picks follow-up tasks for leads still marked new. Either way, any task it creates should be for a lead marked new.",
+    "turns": [
+      { "user": "I keep forgetting to follow up with new leads. Help me stay on top of them.", "answer": "Create a follow-up task due tomorrow for every lead that's still marked new." }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M03.A03", "M06.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) > 0 FROM tasks t WHERE json_extract(t.data,'$.createdAt') >= '2026-10-21' AND json_extract(t.data,'$.relatedTo.id') IN (SELECT id FROM leads WHERE json_extract(data,'$.status')='new')", "equals": 1 },
+        { "sql": "SELECT count(*) FROM tasks t WHERE json_extract(t.data,'$.createdAt') >= '2026-10-21' AND (json_extract(t.data,'$.relatedTo.id') IS NULL OR json_extract(t.data,'$.relatedTo.id') NOT IN (SELECT id FROM leads WHERE json_extract(data,'$.status')='new'))", "equals": 0 }
+      ]
+    }
+  },
+  {
+    "id": "brief-direct-sarah-no-email",
+    "category": "ambiguous",
+    "modules": ["M01"],
+    "note": "The brief's direct example, verbatim. It says \"this email address\" but gives none, so the assistant should ask for it and create nothing.",
+    "turns": [{ "user": "Create a contact named Sarah with this email address." }],
+    "expect": {
+      "status": ["clarify", "needs_clarification"],
+      "noChanges": true
+    }
+  },
+  {
+    "id": "brief-direct-sarah-then-email",
+    "category": "ambiguous",
+    "modules": ["M01"],
+    "note": "The direct example once the email arrives.",
+    "turns": [
+      { "user": "Create a contact named Sarah with this email address.", "status": ["clarify", "needs_clarification"] },
+      { "user": "sarah.kim@northwind.example" }
+    ],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M01.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM contacts WHERE json_extract(data,'$.email')='sarah.kim@northwind.example' AND json_extract(data,'$.firstName')='Sarah'", "equals": 1 }
+      ]
+    }
+  },
+  {
+    "id": "brief-conditional-overdue-reminders",
+    "category": "multi",
+    "modules": ["M28", "M13"],
+    "note": "The brief's conditional example, verbatim. Overdue by more than 15 days: inv_4 (ct_4, 20 days), inv_5 (ct_5, 30), inv_6 (ct_31, 45), inv_9 (ct_33, 18). ct_4 was reminded on Mon 19 Oct, this week, so is skipped; ct_5 and ct_31 were last reminded the week before. inv_3 is only 5 days late. Drafts go to ct_5, ct_31 and ct_33; nothing is sent.",
+    "turns": [
+      { "user": "For unpaid invoices overdue by more than 15 days, draft reminders, but skip customers who already received one this week." }
+    ],
+    "expect": {
+      "status": ["done"],
+      "state": [
+        { "sql": "SELECT count(DISTINCT json_extract(data,'$.contactId')) FROM emails WHERE json_extract(data,'$.status')='draft' AND json_extract(data,'$.contactId') IN ('ct_5','ct_31','ct_33')", "equals": 3 },
+        { "sql": "SELECT count(*) FROM emails WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.contactId') IN ('ct_3','ct_4')", "equals": 0 },
+        { "sql": "SELECT count(*) FROM emails WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status') <> 'draft'", "equals": 0 },
+        { "sql": "SELECT sum(json_array_length(json_extract(data,'$.reminders'))) FROM invoices", "equals": 3 }
+      ]
+    }
+  }
+]

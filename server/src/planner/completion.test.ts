@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { before, test } from "node:test";
 import { compile, type CompiledPlan } from "../core/compile.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
-import { readOnlyIntentError } from "./completion.js";
+import { readOnlyIntentError, toldPart } from "./completion.js";
 import type { SubmitPlan } from "./submit-plan.js";
 
 let registry: Registry;
@@ -23,6 +23,12 @@ test("informational questions and absent write cards never trigger completion re
     assert.deepEqual(readOnlyIntentError(message, read, [registry.get("M28.A08")!]), []);
   }
   assert.deepEqual(readOnlyIntentError("send payment reminders", read, [registry.get("M28.A10")!]), []);
+});
+
+test("a question followed by an instruction still tells", () => {
+  assert.equal(toldPart("Which leads never got back to us? Split the rest between the reps."), "Split the rest between the reps.");
+  assert.equal(toldPart("Which leads never got back to us? Who owns them?"), "");
+  assert.equal(readOnlyIntentError("Which invoices are overdue? Send payment reminders", read, [registry.get("M28.A08")!]).length, 1);
 });
 
 test("read commands can contain write-shaped adjectives without becoming action requests", () => {

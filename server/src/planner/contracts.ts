@@ -18,7 +18,13 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: {
   if (outcome.destination) for (const a of calls) {
     if (a.destination && a.destination.id !== outcome.destination) errors.push(`${a.id} delivers to ${a.destination.label}, not the requested destination ${outcome.destination}`);
   }
-  if (request && (outcome.destination || (SEND.test(request.message) && !HOLD.test(request.message))) && !calls.some((a) => a.destination)) {
+  // A destination says where a record would go, not that it goes now: "draft reminders" for email stays a draft.
+  const sendAsked = !!request && SEND.test(request.message) && !HOLD.test(request.message);
+  const deliver = !!request && (sendAsked || (!!outcome.destination && !DRAFT.test(request.message)));
+  if (request && !deliver) for (const a of calls) {
+    if (a.destination && !outcome.actions.includes(a.id)) errors.push(`${a.id} sends to ${a.destination.label}, but the request doesn't ask to send anything; leave out ${a.id} and keep what was made unsent`);
+  }
+  if (request && deliver && !calls.some((a) => a.destination)) {
     // "Send a review request" planned as only creating one: the record exists, but nothing went out.
     for (const a of calls) {
       const made = a.risk === "read" ? undefined : a.entities?.produces;
@@ -31,6 +37,7 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: {
 }
 
 const SEND = /\bsend\b/i;
+const DRAFT = /\b(draft|drafts|drafting|prepare|write up)\b/i;
 const HOLD = /\b(don'?t|do not|not|without|never|before|later|until)\b.{0,20}\bsend/i;
 
 /**

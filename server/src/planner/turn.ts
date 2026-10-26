@@ -7,18 +7,18 @@ import { type Mention, mentions } from "../retrieval/mentions.js";
 import type { Retrieval, Retriever } from "../retrieval/retrieve.js";
 import type { Clock } from "../store/clock.js";
 import type { Store } from "../store/db.js";
-import { readOnlyIntentError } from "./completion.js";
+import { readOnlyIntentError, toldPart } from "./completion.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
 import { emptyTargets, outcomeErrors, type Outcome } from "./contracts.js";
-import { assessClarification } from "./clarification.js";
+import { assessClarification, namesField } from "./clarification.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
 //   retrieve a shortlist → prompt → plan, with at most two search_tools rounds (a second retrieval for what the
 //   planner says is missing), at most two look rounds (read-only steps run now, their results fed back, so a
 //   value can be worked out from a record: "same time, on Monday"; a second may build on the first) and at most
-//   one repair round (compile errors fed back), plus at most one repair of a malformed clarification (its own allowance, so it can't use up the plan's) and at most
+//   one repair round (compile errors fed back; a second when the first left fewer errors), plus at most one repair of a malformed clarification (its own allowance, so it can't use up the plan's) and at most
 //   one grounded identity clarification retry → a compiled plan or a reply. At most six calls. The plan may only use
 //   actions the planner was shown.
 
@@ -48,7 +48,7 @@ export interface TurnInput {
   /** Set when the last reply was a question: the message it asked about, so retrieval sees both. */
   answering?: string;
   /** Compact typed identities only, not previous records or their mutable contents. */
-  records?: { entity: string; id: string; name: string }[];
+  records?: { entity: string; id: string; name: string; for?: string }[];
   /** Set on a retry: the plan that ran for this message and the errors it failed with, nothing changed. */
   failed?: string;
 }
@@ -56,6 +56,8 @@ export interface TurnInput {
 export interface Carry {
   prev: string[];
   entities: string[];
+  /** Record types the plan made new records of, which a follow-up may amend. */
+  made?: string[];
 }
 
 export type TurnEvent =
@@ -156,6 +158,20 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let looked: string | undefined;
   let identityCheck: string | undefined;
   let outcome: Outcome | undefined;
+  // The reply the outcome was frozen from. If that reply is rejected and repaired, the repair may state the outcome
+  // afresh: a stepless look that called its own reads the outcome shouldn't hold the corrected plan to them. Only a
+  // read outcome is let go, so a change is never downgraded.
+  let outcomeFrom: unknown;
+  const unfreezeRejected = () => { if (outcomeFrom === reply && outcome?.effect === "read") outcome = undefined; };
+  // The actions a change needs are a guess until the reads are in: a look may find that the last turn's tasks are to
+  // be moved, not made again. The first reply after a look may name them afresh; it is still a change.
+  let restate = false;
+  // Whether the read outcome held was stated by a look about its own reads.
+  let lookStated = false;
+  // Whether a plan that makes again what the last turn made was sent back once: the reply after that stands.
+  let remadeChecked = false;
+  // What the reply right after a remake was flagged said it would do: still make them, or change the ones there.
+  let remakeAnswer: string[] | null | undefined;
   // Identity checks already run, by "entity:name": one more is allowed for a different record ("Sales" then "Noah").
   const checkedIdentity: string[] = [];
   const deliverySurfaces = registry.deliverySurfaces();
@@ -174,6 +190,17 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let searched = false;
   let searchedAgain = false;
   let repaired = false;
+  // A plan that doesn't compile gets one repair, and a second when the first got closer (fewer errors): a weaker model
+  // fixes a long plan a few mistakes at a time. Any other repair already spent counts as the first.
+  let planRepairs = 0;
+  let lastErrors = Infinity;
+  const mayRepair = (errors: string[]) => {
+    if (repaired && !(planRepairs === 1 && errors.length < lastErrors)) return false;
+    repaired = true;
+    planRepairs++;
+    lastErrors = errors.length;
+    return true;
+  };
   let clarifyRepaired = false;
   let lookResults: Awaited<ReturnType<NonNullable<TurnDeps["look"]>>> = [];
   let emptyChecked = false;
@@ -186,10 +213,25 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     lookPlan = plan;
     // <looked> contains compiler-generated resolve IDs too. Preserve those exact read steps so
     // the next plan can reference them just like any explicit look step. A second look reruns the first's steps it
-    // needs; the ones it doesn't stay available to the plan.
+    // needs; the ones it doesn't stay available to the plan, results and all. A second look that gives a first-look
+    // id to a different read (its own s1 beside the first's s1) keeps the first's under a fresh id.
     const lowered = lowerLookups(steps, registry).steps;
-    lookSteps = [...lookSteps.filter((l) => !lowered.some((s) => s.id === l.id)), ...lowered];
-    lookResults = await deps.look!(plan);
+    const taken = new Set([...lookSteps, ...lowered].map((l) => l.id));
+    const moved = new Map<string, string>();
+    for (const l of lookSteps) {
+      const now = lowered.find((s) => s.id === l.id);
+      if (!now || JSON.stringify(now) === JSON.stringify(l)) continue;
+      let n = 2, fresh: string;
+      do { fresh = `${l.id}_${n++}`; } while (taken.has(fresh));
+      taken.add(fresh);
+      moved.set(l.id, fresh);
+    }
+    const follow = <T>(x: T): T => (moved.size ? JSON.parse(JSON.stringify(x).replace(/\$([A-Za-z_]\w*)/g, (all, root: string) => (moved.has(root) ? `$${moved.get(root)}` : all))) as T : x);
+    const kept = lookSteps.filter((l) => moved.has(l.id) || !lowered.some((s) => s.id === l.id)).map((l) => follow({ ...l, id: moved.get(l.id) ?? l.id }));
+    const keptIds = new Set(kept.map((l) => l.id));
+    lookSteps = [...kept, ...lowered];
+    const fresh = await deps.look!(plan);
+    lookResults = [...lookResults.map((r) => ({ ...r, id: moved.get(r.id) ?? r.id })).filter((r) => keptIds.has(r.id)), ...fresh];
     looked = JSON.stringify(lookResults);
     if (looked.length > LOOKED_MAX) looked = `${looked.slice(0, LOOKED_MAX)}…(cut)`;
   };
@@ -207,10 +249,16 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       continue;
     }
     const d = parsed.data;
+    if (remadeChecked && remakeAnswer === undefined) remakeAnswer = d.outcome?.actions ?? null;
     // Freeze the first stated outcome across all subsequent reads, searches and repairs. A search may
     // initially lack action IDs; fill those once discovered, but never downgrade a change into a read.
-    if (!outcome && d.outcome) outcome = d.outcome;
+    if (!outcome && d.outcome) { outcome = d.outcome; outcomeFrom = reply; }
+    else if (restate && outcome?.effect === "change" && d.outcome?.effect === "change" && d.outcome.actions.length) { outcome = { ...outcome, actions: d.outcome.actions }; outcomeFrom = reply; }
+    // A look that called its own reads the outcome, for a message that also tells ("Which leads never replied? Split
+    // them between the reps"), described the look: the change the reply after it states is the request's.
+    else if (restate && outcome?.effect === "read" && lookStated && d.outcome?.effect === "change" && d.outcome.actions.length && toldPart(input.message)) { outcome = d.outcome; outcomeFrom = reply; }
     else if (outcome && !outcome.actions.length && d.outcome?.actions.length) outcome = { ...outcome, actions: d.outcome.actions };
+    restate = false;
     if (outcome?.destination && !deliverySurfaces.some((s) => s.id === outcome!.destination)) {
       return { kind: "reply", status: "unsupported", text: `Delivery to ${outcome.destination} isn't supported. Nothing was sent or published. Supported surfaces: ${deliverySurfaces.map((s) => s.label).join(", ")}.` };
     }
@@ -244,6 +292,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       } else {
         identityCheck = assessed.digest;
         identityKey = "";
+        // Shown the records, the planner still asks which one: when the message's name fits several, that is the question.
+        if (checkedIdentity.length && assessed.ambiguous) return { kind: "reply", status: "clarify", text: d.question ?? "Which one did you mean?", options: d.options ?? undefined };
         if (checkedIdentity.length) return failed("Matching account records were already supplied, but the planner still asked for that identity. Nothing was changed; please try again.");
       }
       checkedIdentity.push(identityKey);
@@ -277,7 +327,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     if (d.type === "look") {
       // Reads only, run now; a write waits for the real plan (and its approval). A bad look is repaired like a plan.
       // Asked for a verdict, a model may want to look again: the reads it has are the answer, so they run as the plan.
-      if (looked !== undefined && lookPlan && outcome?.effect === "read") return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
+      // Not for a message that also tells: a second look's own read outcome describes that look, not the request.
+      if (looked !== undefined && lookPlan && outcome?.effect === "read" && !readOnlyIntentError(input.message, lookPlan, offered, registry).length) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
       if (deps.look && looks >= LOOKS_MAX && !lookClosed) {
         // One plain nudge, so asking for a third look doesn't spend the one repair.
         lookClosed = true;
@@ -297,12 +348,17 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
             : [...compiled.plan.steps.flatMap((s) => callsOf(s).filter((a) => a.risk !== "read").map((a) => `${s.id}: ${a.id} is a ${a.risk} action; a look may only read`)), ...staffInQuery(compiled.plan, named)];
       if (errors.length || !compiled.ok) {
         emit({ type: "compile.errors", data: { errors } });
-        if (repaired) return failed(`The plan was still invalid after one repair:\n${errors.join("\n")}`);
-        repaired = true;
+        if (!mayRepair(errors)) return failed(`The plan was still invalid after repair:\n${errors.join("\n")}`);
+        unfreezeRejected();
         reply = await call(repairBlock(user, reply.json, errors), "repair");
         continue;
       }
+      // A look that states its own reads as a read outcome, for a message that asks for a change ("only the Facebook
+      // ones, and make those tasks due tomorrow"), described the look, not the request: the plan after it states it.
+      if (outcomeFrom === reply && outcome?.effect === "read" && readOnlyIntentError(input.message, compiled.plan, offered, registry).length) outcome = undefined;
+      lookStated = outcomeFrom === reply && outcome?.effect === "read";
       await runLook(compiled.plan, lookSource.steps ?? []);
+      restate = true;
       user = prompt();
       reply = await call(user, "plan after look");
       continue;
@@ -362,10 +418,14 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         : compiled.plan.steps.some((s) => callsOf(s).length)
           ? [
               ...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }),
-              // Without a stated outcome, the message's own verbs are the only sign a write was asked for.
-              ...(outcome ? [] : readOnlyIntentError(input.message, compiled.plan, offered, registry)),
-              ...duplicateCreates(compiled.plan, named, input.message),
+              // Without a stated outcome, the message's own verbs are the only sign a write was asked for. A read outcome
+              // this reply states for a message that asks, then tells, may describe only the asking.
+              ...(outcome && !(outcomeFrom === reply && outcome.effect === "read") ? [] : readOnlyIntentError(input.message, compiled.plan, offered, registry)),
+              ...duplicateCreates(compiled.plan, named, input.message, (entity, name) => !!store && (registry.resolver(entity)?.(store, name) ?? []).some((c) => !c.inactive && squash(c.name) === name)),
               ...staffInQuery(compiled.plan, named),
+              ...unfilledNamedFields(compiled.plan, input.message),
+              // Asked once, a remake stands, unless the reply since said it would change those records instead.
+              ...remakes(compiled.plan, input, remadeChecked ? remakeAnswer ?? null : undefined),
             ]
           : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
     if (compiled.ok && !errors.length) {
@@ -394,10 +454,31 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       continue;
     }
     emit({ type: "compile.errors", data: { errors } });
-    if (repaired) return failed(`The plan was still invalid after one repair:\n${errors.join("\n")}`);
-    repaired = true;
+    if (!mayRepair(errors)) return failed(`The plan was still invalid after repair:\n${errors.join("\n")}`);
+    unfreezeRejected();
+    if (compiled.ok && remakes(compiled.plan, input).length) remadeChecked = true;
     reply = await call(repairBlock(user, reply.json, errors), "repair");
   }
+}
+
+/**
+ * A follow-up that narrows what the last turn did ("only the Facebook ones, and make those tasks due tomorrow") is
+ * planned by weaker models as the whole request again, so the records it made are made twice. A plan that makes the
+ * kind of record the last turn made, and changes none of those, is sent back once to say which it means; asked for
+ * more ("one for Tom too"), it isn't.
+ */
+export function remakes(plan: CompiledPlan, input: Pick<TurnInput, "carry" | "records" | "message">, stated?: string[] | null): string[] {
+  if (stated === null || stated?.length === 0) return [];
+  if (/\b(also|too|another|more|as well|again|new)\b/i.test(input.message)) return [];
+  const calls = plan.steps.flatMap(callsOf).filter((a) => a.risk !== "read");
+  return [...new Set(input.carry?.made ?? [])].flatMap((entity) => {
+    const mine = (input.records ?? []).filter((r) => r.entity === entity);
+    const makes = calls.find((a) => a.entities?.produces === entity && !(a.entities?.consumes ?? []).includes(entity));
+    const changes = calls.some((a) => (a.entities?.consumes ?? []).includes(entity));
+    if (!mine.length || !makes || changes || stated?.includes(makes.id)) return [];
+    const names = mine.slice(-8).map((r) => `${r.name} (${r.id}${r.for ? `, for ${r.for}` : ""})`).join(", ");
+    return [`the last turn already made ${mine.length} ${entity} record${mine.length > 1 ? "s" : ""} (${names}); if this message narrows or changes what it did, update those that stay and cancel or undo those now left out instead of ${makes.id} again. If it asks for new ones as well, plan the same again`];
+  });
 }
 
 type Step = NonNullable<SubmitPlan["steps"]>[number];
@@ -473,8 +554,11 @@ export function renameReusedIds(plan: SubmitPlan, lookIds: ReadonlySet<string> =
   return changed ? { ...plan, steps: out } : plan;
 }
 
-/** Characters of look results shown to the planner. */
-const LOOKED_MAX = 6000;
+/**
+ * Characters of look results shown to the planner: enough for a few reads of a dozen records each (last week's leads,
+ * their conversations, appointments, staff). A cut list sends the planner back to read it again.
+ */
+const LOOKED_MAX = 16000;
 const LOOKS_MAX = 2;
 /** A record id such as rv_12 or ct_3: users never see these. */
 const RAW_ID = /\b[a-z]{2,4}_\d+\b/;
@@ -549,9 +633,10 @@ const squash = (s: unknown) => (typeof s === "string" ? s.toLowerCase().replace(
 /**
  * "Add Elodie Mercer, then post as her" when Elodie Mercer is already a contact: creating her again makes a
  * duplicate that later steps can't tell apart. Unless the message asks for a new or second one, the existing
- * record is meant.
+ * record is meant. "Create a contact named Sarah" is not a duplicate of Sarah Johnson: `sameName`, when given, says
+ * whether a record carries the whole name being created.
  */
-export function duplicateCreates(plan: CompiledPlan, named: Mention[], message: string): string[] {
+export function duplicateCreates(plan: CompiledPlan, named: Mention[], message: string, sameName?: (entity: string, name: string) => boolean): string[] {
   if (/\b(new|another|second|duplicate|separate)\b/i.test(message)) return [];
   const errors: string[] = [];
   for (const s of plan.steps) {
@@ -561,7 +646,28 @@ export function duplicateCreates(plan: CompiledPlan, named: Mention[], message: 
     const name = squash(args.name) || squash([args.firstName, args.lastName].filter((v) => typeof v === "string").join(" "));
     if (!made || !name) continue;
     const existing = named.find((m) => !m.of && m.entity === made && squash(m.name) === name);
-    if (existing) errors.push(`${s.id}: ${existing.name} already exists as a ${made}${existing.count > 1 ? ` (${existing.count} of them)` : ""}; resolve and use it instead of creating a duplicate with ${action.id}`);
+    if (existing && (!sameName || sameName(made, name))) errors.push(`${s.id}: ${existing.name} already exists as a ${made}${existing.count > 1 ? ` (${existing.count} of them)` : ""}; resolve and use it instead of creating a duplicate with ${action.id}`);
+  }
+  return errors;
+}
+
+/**
+ * "Add Sarah as a new contact with the email I'm pasting" with nothing pasted: a create that leaves out a field the
+ * message says comes with it would invent the record without it. Set it from the message, or ask for it.
+ */
+export function unfilledNamedFields(plan: CompiledPlan, message: string): string[] {
+  const errors: string[] = [];
+  for (const s of plan.steps) {
+    if (s.kind !== "action") continue;
+    const { action, args } = s.call;
+    const made = action.entities?.produces;
+    if (action.risk === "read" || !made || action.entities?.consumes?.includes(made)) continue;
+    const properties = (action.inputSchema.properties ?? {}) as Record<string, { type?: unknown }>;
+    const required = new Set((action.inputSchema.required ?? []) as string[]);
+    for (const [key, schema] of Object.entries(properties)) {
+      if (required.has(key) || args[key] !== undefined && args[key] !== "" || !["string", "number", "integer"].includes(schema.type as string)) continue;
+      if (namesField(message, key)) errors.push(`${s.id}: ${action.id} leaves out ${key}, which the message says comes with it; set it from the message, or if the message doesn't give it, reply clarify asking for ${key}; never invent it`);
+    }
   }
   return errors;
 }
@@ -585,11 +691,17 @@ export function staffInQuery(plan: CompiledPlan, named: Mention[]): string[] {
   return errors;
 }
 
-/** What a follow-up turn inherits: the actions this plan used and the record types they return. */
+/** What a follow-up turn inherits: the actions this plan used, the record types they return, and those it made. */
 export function carryOf(plan: CompiledPlan, registry: Registry): Carry {
   const prev = [...new Set(plan.steps.flatMap((s) => callsOf(s).map((a) => a.id)))];
   const entities = [...new Set(prev.map((id) => registry.get(id)?.entities?.produces).filter((e): e is string => !!e))];
-  return { prev, entities };
+  // An action that returns a type it doesn't take made a new record of it (a create); one that takes it changed one.
+  const made = [...new Set(prev.flatMap((id) => {
+    const a = registry.get(id);
+    const out = a?.risk !== "read" ? a?.entities?.produces : undefined;
+    return out && !(a?.entities?.consumes ?? []).includes(out) ? [out] : [];
+  }))];
+  return { prev, entities, ...(made.length ? { made } : {}) };
 }
 
 /** Runs `fn`, aborting its signal and rejecting if it hasn't settled after `ms`. */

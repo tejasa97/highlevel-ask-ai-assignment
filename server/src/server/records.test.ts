@@ -42,6 +42,19 @@ describe("typed session identities", () => {
     assert.ok(!requests[2]!.user.includes("<recent_records>"));
   });
 
+  test("records a loop made are kept for a follow-up, and the loop's reads are not", async () => {
+    const ctx = world();
+    const c = compile(response([
+      action("s1", "M03.A03", { status: "new", limit: 2 }),
+      { id: "s2", kind: "op", op: "forEach", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M06.A01", argsJson: JSON.stringify({ title: "Follow up with {{$item.name}}", relatedTo: { type: "lead", id: "$item.id" } }) }] },
+    ] as SubmitPlan["steps"]), registry);
+    assert.ok(c.ok, JSON.stringify(c));
+    const run = await execute(c.plan, registry, ctx, { executionId: "loop" });
+    const tasks = rememberRecords([], c.plan, run).filter((r) => r.entity === "task");
+    assert.equal(tasks.length, 2);
+    assert.ok(tasks.every((t) => /^Follow up with /.test(t.name)));
+  });
+
   test("only observed identities are kept, bounded and without mutable record contents", async () => {
     const ctx = world();
     for (let i = 0; i < MAX_RECORDS + 5; i++) ctx.f.savedReport({ name: `Report ${i}` });
@@ -58,13 +71,13 @@ describe("typed session identities", () => {
     assert.deepEqual(rememberRecords([], c.plan, failed), []);
   });
 
-  test("a record read by a Get action is remembered, by its number when it has no name", async () => {
+  test("a record read by a Get action is remembered, by its number when it has no name, with the contact it is for", async () => {
     const ctx = world();
     const quote = ctx.f.quote({ number: "QT-9139" });
     const c = compile(response([action("get", "M27.A02", { quoteId: quote.id })]), registry);
     assert.ok(c.ok);
     const run = await execute(c.plan, registry, ctx, { executionId: "remember-get" });
-    assert.deepEqual(rememberRecords([], c.plan, run), [{ entity: "quote", id: quote.id, name: "QT-9139" }]);
+    assert.deepEqual(rememberRecords([], c.plan, run), [{ entity: "quote", id: quote.id, name: "QT-9139", for: quote.contactId }]);
   });
 
   test("a plan that fails on a fixable error before changing anything is planned again, once, with the errors", async () => {

@@ -97,6 +97,17 @@ test("a request to send is not done by only creating the draft that would be sen
   assert.deepEqual(outcomeErrors(plan, outcome, { message: "Create a review request for Ana", offered }), []);
 });
 
+test("drafting for a destination stays a draft, and a send the request didn't ask for is refused", () => {
+  const offered = ["M13.A01", "M13.A03"].map((id) => registry.get(id)!);
+  const draft = compiled("M13.A01", { contactId: "ct_5", subject: "Invoice reminder", body: "Your invoice is overdue." });
+  const outcome = { effect: "change" as const, actions: ["M13.A01"], destination: "email" };
+  assert.deepEqual(outcomeErrors(draft, outcome, { message: "Draft payment reminders for overdue invoices", offered }), []);
+  assert.match(outcomeErrors(draft, outcome, { message: "Email Ana about her overdue invoice", offered }).join("\n"), /M13\.A03/);
+  const sent = compiled("M13.A03", { contactId: "ct_5", subject: "Invoice reminder", body: "Your invoice is overdue." });
+  assert.match(outcomeErrors(sent, { ...outcome, actions: [] }, { message: "Draft payment reminders for overdue invoices", offered }).join("\n"), /doesn't ask to send/);
+  assert.deepEqual(outcomeErrors(sent, { ...outcome, actions: ["M13.A03"] }, { message: "Send Ana a reminder about her invoice", offered }), []);
+});
+
 test("an action that emails its own record already sends it", () => {
   const plan = compiled("M28.A08", { invoiceId: "inv_1" });
   const outcome = { effect: "change" as const, actions: ["M28.A08"], destination: "email" };

@@ -118,6 +118,7 @@ function describe(step: CStep, r: StepResult, registry: Registry, used: Set<stri
     const a = step.call.action;
     if (a.risk === "read") return null; // reads only matter through what they feed
     const name = titleOf(r.output);
+    if (r.existing) return `Used the existing ${name ? `"${name}"` : "record"} (${(r.output as { id?: string }).id}) rather than ${a.name.toLowerCase()} again: ${r.existing.message}.`;
     const caveat = r.output === undefined ? undefined : a.caveat?.(r.output);
     return `Done: ${a.name}${name ? ` (${name})` : ""}${r.items?.[0]?.replayed ? ", already done earlier" : ""}${caveat ? `, but ${caveat}` : ""}.`;
   }

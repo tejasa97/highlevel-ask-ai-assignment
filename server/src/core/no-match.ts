@@ -23,11 +23,30 @@ export function runtimeNoMatch(plan: CompiledPlan, run: RunResult): string | und
       } catch { continue; }
     }
     if (!source) continue;
-    if (source.kind === "resolve") return `Step ${source.id} (resolve ${source.entity}) looked for ${JSON.stringify(source.name)} and found nothing. No write ran. Revise the plan using this fact.`;
+    if (source.kind === "resolve") return `Step ${source.id} (resolve ${source.entity}) looked for ${JSON.stringify(source.name)} and found nothing.${found(plan, run, source.name)} No write ran. Revise the plan using this fact.`;
     if (source.kind !== "action" || source.call.action.risk !== "read") continue;
     try {
       const args = substitute(source.call.args, (ref) => valueAt(outputs.get(ref.root), ref.path, `$${ref.root}`));
-      return `Step ${source.id} (${source.call.action.id}) searched/looked up ${JSON.stringify(args)} and found nothing (0 items). No write ran. Revise the plan using this fact.`;
+      return `Step ${source.id} (${source.call.action.id}) searched/looked up ${JSON.stringify(args)} and found nothing (0 items).${found(plan, run)} No write ran. Revise the plan using this fact.`;
     } catch { /* Can't prove what was searched; do not replan. */ }
   }
+}
+
+/** What the run's other reads did find, so the next plan builds on them rather than concluding nothing
+ * exists: "Archive every contact at Wayne" finds no company record named Wayne, but its contact search
+ * matched five contacts whose company field says Wayne. */
+function found(plan: CompiledPlan, run: RunResult, name?: string): string {
+  const facts: string[] = [];
+  for (const step of run.steps) {
+    const source = plan.steps.find((s) => s.id === step.id);
+    if (step.status !== "done" || source?.kind !== "action" || source.call.action.risk !== "read") continue;
+    const out = step.output as { items?: unknown } | unknown[] | undefined;
+    const items = Array.isArray(out) ? out : Array.isArray(out?.items) ? out.items : undefined;
+    if (!items?.length) continue;
+    const fields = name ? [...new Set(items.flatMap((item) => Object.entries(item as Record<string, unknown>)
+      .filter(([k, v]) => k !== "id" && typeof v === "string" && v.toLowerCase().includes(name.toLowerCase())).map(([k]) => k)))] : [];
+    facts.push(` Step ${source.id} (${source.call.action.id}) did find ${items.length} item${items.length === 1 ? "" : "s"}` +
+      (fields.length ? ` whose ${fields.join("/")} contains ${JSON.stringify(name)}.` : "."));
+  }
+  return facts.join("");
 }

@@ -1,5 +1,5 @@
 import MiniSearch, { type SearchResult } from "minisearch";
-import { clauses, terms } from "./text.js";
+import { clauses, terms, withoutContent } from "./text.js";
 import type { SearchCard } from "./cards.js";
 
 // Tool retrieval: narrows the 500 catalog actions to a short list for the planner. No LLM involved.
@@ -9,7 +9,11 @@ import type { SearchCard } from "./cards.js";
 //      the rest follow in reciprocal-rank-fusion order.
 //   2. Walk the merged ranking with a per-module cap until k cards are picked.
 //   3. Add what the planner will need next to them: look-alike siblings, a producer for any record type
-//      a picked card needs but nothing picked returns, and the previous turn's actions.
+//      a picked card needs but nothing picked returns, the previous turn's actions, and the actions that change
+//      what it made.
+
+/** Most actions offered for changing one record type the previous turn made. */
+const MAX_AMEND = 8;
 
 /** Wording that points at many records of one type instead of a named one. */
 const BULK = /\b(every|all|each)\b/i;
@@ -64,7 +68,7 @@ export const DEFAULTS: RetrieveOptions = {
 export interface RetrieveInput {
   message: string;
   /** Short follow-ups lean on the previous turn: its actions are carried over, its record types join the query. */
-  context?: { prev?: string[]; entities?: string[] };
+  context?: { prev?: string[]; entities?: string[]; made?: string[] };
   /** Ids already offered (a search_tools round asks for something new). */
   exclude?: string[];
   /** Record types the planner can resolve by name, so they never need a producer card. */
@@ -239,6 +243,13 @@ export class Retriever {
     };
 
     for (const id of input.context?.prev ?? []) add(id, "carried");
+    // "Only the Facebook ones, and make those due tomorrow" amends the tasks the last turn made: offer what changes
+    // a record of that type (due date, cancel), not only what its words rank.
+    const rank = (id: string) => ranking.find((x) => x.id === id)?.rank ?? Infinity;
+    for (const type of input.context?.made ?? []) {
+      const amend = this.cards.filter((c) => c.available && c.consumes.length === 1 && c.consumes[0] === type);
+      for (const c of amend.sort((a, b) => rank(a.id) - rank(b.id)).slice(0, MAX_AMEND)) add(c.id, "carried", type);
+    }
 
     // "What is Sarah Johnson's status?" names a contact without saying so: offer the contact lookups.
     for (const entity of new Set((input.mentions ?? []).map((m) => m.entity))) {
@@ -256,13 +267,17 @@ export class Retriever {
       // "Archive every contact at Wayne" names no record, so even a resolvable type needs its search.
       const resolvable = new Set(input.resolvable ?? []);
       const bulk = BULK.test(input.message);
+      const strong = new Set(picks.filter((x) => x.why === "bm25" || x.why === "dense").slice(0, o.siblings).map((x) => x.id));
       for (const p of [...picks]) {
         const c = this.byId.get(p.id)!;
         // Optional relationships only expand when a typed name actually supplies that relationship.
         // A plain "create task" must not pull in contact, lead, opportunity and user searches.
         const optional = (c.optionalConsumes ?? []).filter((e) => input.mentions?.some((m) => m.entity === e));
         for (const need of new Set([...c.consumes, ...optional])) {
-          if (bulk && resolvable.has(need) && p.why !== "sibling") {
+          // "Assign them to available sales reps": the record an action links its target to (the user a lead is
+          // assigned to) is named by no one, so there is no name to resolve, only a list to choose from.
+          const unnamed = strong.has(p.id) && c.consumes.indexOf(need) > 0 && !input.mentions?.some((m) => m.entity === need);
+          if ((bulk || unnamed) && resolvable.has(need) && p.why !== "sibling") {
             const producer = this.producerFor(need, ranking);
             if (producer) add(producer, "producer", p.id);
           }
@@ -279,8 +294,9 @@ export class Retriever {
   /** The whole-message query and the clauses, shared by BM25 and the embedding model. */
   private texts(input: RetrieveInput, o: RetrieveOptions): { query: string; parts: string[] } {
     // Record types from the previous turn join the query, so "make those high priority" knows it means tasks.
-    const query = [input.message, ...(input.context?.entities ?? []).map((e) => e.replace(/_/g, " "))].join(" ");
-    return { query, parts: o.splitClauses ? clauses(input.message) : [] };
+    const message = withoutContent(input.message);
+    const query = [message, ...(input.context?.entities ?? []).map((e) => e.replace(/_/g, " "))].join(" ");
+    return { query, parts: o.splitClauses ? clauses(message) : [] };
   }
 
   private run(text: string, o: RetrieveOptions): SearchResult[] {

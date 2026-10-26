@@ -10,6 +10,7 @@ import { loadQueries, score, summarize } from "./eval.js";
 import { mentions } from "./mentions.js";
 import { Embedder, MODEL } from "./embed.js";
 import { type Dense, Retriever } from "./retrieve.js";
+import { withoutContent } from "./text.js";
 import { terms } from "./text.js";
 
 let registry: Registry;
@@ -121,6 +122,14 @@ describe("retrieve", () => {
     for (const p of sibs) assert.ok(r.card(p.via!)!.siblings.includes(p.id), `${p.id} via ${p.via}`);
   });
 
+  test("what a message says is not what it asks to do", () => {
+    const resolvable = registry.resolverEntities();
+    const ids = (message: string) => r.retrieve({ message, resolvable }).picks.map((p) => p.id);
+    assert.ok(ids('Email Tara Larsen with the subject "Your Q4 renewal" saying we\'d like to book a short call next week to go over it').includes("M13.A03"));
+    assert.equal(withoutContent("Send everyone at Acme an SMS saying our office is closed Friday and archive their old notes"), "Send everyone at Acme an SMS and archive their old notes");
+    assert.equal(withoutContent('"Schedule a meeting"'), '"Schedule a meeting"');
+  });
+
   test("a message about every record of a type brings in that type's search even when it resolves by name", () => {
     const resolvable = registry.resolverEntities();
     const ids = (message: string) => r.retrieve({ message, resolvable }, { siblings: 0 }).picks.map((p) => p.id);
@@ -149,6 +158,15 @@ describe("retrieve", () => {
     const x = r.retrieve({ message: "make those high priority", context: { prev: ["M06.A01", "M15.A07"], entities: ["task"] } });
     assert.ok(x.picks.some((p) => p.id === "M06.A01"));
     assert.ok(x.picks.some((p) => p.id === "M15.A07" && p.why === "carried"));
+  });
+
+  test("a follow-up to a turn that made tasks is offered what changes a task", () => {
+    // Nothing in the words says cancel; the tasks just made are what "only include" leaves out.
+    const message = "Only include leads from the Facebook campaign, and make those due tomorrow.";
+    const amend = cards.filter((c) => c.available && c.consumes.length === 1 && c.consumes[0] === "task").map((c) => c.id);
+    const picked = ids(r.retrieve({ message, context: { prev: ["M06.A01"], entities: ["task"], made: ["task"] } }));
+    assert.deepEqual(amend.filter((id) => !picked.includes(id)), []);
+    assert.ok(amend.some((id) => !ids(r.retrieve({ message })).includes(id)));
   });
 
   test("exclude leaves out what was already offered", () => {
