@@ -426,6 +426,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
               ...unfilledNamedFields(compiled.plan, input.message),
               // Asked once, a remake stands, unless the reply since said it would change those records instead.
               ...remakes(compiled.plan, input, remadeChecked ? remakeAnswer ?? null : undefined),
+              ...repeatsEmpty(compiled.plan, input.failed, registry),
             ]
           : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
     if (compiled.ok && !errors.length) {
@@ -478,6 +479,20 @@ export function remakes(plan: CompiledPlan, input: Pick<TurnInput, "carry" | "re
     if (!mine.length || !makes || changes || stated?.includes(makes.id)) return [];
     const names = mine.slice(-8).map((r) => `${r.name} (${r.id}${r.for ? `, for ${r.for}` : ""})`).join(", ");
     return [`the last turn already made ${mine.length} ${entity} record${mine.length > 1 ? "s" : ""} (${names}); if this message narrows or changes what it did, update those that stay and cancel or undo those now left out instead of ${makes.id} again. If it asks for new ones as well, plan the same again`];
+  });
+}
+
+/** On a retry, a search the failed attempt ran and found nothing with, run again unchanged, finds nothing again. */
+export function repeatsEmpty(plan: CompiledPlan, failed: string | undefined, registry: Registry): string[] {
+  let empty: { action: string; args: unknown }[] = [];
+  try {
+    empty = (failed && (JSON.parse(failed) as { empty?: typeof empty }).empty) || [];
+  } catch { return []; }
+  const key = (args: unknown) => JSON.stringify(args, (_, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort()) : v));
+  return plan.steps.flatMap((s) => {
+    if (s.kind !== "action" || !empty.some((e) => e.action === s.call.action.id && key(e.args) === key(s.call.args))) return [];
+    const others = (s.call.action.siblings ?? []).map((id) => registry.get(id)).filter((a) => !!a).map((a) => `${a.id} ${a.name}`);
+    return [`${s.id}: ${s.call.action.id} ${JSON.stringify(s.call.args)} already found nothing in <failed_attempt>, so it finds nothing again; search another way${others.length ? ` (a look-alike that searches other records: ${others.join(", ")})` : ""}, or reply with type answer if nothing should match`];
   });
 }
 

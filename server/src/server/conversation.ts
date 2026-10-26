@@ -2,7 +2,7 @@
 // The HTTP app streams its events to the web UI; the scenario evals drive it headless, so both take the same path.
 import type { CompiledPlan, CStep } from "../core/compile.js";
 import { execute, type Approval, type Pending, type RunResult } from "../core/execute.js";
-import { runtimeNoMatch } from "../core/no-match.js";
+import { emptyRead, runtimeNoMatch } from "../core/no-match.js";
 import { shownRecords, summarize, type Shown } from "../core/summarize.js";
 import { type Carry, type InfraKind, planTurn } from "../planner/turn.js";
 import type { Planner, Tier } from "../planner/types.js";
@@ -162,7 +162,8 @@ const prerequisite = (e: { code: string; message: string }) => e.code === "CONFL
 export function retryable(plan: CompiledPlan, result: RunResult): string | undefined {
   // What a lookup that found nothing searched for, so the next plan can widen or correct it.
   const noMatch = runtimeNoMatch(plan, result);
-  const attempt = (errors: string[]) => JSON.stringify({ steps: plan.steps.map(describeStep), errors: noMatch ? [...errors, noMatch] : errors });
+  const empty = emptyRead(plan, result);
+  const attempt = (errors: string[]) => JSON.stringify({ steps: plan.steps.map(describeStep), errors: noMatch ? [...errors, noMatch] : errors, ...(empty ? { empty: [empty] } : {}) });
   const errors = result.status !== "failed" ? [] : result.steps.flatMap((s) => {
     if (s.status !== "failed" || !s.error) return [];
     if (s.error.code === "ALL_FAILED") return (s.items ?? []).filter((i) => i.error).slice(0, 3).map((i) => ({ step: s.id, ...i.error! }));
