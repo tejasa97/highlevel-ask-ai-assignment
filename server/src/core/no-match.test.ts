@@ -97,6 +97,30 @@ test("Conversation replans once with the fact and retains the original request",
   w.store.close();
 });
 
+test("Conversation replans a write loop that ran over an empty search, and the retry's write runs", async () => {
+  const w = world();
+  const requests: PlanRequest[] = [];
+  const loop = wire([
+    action("s1", "M06.A03", { query: "Unmatched fixture wording" }),
+    { id: "s2", kind: "op", op: "forEach", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M06.A05", argsJson: JSON.stringify({ taskId: "$item.id", assigneeId: "us_5" }) }] },
+  ]);
+  const replies = [loop, wire([action("s1", "M06.A01", { title: "Recovered fixture task" })])];
+  const planner: Planner = { name: "scripted", plan: async (req) => {
+    requests.push(req);
+    const json = replies.shift(); assert.ok(json);
+    return { model: "fake", json, text: JSON.stringify(json), usage: { input: 0, output: 0, cachedRead: 0, cacheWrite: 0, thinking: 0, costUsd: 0, billing: "none" }, latencyMs: 1 };
+  } };
+  const chat = new Conversation({ registry, planner, retriever: new Retriever(buildCards(registry)) }, w);
+  let status: string | undefined;
+  await chat.ask("give the fixture tasks to Noah", "fast", "us_1", (e, d: any) => { if (e === "reply") status = d.status; });
+  assert.equal(requests.length, 2);
+  assert.match(requests[1]!.user, /<failed_attempt>.*step s2 .*ran over nothing/);
+  assert.match(requests[1]!.user, /"empty":\[\{"action":"M06.A03"/, "the empty search rides along so a repeat of it can be refused");
+  assert.equal(status, "done");
+  assert.equal(w.store.all<{ title: string }>("tasks").filter((t) => t.title === "Recovered fixture task").length, 1);
+  w.store.close();
+});
+
 test("a second miss ends the turn rather than calling the planner again", async () => {
   const w = world(); let calls = 0;
   // The retry searches differently and misses too; the same search again is refused before it runs (planner/turn.ts).
