@@ -5,7 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { fingerprint, readHistory } from "../eval/history.js";
 import { type Measured, type ResultFile, renderReport, type Targets } from "../eval/report.js";
-import { loadScenarios } from "../eval/scenario.js";
+import { selectScenarios } from "../eval/selection.js";
 import { CATALOG } from "../registry/catalog.js";
 import { loadRegistry } from "../registry/registry.js";
 
@@ -35,7 +35,8 @@ const measured: Measured[] = labels.map((label) => {
   return { result: JSON.parse(readFileSync(file, "utf8")) as ResultFile, entry: scenarioRuns.filter((h) => h.label === label).at(-1) };
 });
 
-const defs = loadScenarios(`${EVAL}scenarios`);
+// The scenarios the reported run used, so checks and the set fingerprint match it.
+const { scenarios: defs } = selectScenarios(ROOT, measured[0]?.result.summary.scenarioDir);
 const registry = await loadRegistry();
 const implemented = registry.list();
 const md = renderReport({
