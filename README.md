@@ -7,7 +7,7 @@ All 500 actions are implemented against a simulated backend (SQLite, frozen cloc
 - `docs/ASSIGNMENT.md` (local only, not in the repo): what's being asked, with a requirements checklist
 - [docs/PLAN.md](docs/PLAN.md): architecture, design and the 5-day schedule
 - [docs/PLANNER-CHANGES.md](docs/PLANNER-CHANGES.md): what changed in shared lookup, retrieval and planner handling, why each change was needed, and what remains unsolved
-- [BENCHMARK.md](BENCHMARK.md): quality, latency (direct vs complex), tokens and cost per successful task, and the planner against a one-call-per-step baseline agent; final run on Haiku 5.5: planner 98.6% of runs passing against 91.3% for the baseline; regenerate with `npm run report -- --label haiku-final-planner-3x --compare haiku-final-baseline-3x` in `server/`
+- [BENCHMARK.md](BENCHMARK.md): quality, latency (direct vs complex), tokens and cost per successful task, and the planner against a one-call-per-step baseline agent; final run on DeepSeek (deepseek-v4.1-flash-1017 through the Qwen Token Plan), 86 scenarios across 38 modules: planner 94.2% of runs passing at a 1.5 s median reply, against 89.5% at 2.7 s for the baseline; regenerate with `npm run report -- --label deepseek-final-planner-1x --compare deepseek-final-baseline-1x` in `server/`
 - [docs/PROMPT-EXAMPLE.md](docs/PROMPT-EXAMPLE.md): the planner prompt over two turns, with real payloads and token counts
 - `docs/assignment/` (local only, not in this checkout): the original brief and catalog PDFs
 
@@ -54,9 +54,9 @@ The two merged lines add:
 
 On main, the 2,517 deterministic tests, the typecheck and the web build all pass.
 
-The newest live numbers on main are the Qwen/DeepSeek runs under [Use a Qwen Token Plan locally](#use-a-qwen-token-plan-locally). BENCHMARK.md's Haiku run predates both merges; see [Benchmark scope](#benchmark-scope). The earlier validation reports ([outcomes](docs/PLANNER-OUTCOMES-VALIDATION.md), [scoped lookups](docs/SCOPED-LOOKUPS-VALIDATION.md)) describe branches as they stood before the merge. Keep them as history; they don't score main.
+The newest live numbers on main are in BENCHMARK.md: DeepSeek on the Qwen Token Plan, run at commit `94899ef`; see [Benchmark scope](#benchmark-scope). The earlier validation reports ([outcomes](docs/PLANNER-OUTCOMES-VALIDATION.md), [scoped lookups](docs/SCOPED-LOOKUPS-VALIDATION.md)) describe branches as they stood before the merge. Keep them as history; they don't score main.
 
-All 500 actions in all 50 modules are executable. The first 18 modules (Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams) were built in depth first and carry the scenario and module evals below; the other 32 were added in Wave 1 ([WAVE1-REPORT.md](WAVE1-REPORT.md)) and then hardened ([WAVE1-HARDENING-REPORT.md](WAVE1-HARDENING-REPORT.md), assumptions in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md)). The backend suite has 2,517 deterministic tests. The baseline scenarios cover the first 18 modules; the other 32 have a separate set of 25 planner scenarios (`eval/module-scenarios/wave1`) that historically scored 96% of clean runs on Haiku (3 repeats), up from 66.7% before the failure classes it exposed were fixed. In that run, one scenario failed every repeat: the planner read "Move X from Starter to Pro" as an opportunity stage change instead of a subscription plan change. It is recorded, not patched.
+All 500 actions in all 50 modules are executable. The first 18 modules (Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams) were built in depth first and carry the scenario and module evals below; the other 32 were added in Wave 1 ([WAVE1-REPORT.md](WAVE1-REPORT.md)) and then hardened ([WAVE1-HARDENING-REPORT.md](WAVE1-HARDENING-REPORT.md), assumptions in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md)). The backend suite has 2,551 deterministic tests. The baseline scenarios cover the first 18 modules; the other 32 have a separate set of 25 planner scenarios (`eval/module-scenarios/wave1`) that historically scored 96% of clean runs on Haiku (3 repeats), up from 66.7% before the failure classes it exposed were fixed. In that run, one scenario failed every repeat: the planner read "Move X from Starter to Pro" as an opportunity stage change instead of a subscription plan change. It is recorded, not patched.
 
 The new thirty actions use the existing registry, compiler, executor, approval gates, replay ledger, SQLite persistence, audit, traces and UI. [Implementation contract](docs/M45-M47-SCOPE.md) · [Module-building guide](docs/ADDING-A-MODULE.md). Ticket-reply batches now disclose known blocked targets and require approval of the eligible subset before sending; see [subset confirmation](docs/PARTIAL-CONFIRMATION.md). Earlier Sol scores below precede this policy change.
 
@@ -93,9 +93,18 @@ The 45 development cases cover all thirty new action IDs. The 12 reporting cases
 
 ### Benchmark scope
 
-[BENCHMARK.md](BENCHMARK.md) covers one suite, the 23-scenario regression set in `eval/scenarios`. Those scenarios touch 16 modules. Each ran 3 times on Haiku 5.5 through `claude -p`, once with the planner and once with the baseline, at commit `c41d50d` (2026-10-23). That was before #5 and #6 were merged. It doesn't score all 50 modules or the current main.
+[BENCHMARK.md](BENCHMARK.md) covers 86 scenarios touching 38 modules: the 23-scenario regression set in `eval/scenarios`, 12 multi-turn scenarios built from the assignment brief's examples and held-out variants of them (`eval/brief-scenarios`), and 51 parameter-accuracy scenarios that check every argument of the call (`eval/param-scenarios`). Each ran once on deepseek-v4.1-flash-1017 through the Qwen Token Plan, with the planner and with the baseline, at commit `94899ef` (2026-10-26). One repeat is cheap on the Token Plan but noisy: a single run moves a scenario's result, so read gaps of a few points as noise. The previous BENCHMARK.md (Haiku 5.5 through `claude -p`, 23 scenarios × 3, commit `c41d50d`) is in git history.
 
-The repository has 205 scenarios across all 50 modules. The other 182 are scored separately:
+Reproduce it from `server/` with the Token Plan env loaded (see [Use a Qwen Token Plan locally](#use-a-qwen-token-plan-locally)):
+
+```sh
+export PLANNER=qwen QWEN_MODEL=deepseek-v4.1-flash-1017 QWEN_FAST_MODEL=deepseek-v4.1-flash-1017
+npm run eval:scenarios -- --scenario-dir eval/scenarios,eval/brief-scenarios,eval/param-scenarios --repeat 1 --label deepseek-final-planner-1x
+npm run eval:scenarios -- --scenario-dir eval/scenarios,eval/brief-scenarios,eval/param-scenarios --repeat 1 --label deepseek-final-baseline-1x --agent baseline
+npm run report -- --label deepseek-final-planner-1x --compare deepseek-final-baseline-1x
+```
+
+The repository has 268 scenarios across all 50 modules. The other 182 are scored separately:
 
 | Set | Scenarios | Latest reported result |
 | --- | --- | --- |
@@ -209,9 +218,9 @@ four-batch mean; a single batch moves by 1-3 points, so read gaps under ~5 point
 
 ## Known limitations
 
-- **The latency targets are missed.** They were set for a direct API call. Every `claude -p` call starts a new process, and BENCHMARK.md shows a direct p50 of 8.1 s against a 1.5 s target. DeepSeek through the Token Plan API gets a median turn of 1.9 s. There is no Anthropic API adapter, so Claude can't be measured without the process overhead.
+- **The latency targets are missed on Claude.** They were set for a direct API call. DeepSeek through the Token Plan API meets them (direct first reply p50 1.5 s, complex end-to-end p95 4.7 s in BENCHMARK.md). Every `claude -p` call starts a new process, and the earlier Haiku benchmark had a direct p50 of 8.1 s. There is no Anthropic API adapter, so Claude can't be measured without the process overhead.
 - **Cost is unknown on subscription planners.** The Claude and Codex CLIs and the prepaid Token Plan report no USD cost. The cost figures here come from list rates.
-- **The benchmark is narrow and old.** See [Benchmark scope](#benchmark-scope). A single batch moves by 1–3 points, so small gaps are noise.
+- **The benchmark is one repeat and skips 12 modules.** See [Benchmark scope](#benchmark-scope). A single batch moves by 1–3 points, so small gaps are noise. On DeepSeek, the multi-step follow-ups ("only include Facebook leads") and the lead-filtering brief examples are the weak spot; most failures are model misreads (an inverted filter, a filter read as a field update) that the validator can't catch because the plan is well-formed.
 - **Known planner misses are recorded, not patched.** For example, "Move X from Starter to Pro" is read as an opportunity stage change rather than a plan change. [PLANNER-CHANGES.md](docs/PLANNER-CHANGES.md) lists what is still unsolved.
 - **Retrieval can miss.** Hybrid recall@15 is 97.5%, so about 1 question in 40 doesn't get the right card into the shortlist. The planner can ask for another retrieval round (`search_tools`, up to twice), but it can't use an action it never sees.
 - **Each turn is bounded.** A turn gets two looks, two `search_tools` rounds, one compile repair and one retry after a failed run. Requests that need longer chains of read-then-decide steps hit those limits and stop with an honest partial reply.

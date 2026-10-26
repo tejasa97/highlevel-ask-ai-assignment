@@ -4,10 +4,11 @@
 // and writing is in scripts/report.ts.
 import type { HistoryEntry } from "./history.js";
 import type { Scenario, ScenarioRun } from "./scenario.js";
+import { DEFAULT_SCENARIO_DIR } from "./selection.js";
 import { sumUsd } from "../planner/usage.js";
 
 export interface ResultFile {
-  summary: { label: string; planner: string; tier: string; agent?: string; scenarios: number; repeat: number; runs: number; infraRuns: number; notRun: number };
+  summary: { label: string; planner: string; tier: string; agent?: string; scenarioDir?: string; scenarios: number; repeat: number; runs: number; infraRuns: number; notRun: number };
   runs: ScenarioRun[];
 }
 
@@ -314,12 +315,13 @@ export function renderReport(input: ReportInput): string {
   line("```bash");
   for (const m of input.measured) {
     const r = m.result.summary;
-    line(`npm run eval:scenarios -- --repeat ${r.repeat} --label ${r.label}${r.tier === "fast" ? " --fast" : ""}${r.agent === "baseline" ? " --agent baseline" : ""}`);
+    const dir = r.scenarioDir && r.scenarioDir !== DEFAULT_SCENARIO_DIR ? ` --scenario-dir ${r.scenarioDir}` : "";
+    line(`npm run eval:scenarios --${dir} --repeat ${r.repeat} --label ${r.label}${r.tier === "fast" ? " --fast" : ""}${r.agent === "baseline" ? " --agent baseline" : ""}`);
   }
   line(`npm run report -- --label ${p.summary.label}${others.length ? ` --compare ${others.map((m) => m.result.summary.label).join(",")}` : ""}`);
   line("```");
   line();
-  line("The planner comes from `PLANNER` in `.env` (see `server/src/planner/index.ts`). The scenarios are in `eval/scenarios/`, the targets in `eval/targets.json`, and every recorded run in `eval/results/history.jsonl`.");
+  line(`The planner comes from \`PLANNER\` in \`.env\` (see \`server/src/planner/index.ts\`). The scenarios are in ${(p.summary.scenarioDir ?? DEFAULT_SCENARIO_DIR).split(",").map((d) => `\`${d}/\``).join(", ")}, the targets in \`eval/targets.json\`, and every recorded run in \`eval/results/history.jsonl\`.`);
   return out.join("\n") + "\n";
 }
 
