@@ -66,7 +66,7 @@ async function main(): Promise<number> {
 
   let executionId = `ex_${plan.hash}_${Date.now().toString(36)}`;
   let t = performance.now();
-  let run: RunResult = await execute(plan, registry, { store, clock }, { executionId, onEvent: debug ? (e) => console.log("  ·", JSON.stringify(e)) : undefined });
+  let run: RunResult = await execute(plan, registry, { store, clock }, { executionId, said: message, onEvent: debug ? (e) => console.log("  ·", JSON.stringify(e)) : undefined });
   timings.push(`execute ${Math.round(performance.now() - t)} ms`);
   // As in the app: a run that failed before any write, on something another plan could fix, gets one more plan.
   const failed = run.writesAttempted === false ? retryable(plan, run) : undefined;
@@ -79,7 +79,7 @@ async function main(): Promise<number> {
     plan = retry.plan;
     executionId += "_replan";
     printPlan(plan);
-    run = await execute(plan, registry, { store, clock }, { executionId });
+    run = await execute(plan, registry, { store, clock }, { executionId, said: message });
   }
 
   while (run.status === "awaiting_confirmation") {
@@ -91,7 +91,7 @@ async function main(): Promise<number> {
       return 0;
     }
     t = performance.now();
-    run = await execute(plan, registry, { store, clock }, { executionId, approvals: [run.pending!] });
+    run = await execute(plan, registry, { store, clock }, { executionId, said: message, approvals: [run.pending!] });
     timings.push(`resume ${Math.round(performance.now() - t)} ms`);
   }
 

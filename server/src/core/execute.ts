@@ -127,6 +127,8 @@ export interface ExecOptions {
   onEvent?: (e: ExecEvent) => void;
   /** The user's words. A name that matches several records is narrowed by what else the request says about it. */
   request?: string;
+  /** Everything the user said in the turns the planner saw: a limit their words never give was not asked for. */
+  said?: string;
 }
 
 export async function execute(plan: CompiledPlan, registry: Registry, ctx: ActionContext, opts: ExecOptions): Promise<RunResult> {
@@ -136,9 +138,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   const filteredFrom = new Map<string, number>();
   // A search returns one page of its matches. A write over that page alone would quietly skip the rest,
   // so a search feeding writes loads as many as a search can, and writes refuse a list that is still short.
-  // A limit the plan set ("the 10 newest") is kept, and is said wherever the write shows: `capped`.
-  const partial = new Map<string, Cut>();
-  const capped = new Map<string, Cut>();
+  // A limit the plan set ("the 10 newest") is kept (`asked`), and is said wherever the write shows: `capped`.
+  const cuts = new Map<string, Cut & { asked: boolean }>();
   const writeFeeds = new Set<string>();
   for (const s of [...plan.steps].reverse()) {
     const writes = s.kind === "forEach" ? s.calls.some((c) => c.action.risk !== "read") : s.kind === "action" && s.call.action.risk !== "read";
@@ -227,16 +228,20 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
    * removed or kept, which no limit asked for, so that is short.
    */
   const carry = (id: string, list: string, checks: string[]) => {
-    const p = [list, ...checks].map((raw) => partial.get(rootOf(raw))).find(Boolean) ?? checks.map((raw) => capped.get(rootOf(raw))).find(Boolean);
-    if (p) partial.set(id, p);
-    else if (capped.has(rootOf(list))) capped.set(id, capped.get(rootOf(list))!);
+    const short = [list, ...checks].map((raw) => cuts.get(rootOf(raw))).find((c) => c && !c.asked);
+    const check = checks.map((raw) => cuts.get(rootOf(raw))).find(Boolean);
+    const c = short ?? (check && { ...check, asked: false }) ?? cuts.get(rootOf(list));
+    if (c) cuts.set(id, c);
   };
-  const cutOf = (step: CStep) => listRoots(step).map((root) => capped.get(root)).find(Boolean);
+  const cutOf = (step: CStep): Cut | undefined => {
+    const c = listRoots(step).map((root) => cuts.get(root)).find((x) => x?.asked);
+    return c && { search: c.search, loaded: c.loaded, total: c.total };
+  };
   /** Refuses a write over a list that stops short of everything it matched; nothing is changed. */
   const shortList = (step: CStep): StepError | undefined => {
     for (const root of listRoots(step)) {
-      const p = partial.get(root);
-      if (p) {
+      const p = cuts.get(root);
+      if (p && !p.asked) {
         const why = p.loaded === LIMIT_MAX ? `one search loads at most ${p.loaded}` : `only the first ${p.loaded} were loaded`;
         return { code: "INVALID", message: `$${p.search} matched ${p.total} records but ${why}, so nothing was changed rather than only part of them; narrow the search (by date, tag, owner…) and run it in parts` };
       }
@@ -346,9 +351,12 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             fail(short);
             break;
           }
-          // Left alone when the plan asked for a number ("the 10 newest"); otherwise every match it can. The default
-          // written out, when the request never says it, asks for nothing: planners copy it from the schema.
-          if (writeFeeds.has(step.id) && args.value.limit === LIMIT_DEFAULT && !says(opts.request, LIMIT_DEFAULT)) delete args.value.limit;
+          // Left alone when the plan asked for a number ("the 10 newest"); otherwise every match it can. A large limit the
+          // user's words never give asks for nothing: planners copy the schema's 50, or write 100 "to be safe". A small one
+          // ("the newest", "top three") is the user's even when they didn't write it as a number.
+          const words = opts.said ?? opts.request;
+          const limit = args.value.limit;
+          if (writeFeeds.has(step.id) && words !== undefined && typeof limit === "number" && limit >= LIMIT_DEFAULT && !says(words, limit)) delete args.value.limit;
           const widened = writeFeeds.has(step.id) && args.value.limit === undefined && takesLimit(step.call.action);
           if (widened) args.value.limit = LIMIT_MAX;
           const picked = step.call.action.risk === "read" ? undefined : pickedFirst(step);
@@ -364,7 +372,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             }
             const blocked = group.filter((g) => g.error).map((g) => ({ label: `${g.calls[0]?.call.action.name ?? "action"} (${g.calls[0]?.args.ticketId ?? g.step.id})`, error: g.error! }));
             const eligible = group.filter((g) => !g.error).flatMap((g) => g.calls);
-            const gate = gateFor(step, eligible, plan.hash, opts.approvals, eligible.length, blocked, group.map((g) => g.step.id));
+            const cut = group.map((g) => cutOf(g.step)).find(Boolean);
+            const gate = gateFor(step, eligible, plan.hash, opts.approvals, eligible.length, blocked, group.map((g) => g.step.id), cut);
             for (const g of group) checkedActions.set(g.step.id, { error: g.error, gate });
           }
           const checked = checkedActions.get(step.id);
@@ -388,7 +397,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             const query = args.value.query ?? args.value.name;
             if (step.call.action.risk === "read" && typeof query === "string" && query.trim()) searched.set(step.id, { query, entity: step.call.action.entities?.produces ?? "record" });
             const out = r.results![0];
-            if (writeFeeds.has(step.id) && isPage(out) && out.total > out.items.length) (widened ? partial : capped).set(step.id, { search: step.id, loaded: out.items.length, total: out.total });
+            if (writeFeeds.has(step.id) && isPage(out) && out.total > out.items.length) cuts.set(step.id, { search: step.id, loaded: out.items.length, total: out.total, asked: !widened });
             done(r.results![0], { ...(r.replayed ? { items: [r] } : {}), ...(cut ? { capped: cut } : {}) });
           }
           break;
@@ -580,8 +589,9 @@ function listRoots(step: CStep): string[] {
 
 /** The every-item lists ($s2.items[*].leadId) a filter's conditions check against. */
 const whereLists = (where: Record<string, unknown>) => collectRefs(where).map((r) => r.ref).filter((raw) => parseRef(raw)?.path.some((p) => "all" in p));
-/** Whether the user's words carry this number ("the first 50"). */
-const says = (request: string | undefined, n: number) => new RegExp(`(^|\\D)${n}(\\D|$)`).test(request ?? "");
+/** Whether the user's words give this count ("the first 50"), not an amount, a share or a span ("$50", "50%", "50 days"). */
+const says = (words: string, n: number) =>
+  new RegExp(`(^|[^\\d.,$€£₹])${n}(?![\\d%]|[.,]\\d|\\s*(?:k|percent|dollars?|usd|days?|weeks?|months?|years?|hours?|minutes?|mins?|miles?|km)\\b)`, "i").test(words);
 const takesLimit = (action: { input: unknown }) => !!(action.input as { shape?: Record<string, unknown> }).shape?.limit;
 const isPage = (x: unknown): x is { items: unknown[]; total: number } =>
   !!x && typeof x === "object" && Array.isArray((x as { items?: unknown }).items) && typeof (x as { total?: unknown }).total === "number";
@@ -635,7 +645,7 @@ function gateFor(
   else if (risks.has("external")) reason = "sends something outside the account";
   else if (step.kind === "forEach" && writes.length > 0 && count >= BULK_MIN) reason = `changes ${count} records at once`;
   if (!reason) return null;
-  if (cut) reason += ` (the first ${cut.loaded} of the ${cut.total} found)`;
+  if (cut) reason += ` (only the first ${cut.loaded} of the ${cut.total} found were looked at)`;
 
   const targets = writes.map((c) => ({ action: c.call.action.id, args: c.args, ...(c.binding ? { binding: c.binding } : {}) }));
   const targetsHash = createHash("sha256").update(JSON.stringify({ targets, blocked })).digest("hex").slice(0, 16);

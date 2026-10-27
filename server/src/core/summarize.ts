@@ -314,4 +314,4 @@ export function touchedRecords(plan: CompiledPlan, run: RunResult): string | und
 }
 
 /** Says when a write covered only the first page of what its search found, so the rest isn't silently left out. */
-const firstOf = (r: StepResult) => (r.capped ? ` That was the first ${r.capped.loaded} of the ${r.capped.total} found; say if you want the rest too.` : "");
+const firstOf = (r: StepResult) => (r.capped ? ` Only the first ${r.capped.loaded} of the ${r.capped.total} found were looked at; say if you want the rest too.` : "");

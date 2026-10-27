@@ -549,19 +549,19 @@ describe("writes over a search see every match", () => {
     const ctx = tagged(120), p = bulk(10);
     const first = await execute(p, registry, ctx, { executionId: "bulk-10" });
     assert.equal(first.pending?.count, 10);
-    assert.match(first.pending!.reason, /\(the first 10 of the 120 found\)$/);
+    assert.match(first.pending!.reason, /\(only the first 10 of the 120 found were looked at\)$/);
     const r = await execute(p, registry, ctx, { executionId: "bulk-10", approvals: [first.pending!] });
     assert.equal(r.status, "done");
     assert.equal(changed(ctx), 10);
     assert.deepEqual(r.steps.at(-1)!.capped, { search: "s1", loaded: 10, total: 120 });
-    assert.match(summarize(p, r, registry), /That was the first 10 of the 120 found; say if you want the rest too\./);
+    assert.match(summarize(p, r, registry), /Only the first 10 of the 120 found were looked at; say if you want the rest too\./);
   });
   test("the default limit written out, which the request never says, still loads every match", async () => {
-    const ctx = tagged(120), p = bulk(50);
-    const first = await execute(p, registry, ctx, { executionId: "bulk-50", request: "set the company on every bulk contact to Bulk Co" });
+    const ctx = tagged(120), p = bulk(50), request = "set the company on every bulk contact to Bulk Co";
+    const first = await execute(p, registry, ctx, { executionId: "bulk-50", request });
     assert.equal(first.pending?.count, 120);
     assert.doesNotMatch(first.pending!.reason, /first/);
-    const r = await execute(p, registry, ctx, { executionId: "bulk-50", approvals: [first.pending!] });
+    const r = await execute(p, registry, ctx, { executionId: "bulk-50", approvals: [first.pending!], request });
     assert.equal(changed(ctx), 120);
     assert.equal(r.steps.at(-1)!.capped, undefined);
   });
@@ -569,7 +569,52 @@ describe("writes over a search see every match", () => {
     const ctx = tagged(120), p = bulk(50);
     const first = await execute(p, registry, ctx, { executionId: "bulk-50-asked", request: "set the company on the first 50 bulk contacts to Bulk Co" });
     assert.equal(first.pending?.count, 50);
-    assert.match(first.pending!.reason, /the first 50 of the 120 found/);
+    assert.match(first.pending!.reason, /only the first 50 of the 120 found were looked at/);
+  });
+  test("a limit the user gave in an earlier turn is kept on a follow-up that doesn't repeat it", async () => {
+    const said = "set the company on the first 50 bulk contacts to Acme\nactually make it Bulk Co";
+    const first = await execute(bulk(50), registry, tagged(120), { executionId: "bulk-50-followup", request: "actually make it Bulk Co", said });
+    assert.equal(first.pending?.count, 50);
+  });
+  test("any large limit the user's words never give loads every match, and one they give is kept", async () => {
+    const all = await execute(bulk(100), registry, tagged(120), { executionId: "bulk-100", said: "set the company on every bulk contact to Bulk Co" });
+    assert.equal(all.pending?.count, 120);
+    const asked = await execute(bulk(100), registry, tagged(120), { executionId: "bulk-100-asked", said: "set the company on the first 100 bulk contacts to Bulk Co" });
+    assert.equal(asked.pending?.count, 100);
+  });
+  test("a small limit is the user's even when their words don't give it as a number", async () => {
+    const first = await execute(bulk(10), registry, tagged(120), { executionId: "bulk-ten", said: "set the company on the ten newest bulk contacts to Bulk Co" });
+    assert.equal(first.pending?.count, 10);
+  });
+  for (const said of [
+    "set Bulk Co on bulk contacts with deals over $50",
+    "set Bulk Co on bulk contacts at 50% or more",
+    "set Bulk Co on bulk contacts from the last 50 days",
+    "set Bulk Co on bulk contacts with 1,500 points or 50k revenue",
+  ]) {
+    test(`an amount, a share or a span is not a count: "${said}"`, async () => {
+      const first = await execute(bulk(50), registry, tagged(120), { executionId: `bulk-50-${said.length}`, said });
+      assert.equal(first.pending?.count, 120);
+    });
+  }
+  test("a write over a filtered capped search says how much was looked at, not how much changed", async () => {
+    const ctx = tagged(120);
+    for (const c of ctx.store.all<{ id: string; firstName: string }>("contacts")) {
+      const n = Number(c.firstName.replace("Bulk", ""));
+      if (c.firstName.startsWith("Bulk") && n % 2 === 0) ctx.store.update("contacts", c.id, { lastName: "Even" });
+    }
+    const p = compiled(plan([
+      action("s1", "M01.A03", { tag: "bulk", limit: 10 }),
+      op("s2", "filter", { in: "$s1.items", where: { lastName: "Even" } }),
+      op("s3", "forEach", { in: "$s2", do: [{ action: "M01.A04", args: { contactId: "$item.id", company: "Bulk Co" } }] }),
+    ]));
+    const first = await execute(p, registry, ctx, { executionId: "filtered-cap" });
+    const count = first.pending!.count;
+    assert.ok(count > 0 && count < 10, `count ${count}`);
+    assert.match(first.pending!.reason, new RegExp(`changes ${count} records at once \\(only the first 10 of the 120 found were looked at\\)$`));
+    const r = await execute(p, registry, ctx, { executionId: "filtered-cap", approvals: [first.pending!] });
+    assert.equal(changed(ctx), count);
+    assert.match(summarize(p, r, registry), /Only the first 10 of the 120 found were looked at/);
   });
   const twoSearches = (check: "exclude" | "filter") =>
     compiled(plan([
