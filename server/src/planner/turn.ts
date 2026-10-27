@@ -262,6 +262,16 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     }
     const d = parsed.data;
     if (remadeChecked && remakeAnswer === undefined) remakeAnswer = d.outcome?.actions ?? null;
+    // An outcome that makes again what the last turn made is asked about once, before its actions bind the repairs.
+    if (!remadeChecked && !outcome?.actions.length && (d.type === "plan" || d.type === "look")) {
+      const errors = remakesStated(d.outcome, input, registry);
+      if (errors.length) {
+        remadeChecked = true;
+        emit({ type: "compile.errors", data: { errors } });
+        reply = await call(repairBlock(user, reply.json, errors), "repair remake");
+        continue;
+      }
+    }
     // Freeze the first stated outcome across all subsequent reads, searches and repairs. A search may
     // initially lack action IDs; fill those once discovered, but never downgrade a change into a read.
     if (!outcome && d.outcome) { outcome = d.outcome; outcomeFrom = reply; }
@@ -481,16 +491,31 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
  * more ("one for Tom too"), it isn't.
  */
 export function remakes(plan: CompiledPlan, input: Pick<TurnInput, "carry" | "records" | "message">, stated?: string[] | null): string[] {
+  return remadeBy(plan.steps.flatMap(callsOf), input, stated);
+}
+
+/**
+ * The same question asked of the outcome a reply states, before it is frozen. A weaker model states the outcome from
+ * the message alone, as the last turn's request again, and the frozen outcome then holds every repair to making the
+ * records again. Stated, making them again beside changing them is still the remake: which stay is only known once
+ * they are read.
+ */
+export function remakesStated(outcome: Outcome | null | undefined, input: Pick<TurnInput, "carry" | "records" | "message">, registry: Registry): string[] {
+  if (outcome?.effect !== "change") return [];
+  return remadeBy(outcome.actions.flatMap((id) => registry.get(id) ?? []), input, undefined, true);
+}
+
+function remadeBy(actions: RegisteredAction[], input: Pick<TurnInput, "carry" | "records" | "message">, stated?: string[] | null, evenIfChanged = false): string[] {
   if (stated === null || stated?.length === 0) return [];
   if (/\b(also|too|another|more|as well|again|new)\b/i.test(input.message)) return [];
-  const calls = plan.steps.flatMap(callsOf).filter((a) => a.risk !== "read");
+  const calls = actions.filter((a) => a.risk !== "read");
   return [...new Set(input.carry?.made ?? [])].flatMap((entity) => {
     const mine = (input.records ?? []).filter((r) => r.entity === entity);
     const makes = calls.find((a) => a.entities?.produces === entity && !(a.entities?.consumes ?? []).includes(entity));
     const changes = calls.some((a) => (a.entities?.consumes ?? []).includes(entity));
-    if (!mine.length || !makes || changes || stated?.includes(makes.id)) return [];
+    if (!mine.length || !makes || (changes && !evenIfChanged) || stated?.includes(makes.id)) return [];
     const names = mine.slice(-8).map((r) => `${r.name} (${r.id}${r.for ? `, for ${r.for}` : ""})`).join(", ");
-    return [`the last turn already made ${mine.length} ${entity} record${mine.length > 1 ? "s" : ""} (${names}); if this message narrows or changes what it did, update those that stay and cancel or undo those now left out instead of ${makes.id} again. If it asks for new ones as well, plan the same again`];
+    return [`the last turn already made ${mine.length} ${entity} record${mine.length > 1 ? "s" : ""} (${names}); if this message narrows or changes what it did, update those that stay and cancel or undo those now left out instead of ${makes.id} again (look first to read which still fit, when that takes their fields). If it asks for new ones as well, plan the same again`];
   });
 }
 

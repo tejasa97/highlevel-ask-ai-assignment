@@ -3,7 +3,7 @@ import type { z } from "zod";
 import type { SubmitPlan } from "../planner/submit-plan.js";
 import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import type { JsonSchema, RegisteredAction, Registry } from "../registry/registry.js";
-import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, literalList, looksLikeBrokenRef, parseRef, pathOf, RESERVED_ROOTS, type Ref, typeAt, unwrap } from "./refs.js";
+import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, literalList, looksLikeBrokenRef, parseRef, pathOf, RESERVED_ROOTS, type Ref, templateSlips, typeAt, unwrap } from "./refs.js";
 import { normalizeDateTimes } from "./datetimes.js";
 import { lowerLookups, OTHER_THAN } from "./lookups.js";
 import { argumentEntities } from "../registry/arguments.js";
@@ -638,6 +638,13 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
       err(idTypeError(id, r.at, r.ref, held.entity, wanted, scope));
       ok = false;
     }
+  }
+
+  for (const slip of templateSlips(args)) {
+    err(
+      `${id} arg ${slip.at.join(".")}: ${slip.text.slice(0, 80)} is not a ref; a {{template}} holds one $ref (e.g. {{$item.name}}) and nothing in it is computed. To act on some records each with its own id, loop over those records and use $item.id`,
+    );
+    ok = false;
   }
 
   // Literal args: validate with ref-valued leaves removed; their issues are deferred to stage 2.

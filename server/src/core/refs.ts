@@ -64,6 +64,19 @@ export function templateRefs(s: string): string[] {
   return [...s.matchAll(TEMPLATE)].map((m) => m[1]!);
 }
 
+/**
+ * "{{$item.id === 'ld_41' ? 'tk_21' : 'tk_24'}}": a {{template}} that holds more than one ref. Nothing in it is
+ * evaluated, so it would reach the call as that literal text. Returns each such template with where it sits.
+ */
+export function templateSlips(v: unknown, at: (string | number)[] = []): { at: (string | number)[]; text: string }[] {
+  if (typeof v === "string") {
+    return [...v.matchAll(/\{\{([^{}]*)\}\}/g)].filter((m) => m[1]!.includes("$") && !parseRef(m[1]!.trim())).map((m) => ({ at, text: m[0] }));
+  }
+  if (Array.isArray(v)) return v.flatMap((x, i) => templateSlips(x, [...at, i]));
+  if (v && typeof v === "object") return Object.entries(v).flatMap(([k, x]) => templateSlips(x, [...at, k]));
+  return [];
+}
+
 /** Every ref in a JSON value, with the JSON path where it sits (for matching to arg schemas). */
 export function collectRefs(v: unknown, at: (string | number)[] = []): { at: (string | number)[]; ref: string; template: boolean }[] {
   if (typeof v === "string") {

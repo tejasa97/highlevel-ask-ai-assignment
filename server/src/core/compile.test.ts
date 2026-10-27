@@ -259,6 +259,15 @@ describe("ref errors name the legal steps", () => {
     assert.match(cycle.errors.join("\n"), /\$s2 comes later in your plan; list it before this step/);
   });
 
+  test("a {{template}} holding an expression is refused, since nothing in it would be computed", () => {
+    const r = compile(plan([action("s1", "M06.A03", {}), action("s2", "M06.A06", { taskId: "{{$s1.items[0].id === 'tk_1' ? 'tk_2' : 'tk_3'}}", dueDate: "2026-10-22" })]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /M06\.A06 arg taskId: \{\{\$s1\.items\[0\]\.id === 'tk_1'.* is not a ref; a \{\{template\}\} holds one \$ref/);
+    // One ref per template, any number of them in a string, and literal braces without a ref, all stand.
+    const ok = compile(plan([action("s1", "M06.A03", {}), action("s2", "M06.A01", { title: "{{ $s1.total }} of {{$s1.items[0].title}} {{draft}}" })]), registry);
+    assert.ok(ok.ok, ok.ok ? "" : ok.errors.join("\n"));
+  });
+
   test("lists action kinds too, without offering forward references", () => {
     const r = compile(plan([action("s1", "M06.A03", {}), action("s2", "M06.A01", { title: "{{$future.title}}" }), action("future", "M06.A01", { title: "{{$s2.title}}" })]), registry);
     assert.ok(!r.ok);

@@ -179,12 +179,38 @@ describe("grounded outcomes and clarifications", () => {
     const last = { carry: { prev: ["M06.A01"], entities: ["task"], made: ["task"] }, records: [{ entity: "task", id: "tsk_90", name: "Call Ana", for: "ld_4" }] };
     const message = "Only the Austin ones, and make those due Friday";
     const said = (actions: string[]) => ({ ...createTask(), outcome: { effect: "change" as const, actions, destination: null } });
-    const contradicts = scripted(said(["M06.A01"]), said(["M06.A06"]));
+    // The stated remake is asked about; the reply that then says "change" but makes them gets its one repair, and fails.
+    const contradicts = scripted(said(["M06.A01"]), said(["M06.A06"]), said(["M06.A06"]));
     const out = await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner: contradicts, clock: frozenClock() });
     assert.ok(out.kind === "reply" && out.status === "failed", JSON.stringify(out));
     assert.match(contradicts.requests[1]!.user, /Call Ana \(tsk_90, for ld_4\)/);
+    assert.equal(contradicts.requests.length, 3);
     const means = scripted(said(["M06.A01"]), said(["M06.A01"]));
     assert.equal((await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner: means, clock: frozenClock() })).kind, "plan");
+  });
+
+  test("a follow-up whose stated outcome makes again what the last turn made is asked before that outcome binds the repairs", async () => {
+    const last = { carry: { prev: ["M06.A01"], entities: ["task"], made: ["task"] }, records: [{ entity: "task", id: "tsk_90", name: "Call Ana", for: "ld_4" }] };
+    const message = "Only the Austin ones, and make those due Friday";
+    // Stated as the last request again, beside an update, over a plan that doesn't even compile yet.
+    const remake = { ...reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$item.name" }) }] }), outcome: { effect: "change" as const, actions: ["M06.A01", "M06.A06"], destination: null } };
+    const update = { ...reply({ steps: [{ id: "s1", kind: "action", action: "M06.A06", argsJson: JSON.stringify({ taskId: "tsk_90", dueDate: "2026-10-23" }) }] }), outcome: { effect: "change" as const, actions: ["M06.A06"], destination: null } };
+    const planner = scripted(remake, update);
+    const out = await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner, clock: frozenClock() });
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A06"), JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+    assert.match(planner.requests[1]!.user, /already made 1 task record[\s\S]*look first to read which still fit/);
+    assert.doesNotMatch(planner.requests[1]!.user, /requested operation M06\.A01 is missing/);
+    // Nor when a prose reply came first, stating a change it named no actions for.
+    const prose = { ...reply({ steps: null }), type: "answer" as const, text: "I can't amend that from here.", outcome: { effect: "change" as const, actions: [], destination: null } };
+    const after = scripted(prose, remake, update);
+    const late = await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner: after, clock: frozenClock() });
+    assert.ok(late.kind === "plan" && late.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A06"), JSON.stringify(late));
+    assert.match(after.requests[2]!.user, /already made 1 task record/);
+    // Asked for more, the same outcome is the request.
+    const more = scripted({ ...createTask(), outcome: { effect: "change" as const, actions: ["M06.A01"], destination: null } });
+    assert.equal((await planTurn({ message: "Make one for Tom too", tier: "fast", ...last }, { registry, retriever, planner: more, clock: frozenClock() })).kind, "plan");
+    assert.equal(more.requests.length, 1);
   });
 
   test("the reply after a look may name the change's actions afresh, but not turn it into a read", async () => {
