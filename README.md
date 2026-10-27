@@ -38,6 +38,26 @@ The planner never sees all 500 actions. Retrieval starts with 15 ranked slots, t
 - **Review status:** the initial five modules (M01, M03, M06, M48, M49) were reviewed during the original build. M45–M47's generated metadata has now been compared with the new handlers; registry descriptions and entities supply their implemented contracts. Aliases incorrectly promising SMS review requests, holiday hours, a pending ticket state or resolution SLA were corrected. Proposed extra sibling links were measured on development cases and not adopted because they increased shortlist size without improving recall. This is not a claim that all 500 cards have been reviewed; regenerating cards overwrites hand edits.
 - Retrieval quality is measured with `npm run eval:retrieval` (recall@k per question group, with a held-out split; `--bm25` for BM25 alone). Original hybrid recall@15 was 94.9% vs 86.8% BM25 alone; across all 500 actions and 357 questions (112 added for the Wave 1 modules, held out from the card synonyms) hybrid recall@15 is 97.5%, 97.4% on the held-out test split. This is retrieval recall, not task success. The two off-topic examples are not rejected by retrieval; the planner still has to reject them.
 
+## Module catalog, action schemas and registration
+
+- **Catalog.** `server/src/registry/catalog.json` holds HighLevel's 50 modules × 10 actions, with ids `M01.A01` to `M50.A10` and their names. `npm run catalog` generated it from the assignment PDF, and it's committed, so nothing reads the PDF at runtime. Display names always come from this file, so an id and its name can't drift apart.
+- **Modules.** Each module is a folder, such as `server/src/modules/m01-contacts/`. It has an `index.ts` that default-exports its actions (and any name resolvers), a `schema.ts`, and tests. `loadRegistry()` registers every folder that has an index file. Adding a capability means adding a folder; the core agent doesn't change.
+- **Action definition.** An action is an `ActionDef` (`server/src/registry/define.ts`). Its main fields:
+  - `id`
+  - a user-language `description`, including how it differs from look-alike actions
+  - `synonyms`
+  - `risk` (`read`, `write`, `destructive` or `external`)
+  - Zod `input` and `output` schemas. Inputs are strict, so a made-up param is rejected.
+  - `entities` it produces and consumes, for retrieval dependencies
+  - `siblings`, the look-alike actions in other modules
+  - an optional `preflight`, bound to approval
+  - the `handler`, which runs inside a transaction and throws an `ActionError` for expected failures
+  - an `example` call for the smoke test
+- **Checks at registration.** An id that isn't in the catalog fails, so does registering an id twice, and so does marking a destructive or external action as a side-effect-free query. The smoke test (`server/src/registry/smoke.test.ts`) runs every action's example call, a made-up param and an unknown id, and fails a module that registers only some of its catalog actions.
+- **Search cards.** `npm run cards` has a model write the retrieval cards for modules missing from `server/src/retrieval/cards.json`, or rewrite the modules named. Rewriting overwrites any hand edits.
+
+How to add a module, step by step: [docs/ADDING-A-MODULE.md](docs/ADDING-A-MODULE.md). The module contract: [docs/MODULE-CONTRACT.md](docs/MODULE-CONTRACT.md).
+
 ## Current implementation
 
 `main` now holds all the planner work. The Luna line (#5) and the DeepSeek/Qwen line (#6) were merged into it.
@@ -70,7 +90,7 @@ All messages, payments, review publications and directory syncs are **simulated*
 
 ## Run locally
 
-Use a Node release supporting `node:sqlite` (this branch was tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Configure the planner using the existing environment settings; `claude-cli` requires an authenticated Claude CLI with available quota, and `qwen` needs a Qwen Token Plan key (see below). `claude-cli` is the default provider and runs `claude-haiku-5-5` for both tiers; set `CLAUDE_MODEL` (and optionally `CLAUDE_FAST_MODEL`) for another model. Give the full id, not the `haiku` alias: Claude CLI 2.1.284 maps the alias to `claude-haiku-4-5-20251001`, which scored 91.3% on the 23-scenario regression suite at a 23.9 s median turn, against 100% over 8 repeats at 7.2 s for `claude-haiku-5-5`. The CLI logs `claude-haiku-5-5` as `unrecognized_model` but serves it.
+Use a Node release supporting `node:sqlite` (this branch was tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Copy `.env.example` to `.env` in the repository root and pick a planner there: it is set up for `qwen` with DeepSeek, as benchmarked, which needs a Qwen Token Plan key (see below); `claude-cli` requires an authenticated Claude CLI with available quota. With `PLANNER` unset, `claude-cli` is the default provider and runs `claude-haiku-5-5` for both tiers; set `CLAUDE_MODEL` (and optionally `CLAUDE_FAST_MODEL`) for another model. Give the full id, not the `haiku` alias: Claude CLI 2.1.284 maps the alias to `claude-haiku-4-5-20251001`, which scored 91.3% on the 23-scenario regression suite at a 23.9 s median turn, against 100% over 8 repeats at 7.2 s for `claude-haiku-5-5`. The CLI logs `claude-haiku-5-5` as `unrecognized_model` but serves it.
 
 In `server/`, run `npm run db:reset` to recreate **this checkout's** demo database, then `npm run serve`. In `web/`, run `npm run dev`. Defaults: API 8787, web 5173. For isolated concurrent work, set `PORT` for the API and matching `API_PORT` for Vite. Reset erases the local demo database; it is not a migration of saved user data.
 
@@ -93,7 +113,7 @@ The 45 development cases cover all thirty new action IDs. The 12 reporting cases
 
 ### Benchmark scope
 
-[BENCHMARK.md](BENCHMARK.md) covers every active scenario suite: 273 scenarios, each run 3 times (819 runs per agent), touching all 50 modules, with at least one checked action in every module. Both agents ran on deepseek-v4.1-flash-1017 through the Qwen Token Plan at commit `b3a94d4` on 2026-10-27, over the same scenario files (set `958de2e6710f`). The report's "uncommitted edits" note is the two M25 scenarios in `wave1/commerce.json`, which were committed right after the run. Earlier BENCHMARK.md versions (DeepSeek over 86 scenarios × 1; Haiku 5.5 through `claude -p` over 23 × 3) are in git history.
+[BENCHMARK.md](BENCHMARK.md) covers every active scenario suite: 273 scenarios, each run 3 times (819 runs per agent), touching all 50 modules, with at least one checked action in every module. Both agents ran on deepseek-v4.1-flash-1017 through the Qwen Token Plan at commit `b3a94d4` on 2026-10-27, over the same scenario files (set `958de2e6710f`). The report's "uncommitted edits" note is the two M25 scenarios in `wave1/commerce.json`, which were committed right after the run. PR #15 (d9d59c6, which drops filters with no condition, and 89300d1, the `<new_step_ids>` line after a look) merges after `b3a94d4`, so these numbers don't include those two fixes; #15 has only a lean rerun, where 0 of 9 plans after a look reused the looked steps' ids, against 7 of 16 before. Earlier BENCHMARK.md versions (DeepSeek over 86 scenarios × 1; Haiku 5.5 through `claude -p` over 23 × 3) are in git history.
 
 Task success per suite, 3 runs each (from `eval/results/scenarios-final-deepseek-{planner,baseline}-3x.json`):
 
