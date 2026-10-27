@@ -2,39 +2,78 @@
 
 A natural-language assistant over a simulated CRM: 50 modules × 10 actions, with measured latency, cost and quality.
 
-All 500 actions are implemented against a simulated backend (SQLite, frozen clock, deterministic seed). A planner model returns a whole plan as structured output; code validates it, shows it, and runs it, and decides what needs approval from the exact records a step touches. Messages, payments and directory syncs are simulated; the planner is the only real model call. Start with [Current implementation](#current-implementation) for what is real and what is mocked, [Verify and evaluate](#verify-and-evaluate) for the evals, and [BENCHMARK.md](BENCHMARK.md) for the numbers.
+All 500 actions are implemented against a simulated backend (SQLite, frozen clock, deterministic seed). A planner model returns a whole plan as structured output; code validates it, shows it, runs it, and decides what needs approval from the exact records a step touches. The planner is the only real model call; messages, payments and directory syncs are simulated ([Real vs mocked](#real-vs-mocked)).
 
-- [docs/PLAN.md](docs/PLAN.md): architecture, design and the 5-day schedule
-- [docs/PLANNER-CHANGES.md](docs/PLANNER-CHANGES.md): what changed in shared lookup, retrieval and planner handling, and why each change was needed
-- [BENCHMARK.md](BENCHMARK.md): quality, latency (direct vs complex), tokens and cost per successful task, and the planner against a one-call-per-step baseline agent; final run on DeepSeek (deepseek-v4.1-flash-1017 through the Qwen Token Plan), 273 scenarios × 3 runs across all 50 modules: planner 96.9% of runs passing at a 1.3 s median direct reply, against 91.6% at 2.3 s for the baseline, at $0.0043 per successful task against $0.0073 at list rates; regenerate with `npm run report -- --label release-deepseek-planner-3x --compare release-deepseek-baseline-3x` in `server/`
-- [docs/PROMPT-EXAMPLE.md](docs/PROMPT-EXAMPLE.md): the planner prompt over two turns, with real payloads and token counts
+**Results** ([BENCHMARK.md](BENCHMARK.md)): 273 scenarios × 3 runs across all 50 modules, on DeepSeek (`deepseek-v4.1-flash-1017` through the Qwen Token Plan). The planner passes 96.9% of runs against 91.6% for a one-call-per-step baseline, with a 1.3 s median direct reply (2.3 s for the baseline), a median of 1 model call per complex task (5 for the baseline), and $0.0043 per successful task ($0.0073) at list rates. One latency target is missed: the direct-reply p95. See [Trade-offs](#latency-cost-and-quality-trade-offs) and [Known limitations](#known-limitations).
+
+## Quick start
+
+Needs a Node release with `node:sqlite` (tested on Node 26). Copy `.env.example` to `.env` in the repository root and put a Token Plan key in `QWEN_API_KEY`. Then, in `server/`:
+
+```sh
+npm ci && npm run db:reset && npm run serve
+```
+
+and in `web/`:
+
+```sh
+npm ci && npm run dev
+```
+
+The API listens on 8787 and the chat UI on http://localhost:5173. The planner is chosen for you when `PLANNER` is unset, and the startup line says which:
+
+- **With a Qwen Token Plan key** (`QWEN_API_KEY`), it runs `qwen` on `deepseek-v4.1-flash-1017`, the setup BENCHMARK.md measured.
+- **Without one**, it runs `claude-cli` on `claude-haiku-5-5`. That needs only an authenticated Claude CLI (`claude auth login`).
+
+`.env.example` documents every variable. Provider details, the optional Codex provider and model overrides are in [docs/PROVIDERS.md](docs/PROVIDERS.md). For concurrent copies, set `PORT` for the API and a matching `API_PORT` for Vite. `npm run db:reset` (or **↺ Reset data** in the UI) restores the seed; it erases the local demo database.
+
+Try:
+- `Create a task to send the proposal to Marco Patel, due Friday`, then `Actually give it to Aisha and make it high priority`
+- `I keep forgetting to follow up with new leads. Help me stay on top of them.`
+- `Find leads created last week who have not replied, exclude anyone with a booked appointment, assign the remaining leads to available sales reps, and create follow-up tasks.`
+- `Make Aisha the owner of Zoe Costa` (there are two, so it asks which)
 
 ## Architecture
 
-Each turn is one planner call wrapped in code. The full design is in [docs/PLAN.md](docs/PLAN.md), §1–§3.
+Each turn is one planner call wrapped in code. The full design is in [docs/PLAN.md](docs/PLAN.md), §1–§3; [docs/PROMPT-EXAMPLE.md](docs/PROMPT-EXAMPLE.md) shows the planner prompt over two turns, with real payloads and token counts.
 
 1. **Retrieve** (`server/src/retrieval/`, no LLM). BM25 and local embeddings rank about 22 action cards out of 500 (see below). Named records in the message are resolved to typed mentions.
 2. **Plan** (`server/src/planner/`, one LLM call). The model returns a typed JSON plan through `submit_plan`. Steps reference earlier outputs with `$refs`. When the model needs to see data before it can plan, it can return a read-only look first. Each turn allows two looks.
 3. **Validate** (`server/src/core/compile.ts`). Code checks action ids, arguments, refs and required inputs. A plan that fails gets one repair call that sees the error.
 4. **Execute** (`server/src/core/execute.ts`). A deterministic runner walks the plan's step graph. It runs the registered handlers along with `filter`, `exclude` and `forEach`. If a step fails before anything changed, there is one retry, and that retry sees the failure.
-5. **Summarize** (`server/src/core/summarize.ts`). The reply is built from the step results, not written by the model: a verdict for questions, then the records touched.
+5. **Summarize** (`server/src/core/summarize.ts`). The reply is built from the step results, not written by the model: a verdict for questions, then the records touched, and which steps completed, failed or are waiting.
 
 **Context across turns.** The planner never sees the raw transcript. It gets two things. The first is the last four turns as text, in `<context>`. The second is up to 12 typed record identities from the chat, in `<recent_records>`. Follow-ups such as "make those due tomorrow" resolve against those identities. The identities are only ids and labels, so the records' current contents are read again when a plan uses them.
 
+**Clarification.** When a required argument can't be resolved (two Zoe Costas, a listing on two directories), the reply is one focused question tied to that argument, with the candidates as options. The answer is merged into the original request, so the user doesn't repeat it.
+
 **Approval gates.** The model doesn't decide what needs approval; code does. Destructive and external actions (sends, payments, publications, syncs) pause for approval, and so does any write repeated over 3 or more records. The approval is bound to a hash of the plan and to the exact records the plan targets. If either changes, the plan asks again. A batch where some targets are blocked shows those targets, and you approve only the eligible ones ([partial confirmation](docs/PARTIAL-CONFIRMATION.md)).
 
-**Baseline.** `server/src/server/baseline.ts` makes one model call per step, with tools. It runs on the same handlers and gates and is the comparison in BENCHMARK.md.
+**Turn budget.** At most 8 planner calls (repairs and looks included) and 180 seconds per turn. A turn that runs out, or is cancelled, changes nothing.
+
+**Baseline.** `server/src/server/baseline.ts` is the usual tool-calling loop: one model call per step, each seeing the last result. It runs on the same shortlist, handlers and gates, and is the comparison in BENCHMARK.md.
+
+## The chat UI
+
+`web/` is a Vue 3 app. The top bar picks the acting user (permissions and deactivated users are enforced) and the model tier, and shows the seed's fixed clock.
+
+- **Progress while it runs.** Each turn streams its events: the retrieval shortlist, the planner call, then every step as it starts and finishes (✓ done, ◐ partial, ✕ failed, – skipped). No spinner stands in for progress.
+- **Approval before bulk, destructive or external writes.** The approval card lists the exact records each write will touch and any that are blocked; **Approve** (or **Approve eligible only**) runs it, and **Cancel** changes nothing.
+- **Clarifying questions** offer the candidates as buttons, or take a typed answer.
+- **Outcomes** are record cards built from the results. A failed step says what failed; **↻ Retry** reruns a turn.
+- **The side panel** has three tabs. **Trace** shows retrieval scores, the system prompt, the plan and every handler call. **Changes** shows every row the turn changed, marked "after approval" where it was. **Data** browses the tables. Clicking a chat message selects its turn.
 
 ## How the tool list is narrowed
 
-The planner never sees all 500 actions. Retrieval starts with 15 ranked slots, then adds selected lookup/dependency/look-alike helpers; the latest combined evaluation averages 21.8 final cards ([evidence](docs/SCOPED-LOOKUPS-AND-CLARIFICATIONS.md#verification-and-measurement-boundaries)). See [docs/PLAN.md](docs/PLAN.md), section "Retrieval". It combines two rankings over a search card per action, with no LLM call:
+The planner never sees all 500 actions. Retrieval starts with 15 ranked slots, then adds the lookup, dependency and look-alike helpers the request needs; the latest combined evaluation averages 21.8 final cards ([evidence](docs/SCOPED-LOOKUPS-AND-CLARIFICATIONS.md#verification-and-measurement-boundaries)). It combines two rankings over a search card per action, with no LLM call:
 
 - **BM25**, which matches words.
 - **A small local embedding model** (bge-base, ~110 MB, downloaded once on first start), which matches meaning, so "hold off on the webinar emails" finds Pause campaign. Set `RETRIEVAL=bm25` to use BM25 alone.
 
-- **Generated cards are supplemented by implemented contracts.** `server/src/retrieval/cards.json` holds LLM-generated descriptions, synonyms, record types and look-alike siblings. At runtime, implemented module descriptions/entity metadata and module-owned synonyms refine that surface; the new metadata changes did not regenerate cards through a model. The generator never sees `eval/`, and `retrieve.test.ts` fails if a synonym copies an eval paraphrase. See [what changed and why](docs/PLANNER-CHANGES.md#3-retrieve-the-final-action-and-the-right-lookup-dependencies).
-- **Review status:** the initial five modules (M01, M03, M06, M48, M49) were reviewed during the original build. M45–M47's generated metadata has now been compared with the new handlers; registry descriptions and entities supply their implemented contracts. Aliases incorrectly promising SMS review requests, holiday hours, a pending ticket state or resolution SLA were corrected. Proposed extra sibling links were measured on development cases and not adopted because they increased shortlist size without improving recall. This is not a claim that all 500 cards have been reviewed; regenerating cards overwrites hand edits.
-- Retrieval quality is measured with `npm run eval:retrieval` (recall@k per question group, with a held-out split; `--bm25` for BM25 alone). Original hybrid recall@15 was 94.9% vs 86.8% BM25 alone; across all 500 actions and 357 questions (112 added for the Wave 1 modules, held out from the card synonyms) hybrid recall@15 is 97.5%, 97.4% on the held-out test split. This is retrieval recall, not task success. The two off-topic examples are not rejected by retrieval; the planner still has to reject them.
+Look-alike actions in different modules ("send email" exists in several) are told apart three ways: each card's description says how it differs from its siblings, the siblings are linked so the planner sees them side by side, and the record types named in the message pull in the matching lookups.
+
+- **Cards.** `server/src/retrieval/cards.json` holds LLM-generated descriptions, synonyms, record types and look-alike siblings; at runtime, each module's registered descriptions, entities and synonyms refine them. The generator never sees `eval/`, and `retrieve.test.ts` fails if a synonym copies an eval paraphrase. Only some modules' cards were reviewed by hand ([status](docs/IMPLEMENTATION-NOTES.md#search-card-review-status)).
+- **Measured.** `npm run eval:retrieval` reports recall@k per question group, with a held-out split. Across all 500 actions and 357 questions, hybrid recall@15 is 97.5% (97.4% on the held-out split). On the original question set it was 94.9%, against 86.8% for BM25 alone. This is retrieval recall, not task success. Off-topic requests aren't rejected by retrieval; the planner rejects them.
 
 ## Module catalog, action schemas and registration
 
@@ -51,74 +90,28 @@ The planner never sees all 500 actions. Retrieval starts with 15 ranked slots, t
   - an optional `preflight`, bound to approval
   - the `handler`, which runs inside a transaction and throws an `ActionError` for expected failures
   - an `example` call for the smoke test
-- **Checks at registration.** An id that isn't in the catalog fails, so does registering an id twice, and so does marking a destructive or external action as a side-effect-free query. The smoke test (`server/src/registry/smoke.test.ts`) runs every action's example call, a made-up param and an unknown id, and fails a module that registers only some of its catalog actions.
+- **Checks at registration.** An id that isn't in the catalog fails, so does registering an id twice, and so does marking a destructive or external action as a side-effect-free query.
 - **Search cards.** `npm run cards` has a model write the retrieval cards for modules missing from `server/src/retrieval/cards.json`, or rewrite the modules named. Rewriting overwrites any hand edits.
 
-How to add a module, step by step: [docs/ADDING-A-MODULE.md](docs/ADDING-A-MODULE.md). The module contract: [docs/MODULE-CONTRACT.md](docs/MODULE-CONTRACT.md).
+How to add a module, step by step: [docs/ADDING-A-MODULE.md](docs/ADDING-A-MODULE.md). The module contract: [docs/MODULE-CONTRACT.md](docs/MODULE-CONTRACT.md). Product decisions made without an owner to ask (which actions need which permission, what was left out) are in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md).
 
-## Current implementation
+## Real vs mocked
 
-`main` now holds all the planner work. The Luna line (#5) and the DeepSeek/Qwen line (#6) were merged into it.
+| Real | Simulated or mocked |
+|---|---|
+| The planner model call (DeepSeek through the Qwen Token Plan, or Claude or Codex through their CLIs) | No HighLevel account or API is contacted |
+| Retrieval: BM25 and a local embedding model | The CRM: one SQLite database with a seeded demo tenant and a frozen clock |
+| All 500 handlers: stateful, validated, transactional, failing on bad input, missing records, permissions and business rules | Emails, SMS, payments, review publications and directory syncs never leave the process; they are recorded as if sent |
+| Approval gates, the audit log, traces and token accounting | Provider outages (an email provider down, a directory sync failing) are injected by the eval runner |
+| Permissions per acting user, including deactivated users | No real auth and no multi-tenant isolation; permissions are checked per action, not globally |
 
-The lookup and retrieval work came first. It covers consistent named lookup, child names bound to their parents, and clarifying questions tied to the action arguments that are actually missing. [Rationale](docs/PLANNER-CHANGES.md) · [scoped lookups and clarifications](docs/SCOPED-LOOKUPS-AND-CLARIFICATIONS.md).
-
-The two merged lines add:
-- Id arguments named for a role look up their record type.
-- Invoices, quotes, orders and subscriptions can be named by state or owner, as in "Marco Patel's open invoice".
-- Clarification repair, plus repair for invented ids.
-- Up to two looks per turn, and a retry when a search finds nothing.
-- Answers to questions start with a verdict, with record cards under it.
-- The Qwen Token Plan adapter.
-
-On main, the 2,588 deterministic tests, the typecheck and the web build all pass.
-
-The live numbers are in BENCHMARK.md: DeepSeek on the Qwen Token Plan, both agents run at commit `d74874f`; see [Benchmark scope](#benchmark-scope).
-
-All 500 actions in all 50 modules are executable. The first 18 modules (Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams) were built in depth first and carry the scenario and module evals below; the other 32 were added in Wave 1 and then hardened (assumptions in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md)). The backend suite has 2,588 deterministic tests. The regression scenarios cover the first 18 modules; the other 32 have their own set of 27 planner scenarios (`eval/module-scenarios/wave1`), which scored 95.1% in the final DeepSeek benchmark and historically 96% of clean runs on Haiku (3 repeats), up from 66.7% before the failure classes it exposed were fixed. In that run, one scenario failed every repeat: the planner read "Move X from Starter to Pro" as an opportunity stage change instead of a subscription plan change. It is recorded, not patched.
-
-The new thirty actions use the existing registry, compiler, executor, approval gates, replay ledger, SQLite persistence, audit, traces and UI. [Module-building guide](docs/ADDING-A-MODULE.md). Ticket-reply batches now disclose known blocked targets and require approval of the eligible subset before sending; see [subset confirmation](docs/PARTIAL-CONFIRMATION.md).
-
-- Reviews: draft/send/cancel requests, record/search reviews, draft/publish responses and compute rating summaries. Requests are marketing emails and respect opt-outs/DND.
-- Listings: one profile per business/location/directory; the same business on Google and Yelp is valid and ambiguous by name alone. Changes increment a version; publication syncs that version. Hours use America/New_York, all seven days, one interval per day; no overnight/split shifts.
-- Tickets: requester/contact links, eligible support owners, priority/status/history, private notes, replies and **elapsed first-response SLA**, not resolution SLA. Targets: urgent 1h, high 4h, normal 24h, low 72h. Exactly at deadline meets it. Reopening does not reset it. Only delivered requester replies count; automatic acknowledgements do not exist. Closed/resolved tickets must reopen before a reply.
-- New customer sends need their domain permission plus `messaging.send`; ordinary reads/internal writes retain the existing selective permission policy. This is not a global authorization retrofit. Publication needs reputation permission, not messaging permission.
-- Generic email preview/send/schedule routes module-owned kinds back to the review/ticket action so request state and ticket SLA cannot be skipped. Ticket emails bypass marketing preferences under simulator policy but **never** the address requirement.
-
-All messages, payments, review publications and directory syncs are **simulated**; no email provider, HighLevel account or real directory is contacted. The planner calls a real model when configured; retrieval embeddings run locally. Failed module-owned sends roll back their database effects and surface in traces. Injected directory failure likewise preserves the previous published version; it does not manufacture a stored failed sync after rollback.
-
-## Run locally
-
-Use a Node release supporting `node:sqlite` (this branch was tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Copy `.env.example` to `.env` in the repository root. The planner is chosen for you when `PLANNER` is unset:
-
-- **With a Qwen Token Plan key** (`QWEN_API_KEY`, see below), it runs `qwen` with `deepseek-v4.1-flash-1017`, the setup BENCHMARK.md measured.
-- **Without one**, it runs `claude-cli` on `claude-haiku-5-5` for both tiers. That needs only an authenticated Claude CLI (`claude auth login`) with available quota.
-
-To force one, set `PLANNER=claude-cli` or `PLANNER=qwen`. With `PLANNER` unset, every command (`serve`, `ask`, `probe:planner`, `eval:scenarios`) prints the provider it picked on stderr, so an eval can't run on the Claude subscription unnoticed. Set `CLAUDE_MODEL` (and optionally `CLAUDE_FAST_MODEL`) for another Claude model. Give the full id, not the `haiku` alias: Claude CLI 2.1.284 maps the alias to `claude-haiku-4-5-20251001`, which scored 91.3% on the 23-scenario regression suite at a 23.9 s median turn, against 100% over 8 repeats at 7.2 s for `claude-haiku-5-5`. The CLI logs `claude-haiku-5-5` as `unrecognized_model` but serves it.
-
-In `server/`, run `npm run db:reset` to recreate **this checkout's** demo database, then `npm run serve`. In `web/`, run `npm run dev`. Defaults: API 8787, web 5173. For isolated concurrent work, set `PORT` for the API and matching `API_PORT` for Vite. Reset erases the local demo database; it is not a migration of saved user data.
-
-Try “Show Elodie Mercer's reviews”, “Show Maple Dental's listing” (asks which directory), or “Reply to the Portal export fails ticket saying we are investigating, then create a follow-up task”. Sends/publications pause for approval. The trace labels actual hybrid/BM25 mode, including inference fallback, rather than saying there is no model.
+Cost is real tokens priced at list rates: the Token Plan is prepaid, so no money was billed per request.
 
 ## Verify and evaluate
 
-Run `npm run typecheck` and `npm test` in `server/`; run `npm run build` in `web/`. The baseline regression has 23 scenarios; new module sets are kept separate:
+In `server/`, `npm run typecheck` and `npm test` run the 2,602 deterministic tests. They include the **smoke test of all 500 handlers** (`server/src/registry/smoke.test.ts`): every action's example call, a made-up param and an unknown id, and a check that each module registers all ten of its catalog actions. In `web/`, run `npm run build`.
 
-```sh
-# From server/; scenario directories are relative to the repository root.
-npm run eval:scenarios -- --repeat 3 --label m45-m47-regression-after
-npm run eval:scenarios -- --scenario-dir eval/module-scenarios/m45-m47/development --repeat 3 --label m45-m47-development
-npm run eval:scenarios -- --scenario-dir eval/module-scenarios/m45-m47/reporting --repeat 3 --label m45-m47-reporting
-npx tsx src/scripts/eval-module-retrieval.ts
-npm run trajectory
-```
-
-The 45 development cases cover all thirty new action IDs. The 12 reporting cases and matching seed IDs were frozen before handlers in commit `080618f`; do not use reporting outcomes for tuning. Development revision 2 corrects one test that counted existing seeded requests and asserts appointment reads through actual calls (which may run in a look); its original bytes/results are archived and its fingerprint changes. Seed and reporting definitions remain unchanged. The old 23-scenario fingerprint is unchanged **but its seeded database has expanded**. Legacy-row hashes check that existing records were not rewritten.
-
-### Benchmark scope
-
-[BENCHMARK.md](BENCHMARK.md) covers every active scenario suite: 273 scenarios, each run 3 times (819 runs per agent), touching all 50 modules, with at least one checked action in every module. Both agents ran on deepseek-v4.1-flash-1017 through the Qwen Token Plan at commit `d74874f` (clean checkout, PR #15's fixes included) on 2026-10-27, over the same scenario files (set `958de2e6710f`). Runs that failed outside the app (timeouts: 5 planner, 7 baseline) are left out of the rates, so some suites count 34 or 35 runs instead of 36. The previous run, at `b3a94d4` before #15, scored 96.5% against 90.8%; it is in git history. Earlier BENCHMARK.md versions (DeepSeek over 86 scenarios × 1; Haiku 5.5 through `claude -p` over 23 × 3) are in git history.
-
-Task success per suite, 3 runs each (from `eval/results/scenarios-release-deepseek-{planner,baseline}-3x.json`):
+**The eval dataset** is 273 scenarios across all 50 modules, with at least one checked action in every module: 150 direct, 25 indirect, 44 multi-step, 13 follow-up, 11 ambiguous, 3 unsupported and 27 failure cases. Each scenario is a JSON conversation with expected outcomes and automated assertions on the status, the actions planned, their arguments, the reply, and the **final database state** (SQL queries). Every run starts from a fresh seeded database and goes through the same conversation code as the web app.
 
 | Suite | Scenarios | Planner | Baseline |
 | --- | ---: | ---: | ---: |
@@ -126,7 +119,7 @@ Task success per suite, 3 runs each (from `eval/results/scenarios-release-deepse
 | `eval/brief-scenarios` (the brief's examples and held-out variants) | 12 | 82.9% | 58.8% |
 | `eval/param-scenarios` (every argument checked) | 51 | 98.0% | 96.7% |
 | `eval/module-scenarios/coverage` | 75 | 97.3% | 96.9% |
-| `eval/module-scenarios/wave1` (the 32 Wave 1 modules) | 27 | 98.8% | 90.0% |
+| `eval/module-scenarios/wave1` (the 32 modules added in Wave 1) | 27 | 98.8% | 90.0% |
 | `eval/module-scenarios/m45-m47/development` | 45 | 99.3% | 97.7% |
 | `eval/module-scenarios/m45-m47/reporting` (held out) | 12 | 100% | 94.3% |
 | `eval/module-scenarios/m45-m47/trails` | 3 | 100% | 88.9% |
@@ -134,119 +127,58 @@ Task success per suite, 3 runs each (from `eval/results/scenarios-release-deepse
 | `eval/module-scenarios/role-ids` | 1 | 33.3% | 100% |
 | `eval/policy-scenarios/partial-confirmation` | 2 | 100% | 0% |
 
-The baseline wins one row: the single role-id scenario, 3/3 against the planner's 1/3. On the held-out M45–M47 reporting set the planner scores 36/36 against 33/35. The partial-confirmation scenarios need the subset approval only the planner's gate produces, so the baseline fails all of them. Small suites move a lot on one run; read their gaps with care.
+Task success per suite over 3 runs each, from `eval/results/scenarios-release-deepseek-{planner,baseline}-3x.json`. Runs that failed outside the app (timeouts: 5 planner, 7 baseline) are left out of the rates, as in BENCHMARK.md. The baseline wins one row: the single role-id scenario, 3/3 against the planner's 1/3. The partial-confirmation scenarios need the subset approval only the planner's gate produces, so the baseline fails all of them. Small suites move a lot on one run.
 
-Reproduce it from `server/` with the Token Plan key in `.env` (see [Use a Qwen Token Plan locally](#use-a-qwen-token-plan-locally)); BENCHMARK.md's Reproduce section has the same commands:
+**Reproduce** from `server/` with the Token Plan key in `.env`. The planner run takes about 8.5 minutes and the baseline about 14:
 
 ```sh
 export PLANNER=qwen QWEN_MODEL=deepseek-v4.1-flash-1017
 DIRS=eval/scenarios,eval/brief-scenarios,eval/param-scenarios,eval/module-scenarios/coverage,eval/module-scenarios/wave1,eval/module-scenarios/m45-m47/development,eval/module-scenarios/m45-m47/reporting,eval/module-scenarios/m45-m47/trails,eval/module-scenarios/questions,eval/module-scenarios/role-ids,eval/policy-scenarios/partial-confirmation
 npm run eval:scenarios -- --scenario-dir $DIRS --repeat 3 --label release-deepseek-planner-3x
 npm run eval:scenarios -- --scenario-dir $DIRS --repeat 3 --label release-deepseek-baseline-3x --agent baseline
-npm run report -- --label release-deepseek-planner-3x --compare release-deepseek-baseline-3x
+npm run report -- --label release-deepseek-planner-3x --compare release-deepseek-baseline-3x   # writes BENCHMARK.md
+npm run eval:retrieval     # retrieval recall@k
+npm run trajectory         # docs/trajectory.html, every recorded run charted
 ```
 
-The planner run took about 8.5 minutes and the baseline about 14 on the Token Plan.
+Both agents ran at commit `d74874f` on 2026-10-27, over the same scenario files (set `958de2e6710f`). Every run is kept in `eval/results/`, and `eval/results/history.jsonl` lists them; earlier benchmarks (DeepSeek over 86 scenarios, Haiku 5.5 over 23 × 3) are in git history. Each turn's trace (retrieval, planner calls with tokens and latency, every handler call) is in the result files and in the UI's Trace tab.
 
-Codex is an optional provider: select it with `PLANNER=codex-cli` (otherwise the default is qwen with a Token Plan key, else Claude). GPT-6.1 Sol and GPT-6 Luna were used through it during development; the numbers above are DeepSeek's.
+## Latency, cost and quality trade-offs
 
+The targets were committed in [docs/PLAN.md](docs/PLAN.md) on 2026-10-23, before the final runs, and were not relaxed afterwards:
 
-## Use a Codex subscription locally
+| Target | Limit | Planner | Baseline | Verdict (planner) |
+|---|---:|---:|---:|---|
+| Direct: first reply p50 | ≤ 1.5 s | 1.3 s | 2.3 s | met |
+| Direct: first reply p95 | ≤ 3.0 s | 4.3 s | 5.3 s | **missed** |
+| Complex: end-to-end p50 | ≤ 6.0 s | 1.6 s | 4.2 s | met |
+| Complex: end-to-end p95 | ≤ 12.0 s | 7.8 s | 9.5 s | met |
+| Action selection (direct / complex) | ≥ 95% / ≥ 85% | 99.2% / 98.3% | | met |
+| Task success, all | ≥ 85% | 96.9% | 91.6% | met |
+| Model calls per complex task, median | ≤ 2 | 1 | 5 | met |
 
-Install Codex CLI and run `codex login` with ChatGPT sign-in. The adapter is verified with
-CLI 0.159.0. Set `PLANNER=codex-cli` in your local `.env`, or select it for one command
-from `server/`:
+"First reply" is the first useful reply (the answer, a clarifying question, or the approval prompt with the plan); a loading indicator doesn't count.
 
-```sh
-PLANNER=codex-cli npm run probe:planner
-PLANNER=codex-cli npm run serve
-PLANNER=codex-cli npm run ask -- "create a task to call Jo"
-```
+**Why one plan per turn beats one call per step:**
+- **Speed.** A complex request is one model round trip, not one per step, so end-to-end time barely grows with the number of steps (1.6 s p50 against 4.2 s).
+- **Cost.** The baseline resends the growing conversation on every step: 21,063 input tokens per run against 12,852, and $0.0073 against $0.0043 per successful task, retries and failed runs included. 74% of the planner's input tokens are read from the provider's prompt cache, because the system prompt is kept byte-identical between calls.
+- **Quality.** The whole plan is validated before anything runs, so a bad argument or an invented id is repaired before any write, and the approval gate sees every record the plan will touch. The baseline can only find a problem when it reaches that step (91.6% against 96.9% overall; 58.8% against 82.9% on the brief's own examples).
 
-`CODEX_MODEL` and `CODEX_FAST_MODEL` select the strong/fast models (default `gpt-6.1-sol`).
-Set both to `gpt-6-luna` to use GPT-6 Luna. `CODEX_REASONING` and `CODEX_FAST_REASONING`
-accept `low`, `medium`, `high` or `xhigh` (default `low`; fast inherits strong if omitted).
-Model access depends on your account. `CODEX_BIN` optionally selects an executable;
-`CODEX_HOME` may select your existing CLI authentication directory.
-Card generation stays on Claude so its provenance stamp remains accurate.
-
-The adapter uses the Codex runtime, rather than raw model API calls. It supplies our planner
-instructions, request and output schema, while Codex adds runtime framing. **The captured request
-still advertised skills and tools despite the disabling flags.** Do not treat the adapter as a tool-free or prompt-only inference boundary.
-
-This is a trusted local development provider. It strips inherited API credentials, checks the
-current login before enforcing ChatGPT authentication, uses a private working directory and
-read-only sandbox, and requests restricted runtime capabilities. Unexpected tool events and
-configuration errors fail the request; this cannot undo any tool action already started by
-the runtime. Keep it out of public or untrusted services. For raw API-key calls, use the Qwen
-provider below.
-
-Calls have a 120-second deadline, bounded output, cancellation and temporary-file cleanup.
-Subscription usage consumes your shared allowance; USD cost remains unknown in the UI, scenario
-results and benchmark reports, with no automatic API fallback. The app still validates plans
-and owns CRM execution and confirmation. See the
-[official non-interactive documentation](https://learn.chatgpt.com/docs/non-interactive-mode).
-
-## Use a Qwen Token Plan locally
-
-The Qwen provider calls the Token Plan's OpenAI-compatible endpoint directly, with no CLI in
-between. Get an `sk-sp-` key from the Token Plan console (Singapore only) and set it as
-`QWEN_API_KEY` in your local `.env`. With `PLANNER` unset, the key alone selects this provider;
-the literal `sk-sp-...` placeholder counts as no key. Then run any command from `server/`:
-
-```sh
-npm run probe:planner
-npm run serve
-npm run ask -- "create a task to call Jo"
-```
-
-`QWEN_MODEL` and `QWEN_FAST_MODEL` select the strong/fast models (`QWEN_MODEL` defaults to
-`deepseek-v4.1-flash-1017`, `QWEN_FAST_MODEL` to `QWEN_MODEL`). Thinking is off (`enable_thinking: false`);
-set `QWEN_THINKING=1` to turn it on. `QWEN_BASE_URL` defaults to
-`https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1`; use
-`QWEN_BASE_URL=https://token-plan.maas.qwencloudapi.com/compatible-mode/v1` for QwenCloud.
-Token Plan keys must not be pointed at a pay-as-you-go endpoint. The adapter sends the planner
-system/user messages plus the `submit_plan` JSON Schema and leaves tools out. Calls have a
-120-second deadline (`QWEN_TIMEOUT_MS`), cancellation and a 4 MiB reply cap. A dropped connection,
-a 5xx or a 429 with a short `Retry-After` is retried once; a quota error fails at once. A reply cut
-off at the token limit or blocked by the content filter is reported as such.
-Token Plan usage is prepaid, so USD cost stays unknown in the UI and reports.
-
-The reply format follows the model. Where the endpoint takes it, the request carries
-`response_format: json_schema`; where it doesn't, it asks for a JSON object and puts the schema in
-the system message. DeepSeek has no `json_schema` on the Token Plan and answers HTTP 400 "This
-response_format type is unavailable now", so the model picks the format before the first call, and a
-400 that blames the format is retried once as `json_object` and that model is remembered for the
-rest of the process. `QWEN_RESPONSE_FORMAT=json_schema|json_object` pins the choice; leave it unset.
-Plans are validated and repaired either way.
-
-```sh
-QWEN_MODEL=qwen3.8-flash npm run serve   # the Qwen flagship on the same key; no format flag needed
-```
-
-Measured 2026-10-25 on the module scenarios with real list rates (regression: 23 scenarios x 3
-repeats; development: 45 scenarios):
-
-| model | regression | development | median turn | $/turn |
-| --- | --- | --- | --- | --- |
-| qwen3.8-flash | 90.9% | 97.8% | 5.0 s / 3.2 s | 0.00044 / 0.00063 |
-| deepseek-v4.1-flash-1017 (adapter default) | 95.7% | 97.8% | 1.9 s / 1.1 s | 0.00048 / 0.00065 |
-
-DeepSeek's regression figure is the lower of two batches (the other was 98.6%) and Qwen's is a
-four-batch mean; a single batch moves by 1-3 points, so read gaps under ~5 points as noise. Batches:
-`eval/results/scenarios-ds-default-check-*.json`, `scenarios-base-ds-reg-3x-jo.json`,
-`scenarios-reg-fix{4,5,6,7}-qf-3x.json`, `scenarios-dev-smoke-compilerfix.json`.
+**What it costs:**
+- **The planner can't react to data it hasn't seen.** When the plan depends on what a search returns, it spends a look (a read-only call, then a second planner call), so those turns cost two calls. A turn allows two looks.
+- **A well-formed plan can still be the wrong plan.** Validation catches broken plans, not misread intent: an inverted filter passes every check. Those misses are the follow-up failures below.
+- **Speed depends on one provider call.** The direct p95 miss is DeepSeek's latency tail, not app time; an earlier 86-scenario run met it at 2.5 s.
 
 ## Known limitations
 
-- **The direct-reply p95 target is missed.** In BENCHMARK.md the direct first reply is 1.3 s at p50 and 4.3 s at p95, against 1.5 s and 3.0 s, so p50 is met and p95 is not. The complex targets are met (end-to-end 1.6 s p50, 7.8 s p95, against 6.0 s and 12.0 s). Most of a direct reply is one DeepSeek call, whose speed varies by day: an earlier 86-scenario run met the direct targets at 1.5 s / 2.5 s. Every `claude -p` call starts a new process, and the earlier Haiku benchmark had a direct p50 of 8.1 s. There is no Anthropic API adapter, so Claude can't be measured without the process overhead.
-- **Cost is unknown on subscription planners.** The Claude and Codex CLIs and the prepaid Token Plan report no USD cost. The cost figures here come from list rates.
-- **The final benchmark is one model.** It ran on DeepSeek only; the planned Haiku secondary run was not done. Earlier Haiku, Sol and Luna numbers are on different scenario sets and commits, so they don't compare with it.
-- **Multi-step follow-ups are the weak spot.** The brief's suite passes 80.6% of runs for the planner (55.6% for the baseline). Its follow-ups ("only include Facebook leads") and the held-out lead-filtering variants fail most; these are model misreads (an inverted filter, a filter read as a field update) that the validator can't catch because the plan is well-formed. Two question scenarios also fail on the reply's wording (a missing leading "no"), not on the data.
-- **Known planner misses are recorded, not patched.** For example, "Move X from Starter to Pro" is read as an opportunity stage change rather than a plan change. BENCHMARK.md lists [every failing run](BENCHMARK.md#every-failing-run).
+- **The direct-reply p95 target is missed:** 4.3 s against 3.0 s. Most of a direct reply is one DeepSeek call, whose speed varies by day.
+- **Multi-step follow-ups are the weak spot.** The brief's suite passes 82.9% of runs for the planner (58.8% for the baseline). Its follow-up "Only include leads from the Facebook campaign, and make those tasks due tomorrow" and the held-out lead-filtering variants fail most; these are model misreads (an inverted filter, a filter read as a field update) that the validator can't catch because the plan is well-formed. Two question scenarios fail on the reply's wording (a missing leading "no"), not on the data.
+- **Known misses are recorded, not patched.** BENCHMARK.md lists [every failing run](BENCHMARK.md#every-failing-run); no scenario was edited to pass.
+- **The final benchmark is one model.** It ran on DeepSeek only. Earlier Haiku, GPT-6.1 Sol and GPT-6 Luna numbers are on different scenario sets and commits, so they don't compare with it.
+- **Cost is unknown on subscription planners.** The Claude and Codex CLIs and the prepaid Token Plan report no USD cost; the figures here come from list rates.
 - **Retrieval can miss.** Hybrid recall@15 is 97.5%, so about 1 question in 40 doesn't get the right card into the shortlist. The planner can ask for another retrieval round (`search_tools`, up to twice), but it can't use an action it never sees.
-- **Each turn is bounded.** A turn gets two looks, two `search_tools` rounds, one compile repair and one retry after a failed run. Requests that need longer chains of read-then-decide steps hit those limits and stop with an honest partial reply.
-- **Everything is simulated.** The CRM is a single SQLite database with a frozen clock and a seeded demo tenant. Messages, payments, publications and directory syncs never leave the process. There is no real auth, and there is no multi-tenant isolation. Permissions are checked selectively, not globally.
+- **Each turn is bounded.** A turn gets two looks, two `search_tools` rounds, one compile repair and one retry after a failed run. Requests that need longer chains of read-then-decide steps stop with an honest partial reply.
+- **Everything is simulated.** See [Real vs mocked](#real-vs-mocked).
 - **The cards are LLM-generated.** Only the first five modules and M45–M47 were reviewed by hand. Regenerating the cards overwrites hand edits.
 - **Context is short.** The planner gets the last four turns and 12 record identities. Anything older has to be named again.
 
@@ -263,29 +195,19 @@ The prompt doesn't grow with the catalog. The planner sees a fixed shortlist of 
   1. Push each handler's filters into SQL, with typed or generated columns and indexes.
   2. Let reads accept id lists from earlier steps (for example `leadIds: $s1.items[*].id`), so a later step only reads the earlier step's records.
   3. Paginate, and stream pages through `forEach`, instead of the 500-row cap.
+- **Providers.** A new model provider is one file behind the `Planner` interface; nothing in retrieval, compiling, execution or approval changes ([docs/PROVIDERS.md](docs/PROVIDERS.md)).
 
-## The Claude CLI planner, and what it can't measure
-
-The default planner (`server/src/planner/claude-cli.ts`) runs `claude -p` on a Claude subscription, with a clean environment, no tools and a JSON-schema output. This project has no Anthropic API key, and a subscription login must not be used for raw API calls, so that's how every Claude number was measured; the final benchmark uses DeepSeek through the `qwen` provider instead. It has four limits, also listed in [BENCHMARK.md](BENCHMARK.md):
-
-- **Cost is an estimate.** Dollars are Claude Code's own figure at API list prices (`total_cost_usd`); nothing was billed. Input, cache-read, cache-write, output and thinking tokens are reported separately, and the benchmark leads with tokens and model calls.
-- **No temperature control,** so every scenario runs three times.
-- **No control over cache breakpoints.** Claude Code places them. The app keeps the system prompt byte-identical between calls so the prefix can be read from cache.
-- **Latency includes the CLI.** Each call starts a `claude` process (about 0.7 s). The planner answers as soon as the result JSON is printed, without waiting about 0.8 s for the process to exit, and records the CLI's reported model time (`apiMs`) beside the wall clock.
-
-**Every turn has a budget** (`server/src/planner/turn.ts`): at most 8 planner calls, repairs and look-ups included, and 180 seconds. Each call's timeout is cut to whatever time the turn has left. A web client that closes the stream (a closed tab, a reload) aborts the call in flight and kills the `claude` process. A turn that runs out of budget, or is cancelled, changes nothing. Approved runs are not cancelled by a disconnect.
-
-**Every planner call is traced.** The `planner.reply` event, and `plannerCalls` on each turn in `eval/results/*.json`, record the call number, model, a hash of the system prompt and of the user prompt, wall-clock and model latency, provider attempts, model requests, whether it was a repair, and token usage.
-
-**A new provider is one file.** `server/src/planner/qwen.ts` is a direct HTTP provider (OpenAI-compatible chat completions, JSON-schema output, retries with backoff, timeouts) behind the same `Planner` interface in `server/src/planner/types.ts`. Adding it took that file and one branch in `makePlanner` (`server/src/planner/index.ts`); nothing in retrieval, compiling, execution or approval changed. An Anthropic API provider would be the same shape.
-
-## Layout
+## Layout and further reading
 
 ```
 server/   Node + TypeScript backend (registry, modules, store, agent core)
-eval/     scenarios, runner, smoke tests, benchmark report
+eval/     scenarios, results, targets
 web/      Vue 3 chat UI
-docs/     plan, module contract, planner design notes, journey
+docs/     design, module contract, planner notes, providers
 ```
 
-Product decisions made without an owner to ask (which actions need which permission, what was left out) are in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md). Raw eval runs are in `eval/results/`; `docs/trajectory.html` charts them.
+- [docs/PLAN.md](docs/PLAN.md): architecture, design and the 5-day schedule
+- [docs/PLANNER-CHANGES.md](docs/PLANNER-CHANGES.md): what changed in shared lookup, retrieval and planner handling, and why each change was needed
+- [docs/PROVIDERS.md](docs/PROVIDERS.md): the Qwen, Claude CLI and Codex providers, turn budgets and planner tracing
+- [docs/IMPLEMENTATION-NOTES.md](docs/IMPLEMENTATION-NOTES.md): build history, and the rules for reviews, listings and tickets
+- `docs/trajectory.html` charts every recorded eval run
