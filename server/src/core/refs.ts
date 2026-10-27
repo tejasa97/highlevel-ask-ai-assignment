@@ -42,7 +42,9 @@ export function literalList(raw: string | string[], err: (m: string) => void, fi
 }
 
 export function parseRef(s: string): Ref | null {
-  const m = REF.exec(s);
+  // "$s2.items[0].invoiceId}": a weaker model closes a ref like a {{template}}. With no "{" to open it, the brace
+  // can only be that slip, so it reads as the ref it closes.
+  const m = REF.exec(s) ?? (s.endsWith("}") && !s.includes("{") ? REF.exec(s.slice(0, -1)) : null);
   if (!m) return null;
   const path: Seg[] = [];
   for (const part of m[2]!.match(/\.[A-Za-z_][A-Za-z0-9_]*|\[\*\]|\[-?\d+\]/g) ?? []) {

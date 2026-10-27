@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createServer, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, beforeEach, describe, it } from "node:test";
-import { needsJsonObject, QwenPlanner } from "./qwen.js";
+import { needsJsonObject, parseLoose, QwenPlanner } from "./qwen.js";
 import { PlannerError, type PlanRequest } from "./types.js";
 
 interface Captured {
@@ -290,3 +290,22 @@ function send(res: ServerResponse, status: number, body: unknown, headers: Recor
   res.writeHead(status, { "content-type": "application/json", connection: "close", ...headers });
   res.end(JSON.stringify(body));
 }
+
+describe("parseLoose", () => {
+  it("reads JSON with prose around it or trailing commas, and nothing looser", () => {
+    assert.deepEqual(parseLoose('Here is the plan:\n{"type":"plan","steps":[{"id":"s1",},],}\nDone.'), { type: "plan", steps: [{ id: "s1" }] });
+    assert.deepEqual(parseLoose('{"text":"a, } b,]","n":[1,2,]}'), { text: "a, } b,]", n: [1, 2] });
+    assert.deepEqual(parseLoose('{"q":"say \\",}\\" ok",}'), { q: 'say ",}" ok' });
+    assert.throws(() => parseLoose("not json"));
+    assert.throws(() => parseLoose('{"type": plan}'));
+  });
+
+  it("a cut-off reply is not loosened into a shorter plan", async () => {
+    respond = (res, body) => {
+      const r = reply(body.model, '{"type":"answer","text":"hi"} {"type":"pl');
+      r.choices[0]!.finish_reason = "length";
+      send(res, 200, r);
+    };
+    await assert.rejects(planner().plan(req()), /cut off at 8192 tokens/);
+  });
+});

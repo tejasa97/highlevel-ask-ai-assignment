@@ -177,9 +177,21 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   const deliverySurfaces = registry.deliverySurfaces();
   const prompt = () =>
     userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, failed: input.failed, looked, deliverySurfaces, identityCheck, outcome });
+  let resampled = false;
   const call = async (user: string, label: string) => {
     emit({ type: "planner.request", data: { label, tier: input.tier, system: SYSTEM, user, actions: offered.map((a) => a.id) } });
-    const r = await withDeadline(deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }));
+    const ask = () => withDeadline(deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }));
+    let r: PlanResult;
+    try {
+      r = await ask();
+    } catch (err) {
+      // A reply that isn't JSON (often a weaker model looping until the token cap) is a bad sample of a good request,
+      // and there are no errors to repair it with: ask the same thing once more per turn.
+      if (!(err instanceof PlannerError) || err.kind !== "bad_json" || resampled) throw err;
+      resampled = true;
+      emit({ type: "compile.errors", data: { errors: [`${err.message}; asked again`] } });
+      r = await ask();
+    }
     emit({ type: "planner.reply", data: { label, model: r.model, latencyMs: Math.round(r.latencyMs), usage: r.usage, json: r.json } });
     return r;
   };

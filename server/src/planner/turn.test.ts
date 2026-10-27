@@ -856,6 +856,25 @@ describe("a planner that fails", () => {
     assert.ok(garbled.out.kind === "reply" && garbled.out.status === "failed" && garbled.out.infra === undefined);
   });
 
+  test("a reply that isn't JSON is asked for once more per turn; a second one ends the turn", async () => {
+    const bad = new PlannerError("fake: the reply was cut off at 8192 tokens", "bad_json");
+    const good = createTask();
+    let calls = 0;
+    const once: Planner = { name: "once", plan: async () => { if (calls++ === 0) throw bad; return { model: "fake", json: good, text: "", usage: { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0, billing: "none" }, latencyMs: 1 }; } };
+    const { out, events } = await run("create a task to call Ana", once);
+    assert.equal(out.kind, "plan", JSON.stringify(out));
+    assert.equal(calls, 2);
+    assert.ok(events.some((e) => e.type === "compile.errors" && e.data.errors.some((m) => /cut off at 8192 tokens; asked again/.test(m))));
+    let tries = 0;
+    const always: Planner = { name: "always", plan: async () => { tries++; throw bad; } };
+    const twice = await run("create a task to call Ana", always);
+    assert.ok(twice.out.kind === "reply" && twice.out.status === "failed");
+    assert.equal(tries, 2);
+    tries = 0;
+    await run("create a task to call Ana", { name: "down", plan: async () => { tries++; throw new PlannerError("HTTP 503", "provider"); } });
+    assert.equal(tries, 1, "a provider failure is not resampled here; the client already retried it");
+  });
+
   test("a call that never returns is abandoned after the deadline, and told to stop", async () => {
     let signal: AbortSignal | undefined;
     const hung: Planner = { name: "hung", plan: (req) => ((signal = req.signal), new Promise(() => {})) };

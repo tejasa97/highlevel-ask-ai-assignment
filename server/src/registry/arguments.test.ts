@@ -38,3 +38,10 @@ test("ID arguments named for their role (keepId, hostId) name their record type"
   assert.deepEqual(argumentEntities(registry.get("M21.A01")!, "hostId"), ["user"]);
   assert.deepEqual(argumentEntities(registry.get("M07.A03")!, "recordId", { recordType: "lead" }), ["lead"]);
 });
+
+test("a ref closed with a stray brace, as if it were a {{template}}, reads as the ref", () => {
+  assert.deepEqual(parseRef("$s2.items[0].invoiceId}"), { root: "s2", path: [{ field: "items" }, { index: 0 }, { field: "invoiceId" }], raw: "$s2.items[0].invoiceId}" });
+  assert.equal(parseRef("$item.results[0].items[*].id}")?.root, "item");
+  assert.equal(parseRef("$item.id}}"), null);
+  assert.equal(parseRef("{$item.id}"), null);
+});

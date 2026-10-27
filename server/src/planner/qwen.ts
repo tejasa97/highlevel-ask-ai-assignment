@@ -84,7 +84,7 @@ export class QwenPlanner implements Planner {
 
     let json: unknown;
     try {
-      json = JSON.parse(unfence(content));
+      json = finish === "length" ? JSON.parse(unfence(content)) : parseLoose(unfence(content));
     } catch {
       const why = finish === "length" ? `cut off at ${MAX_TOKENS} tokens` : "not valid JSON";
       throw fail(`the reply was ${why}`, "bad_json", content);
@@ -202,6 +202,41 @@ function unfence(text: string): string {
   const trimmed = text.trim();
   const fenced = /^```[a-z]*\s*\n?([\s\S]*?)\n?```$/i.exec(trimmed);
   return (fenced?.[1] ?? trimmed).trim();
+}
+
+/**
+ * JSON with the slips json_object mode lets through: prose around the object, trailing commas. Anything else still
+ * throws, and the turn repairs or fails it. A reply cut off at the token cap is never loosened: it is missing its end.
+ */
+export function parseLoose(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    const start = text.indexOf("{"), end = text.lastIndexOf("}");
+    if (start < 0 || end < start) throw err;
+    return JSON.parse(withoutTrailingCommas(text.slice(start, end + 1)));
+  }
+}
+
+/** Drops a comma right before "}" or "]", outside strings. */
+function withoutTrailingCommas(text: string): string {
+  const closer = /\s*[}\]]/y;
+  let out = "", inString = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]!;
+    if (inString) {
+      out += c;
+      if (c === "\\") out += text[++i] ?? "";
+      else if (c === '"') inString = false;
+    } else if (c === '"') {
+      inString = true;
+      out += c;
+    } else if (c === ",") {
+      closer.lastIndex = i + 1;
+      if (!closer.test(text)) out += c;
+    } else out += c;
+  }
+  return out;
 }
 
 /** Usage is bookkeeping: a missing or odd count reads as 0 rather than discarding a valid plan. */
