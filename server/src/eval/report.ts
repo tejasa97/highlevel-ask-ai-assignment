@@ -47,8 +47,12 @@ export interface GroupStats {
   e2eMs: { p50: number; p95: number };
   /** Planner calls per run, repair rounds and looks included. */
   modelCalls: { mean: number; p50: number };
+  /** Requests to the model per run (provider retries and agent-CLI tool turns included), when the runs record it. */
+  modelRequests: { mean: number } | null;
+  /** Per planner call, wall clock minus the model time the provider reported: process start, transport, parsing. */
+  overheadMs: { mean: number } | null;
   actionCalls: { mean: number };
-  tokens: { input: number; cachedRead: number; cacheWrite: number; output: number };
+  tokens: { input: number; cachedRead: number; cacheWrite: number; output: number; thinking: number };
   costUsd: { total: number | null; perRun: number | null; perSuccess: number | null; listRate: boolean };
 }
 
@@ -92,7 +96,9 @@ export function groupStats(runs: ScenarioRun[], defs: Map<string, Scenario>, cat
   const passed = clean.filter((r) => r.pass).length;
   const costs = all.map(runCost);
   const total = sumUsd(costs.map((c) => c.usd));
-  const usage = (k: "input" | "cachedRead" | "cacheWrite" | "output") => sum(clean.map((r) => r.metrics.usage[k]));
+  const usage = (k: "input" | "cachedRead" | "cacheWrite" | "output" | "thinking") => sum(clean.map((r) => r.metrics.usage[k]));
+  const requested = clean.filter((r) => r.metrics.modelCalls !== undefined);
+  const timed = clean.filter((r) => r.metrics.plannerApiMs !== undefined && r.metrics.plannerRounds);
   return {
     runs: clean.length,
     scenarios: new Set(clean.map((r) => r.id)).size,
@@ -103,8 +109,10 @@ export function groupStats(runs: ScenarioRun[], defs: Map<string, Scenario>, cat
     firstReplyMs: { p50: quantile(clean.map((r) => r.metrics.firstReplyMs), 0.5), p95: quantile(clean.map((r) => r.metrics.firstReplyMs), 0.95) },
     e2eMs: { p50: quantile(clean.map((r) => r.metrics.ms), 0.5), p95: quantile(clean.map((r) => r.metrics.ms), 0.95) },
     modelCalls: { mean: mean(clean.map((r) => r.metrics.plannerRounds)), p50: quantile(clean.map((r) => r.metrics.plannerRounds), 0.5) },
+    modelRequests: requested.length === clean.length && clean.length ? { mean: mean(requested.map((r) => r.metrics.modelCalls!)) } : null,
+    overheadMs: timed.length === clean.length && clean.length ? { mean: sum(timed.map((r) => r.metrics.plannerMs - r.metrics.plannerApiMs!)) / sum(timed.map((r) => r.metrics.plannerRounds)) } : null,
     actionCalls: { mean: mean(clean.map((r) => r.metrics.calls)) },
-    tokens: { input: usage("input"), cachedRead: usage("cachedRead"), cacheWrite: usage("cacheWrite"), output: usage("output") },
+    tokens: { input: usage("input"), cachedRead: usage("cachedRead"), cacheWrite: usage("cacheWrite"), output: usage("output"), thinking: usage("thinking") },
     costUsd: { total, perRun: total === null ? null : all.length ? total / all.length : 0, perSuccess: passed && total !== null ? total / passed : null, listRate: costs.some((c) => c.listRate) },
   };
 }
@@ -214,6 +222,7 @@ export function renderReport(input: ReportInput): string {
   if (p.summary.infraRuns || p.summary.notRun) line(`- **Not a clean run:** ${p.summary.infraRuns} runs failed outside the app (quota, timeout, provider down) and ${p.summary.notRun} were never started. They're left out of every rate and latency below, but their cost counts.`);
   line(`- **Coverage:** ${input.coverage.implemented} of ${input.coverage.catalogActions} catalog actions are implemented, in ${input.coverage.modules} of ${input.coverage.catalogModules} modules. The scenarios touch ${new Set(input.defs.flatMap((s) => s.modules)).size} modules.`);
   line();
+  for (const l of methodLimits(p.summary.planner)) line(l);
 
   // Headline, side by side when comparing.
   line("## Headline");
@@ -298,12 +307,19 @@ export function renderReport(input: ReportInput): string {
   line(`| … read from cache | ${int(all.tokens.cachedRead / (all.runs || 1))} | ${int(all.tokens.cachedRead)} (${cachedShare.toFixed(0)}%) |`);
   line(`| … written to cache | ${int(all.tokens.cacheWrite / (all.runs || 1))} | ${int(all.tokens.cacheWrite)} |`);
   line(`| Output tokens | ${int(all.tokens.output / (all.runs || 1))} | ${int(all.tokens.output)} |`);
-  line(`| Model calls (repairs and looks included) | ${all.modelCalls.mean.toFixed(2)} | |`);
+  if (all.tokens.thinking) line(`| Thinking tokens | ${int(all.tokens.thinking / (all.runs || 1))} | ${int(all.tokens.thinking)} |`);
+  line(`| Planner calls (repairs and looks included) | ${all.modelCalls.mean.toFixed(2)} | |`);
+  if (all.modelRequests) line(`| Model requests (provider retries and CLI tool turns included) | ${all.modelRequests.mean.toFixed(2)} | |`);
   line(`| Action calls executed | ${all.actionCalls.mean.toFixed(1)} | |`);
-  line(`| Cost | ${cost(all.costUsd.perRun, all.costUsd.listRate)} | ${cost(all.costUsd.total, all.costUsd.listRate)} |`);
-  line(`| Cost per successful task | ${cost(all.costUsd.perSuccess, all.costUsd.listRate)} | |`);
+  const estimate = p.summary.planner === "claude-cli" ? " (estimate, not billed)" : "";
+  line(`| Cost${estimate} | ${cost(all.costUsd.perRun, all.costUsd.listRate)} | ${cost(all.costUsd.total, all.costUsd.listRate)} |`);
+  line(`| Cost per successful task${estimate} | ${cost(all.costUsd.perSuccess, all.costUsd.listRate)} | |`);
   line();
-  line("Cost per successful task is everything spent, failed and infra runs and repair rounds included, divided by the runs that passed.");
+  line("Tokens and calls are the measured cost; dollars are derived from them. Cost per successful task is everything spent, failed and infra runs and repair rounds included, divided by the runs that passed.");
+  if (all.overheadMs) {
+    line();
+    line(`Each planner call spent ${secs(all.overheadMs.mean)} on average outside model requests (wall clock minus the model time the provider reported): process start, transport and parsing. It is part of every latency above.`);
+  }
   line();
   line(pricingNote(p.summary.planner, all.costUsd.listRate));
   line();
@@ -347,9 +363,27 @@ export function renderReport(input: ReportInput): string {
   return out.join("\n") + "\n";
 }
 
+/** What a run through an agent CLI can't control or separate out, said before any number. */
+function methodLimits(planner: string): string[] {
+  if (planner !== "claude-cli") return [];
+  return [
+    "## Limits of this measurement",
+    "",
+    "The planner runs through `claude -p` on a Claude subscription: there is no Anthropic API key for this project, and a subscription login must not be used for raw API calls. That costs the measurement four things:",
+    "",
+    "- **Cost is an estimate.** Dollars are Claude Code's own figure at API list prices; nothing was billed. Tokens and model calls are the measured cost.",
+    "- **No temperature control.** Runs vary from one to the next, which is why every scenario runs three times.",
+    "- **No control over cache breakpoints.** Claude Code decides what is cached and for how long. The app keeps the system prompt byte-identical between calls (its hash is in every trace), so the prefix can be read from cache, and reports the cache reads and writes the CLI returns.",
+    "- **Latency includes the CLI.** Every planner call starts a `claude` process and goes through Claude Code's own request framing. Traces record the model time the CLI reports (`apiMs`) beside the wall clock, so the overhead can be taken out; runs recorded before 2026-10-27 also include about 0.8 s per call of waiting for the CLI to exit after it printed the reply.",
+    "",
+    "None of this is in the agent itself. A provider is one file behind the `Planner` interface (`server/src/planner/types.ts`) plus one branch in `makePlanner`: `server/src/planner/qwen.ts` is a direct HTTP provider with JSON-schema output, retries and timeouts, and nothing in retrieval, compiling or execution changed to add it.",
+    "",
+  ];
+}
+
 function pricingNote(planner: string, listRate = false): string {
   if (planner === "claude-cli") {
-    return "**Pricing and test conditions:** this planner runs `claude -p` on a Claude subscription. Cost is Claude Code's own estimate at Anthropic API list prices (`total_cost_usd`), not money spent. Each model call also starts a process, about 1.5 s of every call's latency, which an API client wouldn't pay. Prompt caching is Claude's automatic prefix cache: the system prompt is kept byte-identical between calls so it can be read from cache.";
+    return "**Pricing and test conditions:** this planner runs `claude -p` on a Claude subscription, since no API key is available. Cost is Claude Code's own estimate at Anthropic API list prices (`total_cost_usd`), not money spent. Prompt caching is Claude's automatic prefix cache, with breakpoints Claude Code places; the system prompt is kept byte-identical between calls so its prefix can be read from cache. See \"Limits of this measurement\" above.";
   }
   if (planner === "codex-cli") {
     return "**Pricing and test conditions:** this planner uses Codex CLI with ChatGPT subscription access. Token counts include runtime context and latency includes process startup. Subscription USD cost is unavailable; cost cells show –. See docs/CODEX-PROVIDER-CAPTURE.md for the measured prompt and tool framing.";

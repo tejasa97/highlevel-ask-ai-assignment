@@ -941,6 +941,51 @@ describe("a planner that fails", () => {
     assert.equal(out.kind, "plan");
   });
 
+  test("a turn stops at its call budget, as the app's failure, not the provider's", async () => {
+    const planner = scripted(createTask("M99.A99"), createTask());
+    const out = await planTurn({ message: "create a task to call Ana", tier: "fast" }, { registry, retriever, planner, clock: frozenClock(), maxPlannerCalls: 1 });
+    assert.ok(out.kind === "reply" && out.status === "failed");
+    assert.match(out.text, /used all 1 of its calls.*Nothing was changed/);
+    assert.equal(out.infra, undefined);
+    assert.equal(planner.requests.length, 1, "the repair round never started");
+  });
+
+  test("the turn's deadline shortens a call's own timeout", async () => {
+    const hung: Planner = { name: "hung", plan: () => new Promise(() => {}) };
+    const started = performance.now();
+    const out = await planTurn({ message: "create a task to call Ana", tier: "fast" }, { registry, retriever, planner: hung, clock: frozenClock(), plannerTimeoutMs: 60_000, turnDeadlineMs: 20 });
+    assert.ok(out.kind === "reply" && out.infra === "timeout");
+    assert.ok(performance.now() - started < 5_000);
+  });
+
+  test("a client that goes away stops the call in flight, and no other starts", async () => {
+    let signal: AbortSignal | undefined;
+    let calls = 0;
+    const hung: Planner = { name: "hung", plan: (req) => ((calls++, (signal = req.signal)), new Promise(() => {})) };
+    const gone = new AbortController();
+    setTimeout(() => gone.abort(), 10);
+    const out = await planTurn({ message: "create a task to call Ana", tier: "fast" }, { registry, retriever, planner: hung, clock: frozenClock(), signal: gone.signal });
+    assert.ok(out.kind === "reply" && out.status === "failed");
+    assert.match(out.text, /cancelled\. Nothing was changed/);
+    assert.equal(out.infra, undefined);
+    assert.equal(signal?.aborted, true);
+    assert.equal(calls, 1);
+
+    const planner = scripted(createTask());
+    const already = await planTurn({ message: "create a task to call Ana", tier: "fast" }, { registry, retriever, planner, clock: frozenClock(), signal: gone.signal });
+    assert.ok(already.kind === "reply" && already.status === "failed");
+    assert.equal(planner.requests.length, 0);
+  });
+
+  test("every reply is traced with its call number, prompt hashes, retries and whether it was a repair", async () => {
+    const { events } = await run("create a task to call Ana", scripted(createTask("M99.A99"), createTask()));
+    const replies = events.flatMap((e) => (e.type === "planner.reply" ? [e.data] : []));
+    assert.deepEqual(replies.map((r) => [r.call, r.repair, r.attempts, r.modelCalls]), [[1, false, 1, 1], [2, true, 1, 1]]);
+    assert.match(replies[0]!.promptHash, /^[0-9a-f]{12}$/);
+    assert.equal(replies[0]!.systemHash, replies[1]!.systemHash, "the cacheable system prompt is the same on every call");
+    assert.notEqual(replies[0]!.promptHash, replies[1]!.promptHash);
+  });
+
   test("an error that isn't the planner's still surfaces", async () => {
     await assert.rejects(run("create a task to call Ana", failing(new TypeError("bug"))), /bug/);
   });

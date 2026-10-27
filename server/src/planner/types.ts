@@ -25,7 +25,13 @@ export interface PlanResult {
   json: unknown; // parsed reply; still unvalidated
   text: string;
   usage: Usage;
-  latencyMs: number;
+  latencyMs: number; // wall clock, as the caller waited
+  /** Requests sent to the model provider, the provider's own retries included; defaults to 1. */
+  attempts?: number;
+  /** Model requests behind this reply, when the provider makes more than one (an agent CLI's tool turns). */
+  modelCalls?: number;
+  /** Time the provider spent in model requests, when it reports it: latencyMs minus this is client overhead. */
+  apiMs?: number;
 }
 
 export interface Planner {

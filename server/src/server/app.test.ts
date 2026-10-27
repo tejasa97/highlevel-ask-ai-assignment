@@ -361,6 +361,22 @@ describe("POST /api/ask", () => {
     release(action("M06.A01", { title: "Call Ana" }));
     assert.equal(last(await events(await first), "run").status, "done");
   });
+
+  test("a client that goes away cancels its turn: the planner is told to stop, nothing runs, and the app is free", async () => {
+    let signal: AbortSignal | undefined;
+    const hung: Planner = { name: "hung", plan: (req) => ((signal = req.signal), new Promise(() => {})) };
+    const app = await start(hung);
+    const tasks = app.world().store.all("tasks").length;
+    const client = new AbortController();
+    const res = await fetch(`${app.base}/api/ask`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: "create a task to call Ana" }), signal: client.signal });
+    for (let i = 0; i < 100 && !signal; i++) await new Promise((ok) => setTimeout(ok, 10));
+    client.abort();
+    await res.body?.cancel().catch(() => {});
+    for (let i = 0; i < 100 && (await busyNow(app)); i++) await new Promise((ok) => setTimeout(ok, 10));
+    assert.equal(signal?.aborted, true);
+    assert.equal(await busyNow(app), false);
+    assert.equal(app.world().store.all("tasks").length, tasks);
+  });
 });
 
 /** True when a further ask is refused. */

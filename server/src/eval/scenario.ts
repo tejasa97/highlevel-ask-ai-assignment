@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { z } from "zod";
 import type { Pending } from "../core/execute.js";
 import type { Planner, Tier, Usage } from "../planner/types.js";
+import type { PlannerCallTrace } from "../planner/turn.js";
 import { sumUsd } from "../planner/usage.js";
 import type { Registry } from "../registry/registry.js";
 import type { Retriever } from "../retrieval/retrieve.js";
@@ -104,6 +105,8 @@ export interface TurnTrace {
   plannerRounds: number;
   /** Every raw planner reply, with only the request's tier and round kept. */
   planner: PlannerReplyTrace[];
+  /** Every planner call of the turn: model, prompt hashes, tokens, latency, retries, repairs (the execution trace). */
+  plannerCalls?: PlannerCallTrace[];
   compileErrors: string[];
   errors: string[];
   approvals: number;
@@ -122,6 +125,10 @@ export interface RunMetrics {
   firstReplyMs: number;
   plannerMs: number;
   plannerRounds: number;
+  /** Requests to the model behind those rounds, provider retries and agent-CLI tool turns included. */
+  modelCalls?: number;
+  /** Planner time the provider reported as model time; plannerMs minus this is client and process overhead. */
+  plannerApiMs?: number;
   calls: number;
   /** Clarifying questions answered (at most one a run). */
   clarifications?: number;
@@ -191,6 +198,8 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       } else if (event === "planner.reply") {
         trace.plannerRounds++;
         trace.planner.push({ tier: roundTier, round: data.label, reply: data.json });
+        const { json: _, ...call } = data as PlannerCallTrace & { json: unknown };
+        (trace.plannerCalls ??= []).push(call);
         plannerMs += data.latencyMs;
         if (data.model && !models.includes(data.model)) models.push(data.model);
         const next: Usage = data.usage;
@@ -237,6 +246,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
     turns.push(trace);
   }
 
+  const calls = turns.flatMap((t) => t.plannerCalls ?? []);
   const failures = check(s, turns, changes, (sql) => (Object.values((w.store.db.prepare(sql).get() as Record<string, unknown> | undefined) ?? {})[0]));
   w.store.close();
   const infra = turns.find((t) => t.infra)?.infra;
@@ -253,6 +263,8 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       firstReplyMs: turns[0]!.firstReplyMs,
       plannerMs,
       plannerRounds: turns.reduce((a, t) => a + t.plannerRounds, 0),
+      modelCalls: calls.reduce((a, c) => a + c.attempts * c.modelCalls, 0),
+      ...(calls.length && calls.every((c) => c.apiMs !== undefined) ? { plannerApiMs: calls.reduce((a, c) => a + c.apiMs!, 0) } : {}),
       calls: turns.reduce((a, t) => a + t.calls.length, 0),
       clarifications: turns.filter((t) => t.clarified).length,
       usage,
