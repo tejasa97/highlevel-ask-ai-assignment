@@ -71,6 +71,25 @@ describe("makePlanner provider choice", () => {
     assert.deepEqual(planner.models, { strong: "claude-haiku-5-5", fast: "claude-haiku-5-5" });
   });
 
+  it("accepts ALIBABA_TOKEN_PLAN_API_KEY alone, and behind a blank QWEN_API_KEY", () => {
+    delete process.env.PLANNER;
+    process.env.ALIBABA_TOKEN_PLAN_API_KEY = "sk-sp-alias";
+    delete process.env.QWEN_API_KEY;
+    assert.equal(makePlanner().name, "qwen");
+
+    process.env.QWEN_API_KEY = " ";
+    assert.equal(makePlanner().name, "qwen");
+    assert.equal(makePlanner("qwen").name, "qwen");
+  });
+
+  it("treats the sk-sp-... placeholder as no key", () => {
+    delete process.env.PLANNER;
+    delete process.env.ALIBABA_TOKEN_PLAN_API_KEY;
+    process.env.QWEN_API_KEY = "sk-sp-...";
+    assert.equal(makePlanner().name, "claude-cli");
+    assert.throws(() => makePlanner("qwen"), /needs QWEN_API_KEY/);
+  });
+
   it("lets PLANNER=claude-cli override a present key", () => {
     process.env.PLANNER = "claude-cli";
     process.env.QWEN_API_KEY = "sk-sp-test";

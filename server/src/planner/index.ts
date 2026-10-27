@@ -5,6 +5,8 @@ import type { Planner } from "./types.js";
 
 const HAIKU = "claude-haiku-5-5";
 const DEEPSEEK = "deepseek-v4.1-flash-1017";
+/** The key shown in the README and older copies of .env.example; a .env that still carries it has no key. */
+const PLACEHOLDER = "sk-sp-...";
 
 /**
  * Local development providers: Qwen Token Plan running DeepSeek (default), Claude CLI on Haiku 5.5, or opt-in Codex
@@ -38,8 +40,8 @@ export function makePlanner(kind = process.env.PLANNER || defaultPlanner()): Pla
   if (kind === "qwen" || kind === "qwen-token-plan") {
     // `||`, not `??`: a blank `QWEN_BASE_URL=` line in .env must fall back to the default, not post to "/chat/completions".
     const apiKey = qwenKey();
-    if (!apiKey?.trim()) {
-      throw new Error("PLANNER=qwen needs QWEN_API_KEY (or ALIBABA_TOKEN_PLAN_API_KEY) in the environment");
+    if (!apiKey) {
+      throw new Error(`PLANNER=qwen needs QWEN_API_KEY (or ALIBABA_TOKEN_PLAN_API_KEY) in the environment; "${PLACEHOLDER}" doesn't count`);
     }
     const timeout = Number(process.env.QWEN_TIMEOUT_MS);
     // DeepSeek is the benchmarked model: 95.7% on regression against 90.9% for qwen3.8-flash, at a third of the turn
@@ -58,12 +60,22 @@ export function makePlanner(kind = process.env.PLANNER || defaultPlanner()): Pla
   throw new Error(`unknown PLANNER "${kind}"; supported: claude-cli, codex-cli, qwen`);
 }
 
+/** Picks the provider when PLANNER is unset, and says so on stderr: every entry point (serve, ask, probe, eval) gets the line. */
 function defaultPlanner(): string {
-  return qwenKey()?.trim() ? "qwen" : "claude-cli";
+  const kind = qwenKey() ? "qwen" : "claude-cli";
+  console.error(kind === "qwen"
+    ? "PLANNER unset: using qwen, since a Token Plan key is set"
+    : "PLANNER unset and no Token Plan key: using claude-cli on your Claude subscription");
+  return kind;
 }
 
+/** The first Token Plan key that is set, trimmed. Blank values and the .env.example placeholder don't count. */
 function qwenKey(): string | undefined {
-  return process.env.QWEN_API_KEY || process.env.ALIBABA_TOKEN_PLAN_API_KEY;
+  for (const value of [process.env.QWEN_API_KEY, process.env.ALIBABA_TOKEN_PLAN_API_KEY]) {
+    const key = value?.trim();
+    if (key && key !== PLACEHOLDER) return key;
+  }
+  return undefined;
 }
 
 /** `QWEN_RESPONSE_FORMAT` pins the reply format; blank or anything else leaves it to the model. */
