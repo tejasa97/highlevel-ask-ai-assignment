@@ -13,7 +13,7 @@ const PLACEHOLDER = "sk-sp-...";
  * subscription access. With PLANNER unset or blank, a Token Plan key selects qwen, as benchmarked; without one the
  * app runs on claude-cli, so a checkout with only a Claude login works with no configuration.
  */
-export function makePlanner(kind = process.env.PLANNER || defaultPlanner()): Planner {
+export function makePlanner(kind = process.env.PLANNER?.trim() || defaultPlanner()): Planner {
   if (kind === "claude-cli") {
     // The default path runs Haiku 5.5, for cost, by its full id. Not the "haiku" alias: CLI 2.1.284 maps that to
     // claude-haiku-4-5-20251001, which measured 91.3% on regression at 23.9 s p50, against 100% (8x) at 7.2 s for
@@ -64,8 +64,9 @@ export function makePlanner(kind = process.env.PLANNER || defaultPlanner()): Pla
 function defaultPlanner(): string {
   const kind = qwenKey() ? "qwen" : "claude-cli";
   console.error(kind === "qwen"
-    ? "PLANNER unset: using qwen, since a Token Plan key is set"
-    : "PLANNER unset and no Token Plan key: using claude-cli on your Claude subscription");
+    ? `PLANNER unset: using qwen (${process.env.QWEN_MODEL || DEEPSEEK}), since a Token Plan key is set`
+    : "PLANNER unset and no Token Plan key: using claude-cli on your Claude subscription (run `claude auth login` once). " +
+      "Set QWEN_API_KEY to plan with DeepSeek on the Qwen Token Plan instead.");
   return kind;
 }
 

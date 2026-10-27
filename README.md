@@ -95,7 +95,7 @@ Use a Node release supporting `node:sqlite` (this branch was tested on Node 26).
 - **With a Qwen Token Plan key** (`QWEN_API_KEY`, see below), it runs `qwen` with `deepseek-v4.1-flash-1017`, the setup BENCHMARK.md measured.
 - **Without one**, it runs `claude-cli` on `claude-haiku-5-5` for both tiers. That needs only an authenticated Claude CLI (`claude auth login`) with available quota.
 
-To force one, set `PLANNER=claude-cli` or `PLANNER=qwen`; the server's startup line names the planner it picked. Set `CLAUDE_MODEL` (and optionally `CLAUDE_FAST_MODEL`) for another Claude model. Give the full id, not the `haiku` alias: Claude CLI 2.1.284 maps the alias to `claude-haiku-4-5-20251001`, which scored 91.3% on the 23-scenario regression suite at a 23.9 s median turn, against 100% over 8 repeats at 7.2 s for `claude-haiku-5-5`. The CLI logs `claude-haiku-5-5` as `unrecognized_model` but serves it.
+To force one, set `PLANNER=claude-cli` or `PLANNER=qwen`. With `PLANNER` unset, every command (`serve`, `ask`, `probe:planner`, `eval:scenarios`) prints the provider it picked on stderr, so an eval can't run on the Claude subscription unnoticed. Set `CLAUDE_MODEL` (and optionally `CLAUDE_FAST_MODEL`) for another Claude model. Give the full id, not the `haiku` alias: Claude CLI 2.1.284 maps the alias to `claude-haiku-4-5-20251001`, which scored 91.3% on the 23-scenario regression suite at a 23.9 s median turn, against 100% over 8 repeats at 7.2 s for `claude-haiku-5-5`. The CLI logs `claude-haiku-5-5` as `unrecognized_model` but serves it.
 
 In `server/`, run `npm run db:reset` to recreate **this checkout's** demo database, then `npm run serve`. In `web/`, run `npm run dev`. Defaults: API 8787, web 5173. For isolated concurrent work, set `PORT` for the API and matching `API_PORT` for Vite. Reset erases the local demo database; it is not a migration of saved user data.
 
@@ -196,20 +196,14 @@ and owns CRM execution and confirmation. See the
 ## Use a Qwen Token Plan locally
 
 The Qwen provider calls the Token Plan's OpenAI-compatible endpoint directly, with no CLI in
-between. Get an `sk-sp-...` key from the Token Plan console (Singapore only) and set it in
-your local `.env`:
+between. Get an `sk-sp-` key from the Token Plan console (Singapore only) and set it as
+`QWEN_API_KEY` in your local `.env`. With `PLANNER` unset, the key alone selects this provider;
+the literal `sk-sp-...` placeholder counts as no key. Then run any command from `server/`:
 
 ```sh
-PLANNER=qwen
-QWEN_API_KEY=sk-sp-...
-```
-
-Then run any command from `server/`:
-
-```sh
-PLANNER=qwen npm run probe:planner
-PLANNER=qwen npm run serve
-PLANNER=qwen npm run ask -- "create a task to call Jo"
+npm run probe:planner
+npm run serve
+npm run ask -- "create a task to call Jo"
 ```
 
 `QWEN_MODEL` and `QWEN_FAST_MODEL` select the strong/fast models (`QWEN_MODEL` defaults to

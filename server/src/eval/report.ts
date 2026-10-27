@@ -367,7 +367,7 @@ export function renderReport(input: ReportInput): string {
   line(`npm run report -- --label ${p.summary.label}${others.length ? ` --compare ${others.map((m) => m.result.summary.label).join(",")}` : ""}`);
   line("```");
   line();
-  line(`The planner comes from \`PLANNER\` in \`.env\` (see \`server/src/planner/index.ts\`). The scenarios are in ${(p.summary.scenarioDir ?? DEFAULT_SCENARIO_DIR).split(",").map((d) => `\`${d}/\``).join(", ")}, the targets in \`eval/targets.json\`, and every recorded run in \`eval/results/history.jsonl\`.`);
+  line(`The planner comes from \`PLANNER\` in \`.env\`; left unset, a Token Plan key selects qwen and no key selects claude-cli (see \`server/src/planner/index.ts\`). The scenarios are in ${(p.summary.scenarioDir ?? DEFAULT_SCENARIO_DIR).split(",").map((d) => `\`${d}/\``).join(", ")}, the targets in \`eval/targets.json\`, and every recorded run in \`eval/results/history.jsonl\`.`);
   return out.join("\n") + "\n";
 }
 

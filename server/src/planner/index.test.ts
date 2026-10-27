@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { afterEach, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { makePlanner } from "./index.js";
 
 const KEYS = ["PLANNER", "CLAUDE_MODEL", "CLAUDE_FAST_MODEL", "CODEX_MODEL", "QWEN_API_KEY", "ALIBABA_TOKEN_PLAN_API_KEY", "QWEN_MODEL", "QWEN_FAST_MODEL"];
@@ -53,11 +53,21 @@ describe("makePlanner defaults", () => {
 });
 
 describe("makePlanner provider choice", () => {
+  // The choice is announced on stderr; capture it so it can be asserted and stays out of the test output.
+  let logged: string[] = [];
+  beforeEach(() => {
+    logged = [];
+    mock.method(console, "error", (line: string) => logged.push(line));
+  });
+  afterEach(() => mock.restoreAll());
+
   it("picks qwen when PLANNER is unset and a Token Plan key is present", () => {
     delete process.env.PLANNER;
     delete process.env.ALIBABA_TOKEN_PLAN_API_KEY;
     process.env.QWEN_API_KEY = "sk-sp-test";
+    delete process.env.QWEN_MODEL;
     assert.equal(makePlanner().name, "qwen");
+    assert.deepEqual(logged, ["PLANNER unset: using qwen (deepseek-v4.1-flash-1017), since a Token Plan key is set"]);
   });
 
   it("falls back to claude-cli on Haiku 5.5 without a key, or with a blank one", () => {
@@ -69,6 +79,21 @@ describe("makePlanner provider choice", () => {
     const planner = makePlanner();
     assert.equal(planner.name, "claude-cli");
     assert.deepEqual(planner.models, { strong: "claude-haiku-5-5", fast: "claude-haiku-5-5" });
+    assert.equal(logged.length, 1);
+    assert.match(logged[0]!, /no Token Plan key: using claude-cli .*claude auth login.*QWEN_API_KEY/);
+  });
+
+  it("treats a whitespace-only PLANNER as unset", () => {
+    process.env.PLANNER = " ";
+    delete process.env.ALIBABA_TOKEN_PLAN_API_KEY;
+    delete process.env.QWEN_API_KEY;
+    assert.equal(makePlanner().name, "claude-cli");
+  });
+
+  it("stays quiet when PLANNER is set", () => {
+    process.env.PLANNER = "claude-cli";
+    makePlanner();
+    assert.deepEqual(logged, []);
   });
 
   it("accepts ALIBABA_TOKEN_PLAN_API_KEY alone, and behind a blank QWEN_API_KEY", () => {
