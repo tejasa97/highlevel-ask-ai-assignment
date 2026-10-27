@@ -4,6 +4,9 @@ How Ask AI got where it is: each change, the problem it went after, why it was b
 the numbers. `docs/trajectory.html` is built from this file and `eval/results/history.jsonl`
 (`npm run trajectory`).
 
+Some entries name build-time reports (the M45–M47 and Wave 1 reports, the planner validation reports) that were removed
+before submission. They are in git history: `git show 0b24cca:docs/M45-M47-FINAL-REPORT.md`, for example.
+
 ## How to read the numbers
 
 - **Retrieval eval** (`npm run eval:retrieval`): no LLM. For each held-out question, is the action it needs in the

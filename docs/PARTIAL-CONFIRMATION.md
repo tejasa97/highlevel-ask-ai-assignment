@@ -14,7 +14,6 @@ The old frozen module seed, development/reporting scenarios and historical resul
 
 ## Verification
 
-- Integrated GitHub main (`d63f198`), retaining its benchmark implementation, fixtures, results and report. Full backend suite: 814 pass, no failures/skips; typecheck and production web build pass.
-- GPT-6.1 Sol, low reasoning: both new policy scenarios ×3, concurrency two: 6/6 pass, no flaky or infrastructure failures. Result: `eval/results/scenarios-codex-sol-partial-confirmation-v1-3x.json`, code checkpoint `4c060f0`. No full-suite quality claim follows from this targeted run.
+- In the current [benchmark](../BENCHMARK.md) the planner passes both policy scenarios on all 3 runs (6/6); the one-call-per-step baseline can't produce the subset approval and fails all 6.
 - Scripted browser check verified blocked reason, eligible recipient/body, "Approve eligible only", zero pre-approval changes, then one eligible send and a partial result. This browser check uses no LLM and no real email provider.
 - Deterministic tests cover independent and forEach batches, cancellation, all-blocked failure, permission revocation, recipient/eligibility changes requiring renewed approval, replay deduplication, delivery faults not consumed by preflight, and confirmation-content grading. Previous approval-retention coverage still tests two distinct external actions.

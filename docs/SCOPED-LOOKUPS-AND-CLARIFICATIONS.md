@@ -1,8 +1,6 @@
 # Scoped child lookup and argument-bound clarification
 
-2026-10-24 · `codex/planner-outcomes-and-retrieval` · starts from `57a6d59`
-
-This batch implements the first two follow-on priorities. It makes the same interface easier for every planner provider; Luna is a validation model, not a special execution path. It does not add the proposed independent completion verifier, workflow retrieval bundles or broader conversation memory.
+This page covers two follow-on changes. It makes the same interface easier for every planner provider; Luna is a validation model, not a special execution path. It does not add the proposed independent completion verifier, workflow retrieval bundles or broader conversation memory.
 
 ## 1. Find the right child under the right parent
 
@@ -64,6 +62,6 @@ Typecheck and all **2,353 deterministic tests** pass; the web build passes. Test
 
 Seed records, natural-language scenario files/assertions, retrieval questions and frozen reporting data are unchanged. Development retrieval over 365 questions remains **97.6% R@15**, **96.9% all-needed**, **21.8 mean final cards**, zero in-scope false rejections ([raw](../eval/results/retrieval-scoped-inputs-dev-all-20261024.json)); that run records the dirty development checkpoint, not a clean committed-source benchmark. BGE-base, ranking and expansion rules are unchanged.
 
-Live model evidence is recorded in the [validation and unresolved regression gate](SCOPED-LOOKUPS-VALIDATION.md). At clean `48cbf80`, Luna passed 16/22 clean older-suite attempts (one timeout) and 69/73 clean coverage attempts (two timeouts). The targeted interfaces worked, but the older suite regressed; this is not merge-ready evidence. Existing inspected scenarios are regression/development sets, not a fresh holdout. Deterministic plumbing tests and retrieval recall are not evidence that every model completes every request.
+End-to-end results are in [BENCHMARK.md](../BENCHMARK.md). Existing inspected scenarios are regression/development sets, not a fresh holdout. Deterministic plumbing tests and retrieval recall are not evidence that every model completes every request.
 
 The design follows the [function-calling guidance](https://developers.openai.com/api/docs/guides/function-calling#best-practices-for-defining-functions): explicit schemas and deterministic application-owned work, without provider-specific execution behavior.

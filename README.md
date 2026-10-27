@@ -6,7 +6,7 @@ All 500 actions are implemented against a simulated backend (SQLite, frozen cloc
 
 - `docs/ASSIGNMENT.md` (local only, not in the repo): what's being asked, with a requirements checklist
 - [docs/PLAN.md](docs/PLAN.md): architecture, design and the 5-day schedule
-- [docs/PLANNER-CHANGES.md](docs/PLANNER-CHANGES.md): what changed in shared lookup, retrieval and planner handling, why each change was needed, and what remains unsolved
+- [docs/PLANNER-CHANGES.md](docs/PLANNER-CHANGES.md): what changed in shared lookup, retrieval and planner handling, and why each change was needed
 - [BENCHMARK.md](BENCHMARK.md): quality, latency (direct vs complex), tokens and cost per successful task, and the planner against a one-call-per-step baseline agent; final run on DeepSeek (deepseek-v4.1-flash-1017 through the Qwen Token Plan), 273 scenarios × 3 runs across all 50 modules: planner 96.9% of runs passing at a 1.3 s median direct reply, against 91.6% at 2.3 s for the baseline, at $0.0043 per successful task against $0.0073 at list rates; regenerate with `npm run report -- --label release-deepseek-planner-3x --compare release-deepseek-baseline-3x` in `server/`
 - [docs/PROMPT-EXAMPLE.md](docs/PROMPT-EXAMPLE.md): the planner prompt over two turns, with real payloads and token counts
 - `docs/assignment/` (local only, not in this checkout): the original brief and catalog PDFs
@@ -29,7 +29,7 @@ Each turn is one planner call wrapped in code. The full design is in [docs/PLAN.
 
 ## How the tool list is narrowed
 
-The planner never sees all 500 actions. Retrieval starts with 15 ranked slots, then adds selected lookup/dependency/look-alike helpers; the latest combined evaluation averages 21.8 final cards ([evidence](docs/PLANNER-OUTCOMES-VALIDATION.md)). See [docs/PLAN.md](docs/PLAN.md), section "Retrieval". It combines two rankings over a search card per action, with no LLM call:
+The planner never sees all 500 actions. Retrieval starts with 15 ranked slots, then adds selected lookup/dependency/look-alike helpers; the latest combined evaluation averages 21.8 final cards ([evidence](docs/SCOPED-LOOKUPS-AND-CLARIFICATIONS.md#verification-and-measurement-boundaries)). See [docs/PLAN.md](docs/PLAN.md), section "Retrieval". It combines two rankings over a search card per action, with no LLM call:
 
 - **BM25**, which matches words.
 - **A small local embedding model** (bge-base, ~110 MB, downloaded once on first start), which matches meaning, so "hold off on the webinar emails" finds Pause campaign. Set `RETRIEVAL=bm25` to use BM25 alone.
@@ -72,13 +72,13 @@ The two merged lines add:
 - Answers to questions start with a verdict, with record cards under it.
 - The Qwen Token Plan adapter.
 
-On main, the 2,580 deterministic tests, the typecheck and the web build all pass.
+On main, the 2,588 deterministic tests, the typecheck and the web build all pass.
 
-The live numbers are in BENCHMARK.md: DeepSeek on the Qwen Token Plan, both agents run at commit `d74874f`; see [Benchmark scope](#benchmark-scope). The earlier validation reports ([outcomes](docs/PLANNER-OUTCOMES-VALIDATION.md), [scoped lookups](docs/SCOPED-LOOKUPS-VALIDATION.md)) describe branches as they stood before the merge. Keep them as history; they don't score main.
+The live numbers are in BENCHMARK.md: DeepSeek on the Qwen Token Plan, both agents run at commit `d74874f`; see [Benchmark scope](#benchmark-scope).
 
-All 500 actions in all 50 modules are executable. The first 18 modules (Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams) were built in depth first and carry the scenario and module evals below; the other 32 were added in Wave 1 ([WAVE1-REPORT.md](WAVE1-REPORT.md)) and then hardened ([WAVE1-HARDENING-REPORT.md](WAVE1-HARDENING-REPORT.md), assumptions in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md)). The backend suite has 2,580 deterministic tests. The regression scenarios cover the first 18 modules; the other 32 have their own set of 27 planner scenarios (`eval/module-scenarios/wave1`), which scored 95.1% in the final DeepSeek benchmark and historically 96% of clean runs on Haiku (3 repeats), up from 66.7% before the failure classes it exposed were fixed. In that run, one scenario failed every repeat: the planner read "Move X from Starter to Pro" as an opportunity stage change instead of a subscription plan change. It is recorded, not patched.
+All 500 actions in all 50 modules are executable. The first 18 modules (Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams) were built in depth first and carry the scenario and module evals below; the other 32 were added in Wave 1 and then hardened (assumptions in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md)). The backend suite has 2,588 deterministic tests. The regression scenarios cover the first 18 modules; the other 32 have their own set of 27 planner scenarios (`eval/module-scenarios/wave1`), which scored 95.1% in the final DeepSeek benchmark and historically 96% of clean runs on Haiku (3 repeats), up from 66.7% before the failure classes it exposed were fixed. In that run, one scenario failed every repeat: the planner read "Move X from Starter to Pro" as an opportunity stage change instead of a subscription plan change. It is recorded, not patched.
 
-The new thirty actions use the existing registry, compiler, executor, approval gates, replay ledger, SQLite persistence, audit, traces and UI. [Implementation contract](docs/M45-M47-SCOPE.md) · [Module-building guide](docs/ADDING-A-MODULE.md). Ticket-reply batches now disclose known blocked targets and require approval of the eligible subset before sending; see [subset confirmation](docs/PARTIAL-CONFIRMATION.md). Earlier Sol scores below precede this policy change.
+The new thirty actions use the existing registry, compiler, executor, approval gates, replay ledger, SQLite persistence, audit, traces and UI. [Module-building guide](docs/ADDING-A-MODULE.md). Ticket-reply batches now disclose known blocked targets and require approval of the eligible subset before sending; see [subset confirmation](docs/PARTIAL-CONFIRMATION.md).
 
 - Reviews: draft/send/cancel requests, record/search reviews, draft/publish responses and compute rating summaries. Requests are marketing emails and respect opt-outs/DND.
 - Listings: one profile per business/location/directory; the same business on Google and Yelp is valid and ambiguous by name alone. Changes increment a version; publication syncs that version. Hours use America/New_York, all seven days, one interval per day; no overnight/split shifts.
@@ -150,7 +150,7 @@ npm run report -- --label release-deepseek-planner-3x --compare release-deepseek
 
 The planner run took about 8.5 minutes and the baseline about 14 on the Token Plan.
 
-Codex integration is available in this branch: explicitly select `PLANNER=codex-cli` (otherwise the default is qwen with a Token Plan key, else Claude). Full GPT-6.1 Sol low-reasoning evaluations score 91.9% development, 91.3% original regression and 83.3% reporting, versus Luna's 85.2%, 56.5% and 72.2%. Sol improves overall quality but still misses acceptance. See the [delivery and evaluation report](docs/M45-M47-FINAL-REPORT.md) for counts, test conditions, test-set revisions and remaining planner gaps. Do not substitute adapter tests or retrieval recall for AI task success.
+Codex is an optional provider: select it with `PLANNER=codex-cli` (otherwise the default is qwen with a Token Plan key, else Claude). GPT-6.1 Sol and GPT-6 Luna were used through it during development; the numbers above are DeepSeek's.
 
 
 ## Use a Codex subscription locally
@@ -169,16 +169,12 @@ PLANNER=codex-cli npm run ask -- "create a task to call Jo"
 Set both to `gpt-6-luna` to use GPT-6 Luna. `CODEX_REASONING` and `CODEX_FAST_REASONING`
 accept `low`, `medium`, `high` or `xhigh` (default `low`; fast inherits strong if omitted).
 Model access depends on your account. `CODEX_BIN` optionally selects an executable;
-`CODEX_HOME` may select your existing CLI authentication directory. Claude remains the default.
+`CODEX_HOME` may select your existing CLI authentication directory.
 Card generation stays on Claude so its provenance stamp remains accurate.
 
 The adapter uses the Codex runtime, rather than raw model API calls. It supplies our planner
 instructions, request and output schema, while Codex adds runtime framing. **The captured request
-still advertised skills and tools despite the disabling flags.** See the measured
-[provider capture note](docs/CODEX-PROVIDER-CAPTURE.md) for the actual request, limitations and
-local evidence. Do not treat the adapter as a tool-free or prompt-only inference boundary.
-The [main-based validation results](docs/CODEX-VALIDATION.md) record the live Luna sample,
-including its planning failures.
+still advertised skills and tools despite the disabling flags.** Do not treat the adapter as a tool-free or prompt-only inference boundary.
 
 This is a trusted local development provider. It strips inherited API credentials, checks the
 current login before enforcing ChatGPT authentication, uses a private working directory and
@@ -249,7 +245,7 @@ four-batch mean; a single batch moves by 1-3 points, so read gaps under ~5 point
 - **Cost is unknown on subscription planners.** The Claude and Codex CLIs and the prepaid Token Plan report no USD cost. The cost figures here come from list rates.
 - **The final benchmark is one model.** It ran on DeepSeek only; the planned Haiku secondary run was not done. Earlier Haiku, Sol and Luna numbers are on different scenario sets and commits, so they don't compare with it.
 - **Multi-step follow-ups are the weak spot.** The brief's suite scores 75% for the planner (61.1% for the baseline). Its follow-ups ("only include Facebook leads") and the held-out lead-filtering variants fail most; these are model misreads (an inverted filter, a filter read as a field update) that the validator can't catch because the plan is well-formed. Four question scenarios also fail on the reply's wording (a missing leading "yes" or "no", or a count), not on the data.
-- **Known planner misses are recorded, not patched.** For example, "Move X from Starter to Pro" is read as an opportunity stage change rather than a plan change. [PLANNER-CHANGES.md](docs/PLANNER-CHANGES.md) lists what is still unsolved.
+- **Known planner misses are recorded, not patched.** For example, "Move X from Starter to Pro" is read as an opportunity stage change rather than a plan change. BENCHMARK.md lists [every failing run](BENCHMARK.md#every-failing-run).
 - **Retrieval can miss.** Hybrid recall@15 is 97.5%, so about 1 question in 40 doesn't get the right card into the shortlist. The planner can ask for another retrieval round (`search_tools`, up to twice), but it can't use an action it never sees.
 - **Each turn is bounded.** A turn gets two looks, two `search_tools` rounds, one compile repair and one retry after a failed run. Requests that need longer chains of read-then-decide steps hit those limits and stop with an honest partial reply.
 - **Everything is simulated.** The CRM is a single SQLite database with a frozen clock and a seeded demo tenant. Messages, payments, publications and directory syncs never leave the process. There is no real auth, and there is no multi-tenant isolation. Permissions are checked selectively, not globally.
@@ -287,7 +283,7 @@ The default planner (`server/src/planner/claude-cli.ts`) runs `claude -p` on a C
 server/   Node + TypeScript backend (registry, modules, store, agent core)
 eval/     scenarios, runner, smoke tests, benchmark report
 web/      Vue 3 chat UI
-docs/     assignment, plan, module contract, verification reports
+docs/     plan, module contract, planner design notes, journey
 ```
 
-Reports from the two later waves are at the repository root: [WAVE1-REPORT.md](WAVE1-REPORT.md), [WAVE1-HARDENING-REPORT.md](WAVE1-HARDENING-REPORT.md) and [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md). Raw eval runs are in `eval/results/`; `docs/trajectory.html` charts them.
+Product decisions made without an owner to ask (which actions need which permission, what was left out) are in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md). Raw eval runs are in `eval/results/`; `docs/trajectory.html` charts them.

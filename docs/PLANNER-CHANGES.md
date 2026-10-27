@@ -1,16 +1,16 @@
 # Shared planner changes: what changed and why
 
-Branch: `codex/planner-outcomes-and-retrieval`. This branch was created at `d583fb3`, retaining the existing lookup, retrieval, outcome-handling and validation commits. Creating the branch did not rebase onto main, squash history, change providers or rerun benchmarks. The original batch through `57a6d59` was subsequently pushed on request.
+The rationale for the planner's shared lookup, retrieval and outcome handling. Current measurements are in [BENCHMARK.md](../BENCHMARK.md).
 
-The follow-on [scoped child lookup and argument-bound clarification batch](SCOPED-LOOKUPS-AND-CLARIFICATIONS.md) extends the historical foundation and section 1 below. Those original measurements and limitations remain checkpoint-specific; the follow-on has separate validation.
+The follow-on [scoped child lookup and argument-bound clarification](SCOPED-LOOKUPS-AND-CLARIFICATIONS.md) extends the foundation and section 1 below.
 
-This is the rationale and reading guide. [Lookup implementation](PLANNER-RECORD-LOOKUPS.md) and [outcome implementation](PLANNER-OUTCOMES.md) describe the mechanics; their separate validation reports record the measurements and limitations.
+This is the rationale and reading guide. [Lookup implementation](PLANNER-RECORD-LOOKUPS.md) and [outcome implementation](PLANNER-OUTCOMES.md) describe the mechanics.
 
 ## The problem we were trying to solve
 
 Retrieving a relevant action is only the first part of completing a request. The model must also find the right records, pass valid IDs, preserve qualifiers, use the right dates, finish the requested operation and respect approvals. Several failures happened **after the correct action was already offered**. A stronger embedding model would not, by itself, fix those failures.
 
-The design choice was therefore to improve the shared interface and move deterministic work into code. Models still interpret requests and compose plans. Code handles known lookup rules, calendar arithmetic, eligibility filtering and checks on the declared plan. These changes apply to every provider using this planner, not only Luna. That is an architectural property, not evidence that every model's success rate has improved.
+The design choice was therefore to improve the shared interface and move deterministic work into code. Models still interpret requests and compose plans. Code handles known lookup rules, calendar arithmetic, eligibility filtering and checks on the declared plan. These changes apply to every provider using this planner, not only the model it was first validated on. That is an architectural property, not evidence that every model's success rate has improved.
 
 ## Foundation: consistent record lookup
 
@@ -22,7 +22,7 @@ This was implemented before the seven follow-on improvements and is retained on 
 
 **Boundary.** Multiple matches are not resolved by choosing the first. Unknown qualifiers are rejected. Remembered identities are not fresh record contents. Nested child selection, such as form field IDs and community channel IDs, is not generally solved by top-level named lookup.
 
-Code: [resolver helpers](../server/src/registry/lookup.ts), [lookup lowering](../server/src/core/lookups.ts), [session identities](../server/src/server/records.ts). Details and evidence: [lookup notes](PLANNER-RECORD-LOOKUPS.md), [lookup validation](PLANNER-RECORD-LOOKUPS-VALIDATION.md).
+Code: [resolver helpers](../server/src/registry/lookup.ts), [lookup lowering](../server/src/core/lookups.ts), [session identities](../server/src/server/records.ts). Details: [lookup notes](PLANNER-RECORD-LOOKUPS.md).
 
 ## 1. Check actual matches before asking identity questions
 
@@ -82,7 +82,7 @@ Code and tests: [invoices](../server/src/modules/m28-invoices/index.ts), [invoic
 
 **Boundary.** This is prompt guidance, not a deterministic factuality checker. Delivery eligibility and applicable approval rules remain unchanged; composing wording does not authorize an otherwise unrequested send.
 
-Code: [shared prompt](../server/src/planner/prompt.ts). Live behavior and caveats: [validation](PLANNER-OUTCOMES-VALIDATION.md).
+Code: [shared prompt](../server/src/planner/prompt.ts).
 
 ## 7. Check destination support before requesting content
 
@@ -110,6 +110,4 @@ Code: [action metadata](../server/src/registry/define.ts), [registry surfaces](.
 
 ## What the evidence supports
 
-At final source `abe136b`, 2,323 deterministic tests, typecheck and the web build passed. Combined retrieval recall was 97.6%, with 21.8 final cards on average. At checkpoint `10ee277`, complete Luna runs passed 21/23 older cases and 70/75 coverage cases, with no provider errors. The final trigger-query correction subsequently passed a selected three-case diagnostic; the complete suites were not rerun after it. This is not a substituted 71/75 result.
-
-Earlier repeated runs also had upstream provider failures and application failures. They are preserved, not hidden by later retries. The consistency/merge gate is not cleared, and inspected regression/development cases are not an untouched holdout. See [all outcome measurements and remaining gaps](PLANNER-OUTCOMES-VALIDATION.md) for exact checkpoints and test conditions; see [the journey](JOURNEY.md) for the historical sequence.
+These changes were built and checked checkpoint by checkpoint on development branches, mostly with Codex models; those reports are in git history, and [the journey](JOURNEY.md) keeps the sequence. The current measurement is [BENCHMARK.md](../BENCHMARK.md): 273 scenarios × 3 on DeepSeek, with every failing run listed. Inspected regression and development cases are not an untouched holdout.
