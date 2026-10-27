@@ -300,6 +300,21 @@ describe("POST /api/ask", () => {
     assert.equal(app.world().store.all("tasks").length, before + 1);
   });
 
+  test("a follow-up that changes a request keeps the number of records the user asked for a turn earlier", async () => {
+    const bulk = (company: string) => reply({ steps: [
+      { id: "s1", kind: "action", action: "M01.A03", argsJson: JSON.stringify({ tag: "bulk", limit: 50 }) },
+      { id: "s2", kind: "op", op: "forEach", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M01.A04", argsJson: JSON.stringify({ contactId: "$item.id", company }) }] },
+    ] });
+    const app = await start(scripted(bulk("Acme"), bulk("Bulk Co"))), store = app.world().store;
+    const { id: _, ...base } = store.get<Record<string, unknown>>("contacts", "ct_1")!;
+    for (let i = 0; i < 120; i++) store.insert("contacts", "ct", { ...base, firstName: `Bulk${i}`, email: `bulk${i}@example.com`, tags: ["bulk"] });
+    const gated = (evs: Sse[]) => evs.find((e) => e.event === "exec" && e.data.type === "confirm.required")?.data.pending.count;
+    const first = await app.ask("Set the company on the first 50 bulk contacts to Acme");
+    assert.equal(gated(first), 50);
+    await app.confirm(last(first, "turn").turnId, true);
+    assert.equal(gated(await app.ask("Actually make it Bulk Co")), 50);
+  });
+
   test("a clarifying question comes back as a reply with its options and changes nothing", async () => {
     const app = await start(scripted(reply({ type: "clarify", missing: { action: "M06.A01", argument: "title", argsJson: "{}" }, question: "What should the task say?", options: ["Call Ana", "Email Ana"] })));
     const audit = app.world().store.audit().length;

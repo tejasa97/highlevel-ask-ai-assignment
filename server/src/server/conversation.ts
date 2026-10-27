@@ -29,6 +29,8 @@ interface Turn {
   message: string;
   /** The message with the ones it answers ("the one at Umbrella" after "move Zoe Costa…"), for telling names apart. */
   request: string;
+  /** Everything the user said in the turns the planner saw, this one included. */
+  said: string;
   plan: CompiledPlan;
   executionId: string;
   /** The planner's verdict on a question, said above what the reads found. */
@@ -67,10 +69,11 @@ export class Conversation {
     emit("turn", { turnId, message });
     const context = this.history.length ? this.history.slice(-HISTORY_TURNS).map((h) => `user: ${h.user}\nassistant: ${h.assistant}`).join("\n") : undefined;
     const request = this.answering ? `${this.answering}\n${message}` : message;
+    const said = [...this.history.slice(-HISTORY_TURNS).map((h) => h.user), request].join("\n");
     // A look runs reads only (planTurn checks), as this user, before the real plan.
     const look = async (plan: CompiledPlan) => {
       const onCall = (c: CallTrace) => emit("call", { ...c, ms: Math.round(c.ms * 10) / 10 });
-      const r = await execute(plan, registry, { ...this.world, actorId, onCall }, { executionId: `look_${turnId}`, request });
+      const r = await execute(plan, registry, { ...this.world, actorId, onCall }, { executionId: `look_${turnId}`, request, said });
       const steps = r.steps.map((s) => ({ id: s.id, ...(s.error ? { error: s.error.message } : { output: s.output }) }));
       const c = r.clarification;
       return c ? [...steps, { id: c.stepId, error: `more than one ${c.entity} matches "${c.name}": ${c.candidates.map((x) => x.name).join(", ")}` }] : steps;
@@ -89,7 +92,7 @@ export class Conversation {
       if (signal?.aborted) return this.finish(message, "failed", "The request was cancelled. Nothing was changed.", emit);
       this.carry = outcome.carry;
       const id = attempt ? `${turnId}_retry` : turnId;
-      const turn: Turn = { id, message, request, plan: outcome.plan, executionId: `ex_${id}`, answer: outcome.answer };
+      const turn: Turn = { id, message, request, said, plan: outcome.plan, executionId: `ex_${id}`, answer: outcome.answer };
       this.turns.set(id, turn);
       emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
       failed = await this.run(turn, actorId, emit, undefined, attempt === 0);
@@ -124,7 +127,7 @@ export class Conversation {
       turn.plan,
       this.deps.registry,
       { ...this.world, actorId, onCall },
-      { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e), request: turn.request },
+      { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e), request: turn.request, said: turn.said },
     );
     emit("run", { status: result.status, ms: Math.round(performance.now() - t), steps: result.steps });
     this.records = rememberRecords(this.records, turn.plan, result);
