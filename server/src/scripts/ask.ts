@@ -34,7 +34,11 @@ const timings: string[] = [];
 const cards = buildCards(registry);
 const retriever = new Retriever(cards, {}, await loadDense(cards, debug ? console.log : () => {}));
 const onTurn = (e: TurnEvent) => {
-  if (e.type === "planner.reply") timings.push(`${e.data.label} ${e.data.latencyMs} ms (${e.data.model}, in ${e.data.usage.input}, out ${e.data.usage.output}, ${formatCost(e.data.usage.costUsd, e.data.usage.billing)})`);
+  if (e.type === "planner.reply") {
+    const d = e.data;
+    const extra = [d.apiMs != null && `model ${d.apiMs} ms`, d.attempts > 1 && `${d.attempts} attempts`, d.modelCalls > 1 && `${d.modelCalls} model requests`, `prompt ${d.promptHash}`].filter(Boolean).join(", ");
+    timings.push(`#${d.call} ${d.label} ${d.latencyMs} ms (${d.model}, in ${d.usage.input}, cache read ${d.usage.cachedRead}, written ${d.usage.cacheWrite}, out ${d.usage.output}, ${formatCost(d.usage.costUsd, d.usage.billing)}; ${extra})`);
+  }
   if (e.type === "compile.errors") console.log(`\nplan rejected:\n  ${e.data.errors.join("\n  ")}`);
   if (!debug) return;
   if (e.type === "planner.reply") console.log(`\n${e.data.label} reply:`, JSON.stringify(e.data.json));
