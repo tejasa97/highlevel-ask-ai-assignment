@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { z } from "zod";
 import { ActionError, type ActionContext } from "../registry/define.js";
-import { LIMIT_MAX, norm } from "../registry/helpers.js";
+import { LIMIT_DEFAULT, LIMIT_MAX, norm } from "../registry/helpers.js";
 import { DEFAULT_ACTOR, invoke } from "../registry/invoke.js";
 import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
@@ -90,6 +90,15 @@ export interface StepResult {
   items?: ItemResult[];
   /** A create that found its record already there, whose existing record the later steps used instead. */
   existing?: StepError;
+  /** A write over the first `loaded` of a search's `total` matches, because the plan asked for that many. */
+  capped?: Cut;
+}
+
+/** A search whose page stopped short of its matches. */
+export interface Cut {
+  search: string;
+  loaded: number;
+  total: number;
 }
 
 export type RunStatus = "done" | "partial" | "failed" | "awaiting_confirmation" | "needs_clarification";
@@ -127,7 +136,9 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   const filteredFrom = new Map<string, number>();
   // A search returns one page of its matches. A write over that page alone would quietly skip the rest,
   // so a search feeding writes loads as many as a search can, and writes refuse a list that is still short.
-  const partial = new Map<string, { search: string; loaded: number; total: number }>();
+  // A limit the plan set ("the 10 newest") is kept, and is said wherever the write shows: `capped`.
+  const partial = new Map<string, Cut>();
+  const capped = new Map<string, Cut>();
   const writeFeeds = new Set<string>();
   for (const s of [...plan.steps].reverse()) {
     const writes = s.kind === "forEach" ? s.calls.some((c) => c.action.risk !== "read") : s.kind === "action" && s.call.action.risk !== "read";
@@ -209,16 +220,26 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     }
     return { call: { ...call, args } };
   };
-  /** A filter or exclude over a short list is short too: records it never saw may belong in it. */
-  const carryPartial = (id: string, ...from: string[]) => {
-    const p = from.map((raw) => partial.get(parseRef(raw)?.root ?? "")).find(Boolean);
+  const rootOf = (raw: string) => parseRef(raw)?.root ?? "";
+  /**
+   * A filter or exclude over a short list is short too: records it never saw may belong in it. A capped list stays
+   * capped; but a capped set it checks against (who to exclude, who to keep) leaves out records it should have
+   * removed or kept, which no limit asked for, so that is short.
+   */
+  const carry = (id: string, list: string, checks: string[]) => {
+    const p = [list, ...checks].map((raw) => partial.get(rootOf(raw))).find(Boolean) ?? checks.map((raw) => capped.get(rootOf(raw))).find(Boolean);
     if (p) partial.set(id, p);
+    else if (capped.has(rootOf(list))) capped.set(id, capped.get(rootOf(list))!);
   };
+  const cutOf = (step: CStep) => listRoots(step).map((root) => capped.get(root)).find(Boolean);
   /** Refuses a write over a list that stops short of everything it matched; nothing is changed. */
   const shortList = (step: CStep): StepError | undefined => {
     for (const root of listRoots(step)) {
       const p = partial.get(root);
-      if (p) return { code: "INVALID", message: `$${p.search} matched ${p.total} records but one search loads at most ${p.loaded}, so nothing was changed rather than only the first ${p.loaded}; narrow the search (by date, tag, owner…) and run it in parts` };
+      if (p) {
+        const why = p.loaded === LIMIT_MAX ? `one search loads at most ${p.loaded}` : `only the first ${p.loaded} were loaded`;
+        return { code: "INVALID", message: `$${p.search} matched ${p.total} records but ${why}, so nothing was changed rather than only part of them; narrow the search (by date, tag, owner…) and run it in parts` };
+      }
     }
   };
   const ask = (step: CStep, clarification: Clarification) => {
@@ -295,7 +316,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           const list = asList(refValue(step.in), step.in);
           const where = substitute(step.where, lookup()) as Record<string, unknown>;
           filteredFrom.set(step.id, list.length);
-          carryPartial(step.id, step.in);
+          carry(step.id, step.in, whereLists(step.where));
           done(list.filter((x) => matches(x, where)));
           break;
         }
@@ -303,7 +324,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         case "exclude": {
           const list = asList(refValue(step.in), step.in);
           const set = new Set(asList(refValue(step.set), step.set).map(String));
-          carryPartial(step.id, step.in, step.set);
+          carry(step.id, step.in, [step.set]);
           done(list.filter((x) => !set.has(String(fieldOf(x, step.by)))));
           break;
         }
@@ -325,7 +346,9 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             fail(short);
             break;
           }
-          // Left alone when the plan asked for a number ("the 10 newest"); otherwise every match it can.
+          // Left alone when the plan asked for a number ("the 10 newest"); otherwise every match it can. The default
+          // written out, when the request never says it, asks for nothing: planners copy it from the schema.
+          if (writeFeeds.has(step.id) && args.value.limit === LIMIT_DEFAULT && !says(opts.request, LIMIT_DEFAULT)) delete args.value.limit;
           const widened = writeFeeds.has(step.id) && args.value.limit === undefined && takesLimit(step.call.action);
           if (widened) args.value.limit = LIMIT_MAX;
           const picked = step.call.action.risk === "read" ? undefined : pickedFirst(step);
@@ -345,7 +368,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             for (const g of group) checkedActions.set(g.step.id, { error: g.error, gate });
           }
           const checked = checkedActions.get(step.id);
-          const gate = checked ? checked.gate : gateFor(step, [{ call: step.call, args: args.value }], plan.hash, opts.approvals);
+          const cut = step.call.action.risk === "read" ? undefined : cutOf(step);
+          const gate = checked ? checked.gate : gateFor(step, [{ call: step.call, args: args.value }], plan.hash, opts.approvals, 1, [], [step.id], cut);
           if (gate) {
             results.push({ id: step.id, kind: step.kind, status: "awaiting_confirmation" });
             emit({ type: "confirm.required", pending: gate });
@@ -364,8 +388,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             const query = args.value.query ?? args.value.name;
             if (step.call.action.risk === "read" && typeof query === "string" && query.trim()) searched.set(step.id, { query, entity: step.call.action.entities?.produces ?? "record" });
             const out = r.results![0];
-            if (widened && isPage(out) && out.total > out.items.length) partial.set(step.id, { search: step.id, loaded: out.items.length, total: out.total });
-            done(r.results![0], r.replayed ? { items: [r] } : {});
+            if (writeFeeds.has(step.id) && isPage(out) && out.total > out.items.length) (widened ? partial : capped).set(step.id, { search: step.id, loaded: out.items.length, total: out.total });
+            done(r.results![0], { ...(r.replayed ? { items: [r] } : {}), ...(cut ? { capped: cut } : {}) });
           }
           break;
         }
@@ -423,6 +447,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             prepared.push({ key, label: labelOf(item), item, calls, error });
           });
 
+          const cut = writes ? cutOf(step) : undefined;
           const gate = gateFor(
             step,
             prepared.filter((p) => !p.error).flatMap((p) => p.calls.map((c) => ({ ...c, label: p.label }))),
@@ -430,6 +455,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             opts.approvals,
             prepared.filter((p) => !p.error).length,
             prepared.filter((p) => p.error).map((p) => ({ label: p.label ?? p.key, error: p.error! })),
+            [step.id],
+            cut,
           );
           if (gate) {
             results.push({ id: step.id, kind: step.kind, status: "awaiting_confirmation" });
@@ -446,7 +473,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           const output = prepared.map((p, i) => ({ item: p.item, results: items[i]!.results ?? [] }));
           const failed = items.filter((x) => x.status === "failed").length;
           if (failed > 0 && failed === items.length) fail({ code: "ALL_FAILED", message: `all ${failed} items failed` }, { items });
-          else done(output, { items, status: failed ? "partial" : "done" });
+          else done(output, { items, status: failed ? "partial" : "done", ...(cut ? { capped: cut } : {}) });
           break;
         }
       }
@@ -537,16 +564,24 @@ const takesNull = (s: unknown): boolean => {
 };
 
 /** Runs one item's calls in one transaction, replaying any write the ledger already has. */
-/** The lists a step takes whole: a loop's input, an exclude's sets, an action arg that takes every item ($s1.items[*].id). */
+/**
+ * The lists a step takes whole: a loop's input, a filter's input and the lists its conditions check against
+ * (`{ id: { in: "$s2.items[*].leadId" } }`), an exclude's sets, an action arg that takes every item ($s1.items[*].id).
+ */
 function listRoots(step: CStep): string[] {
   const roots =
-    step.kind === "forEach" || step.kind === "filter" ? [step.in]
+    step.kind === "forEach" ? [step.in]
+    : step.kind === "filter" ? [step.in, ...whereLists(step.where)]
     : step.kind === "exclude" ? [step.in, step.set]
     : step.kind === "action" ? collectRefs(step.call.args).map((r) => r.ref).filter((raw) => parseRef(raw)?.path.some((p) => "all" in p))
     : [];
   return roots.flatMap((raw) => (typeof raw === "string" ? [parseRef(raw)?.root] : [])).filter((r): r is string => !!r);
 }
 
+/** The every-item lists ($s2.items[*].leadId) a filter's conditions check against. */
+const whereLists = (where: Record<string, unknown>) => collectRefs(where).map((r) => r.ref).filter((raw) => parseRef(raw)?.path.some((p) => "all" in p));
+/** Whether the user's words carry this number ("the first 50"). */
+const says = (request: string | undefined, n: number) => new RegExp(`(^|\\D)${n}(\\D|$)`).test(request ?? "");
 const takesLimit = (action: { input: unknown }) => !!(action.input as { shape?: Record<string, unknown> }).shape?.limit;
 const isPage = (x: unknown): x is { items: unknown[]; total: number } =>
   !!x && typeof x === "object" && Array.isArray((x as { items?: unknown }).items) && typeof (x as { total?: unknown }).total === "number";
@@ -591,6 +626,7 @@ function gateFor(
   count = calls.length,
   blocked: { label: string; error: StepError }[] = [],
   covers: string[] = [step.id],
+  cut?: Cut,
 ): Pending | null {
   const risks = new Set(calls.map((c) => c.call.action.risk));
   const writes = calls.filter((c) => c.call.action.risk !== "read");
@@ -599,6 +635,7 @@ function gateFor(
   else if (risks.has("external")) reason = "sends something outside the account";
   else if (step.kind === "forEach" && writes.length > 0 && count >= BULK_MIN) reason = `changes ${count} records at once`;
   if (!reason) return null;
+  if (cut) reason += ` (the first ${cut.loaded} of the ${cut.total} found)`;
 
   const targets = writes.map((c) => ({ action: c.call.action.id, args: c.args, ...(c.binding ? { binding: c.binding } : {}) }));
   const targetsHash = createHash("sha256").update(JSON.stringify({ targets, blocked })).digest("hex").slice(0, 16);

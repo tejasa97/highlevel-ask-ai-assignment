@@ -90,9 +90,11 @@ export function listOf<T extends z.ZodType>(item: T) {
 
 /** The most one search returns. */
 export const LIMIT_MAX = 500;
-export const Limit = z.number().int().min(1).max(LIMIT_MAX).optional().describe("max items to return (default 50)");
+/** What one search returns when no limit is given. */
+export const LIMIT_DEFAULT = 50;
+export const Limit = z.number().int().min(1).max(LIMIT_MAX).optional().describe('only when the user asks for a number of records ("the 10 newest"); leave it out otherwise');
 
-export function page<T>(items: T[], limit = 50): { items: T[]; total: number } {
+export function page<T>(items: T[], limit = LIMIT_DEFAULT): { items: T[]; total: number } {
   return { items: items.slice(0, limit), total: items.length };
 }
 

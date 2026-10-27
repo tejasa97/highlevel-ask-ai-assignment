@@ -5,6 +5,7 @@ import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile, type CompiledPlan } from "./compile.js";
 import { execute, matches, narrowByRequest } from "./execute.js";
+import { summarize } from "./summarize.js";
 import { valueAt } from "./refs.js";
 
 let registry: Registry;
@@ -544,12 +545,59 @@ describe("writes over a search see every match", () => {
     assert.match(r.steps.at(-1)!.error!.message, /\$s1 matched 600/);
     assert.equal(changed(ctx), 0);
   });
-  test("a limit the plan asked for is kept", async () => {
+  test("a limit the plan asked for is kept, and the approval and reply say it is part of what was found", async () => {
     const ctx = tagged(120), p = bulk(10);
     const first = await execute(p, registry, ctx, { executionId: "bulk-10" });
     assert.equal(first.pending?.count, 10);
+    assert.match(first.pending!.reason, /\(the first 10 of the 120 found\)$/);
     const r = await execute(p, registry, ctx, { executionId: "bulk-10", approvals: [first.pending!] });
     assert.equal(r.status, "done");
     assert.equal(changed(ctx), 10);
+    assert.deepEqual(r.steps.at(-1)!.capped, { search: "s1", loaded: 10, total: 120 });
+    assert.match(summarize(p, r, registry), /That was the first 10 of the 120 found; say if you want the rest too\./);
+  });
+  test("the default limit written out, which the request never says, still loads every match", async () => {
+    const ctx = tagged(120), p = bulk(50);
+    const first = await execute(p, registry, ctx, { executionId: "bulk-50", request: "set the company on every bulk contact to Bulk Co" });
+    assert.equal(first.pending?.count, 120);
+    assert.doesNotMatch(first.pending!.reason, /first/);
+    const r = await execute(p, registry, ctx, { executionId: "bulk-50", approvals: [first.pending!] });
+    assert.equal(changed(ctx), 120);
+    assert.equal(r.steps.at(-1)!.capped, undefined);
+  });
+  test("the default limit is kept when the request asks for that many", async () => {
+    const ctx = tagged(120), p = bulk(50);
+    const first = await execute(p, registry, ctx, { executionId: "bulk-50-asked", request: "set the company on the first 50 bulk contacts to Bulk Co" });
+    assert.equal(first.pending?.count, 50);
+    assert.match(first.pending!.reason, /the first 50 of the 120 found/);
+  });
+  const twoSearches = (check: "exclude" | "filter") =>
+    compiled(plan([
+      action("s1", "M01.A03", { tag: "bulk" }),
+      action("s2", "M01.A03", { tag: "bulk", limit: 10 }),
+      check === "exclude"
+        ? op("s3", "exclude", { in: "$s1.items", by: "id", set: "$s2.items[*].id" })
+        : op("s3", "filter", { in: "$s1.items", where: { id: { in: "$s2.items[*].id" } } }),
+      op("s4", "forEach", { in: "$s3", do: [{ action: "M01.A04", args: { contactId: "$item.id", company: "Bulk Co" } }] }),
+    ]));
+  for (const check of ["exclude", "filter"] as const) {
+    test(`a capped list ${check === "exclude" ? "an" : "a"} ${check} checks against refuses the write: a limit can't say who to leave out`, async () => {
+      const ctx = tagged(120);
+      const r = await execute(twoSearches(check), registry, ctx, { executionId: `capped-${check}` });
+      assert.equal(r.status, "failed");
+      assert.match(r.steps.at(-1)!.error!.message, /\$s2 matched 120 records but only the first 10 were loaded, so nothing was changed/);
+      assert.equal(changed(ctx), 0);
+    });
+  }
+  test("a filter's list to check against loads every match, not the first page", async () => {
+    const ctx = tagged(120);
+    const p = compiled(plan([
+      action("s1", "M01.A03", { tag: "bulk" }),
+      action("s2", "M01.A03", { tag: "bulk" }),
+      op("s3", "filter", { in: "$s1.items", where: { id: { in: "$s2.items[*].id" } } }),
+      op("s4", "forEach", { in: "$s3", do: [{ action: "M01.A04", args: { contactId: "$item.id", company: "Bulk Co" } }] }),
+    ]));
+    const first = await execute(p, registry, ctx, { executionId: "filter-widened" });
+    assert.equal(first.pending?.count, 120);
   });
 });

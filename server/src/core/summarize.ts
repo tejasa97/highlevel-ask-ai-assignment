@@ -120,7 +120,7 @@ function describe(step: CStep, r: StepResult, registry: Registry, used: Set<stri
     const name = titleOf(r.output);
     if (r.existing) return `Used the existing ${name ? `"${name}"` : "record"} (${(r.output as { id?: string }).id}) rather than ${a.name.toLowerCase()} again: ${r.existing.message}.`;
     const caveat = r.output === undefined ? undefined : a.caveat?.(r.output);
-    return `Done: ${a.name}${name ? ` (${name})` : ""}${r.items?.[0]?.replayed ? ", already done earlier" : ""}${caveat ? `, but ${caveat}` : ""}.`;
+    return `Done: ${a.name}${name ? ` (${name})` : ""}${r.items?.[0]?.replayed ? ", already done earlier" : ""}${caveat ? `, but ${caveat}` : ""}.${firstOf(r)}`;
   }
   if (step.kind === "forEach" && r.items) {
     const writes = step.calls.filter((c) => c.action.risk !== "read");
@@ -136,7 +136,7 @@ function describe(step: CStep, r: StepResult, registry: Registry, used: Set<stri
     const caveats = ok.flatMap((i) => step.calls.flatMap((c, n) => (c.action.risk !== "read" && c.action.caveat?.(i.results?.[n]) ? [`${i.label ?? i.key} (${c.action.caveat(i.results?.[n])})`] : [])));
     if (caveats.length) out.push(`But ${caveats.length} of those did not go through: ${caveats.slice(0, NAMES_MAX).join("; ")}${caveats.length > NAMES_MAX ? "; …" : ""}.`);
     if (bad.length) out.push(`Failed for ${bad.length}: ${bad.slice(0, NAMES_MAX).map((i) => `${i.label ?? i.key} (${i.error!.message})`).join("; ")}${bad.length > NAMES_MAX ? "; …" : ""}.`);
-    return out.join(" ");
+    return out.join(" ") + firstOf(r);
   }
   return null;
 }
@@ -312,3 +312,6 @@ export function touchedRecords(plan: CompiledPlan, run: RunResult): string | und
   const all = [...out.values()];
   return all.length ? `${all.slice(0, RECORDS_MAX).join("; ")}${all.length > RECORDS_MAX ? `; and ${all.length - RECORDS_MAX} more` : ""}` : undefined;
 }
+
+/** Says when a write covered only the first page of what its search found, so the rest isn't silently left out. */
+const firstOf = (r: StepResult) => (r.capped ? ` That was the first ${r.capped.loaded} of the ${r.capped.total} found; say if you want the rest too.` : "");
