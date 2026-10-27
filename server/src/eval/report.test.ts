@@ -58,7 +58,23 @@ test("unknown subscription costs propagate through benchmark totals and cost per
   subscription.metrics.usage.costUsd = null;
   subscription.metrics.usage.billing = "subscription";
   const g = groupStats([run("d1", "direct"), subscription], defs, GROUPS.direct);
-  assert.deepEqual(g.costUsd, { total: null, perRun: null, perSuccess: null });
+  assert.deepEqual(g.costUsd, { total: null, perRun: null, perSuccess: null, listRate: false });
+});
+
+test("prepaid runs of one model with a list rate are priced from their tokens and marked as list rate", () => {
+  const prepaid = (models: string[]) => {
+    const r = run("d1", "direct");
+    Object.assign(r.metrics.usage, { input: 10_000, output: 200, thinking: 100, costUsd: null, billing: "subscription" });
+    return { ...r, models };
+  };
+  const g = groupStats([prepaid(["deepseek-v4.1-flash-1017"]), prepaid(["deepseek-v4.1-flash-1017"])], defs, GROUPS.direct);
+  // 10,000 input at $0.30/M plus 300 output and thinking at $1.20/M, twice.
+  assert.equal(g.costUsd.total!.toFixed(5), "0.00672");
+  assert.equal(g.costUsd.perSuccess!.toFixed(5), "0.00336");
+  assert.equal(g.costUsd.listRate, true);
+  // A model without a rate, or a run that mixed models, still leaves the total unknown.
+  assert.equal(groupStats([prepaid(["qwen-unpriced"])], defs, GROUPS.direct).costUsd.total, null);
+  assert.equal(groupStats([prepaid(["deepseek-v4.1-flash-1017", "qwen-unpriced"])], defs, GROUPS.direct).costUsd.total, null);
 });
 
 test("a target is judged only when committed on or before the run's date", () => {

@@ -49,7 +49,7 @@ export interface GroupStats {
   modelCalls: { mean: number; p50: number };
   actionCalls: { mean: number };
   tokens: { input: number; cachedRead: number; cacheWrite: number; output: number };
-  costUsd: { total: number | null; perRun: number | null; perSuccess: number | null };
+  costUsd: { total: number | null; perRun: number | null; perSuccess: number | null; listRate: boolean };
 }
 
 export function quantile(xs: number[], q: number): number {
@@ -58,6 +58,25 @@ export function quantile(xs: number[], q: number): number {
 }
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+
+/**
+ * Pay-as-you-go list rates, USD per million tokens, for models whose adapter can't price its own usage (a
+ * prepaid Token Plan). Alibaba Cloud Model Studio, Singapore, busy hours (08:00–22:00 UTC+8); idle hours are
+ * half. Page last updated 2026-10-22. Cached and thinking tokens are priced as input and output.
+ */
+export const LIST_RATES: Record<string, { input: number; output: number }> = {
+  "deepseek-v4.1-flash": { input: 0.3, output: 1.2 },
+  "deepseek-v4.1-flash-1017": { input: 0.3, output: 1.2 },
+};
+
+/** The adapter's cost, or the list-rate price of the tokens when the run used one model with a known rate. */
+export function runCost(r: ScenarioRun): { usd: number | null; listRate: boolean } {
+  const u = r.metrics.usage;
+  if (u.costUsd !== null) return { usd: u.costUsd, listRate: false };
+  const rate = r.models?.length === 1 ? LIST_RATES[r.models[0]!] : undefined;
+  if (!rate) return { usd: null, listRate: false };
+  return { usd: (u.input * rate.input + (u.output + u.thinking) * rate.output) / 1e6, listRate: true };
+}
 
 /**
  * Stats over the clean runs (no infrastructure failure) in some categories. Cost is the exception: what was
@@ -71,7 +90,8 @@ export function groupStats(runs: ScenarioRun[], defs: Map<string, Scenario>, cat
     return { ok: rs.filter((r) => !r.failures.some((f) => kinds.includes(f.kind))).length, of: rs.length };
   };
   const passed = clean.filter((r) => r.pass).length;
-  const total = sumUsd(all.map((r) => r.metrics.usage.costUsd));
+  const costs = all.map(runCost);
+  const total = sumUsd(costs.map((c) => c.usd));
   const usage = (k: "input" | "cachedRead" | "cacheWrite" | "output") => sum(clean.map((r) => r.metrics.usage[k]));
   return {
     runs: clean.length,
@@ -85,7 +105,7 @@ export function groupStats(runs: ScenarioRun[], defs: Map<string, Scenario>, cat
     modelCalls: { mean: mean(clean.map((r) => r.metrics.plannerRounds)), p50: quantile(clean.map((r) => r.metrics.plannerRounds), 0.5) },
     actionCalls: { mean: mean(clean.map((r) => r.metrics.calls)) },
     tokens: { input: usage("input"), cachedRead: usage("cachedRead"), cacheWrite: usage("cacheWrite"), output: usage("output") },
-    costUsd: { total, perRun: total === null ? null : all.length ? total / all.length : 0, perSuccess: passed && total !== null ? total / passed : null },
+    costUsd: { total, perRun: total === null ? null : all.length ? total / all.length : 0, perSuccess: passed && total !== null ? total / passed : null, listRate: costs.some((c) => c.listRate) },
   };
 }
 
@@ -147,6 +167,8 @@ const pctOf = (r: Rate) => (r.of ? `${((100 * r.ok) / r.of).toFixed(1)}%` : "–
 const rateCell = (r: Rate) => (r.of ? `${pctOf(r)} (${r.ok}/${r.of})` : "–");
 const secs = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 const usd = (x: number | null) => (x === null ? "–" : `$${x < 0.1 ? x.toFixed(4) : x.toFixed(2)}`);
+/** A cost cell, marked when it's priced at list rates rather than reported by the adapter. */
+const cost = (x: number | null, listRate: boolean) => usd(x) + (listRate && x !== null ? " (list rate)" : "");
 const int = (x: number) => Math.round(x).toLocaleString("en-US");
 const esc = (s: string) => s.replace(/\|/g, "\\|").replace(/\n/g, " ");
 
@@ -210,8 +232,8 @@ export function renderReport(input: ReportInput): string {
   row("Complex: first reply p50 / p95", (m) => `${secs(stats(m, "complex").firstReplyMs.p50)} / ${secs(stats(m, "complex").firstReplyMs.p95)}`);
   row("Complex: end-to-end p50 / p95", (m) => `${secs(stats(m, "complex").e2eMs.p50)} / ${secs(stats(m, "complex").e2eMs.p95)}`);
   row("Model calls per complex task, median", (m) => String(stats(m, "complex").modelCalls.p50));
-  row("Cost per run", (m) => usd(stats(m, "all").costUsd.perRun));
-  row("Cost per successful task", (m) => usd(stats(m, "all").costUsd.perSuccess));
+  row("Cost per run", (m) => cost(stats(m, "all").costUsd.perRun, stats(m, "all").costUsd.listRate));
+  row("Cost per successful task", (m) => cost(stats(m, "all").costUsd.perSuccess, stats(m, "all").costUsd.listRate));
   line();
   if (input.measured.some((m) => m.result.summary.agent === "baseline")) {
     line("The baseline (`server/src/server/baseline.ts`) is the usual tool-calling loop: each model call picks one action or name lookup, sees its result, and picks the next. It gets the same shortlist of actions, name matches, context and approval rules as the planner; only the planning differs.");
@@ -278,12 +300,12 @@ export function renderReport(input: ReportInput): string {
   line(`| Output tokens | ${int(all.tokens.output / (all.runs || 1))} | ${int(all.tokens.output)} |`);
   line(`| Model calls (repairs and looks included) | ${all.modelCalls.mean.toFixed(2)} | |`);
   line(`| Action calls executed | ${all.actionCalls.mean.toFixed(1)} | |`);
-  line(`| Cost | ${usd(all.costUsd.perRun)} | ${usd(all.costUsd.total)} |`);
-  line(`| Cost per successful task | ${usd(all.costUsd.perSuccess)} | |`);
+  line(`| Cost | ${cost(all.costUsd.perRun, all.costUsd.listRate)} | ${cost(all.costUsd.total, all.costUsd.listRate)} |`);
+  line(`| Cost per successful task | ${cost(all.costUsd.perSuccess, all.costUsd.listRate)} | |`);
   line();
   line("Cost per successful task is everything spent, failed and infra runs and repair rounds included, divided by the runs that passed.");
   line();
-  line(pricingNote(p.summary.planner));
+  line(pricingNote(p.summary.planner, all.costUsd.listRate));
   line();
 
   // Retrieval.
@@ -325,7 +347,7 @@ export function renderReport(input: ReportInput): string {
   return out.join("\n") + "\n";
 }
 
-function pricingNote(planner: string): string {
+function pricingNote(planner: string, listRate = false): string {
   if (planner === "claude-cli") {
     return "**Pricing and test conditions:** this planner runs `claude -p` on a Claude subscription. Cost is Claude Code's own estimate at Anthropic API list prices (`total_cost_usd`), not money spent. Each model call also starts a process, about 1.5 s of every call's latency, which an API client wouldn't pay. Prompt caching is Claude's automatic prefix cache: the system prompt is kept byte-identical between calls so it can be read from cache.";
   }
@@ -333,7 +355,10 @@ function pricingNote(planner: string): string {
     return "**Pricing and test conditions:** this planner uses Codex CLI with ChatGPT subscription access. Token counts include runtime context and latency includes process startup. Subscription USD cost is unavailable; cost cells show –. See docs/CODEX-PROVIDER-CAPTURE.md for the measured prompt and tool framing.";
   }
   if (planner === "qwen") {
-    return "**Pricing and test conditions:** this planner calls a Qwen Token Plan's OpenAI-compatible endpoint directly (strict `json_schema` output, or `json_object` with the schema in the prompt when `QWEN_RESPONSE_FORMAT=json_object`; thinking off unless `QWEN_THINKING` is set). Token Plan usage is prepaid, so USD cost is unavailable; cost cells show –. Latency is a direct HTTPS call with no process startup.";
+    const cost = listRate
+      ? "cost cells marked (list rate) price the reported tokens at Alibaba Cloud Model Studio's pay-as-you-go rates for the same model (`LIST_RATES` in `server/src/eval/report.ts`: Singapore, busy hours; idle hours cost half). That is what the same traffic would cost without the plan, not money spent."
+      : "USD cost is unavailable; cost cells show –.";
+    return "**Pricing and test conditions:** this planner calls a Qwen Token Plan's OpenAI-compatible endpoint directly (strict `json_schema` output, or `json_object` with the schema in the prompt when `QWEN_RESPONSE_FORMAT=json_object`; thinking off unless `QWEN_THINKING` is set). Token Plan usage is prepaid, so " + cost + " Latency is a direct HTTPS call with no process startup.";
   }
   return `**Pricing and test conditions:** cost is computed by the \`${planner}\` adapter from the tokens the provider reports and the list prices in \`server/src/planner/index.ts\`.`;
 }

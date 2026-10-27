@@ -930,3 +930,20 @@ describe("creating a record the message names", () => {
     assert.deepEqual(unfilledNamedFields(sarah, "Create Sarah and send her an email"), []);
   });
 });
+
+test("a retry that runs the search the failed attempt found nothing with, unchanged, is sent back with the look-alike search", async () => {
+  const archive = (search: SubmitPlan["steps"]) => reply({ steps: [...search!, { id: "s9", kind: "op", op: "forEach", in: "$s2.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M01.A05", argsJson: '{"contactId":"$item.id"}' }] }] });
+  const companies = archive([
+    { id: "s1", kind: "action", action: "M02.A03", argsJson: '{"query":"Wayne"}' },
+    { id: "s2", kind: "action", action: "M02.A10", argsJson: '{"companyId":"$s1.items[0].id"}' },
+  ]);
+  const contacts = archive([
+    { id: "s1", kind: "action", action: "M01.A03", argsJson: '{"query":"Wayne"}' },
+    { id: "s2", kind: "op", op: "filter", in: "$s1.items", whereJson: '{"company":"Wayne"}', by: null, set: null, roundRobin: null, do: null },
+  ]);
+  const planner = scripted(companies, contacts);
+  const failed = JSON.stringify({ steps: [], errors: ["s2: $s1.items has 0 items, no [0]."], empty: [{ action: "M02.A03", args: { query: "Wayne" } }] });
+  const out = await planTurn({ message: "Archive every contact at Wayne", tier: "fast", failed }, { registry, retriever, planner, clock: frozenClock() }, () => {});
+  assert.equal(out.kind, "plan");
+  assert.match(planner.requests[1]!.user, /s1: M02\.A03 \{"query":"Wayne"\} already found nothing in <failed_attempt>.*M01\.A03 Search contacts/);
+});
