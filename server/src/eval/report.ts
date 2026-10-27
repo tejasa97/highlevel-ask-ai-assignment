@@ -77,6 +77,8 @@ export const LIST_RATES: Record<string, { input: number; output: number }> = {
 export function runCost(r: ScenarioRun): { usd: number | null; listRate: boolean } {
   const u = r.metrics.usage;
   if (u.costUsd !== null) return { usd: u.costUsd, listRate: false };
+  // A run that timed out before any model answered used no tokens and names no model; it cost nothing.
+  if (!r.models?.length && u.input + u.output + u.thinking === 0) return { usd: 0, listRate: false };
   const rate = r.models?.length === 1 ? LIST_RATES[r.models[0]!] : undefined;
   if (!rate) return { usd: null, listRate: false };
   return { usd: (u.input * rate.input + (u.output + u.thinking) * rate.output) / 1e6, listRate: true };
@@ -367,7 +369,7 @@ export function renderReport(input: ReportInput): string {
   line(`npm run report -- --label ${p.summary.label}${others.length ? ` --compare ${others.map((m) => m.result.summary.label).join(",")}` : ""}`);
   line("```");
   line();
-  line(`The planner comes from \`PLANNER\` in \`.env\` (see \`server/src/planner/index.ts\`). The scenarios are in ${(p.summary.scenarioDir ?? DEFAULT_SCENARIO_DIR).split(",").map((d) => `\`${d}/\``).join(", ")}, the targets in \`eval/targets.json\`, and every recorded run in \`eval/results/history.jsonl\`.`);
+  line(`The planner comes from \`PLANNER\` in \`.env\`; left unset, a Token Plan key selects qwen and no key selects claude-cli (see \`server/src/planner/index.ts\`). The scenarios are in ${(p.summary.scenarioDir ?? DEFAULT_SCENARIO_DIR).split(",").map((d) => `\`${d}/\``).join(", ")}, the targets in \`eval/targets.json\`, and every recorded run in \`eval/results/history.jsonl\`.`);
   return out.join("\n") + "\n";
 }
 

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import { afterEach, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { makePlanner } from "./index.js";
 
-const KEYS = ["CLAUDE_MODEL", "CLAUDE_FAST_MODEL", "QWEN_API_KEY", "QWEN_MODEL", "QWEN_FAST_MODEL"];
+const KEYS = ["PLANNER", "CLAUDE_MODEL", "CLAUDE_FAST_MODEL", "CODEX_MODEL", "QWEN_API_KEY", "ALIBABA_TOKEN_PLAN_API_KEY", "QWEN_MODEL", "QWEN_FAST_MODEL"];
 const saved = Object.fromEntries(KEYS.map((key) => [key, process.env[key]]));
 
 afterEach(() => {
@@ -41,13 +41,83 @@ describe("makePlanner defaults", () => {
     assert.deepEqual(makePlanner("codex-cli").models, { strong: "gpt-6.1-sol", fast: "gpt-6.1-sol" });
   });
 
-  it("keeps the Token Plan on qwen3.8-flash, with deepseek one variable away", () => {
+  it("runs the Token Plan on DeepSeek, with the Qwen flagship one variable away", () => {
     process.env.QWEN_API_KEY = "sk-sp-test";
     delete process.env.QWEN_MODEL;
     delete process.env.QWEN_FAST_MODEL;
-    assert.deepEqual(makePlanner("qwen").models, { strong: "qwen3.8-flash", fast: "qwen3.8-flash" });
-
-    process.env.QWEN_MODEL = "deepseek-v4.1-flash-1017";
     assert.deepEqual(makePlanner("qwen").models, { strong: "deepseek-v4.1-flash-1017", fast: "deepseek-v4.1-flash-1017" });
+
+    process.env.QWEN_MODEL = "qwen3.8-flash";
+    assert.deepEqual(makePlanner("qwen").models, { strong: "qwen3.8-flash", fast: "qwen3.8-flash" });
+  });
+});
+
+describe("makePlanner provider choice", () => {
+  // The choice is announced on stderr; capture it so it can be asserted and stays out of the test output.
+  let logged: string[] = [];
+  beforeEach(() => {
+    logged = [];
+    mock.method(console, "error", (line: string) => logged.push(line));
+  });
+  afterEach(() => mock.restoreAll());
+
+  it("picks qwen when PLANNER is unset and a Token Plan key is present", () => {
+    delete process.env.PLANNER;
+    delete process.env.ALIBABA_TOKEN_PLAN_API_KEY;
+    process.env.QWEN_API_KEY = "sk-sp-test";
+    delete process.env.QWEN_MODEL;
+    assert.equal(makePlanner().name, "qwen");
+    assert.deepEqual(logged, ["PLANNER unset: using qwen (deepseek-v4.1-flash-1017), since a Token Plan key is set"]);
+  });
+
+  it("falls back to claude-cli on Haiku 5.5 without a key, or with a blank one", () => {
+    process.env.PLANNER = "";
+    delete process.env.ALIBABA_TOKEN_PLAN_API_KEY;
+    delete process.env.CLAUDE_MODEL;
+    delete process.env.CLAUDE_FAST_MODEL;
+    process.env.QWEN_API_KEY = " ";
+    const planner = makePlanner();
+    assert.equal(planner.name, "claude-cli");
+    assert.deepEqual(planner.models, { strong: "claude-haiku-5-5", fast: "claude-haiku-5-5" });
+    assert.equal(logged.length, 1);
+    assert.match(logged[0]!, /no Token Plan key: using claude-cli .*claude auth login.*QWEN_API_KEY/);
+  });
+
+  it("treats a whitespace-only PLANNER as unset", () => {
+    process.env.PLANNER = " ";
+    delete process.env.ALIBABA_TOKEN_PLAN_API_KEY;
+    delete process.env.QWEN_API_KEY;
+    assert.equal(makePlanner().name, "claude-cli");
+  });
+
+  it("stays quiet when PLANNER is set", () => {
+    process.env.PLANNER = "claude-cli";
+    makePlanner();
+    assert.deepEqual(logged, []);
+  });
+
+  it("accepts ALIBABA_TOKEN_PLAN_API_KEY alone, and behind a blank QWEN_API_KEY", () => {
+    delete process.env.PLANNER;
+    process.env.ALIBABA_TOKEN_PLAN_API_KEY = "sk-sp-alias";
+    delete process.env.QWEN_API_KEY;
+    assert.equal(makePlanner().name, "qwen");
+
+    process.env.QWEN_API_KEY = " ";
+    assert.equal(makePlanner().name, "qwen");
+    assert.equal(makePlanner("qwen").name, "qwen");
+  });
+
+  it("treats the sk-sp-... placeholder as no key", () => {
+    delete process.env.PLANNER;
+    delete process.env.ALIBABA_TOKEN_PLAN_API_KEY;
+    process.env.QWEN_API_KEY = "sk-sp-...";
+    assert.equal(makePlanner().name, "claude-cli");
+    assert.throws(() => makePlanner("qwen"), /needs QWEN_API_KEY/);
+  });
+
+  it("lets PLANNER=claude-cli override a present key", () => {
+    process.env.PLANNER = "claude-cli";
+    process.env.QWEN_API_KEY = "sk-sp-test";
+    assert.equal(makePlanner().name, "claude-cli");
   });
 });

@@ -7,7 +7,7 @@ All 500 actions are implemented against a simulated backend (SQLite, frozen cloc
 - `docs/ASSIGNMENT.md` (local only, not in the repo): what's being asked, with a requirements checklist
 - [docs/PLAN.md](docs/PLAN.md): architecture, design and the 5-day schedule
 - [docs/PLANNER-CHANGES.md](docs/PLANNER-CHANGES.md): what changed in shared lookup, retrieval and planner handling, why each change was needed, and what remains unsolved
-- [BENCHMARK.md](BENCHMARK.md): quality, latency (direct vs complex), tokens and cost per successful task, and the planner against a one-call-per-step baseline agent; final run on DeepSeek (deepseek-v4.1-flash-1017 through the Qwen Token Plan), 273 scenarios × 3 runs across all 50 modules: planner 96.5% of runs passing at a 1.7 s median direct reply, against 90.8% at 2.6 s for the baseline, at $0.0044 per successful task against $0.0074 at list rates; regenerate with `npm run report -- --label final-deepseek-planner-3x --compare final-deepseek-baseline-3x` in `server/`
+- [BENCHMARK.md](BENCHMARK.md): quality, latency (direct vs complex), tokens and cost per successful task, and the planner against a one-call-per-step baseline agent; final run on DeepSeek (deepseek-v4.1-flash-1017 through the Qwen Token Plan), 273 scenarios × 3 runs across all 50 modules: planner 96.9% of runs passing at a 1.3 s median direct reply, against 91.6% at 2.3 s for the baseline, at $0.0043 per successful task against $0.0073 at list rates; regenerate with `npm run report -- --label release-deepseek-planner-3x --compare release-deepseek-baseline-3x` in `server/`
 - [docs/PROMPT-EXAMPLE.md](docs/PROMPT-EXAMPLE.md): the planner prompt over two turns, with real payloads and token counts
 - `docs/assignment/` (local only, not in this checkout): the original brief and catalog PDFs
 
@@ -74,7 +74,7 @@ The two merged lines add:
 
 On main, the 2,580 deterministic tests, the typecheck and the web build all pass.
 
-The live numbers are in BENCHMARK.md: DeepSeek on the Qwen Token Plan, both agents run at commit `b3a94d4`; see [Benchmark scope](#benchmark-scope). The earlier validation reports ([outcomes](docs/PLANNER-OUTCOMES-VALIDATION.md), [scoped lookups](docs/SCOPED-LOOKUPS-VALIDATION.md)) describe branches as they stood before the merge. Keep them as history; they don't score main.
+The live numbers are in BENCHMARK.md: DeepSeek on the Qwen Token Plan, both agents run at commit `d74874f`; see [Benchmark scope](#benchmark-scope). The earlier validation reports ([outcomes](docs/PLANNER-OUTCOMES-VALIDATION.md), [scoped lookups](docs/SCOPED-LOOKUPS-VALIDATION.md)) describe branches as they stood before the merge. Keep them as history; they don't score main.
 
 All 500 actions in all 50 modules are executable. The first 18 modules (Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams) were built in depth first and carry the scenario and module evals below; the other 32 were added in Wave 1 ([WAVE1-REPORT.md](WAVE1-REPORT.md)) and then hardened ([WAVE1-HARDENING-REPORT.md](WAVE1-HARDENING-REPORT.md), assumptions in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md)). The backend suite has 2,580 deterministic tests. The regression scenarios cover the first 18 modules; the other 32 have their own set of 27 planner scenarios (`eval/module-scenarios/wave1`), which scored 95.1% in the final DeepSeek benchmark and historically 96% of clean runs on Haiku (3 repeats), up from 66.7% before the failure classes it exposed were fixed. In that run, one scenario failed every repeat: the planner read "Move X from Starter to Pro" as an opportunity stage change instead of a subscription plan change. It is recorded, not patched.
 
@@ -90,7 +90,12 @@ All messages, payments, review publications and directory syncs are **simulated*
 
 ## Run locally
 
-Use a Node release supporting `node:sqlite` (this branch was tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Copy `.env.example` to `.env` in the repository root and pick a planner there: it is set up for `qwen` with DeepSeek, as benchmarked, which needs a Qwen Token Plan key (see below); `claude-cli` requires an authenticated Claude CLI with available quota. With `PLANNER` unset, `claude-cli` is the default provider and runs `claude-haiku-5-5` for both tiers; set `CLAUDE_MODEL` (and optionally `CLAUDE_FAST_MODEL`) for another model. Give the full id, not the `haiku` alias: Claude CLI 2.1.284 maps the alias to `claude-haiku-4-5-20251001`, which scored 91.3% on the 23-scenario regression suite at a 23.9 s median turn, against 100% over 8 repeats at 7.2 s for `claude-haiku-5-5`. The CLI logs `claude-haiku-5-5` as `unrecognized_model` but serves it.
+Use a Node release supporting `node:sqlite` (this branch was tested on Node 26). Install dependencies in both `server/` and `web/` with `npm ci`. Copy `.env.example` to `.env` in the repository root. The planner is chosen for you when `PLANNER` is unset:
+
+- **With a Qwen Token Plan key** (`QWEN_API_KEY`, see below), it runs `qwen` with `deepseek-v4.1-flash-1017`, the setup BENCHMARK.md measured.
+- **Without one**, it runs `claude-cli` on `claude-haiku-5-5` for both tiers. That needs only an authenticated Claude CLI (`claude auth login`) with available quota.
+
+To force one, set `PLANNER=claude-cli` or `PLANNER=qwen`. With `PLANNER` unset, every command (`serve`, `ask`, `probe:planner`, `eval:scenarios`) prints the provider it picked on stderr, so an eval can't run on the Claude subscription unnoticed. Set `CLAUDE_MODEL` (and optionally `CLAUDE_FAST_MODEL`) for another Claude model. Give the full id, not the `haiku` alias: Claude CLI 2.1.284 maps the alias to `claude-haiku-4-5-20251001`, which scored 91.3% on the 23-scenario regression suite at a 23.9 s median turn, against 100% over 8 repeats at 7.2 s for `claude-haiku-5-5`. The CLI logs `claude-haiku-5-5` as `unrecognized_model` but serves it.
 
 In `server/`, run `npm run db:reset` to recreate **this checkout's** demo database, then `npm run serve`. In `web/`, run `npm run dev`. Defaults: API 8787, web 5173. For isolated concurrent work, set `PORT` for the API and matching `API_PORT` for Vite. Reset erases the local demo database; it is not a migration of saved user data.
 
@@ -113,39 +118,39 @@ The 45 development cases cover all thirty new action IDs. The 12 reporting cases
 
 ### Benchmark scope
 
-[BENCHMARK.md](BENCHMARK.md) covers every active scenario suite: 273 scenarios, each run 3 times (819 runs per agent), touching all 50 modules, with at least one checked action in every module. Both agents ran on deepseek-v4.1-flash-1017 through the Qwen Token Plan at commit `b3a94d4` on 2026-10-27, over the same scenario files (set `958de2e6710f`). The report's "uncommitted edits" note is the two M25 scenarios in `wave1/commerce.json`, which were committed right after the run. PR #15 (d9d59c6, which drops filters with no condition, and 89300d1, the `<new_step_ids>` line after a look) merges after `b3a94d4`, so these numbers don't include those two fixes; #15 has only a lean rerun, where 0 of 9 plans after a look reused the looked steps' ids, against 7 of 16 before. Earlier BENCHMARK.md versions (DeepSeek over 86 scenarios × 1; Haiku 5.5 through `claude -p` over 23 × 3) are in git history.
+[BENCHMARK.md](BENCHMARK.md) covers every active scenario suite: 273 scenarios, each run 3 times (819 runs per agent), touching all 50 modules, with at least one checked action in every module. Both agents ran on deepseek-v4.1-flash-1017 through the Qwen Token Plan at commit `d74874f` (clean checkout, PR #15's fixes included) on 2026-10-27, over the same scenario files (set `958de2e6710f`). Runs that failed outside the app (timeouts: 5 planner, 7 baseline) are left out of the rates, so some suites count 34 or 35 runs instead of 36. The previous run, at `b3a94d4` before #15, scored 96.5% against 90.8%; it is in git history. Earlier BENCHMARK.md versions (DeepSeek over 86 scenarios × 1; Haiku 5.5 through `claude -p` over 23 × 3) are in git history.
 
-Task success per suite, 3 runs each (from `eval/results/scenarios-final-deepseek-{planner,baseline}-3x.json`):
+Task success per suite, 3 runs each (from `eval/results/scenarios-release-deepseek-{planner,baseline}-3x.json`):
 
 | Suite | Scenarios | Planner | Baseline |
 | --- | ---: | ---: | ---: |
-| `eval/scenarios` (regression, first 18 modules) | 23 | 97.1% | 79.7% |
-| `eval/brief-scenarios` (the brief's examples and held-out variants) | 12 | 75.0% | 61.1% |
-| `eval/param-scenarios` (every argument checked) | 51 | 99.3% | 96.7% |
-| `eval/module-scenarios/coverage` | 75 | 98.7% | 96.0% |
-| `eval/module-scenarios/wave1` (the 32 Wave 1 modules) | 27 | 95.1% | 86.4% |
-| `eval/module-scenarios/m45-m47/development` | 45 | 98.5% | 97.8% |
-| `eval/module-scenarios/m45-m47/reporting` (held out) | 12 | 91.7% | 97.2% |
-| `eval/module-scenarios/m45-m47/trails` | 3 | 100% | 66.7% |
-| `eval/module-scenarios/questions` | 22 | 93.9% | 86.4% |
-| `eval/module-scenarios/role-ids` | 1 | 66.7% | 100% |
+| `eval/scenarios` (regression, first 18 modules) | 23 | 94.2% | 82.6% |
+| `eval/brief-scenarios` (the brief's examples and held-out variants) | 12 | 82.9% | 58.8% |
+| `eval/param-scenarios` (every argument checked) | 51 | 98.0% | 96.7% |
+| `eval/module-scenarios/coverage` | 75 | 97.3% | 96.9% |
+| `eval/module-scenarios/wave1` (the 32 Wave 1 modules) | 27 | 98.8% | 90.0% |
+| `eval/module-scenarios/m45-m47/development` | 45 | 99.3% | 97.7% |
+| `eval/module-scenarios/m45-m47/reporting` (held out) | 12 | 100% | 94.3% |
+| `eval/module-scenarios/m45-m47/trails` | 3 | 100% | 88.9% |
+| `eval/module-scenarios/questions` | 22 | 97.0% | 84.8% |
+| `eval/module-scenarios/role-ids` | 1 | 33.3% | 100% |
 | `eval/policy-scenarios/partial-confirmation` | 2 | 100% | 0% |
 
-The baseline wins two rows. On the held-out M45–M47 reporting set it scores 97.2% to the planner's 91.7% (35/36 against 33/36), and on the single role-id scenario it scores 3/3 to 2/3. The partial-confirmation scenarios need the subset approval only the planner's gate produces, so the baseline fails all of them. Small suites move a lot on one run; read their gaps with care.
+The baseline wins one row: the single role-id scenario, 3/3 against the planner's 1/3. On the held-out M45–M47 reporting set the planner scores 36/36 against 33/35. The partial-confirmation scenarios need the subset approval only the planner's gate produces, so the baseline fails all of them. Small suites move a lot on one run; read their gaps with care.
 
 Reproduce it from `server/` with the Token Plan key in `.env` (see [Use a Qwen Token Plan locally](#use-a-qwen-token-plan-locally)); BENCHMARK.md's Reproduce section has the same commands:
 
 ```sh
 export PLANNER=qwen QWEN_MODEL=deepseek-v4.1-flash-1017
 DIRS=eval/scenarios,eval/brief-scenarios,eval/param-scenarios,eval/module-scenarios/coverage,eval/module-scenarios/wave1,eval/module-scenarios/m45-m47/development,eval/module-scenarios/m45-m47/reporting,eval/module-scenarios/m45-m47/trails,eval/module-scenarios/questions,eval/module-scenarios/role-ids,eval/policy-scenarios/partial-confirmation
-npm run eval:scenarios -- --scenario-dir $DIRS --repeat 3 --label final-deepseek-planner-3x
-npm run eval:scenarios -- --scenario-dir $DIRS --repeat 3 --label final-deepseek-baseline-3x --agent baseline
-npm run report -- --label final-deepseek-planner-3x --compare final-deepseek-baseline-3x
+npm run eval:scenarios -- --scenario-dir $DIRS --repeat 3 --label release-deepseek-planner-3x
+npm run eval:scenarios -- --scenario-dir $DIRS --repeat 3 --label release-deepseek-baseline-3x --agent baseline
+npm run report -- --label release-deepseek-planner-3x --compare release-deepseek-baseline-3x
 ```
 
 The planner run took about 8.5 minutes and the baseline about 14 on the Token Plan.
 
-Codex integration is available in this branch: explicitly select `PLANNER=codex-cli` (Claude is otherwise still the inherited default). Full GPT-6.1 Sol low-reasoning evaluations score 91.9% development, 91.3% original regression and 83.3% reporting, versus Luna's 85.2%, 56.5% and 72.2%. Sol improves overall quality but still misses acceptance. See the [delivery and evaluation report](docs/M45-M47-FINAL-REPORT.md) for counts, test conditions, test-set revisions and remaining planner gaps. Do not substitute adapter tests or retrieval recall for AI task success.
+Codex integration is available in this branch: explicitly select `PLANNER=codex-cli` (otherwise the default is qwen with a Token Plan key, else Claude). Full GPT-6.1 Sol low-reasoning evaluations score 91.9% development, 91.3% original regression and 83.3% reporting, versus Luna's 85.2%, 56.5% and 72.2%. Sol improves overall quality but still misses acceptance. See the [delivery and evaluation report](docs/M45-M47-FINAL-REPORT.md) for counts, test conditions, test-set revisions and remaining planner gaps. Do not substitute adapter tests or retrieval recall for AI task success.
 
 
 ## Use a Codex subscription locally
@@ -191,24 +196,18 @@ and owns CRM execution and confirmation. See the
 ## Use a Qwen Token Plan locally
 
 The Qwen provider calls the Token Plan's OpenAI-compatible endpoint directly, with no CLI in
-between. Get an `sk-sp-...` key from the Token Plan console (Singapore only) and set it in
-your local `.env`:
+between. Get an `sk-sp-` key from the Token Plan console (Singapore only) and set it as
+`QWEN_API_KEY` in your local `.env`. With `PLANNER` unset, the key alone selects this provider;
+the literal `sk-sp-...` placeholder counts as no key. Then run any command from `server/`:
 
 ```sh
-PLANNER=qwen
-QWEN_API_KEY=sk-sp-...
-```
-
-Then run any command from `server/`:
-
-```sh
-PLANNER=qwen npm run probe:planner
-PLANNER=qwen npm run serve
-PLANNER=qwen npm run ask -- "create a task to call Jo"
+npm run probe:planner
+npm run serve
+npm run ask -- "create a task to call Jo"
 ```
 
 `QWEN_MODEL` and `QWEN_FAST_MODEL` select the strong/fast models (`QWEN_MODEL` defaults to
-`qwen3.8-flash`, `QWEN_FAST_MODEL` to `QWEN_MODEL`). Thinking is off (`enable_thinking: false`);
+`deepseek-v4.1-flash-1017`, `QWEN_FAST_MODEL` to `QWEN_MODEL`). Thinking is off (`enable_thinking: false`);
 set `QWEN_THINKING=1` to turn it on. `QWEN_BASE_URL` defaults to
 `https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1`; use
 `QWEN_BASE_URL=https://token-plan.maas.qwencloudapi.com/compatible-mode/v1` for QwenCloud.
@@ -228,7 +227,7 @@ rest of the process. `QWEN_RESPONSE_FORMAT=json_schema|json_object` pins the cho
 Plans are validated and repaired either way.
 
 ```sh
-QWEN_MODEL=deepseek-v4.1-flash-1017 npm run serve   # DeepSeek on the same key; no format flag needed
+QWEN_MODEL=qwen3.8-flash npm run serve   # the Qwen flagship on the same key; no format flag needed
 ```
 
 Measured 2026-10-25 on the module scenarios with real list rates (regression: 23 scenarios x 3
@@ -236,8 +235,8 @@ repeats; development: 45 scenarios):
 
 | model | regression | development | median turn | $/turn |
 | --- | --- | --- | --- | --- |
-| qwen3.8-flash (adapter default) | 90.9% | 97.8% | 5.0 s / 3.2 s | 0.00044 / 0.00063 |
-| deepseek-v4.1-flash-1017 | 95.7% | 97.8% | 1.9 s / 1.1 s | 0.00048 / 0.00065 |
+| qwen3.8-flash | 90.9% | 97.8% | 5.0 s / 3.2 s | 0.00044 / 0.00063 |
+| deepseek-v4.1-flash-1017 (adapter default) | 95.7% | 97.8% | 1.9 s / 1.1 s | 0.00048 / 0.00065 |
 
 DeepSeek's regression figure is the lower of two batches (the other was 98.6%) and Qwen's is a
 four-batch mean; a single batch moves by 1-3 points, so read gaps under ~5 points as noise. Batches:

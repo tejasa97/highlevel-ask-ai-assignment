@@ -110,7 +110,9 @@ function run(args: string[], stdin: string, opts: { cwd: string; env: NodeJS.Pro
       if (out.trimEnd().endsWith("}") && parses(out)) resolve(out);
     });
     child.stderr.on("data", (d) => (err += d));
-    child.on("error", (e) => reject(new PlannerError(`could not start claude: ${e.message}`, "provider")));
+    child.on("error", (e: NodeJS.ErrnoException) => reject(new PlannerError(e.code === "ENOENT"
+      ? "Claude CLI not found on PATH: install it and run `claude auth login`, or set QWEN_API_KEY to plan with DeepSeek on the Qwen Token Plan"
+      : `could not start claude: ${e.message}`, "provider")));
     child.on("close", (code) => {
       signal?.removeEventListener("abort", abort);
       // claude -p exits 1 on an error result but still prints the JSON, so let the caller read it
