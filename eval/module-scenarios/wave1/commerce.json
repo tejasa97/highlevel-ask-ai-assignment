@@ -206,5 +206,37 @@
         { "sql": "SELECT json_extract(data,'$.status') FROM event_registrations WHERE json_extract(data,'$.contactId')='ct_9'", "equals": "registered" }
       ]
     }
+  },
+  {
+    "id": "w1-product-create-stocked",
+    "category": "direct",
+    "modules": ["M25"],
+    "note": "A new product with its SKU and a tracked stock count, made in one create.",
+    "turns": [{ "user": "Add a product called Travel Mug, SKU MUG-01, with 40 in stock" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M25.A01"] },
+      "state": [
+        { "sql": "SELECT count(*) FROM products WHERE json_extract(data,'$.name')='Travel Mug'", "equals": 1 },
+        { "sql": "SELECT json_extract(data,'$.sku') FROM products WHERE json_extract(data,'$.name')='Travel Mug'", "equals": "MUG-01" },
+        { "sql": "SELECT json_extract(data,'$.inventory') FROM products WHERE json_extract(data,'$.name')='Travel Mug'", "equals": 40 }
+      ]
+    }
+  },
+  {
+    "id": "w1-product-sku-and-stock",
+    "category": "multi",
+    "modules": ["M25"],
+    "note": "Setup Package is prd_1 with no SKU and untracked stock; SKU and inventory each have their own action.",
+    "setup": [{ "fixture": "product", "with": { "name": "Setup Package" } }],
+    "turns": [{ "user": "Give the Setup Package the SKU SET-100 and set its stock to 12" }],
+    "expect": {
+      "status": ["done"],
+      "actions": { "includes": ["M25.A08", "M25.A09"] },
+      "state": [
+        { "sql": "SELECT json_extract(data,'$.sku') FROM products WHERE id='prd_1'", "equals": "SET-100" },
+        { "sql": "SELECT json_extract(data,'$.inventory') FROM products WHERE id='prd_1'", "equals": 12 }
+      ]
+    }
   }
 ]
