@@ -1,6 +1,6 @@
 # Adding a module
 
-M45 Reviews, M46 Business Listings and M47 Support Tickets demonstrate this pattern. This is an implementation checklist, not a claim that their pending AI evaluation gates have passed.
+M45 Reviews, M46 Business Listings and M47 Support Tickets demonstrate this pattern.
 
 ## 1. Freeze the contract and test data
 

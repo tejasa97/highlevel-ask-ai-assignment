@@ -2,11 +2,9 @@
 
 ## Scope
 
-Follow-on: the seven older-suite improvements, including bounded completion handling, are implemented separately in [Grounded planner outcomes](PLANNER-OUTCOMES.md). The original batch and its recorded validation below remain historical evidence.
+Follow-on: the seven older-suite improvements, including bounded completion handling, are implemented separately in [Grounded planner outcomes](PLANNER-OUTCOMES.md).
 
 This batch implements the first three agreed improvements: consistent named-record lookup, discovery dependencies in retrieval, and a smaller planner-facing representation. It is shared by every `Planner` provider. There is no provider/model-name branch, reasoning-setting change, new executor or embedding-model change. Completion tracking, unrequested prerequisite writes and whole-plan approval policy are separate work.
-
-Base: `64c9e45` (current main `d62d534` plus the other agent's committed 75-case coverage snapshot). Its source/scenarios were not changed to improve scores. The other agent's checkout and the earlier evaluation evidence stay untouched.
 
 ## Named arguments
 
@@ -47,13 +45,6 @@ Name mentions add one get plus one standalone discovery helper, not every cross-
 
 The session carries at most 12 `{entity,id,name}` identities actually observed in successful execution steps. It does not carry raw records, mutable fields or planned-but-unexecuted IDs. These appear in the rebuilt per-turn `<recent_records>` block and reset with the chat. They are identity hints, not authoritative current state; handlers still recheck the actual record. The model must clarify when a follow-up has several plausible targets.
 
-## Verification
+## Tests
 
-- TypeScript typecheck passes.
-- All 2,293 automated tests pass at the initial implementation checkpoint, including 42 new tests. Existing HTTP, confirmation/cancellation, replay, permission, cross-module and retrieval regression tests pass.
-- Added tests cover actual fixtures for every new table resolver, zero/duplicate matches, company/directory/parent qualifiers, ID/entity validation, generated step-ID collisions, permission denial, changed-target approvals and typed session reset.
-- Live planner measurements are recorded separately; do not infer a model-independent success-rate increase from deterministic tests alone.
-
-After live validation exposed a look/replan integration edge case, generated resolve IDs are retained with the actual read plan. Qualifier interpolation is now checked with the same dependency/type rules as ordinary references. The final hardening checkpoint passes **2,298 tests with the real embedding model loaded**, including the existing shortlist-size gate (unchanged). Initial pre-hardening measurements are preserved under their original labels, not relabelled as final-source results.
-
-The original scenario files, seeds, expected actions and historical results are unchanged. Strict action-path assertions remain strict: a newly simplified resolve-plus-action route can still fail a scenario expecting a particular intermediate action, so inspect outcome assertions as well as raw pass rate. These already-inspected scenarios are development/regression evidence, not an untouched holdout.
+Tests cover actual fixtures for every table resolver, zero and duplicate matches, company/directory/parent qualifiers, ID and entity validation, generated step-ID collisions, permission denial, changed-target approvals and typed session reset. Generated resolve IDs are kept with the actual read plan after a look, and qualifier interpolation is checked with the same dependency and type rules as ordinary references. Live measurements are in [BENCHMARK.md](../BENCHMARK.md); deterministic tests alone don't show a success-rate change.

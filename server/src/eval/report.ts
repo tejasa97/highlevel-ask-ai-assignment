@@ -396,7 +396,7 @@ function pricingNote(planner: string, listRate = false): string {
     return "**Pricing and test conditions:** this planner runs `claude -p` on a Claude subscription, since no API key is available. Cost is Claude Code's own estimate at Anthropic API list prices (`total_cost_usd`), not money spent. Prompt caching is Claude's automatic prefix cache, with breakpoints Claude Code places; the system prompt is kept byte-identical between calls so its prefix can be read from cache. See \"Limits of this measurement\" above.";
   }
   if (planner === "codex-cli") {
-    return "**Pricing and test conditions:** this planner uses Codex CLI with ChatGPT subscription access. Token counts include runtime context and latency includes process startup. Subscription USD cost is unavailable; cost cells show –. See docs/CODEX-PROVIDER-CAPTURE.md for the measured prompt and tool framing.";
+    return "**Pricing and test conditions:** this planner uses Codex CLI with ChatGPT subscription access. Token counts include runtime context and latency includes process startup. Subscription USD cost is unavailable; cost cells show –.";
   }
   if (planner === "qwen") {
     const cost = listRate
