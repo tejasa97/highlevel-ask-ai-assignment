@@ -233,6 +233,7 @@ export function renderReport(input: ReportInput): string {
   const row = (name: string, f: (m: Measured) => string) => line(`| ${name} | ${input.measured.map(f).join(" | ")} |`);
   row("Agent", (m) => (m.result.summary.agent === "baseline" ? "baseline: one call per step" : "planner: whole plan per call"));
   row("Planner", (m) => `${m.result.summary.planner} (${m.result.summary.tier})`);
+  if (others.length) row("Scenario files (set)", (m) => m.entry?.set ? `\`${m.entry.set}\`` : "not recorded");
   row("Task success, all runs", (m) => rateCell(stats(m, "all").success));
   row("Action selection", (m) => rateCell(stats(m, "all").actions));
   row("Parameter accuracy", (m) => rateCell(stats(m, "all").args));
@@ -241,15 +242,20 @@ export function renderReport(input: ReportInput): string {
   row("Complex: first reply p50 / p95", (m) => `${secs(stats(m, "complex").firstReplyMs.p50)} / ${secs(stats(m, "complex").firstReplyMs.p95)}`);
   row("Complex: end-to-end p50 / p95", (m) => `${secs(stats(m, "complex").e2eMs.p50)} / ${secs(stats(m, "complex").e2eMs.p95)}`);
   row("Model calls per complex task, median", (m) => String(stats(m, "complex").modelCalls.p50));
-  row("Cost per run", (m) => cost(stats(m, "all").costUsd.perRun, stats(m, "all").costUsd.listRate));
-  row("Cost per successful task", (m) => cost(stats(m, "all").costUsd.perSuccess, stats(m, "all").costUsd.listRate));
+  row("Tokens per run: input / output", (m) => {
+    const { tokens, runs } = stats(m, "all");
+    return `${int(tokens.input / (runs || 1))} / ${int((tokens.output + tokens.thinking) / (runs || 1))}`;
+  });
+  const est = (m: Measured) => (m.result.summary.planner === "claude-cli" ? " (est.)" : "");
+  row("Cost per run", (m) => cost(stats(m, "all").costUsd.perRun, stats(m, "all").costUsd.listRate) + est(m));
+  row("Cost per successful task", (m) => cost(stats(m, "all").costUsd.perSuccess, stats(m, "all").costUsd.listRate) + est(m));
   line();
   if (input.measured.some((m) => m.result.summary.agent === "baseline")) {
     line("The baseline (`server/src/server/baseline.ts`) is the usual tool-calling loop: each model call picks one action or name lookup, sees its result, and picks the next. It gets the same shortlist of actions, name matches, context and approval rules as the planner; only the planning differs.");
     line();
   }
   if (others.length) {
-    line("Columns are comparable only when they ran the same scenario files; check the set fingerprints under each label in `eval/results/history.jsonl`.");
+    line("Columns are comparable only when they ran the same scenario files (the set row above). Output tokens include thinking. Compare columns by tokens and calls: a dollar estimate depends on the Claude Code version that made it.");
     line();
   }
 
@@ -354,7 +360,9 @@ export function renderReport(input: ReportInput): string {
   for (const m of input.measured) {
     const r = m.result.summary;
     const dir = r.scenarioDir && r.scenarioDir !== DEFAULT_SCENARIO_DIR ? ` --scenario-dir ${r.scenarioDir}` : "";
-    line(`npm run eval:scenarios --${dir} --repeat ${r.repeat} --label ${r.label}${r.tier === "fast" ? " --fast" : ""}${r.agent === "baseline" ? " --agent baseline" : ""}`);
+    const only = models(m.result.runs);
+    const env = only.includes(",") ? "" : r.planner === "claude-cli" ? `PLANNER=claude-cli CLAUDE_MODEL=${only} ` : r.planner === "qwen" ? `PLANNER=qwen QWEN_MODEL=${only} ` : "";
+    line(`${env}npm run eval:scenarios --${dir} --repeat ${r.repeat} --label ${r.label}${r.tier === "fast" ? " --fast" : ""}${r.agent === "baseline" ? " --agent baseline" : ""}`);
   }
   line(`npm run report -- --label ${p.summary.label}${others.length ? ` --compare ${others.map((m) => m.result.summary.label).join(",")}` : ""}`);
   line("```");
@@ -371,7 +379,7 @@ function methodLimits(planner: string): string[] {
     "",
     "The planner runs through `claude -p` on a Claude subscription: there is no Anthropic API key for this project, and a subscription login must not be used for raw API calls. That costs the measurement four things:",
     "",
-    "- **Cost is an estimate.** Dollars are Claude Code's own figure at API list prices; nothing was billed. Tokens and model calls are the measured cost.",
+    "- **Cost is an estimate.** Dollars are Claude Code's own figure at API list prices; nothing was billed. Tokens and model calls are the measured cost. The figure also isn't stable across Claude Code versions: for about the same tokens per run, the 2026-10-27 run's estimate was about 16 times lower per token than the 2026-10-23 run's, so compare runs by tokens, not dollars.",
     "- **No temperature control.** Runs vary from one to the next, which is why every scenario runs three times.",
     "- **No control over cache breakpoints.** Claude Code decides what is cached and for how long. The app keeps the system prompt byte-identical between calls (its hash is in every trace), so the prefix can be read from cache, and reports the cache reads and writes the CLI returns.",
     "- **Latency includes the CLI.** Every planner call starts a `claude` process and goes through Claude Code's own request framing. Traces record the model time the CLI reports (`apiMs`) beside the wall clock, so the overhead can be taken out; runs recorded before 2026-10-27 also include about 0.8 s per call of waiting for the CLI to exit after it printed the reply.",
