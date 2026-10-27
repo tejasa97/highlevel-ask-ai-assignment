@@ -75,6 +75,12 @@ test("prepaid runs of one model with a list rate are priced from their tokens an
   // A model without a rate, or a run that mixed models, still leaves the total unknown.
   assert.equal(groupStats([prepaid(["qwen-unpriced"])], defs, GROUPS.direct).costUsd.total, null);
   assert.equal(groupStats([prepaid(["deepseek-v4.1-flash-1017", "qwen-unpriced"])], defs, GROUPS.direct).costUsd.total, null);
+  // A run that timed out before any model answered has no model and no tokens: it adds nothing, not an unknown.
+  const silent = prepaid([]);
+  Object.assign(silent.metrics.usage, { input: 0, output: 0, thinking: 0 });
+  const withSilent = groupStats([prepaid(["deepseek-v4.1-flash-1017"]), silent], defs, GROUPS.direct);
+  assert.equal(withSilent.costUsd.total!.toFixed(5), "0.00336");
+  assert.equal(withSilent.costUsd.listRate, true);
 });
 
 test("a target is judged only when committed on or before the run's date", () => {

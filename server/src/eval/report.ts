@@ -77,6 +77,8 @@ export const LIST_RATES: Record<string, { input: number; output: number }> = {
 export function runCost(r: ScenarioRun): { usd: number | null; listRate: boolean } {
   const u = r.metrics.usage;
   if (u.costUsd !== null) return { usd: u.costUsd, listRate: false };
+  // A run that timed out before any model answered used no tokens and names no model; it cost nothing.
+  if (!r.models?.length && u.input + u.output + u.thinking === 0) return { usd: 0, listRate: false };
   const rate = r.models?.length === 1 ? LIST_RATES[r.models[0]!] : undefined;
   if (!rate) return { usd: null, listRate: false };
   return { usd: (u.input * rate.input + (u.output + u.thinking) * rate.output) / 1e6, listRate: true };
