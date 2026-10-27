@@ -259,6 +259,10 @@ The prompt doesn't grow with the catalog. The planner sees a fixed shortlist of 
 - **Cards and registration.** Each new module follows [docs/ADDING-A-MODULE.md](docs/ADDING-A-MODULE.md): a handler file, its schemas, a generated card and smoke coverage. The smoke test checks every action automatically for a valid call, an unknown param and an unknown id. That keeps the per-action cost low, but card review is manual, and at thousands of actions it would need sampling.
 - **Evals.** The suites are per module group, so new modules add their own sets without touching the regression fingerprint. A full run at this size costs real planner quota, so CI should run the regression set and sample the rest.
 - **Execution and gates.** These scale per request, not per catalog. Risk comes from each action's registered `risk` (`read`, `write`, `destructive` or `external`), so a new action gets approval gates without any new gate code.
+- **Filtering and joins run in application memory.** Each handler loads its rows with `store.find(table, predicate)` over JSON-document rows. A cross-module question ("leads from last week with no reply") is joined in memory by the generic filter and exclude steps. Three things make that the right choice here. First, the catalog fixes the actions: `M11.A10` takes no list of lead ids, and `M03.A03` has no "not replied" filter. Second, the seed data is tiny, so a scan takes well under a millisecond and the planner call dominates. Third, the generic join steps let the planner combine any of the 500 actions. With real data volumes, three changes would be needed:
+  1. Push each handler's filters into SQL, with typed or generated columns and indexes.
+  2. Let reads accept id lists from earlier steps (for example `leadIds: $s1.items[*].id`), so a later step only reads the earlier step's records.
+  3. Paginate, and stream pages through `forEach`, instead of the 500-row cap.
 
 ## The Claude CLI planner, and what it can't measure
 
