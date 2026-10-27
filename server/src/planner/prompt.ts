@@ -111,7 +111,9 @@ Ops (kind "op"):
            operators: eq ne gt gte lt lte in nin contains exists; {"date": {"lt": "YYYY-MM-DD", "orNull": true}}
            also admits null/missing for that field; other field conditions still apply
            a field inside a field is a dotted path: {"relatedTo.id": {"in": "$s1[*].id"}}
-- exclude: drop items of "in" whose field "by" is in the list "set"
+- exclude: drop items of "in" whose field "by" is in the list "set" (the ones that already have an appointment).
+           To keep only the items that ARE in another list (leads that came in last week and never replied), filter
+           with "in" instead. Pick records by a $ref to what a read found, never by ids copied out of <looked>.
 - forEach: run each call in "do" once per item of "in", a $ref to a list or a JSON array of strings
            (["id_1","id_2"]); "roundRobin" (optional) spreads a list across items as $rr`;
 

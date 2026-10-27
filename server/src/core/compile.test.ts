@@ -36,10 +36,25 @@ describe("forEach over a literal list", () => {
   test("a field read off a forEach's items, not its results, is told where the results are", () => {
     const r = compile(plan([
       op("s1", "forEach", { in: ["literal_alpha", "literal_beta"], do: [{ action: "M06.A01", args: { title: "$item" } }] }),
-      op("s2", "forEach", { in: "$s1.items[*].relatedTo", do: [{ action: "M06.A01", args: { title: "$item" } }] }),
+      op("s2", "forEach", { in: "$s1.items[*].nope", do: [{ action: "M06.A01", args: { title: "$item" } }] }),
     ]), registry);
     assert.ok(!r.ok);
-    assert.match(r.errors.join("\n"), /has no field "relatedTo"; fields: item, results \(a forEach step's output.* is \$s1\[\*\]\.results\[0\]\.relatedTo/);
+    assert.match(r.errors.join("\n"), /has no field "nope"; fields: item, results \(a forEach step's output.* is \$s1\[\*\]\.results\[0\]\.nope/);
+  });
+
+  test("a field of what a loop's one call returned reads through to it; with two calls it is told where they are", () => {
+    const one = compile(plan([
+      op("s1", "forEach", { in: ["literal_alpha", "literal_beta"], do: [{ action: "M06.A01", args: { title: "$item" } }] }),
+      op("s2", "forEach", { in: "$s1[*].id", do: [{ action: "M06.A10", args: { taskId: "$item" } }] }),
+      op("s3", "filter", { in: "$s1", where: { status: "open" } }),
+    ]), registry);
+    assert.ok(one.ok, one.ok ? "" : one.errors.join("\n"));
+    const two = compile(plan([
+      op("s1", "forEach", { in: ["literal_alpha"], do: [{ action: "M06.A01", args: { title: "$item" } }, { action: "M06.A01", args: { title: "$item" } }] }),
+      op("s2", "forEach", { in: "$s1[*].id", do: [{ action: "M06.A10", args: { taskId: "$item" } }] }),
+    ]), registry);
+    assert.ok(!two.ok);
+    assert.match(two.errors.join("\n"), /has no field "id"; fields: item, results/);
   });
 
   test("a filter over a forEach's items can name a field of one of its results by position", () => {
@@ -257,6 +272,15 @@ describe("ref errors name the legal steps", () => {
     const cycle = compile(plan([action("s1", "M06.A01", { title: "{{$s2.title}}" }), action("s2", "M06.A01", { title: "{{$s1.title}}" })]), registry);
     assert.ok(!cycle.ok);
     assert.match(cycle.errors.join("\n"), /\$s2 comes later in your plan; list it before this step/);
+  });
+
+  test("a {{template}} holding an expression is refused, since nothing in it would be computed", () => {
+    const r = compile(plan([action("s1", "M06.A03", {}), action("s2", "M06.A06", { taskId: "{{$s1.items[0].id === 'tk_1' ? 'tk_2' : 'tk_3'}}", dueDate: "2026-10-22" })]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /M06\.A06 arg taskId: \{\{\$s1\.items\[0\]\.id === 'tk_1'.* is not a ref; a \{\{template\}\} holds one \$ref/);
+    // One ref per template, any number of them in a string, and literal braces without a ref, all stand.
+    const ok = compile(plan([action("s1", "M06.A03", {}), action("s2", "M06.A01", { title: "{{ $s1.total }} of {{$s1.items[0].title}} {{draft}}" })]), registry);
+    assert.ok(ok.ok, ok.ok ? "" : ok.errors.join("\n"));
   });
 
   test("lists action kinds too, without offering forward references", () => {

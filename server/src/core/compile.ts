@@ -3,7 +3,7 @@ import type { z } from "zod";
 import type { SubmitPlan } from "../planner/submit-plan.js";
 import { CATALOG_ACTIONS } from "../registry/catalog.js";
 import type { JsonSchema, RegisteredAction, Registry } from "../registry/registry.js";
-import { ANY, arrayOf, collectRefs, fieldsOf, kindOf, literalList, looksLikeBrokenRef, parseRef, pathOf, RESERVED_ROOTS, type Ref, typeAt, unwrap } from "./refs.js";
+import { ANY, arrayOf, collectRefs, fieldsOf, isLoopEntry, kindOf, literalList, looksLikeBrokenRef, parseRef, pathOf, RESERVED_ROOTS, type Ref, templateSlips, typeAt, unwrap } from "./refs.js";
 import { normalizeDateTimes } from "./datetimes.js";
 import { lowerLookups, OTHER_THAN } from "./lookups.js";
 import { argumentEntities } from "../registry/arguments.js";
@@ -197,7 +197,9 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
             );
           });
           if (calls.some((c) => !c)) continue;
-          const out = arrayOf({ type: "object", properties: { item, results: arrayOf(ANY) } });
+          // results[k] is what do[k] returned for the item.
+          const results = { ...arrayOf(ANY), prefixItems: (calls as Call[]).map((c) => c.action.outputSchema ?? ANY) };
+          const out = arrayOf({ type: "object", properties: { item, results } });
           steps.push({ id: s.id, kind: "forEach", in: literal ?? (s.in as string), roundRobin: rrLiteral ?? s.roundRobin, calls: calls as Call[], deps: [...deps], type: out });
           types.set(s.id, out);
         }
@@ -539,6 +541,12 @@ function checkField(item: JsonSchema, field: string, what: string, err: (m: stri
     const fields = fieldsOf(cur);
     if (!fields.length) return;
     const at = parts.slice(0, i).join(".");
+    // A loop entry's field it doesn't have is what its one "do" call returned: "total" is "results.0.total".
+    const calls = isLoopEntry(cur) && !fields.includes(part) ? ((unwrap(((unwrap(cur).properties ?? {}) as Record<string, JsonSchema>).results!).prefixItems ?? []) as JsonSchema[]) : [];
+    if (calls.length === 1 && fieldsOf(calls[0]!).includes(part)) {
+      cur = ((unwrap(calls[0]!).properties ?? {}) as Record<string, JsonSchema>)[part]!;
+      continue;
+    }
     if (!fields.includes(part)) return err(`${what}: items have no field "${field}"; fields${at ? ` of ${at}` : ""}: ${fields.join(", ")}`);
     cur = ((unwrap(cur).properties ?? {}) as Record<string, JsonSchema>)[part]!;
   }
@@ -638,6 +646,13 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
       err(idTypeError(id, r.at, r.ref, held.entity, wanted, scope));
       ok = false;
     }
+  }
+
+  for (const slip of templateSlips(args)) {
+    err(
+      `${id} arg ${slip.at.join(".")}: ${slip.text.slice(0, 80)} is not a ref; a {{template}} holds one $ref (e.g. {{$item.name}}) and nothing in it is computed. To act on some records each with its own id, loop over those records and use $item.id`,
+    );
+    ok = false;
   }
 
   // Literal args: validate with ref-valued leaves removed; their issues are deferred to stage 2.

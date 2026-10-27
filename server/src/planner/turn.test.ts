@@ -179,12 +179,60 @@ describe("grounded outcomes and clarifications", () => {
     const last = { carry: { prev: ["M06.A01"], entities: ["task"], made: ["task"] }, records: [{ entity: "task", id: "tsk_90", name: "Call Ana", for: "ld_4" }] };
     const message = "Only the Austin ones, and make those due Friday";
     const said = (actions: string[]) => ({ ...createTask(), outcome: { effect: "change" as const, actions, destination: null } });
-    const contradicts = scripted(said(["M06.A01"]), said(["M06.A06"]));
+    // The stated remake is asked about; the reply that then says "change" but makes them gets its one repair, and fails.
+    const contradicts = scripted(said(["M06.A01"]), said(["M06.A06"]), said(["M06.A06"]));
     const out = await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner: contradicts, clock: frozenClock() });
     assert.ok(out.kind === "reply" && out.status === "failed", JSON.stringify(out));
     assert.match(contradicts.requests[1]!.user, /Call Ana \(tsk_90, for ld_4\)/);
+    assert.equal(contradicts.requests.length, 3);
     const means = scripted(said(["M06.A01"]), said(["M06.A01"]));
     assert.equal((await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner: means, clock: frozenClock() })).kind, "plan");
+  });
+
+  test("a follow-up whose stated outcome makes again what the last turn made is asked before that outcome binds the repairs", async () => {
+    const last = { carry: { prev: ["M06.A01"], entities: ["task"], made: ["task"] }, records: [{ entity: "task", id: "tsk_90", name: "Call Ana", for: "ld_4" }] };
+    const message = "Only the Austin ones, and make those due Friday";
+    // Stated as the last request again, beside an update, over a plan that doesn't even compile yet.
+    const remake = { ...reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$item.name" }) }] }), outcome: { effect: "change" as const, actions: ["M06.A01", "M06.A06"], destination: null } };
+    const update = { ...reply({ steps: [{ id: "s1", kind: "action", action: "M06.A06", argsJson: JSON.stringify({ taskId: "tsk_90", dueDate: "2026-10-23" }) }] }), outcome: { effect: "change" as const, actions: ["M06.A06"], destination: null } };
+    const planner = scripted(remake, update);
+    const out = await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner, clock: frozenClock() });
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A06"), JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+    assert.match(planner.requests[1]!.user, /already made 1 task record[\s\S]*look first to read which still fit/);
+    assert.doesNotMatch(planner.requests[1]!.user, /requested operation M06\.A01 is missing/);
+    // Nor when a prose reply came first, stating a change it named no actions for.
+    const prose = { ...reply({ steps: null }), type: "answer" as const, text: "I can't amend that from here.", outcome: { effect: "change" as const, actions: [], destination: null } };
+    const after = scripted(prose, remake, update);
+    const late = await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner: after, clock: frozenClock() });
+    assert.ok(late.kind === "plan" && late.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A06"), JSON.stringify(late));
+    assert.match(after.requests[2]!.user, /already made 1 task record/);
+    // Asked for more, the same outcome is the request.
+    const more = scripted({ ...createTask(), outcome: { effect: "change" as const, actions: ["M06.A01"], destination: null } });
+    assert.equal((await planTurn({ message: "Make one for Tom too", tier: "fast", ...last }, { registry, retriever, planner: more, clock: frozenClock() })).kind, "plan");
+    assert.equal(more.requests.length, 1);
+  });
+
+  test("the records a change runs on are said back once after a look; a reply that then breaks runs the plan said back", async () => {
+    const outcome = { effect: "change" as const, actions: ["M06.A05"], destination: null };
+    const read = (id: string, args: object) => ({ id, kind: "action" as const, action: "M06.A03", argsJson: JSON.stringify(args) });
+    const op = (id: string, o: Record<string, unknown>) => ({ id, kind: "op", whereJson: null, by: null, set: null, roundRobin: null, do: null, ...o }) as unknown as NonNullable<SubmitPlan["steps"]>[number];
+    const looks = reply({ type: "look", steps: [read("s1", {}), read("s2", { status: "open" })], outcome });
+    const pick = reply({ steps: [op("s3", { op: "exclude", in: "$s1.items", by: "id", set: "$s2.items[*].id" }), op("s4", { op: "forEach", in: "$s3", do: [{ action: "M06.A05", argsJson: JSON.stringify({ taskId: "$item.id", assigneeId: "us_5" }) }] })], outcome });
+    const looked = async () => [
+      { id: "s1", output: { items: [{ id: "tk_1", title: "Call Ana" }, { id: "tk_2", title: "Call Ben" }], total: 2 } },
+      { id: "s2", output: { items: [{ id: "tk_2", title: "Call Ben" }], total: 1 } },
+    ];
+    const broken = reply({ steps: [read("s5", { nope: 1 })], outcome });
+    const planner = scripted(looks, pick, broken, broken);
+    const { out } = await run("Give Kim the tasks that aren't open", planner, {}, looked);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.match(planner.requests[2]!.user, /s3 keeps 1 of the 2 \(Call Ana\) items of \$s1\.items whose id is NOT among/);
+    assert.ok(out.plan.steps.some((s) => s.id === "s3" && s.kind === "exclude"));
+    // Planned the same again, it runs; it is not said back twice.
+    const again = scripted(looks, pick, pick);
+    assert.equal((await run("Give Kim the tasks that aren't open", again, {}, looked)).out.kind, "plan");
+    assert.equal(again.requests.length, 3);
   });
 
   test("the reply after a look may name the change's actions afresh, but not turn it into a read", async () => {
@@ -854,6 +902,25 @@ describe("a planner that fails", () => {
     assert.ok(quota.out.kind === "reply" && quota.out.infra === "rate_limited");
     const garbled = await run("create a task to call Ana", failing(new PlannerError("no structured_output in reply", "bad_json")));
     assert.ok(garbled.out.kind === "reply" && garbled.out.status === "failed" && garbled.out.infra === undefined);
+  });
+
+  test("a reply that isn't JSON is asked for once more per turn; a second one ends the turn", async () => {
+    const bad = new PlannerError("fake: the reply was cut off at 8192 tokens", "bad_json");
+    const good = createTask();
+    let calls = 0;
+    const once: Planner = { name: "once", plan: async () => { if (calls++ === 0) throw bad; return { model: "fake", json: good, text: "", usage: { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0, billing: "none" }, latencyMs: 1 }; } };
+    const { out, events } = await run("create a task to call Ana", once);
+    assert.equal(out.kind, "plan", JSON.stringify(out));
+    assert.equal(calls, 2);
+    assert.ok(events.some((e) => e.type === "compile.errors" && e.data.errors.some((m) => /cut off at 8192 tokens; asked again/.test(m))));
+    let tries = 0;
+    const always: Planner = { name: "always", plan: async () => { tries++; throw bad; } };
+    const twice = await run("create a task to call Ana", always);
+    assert.ok(twice.out.kind === "reply" && twice.out.status === "failed");
+    assert.equal(tries, 2);
+    tries = 0;
+    await run("create a task to call Ana", { name: "down", plan: async () => { tries++; throw new PlannerError("HTTP 503", "provider"); } });
+    assert.equal(tries, 1, "a provider failure is not resampled here; the client already retried it");
   });
 
   test("a call that never returns is abandoned after the deadline, and told to stop", async () => {
