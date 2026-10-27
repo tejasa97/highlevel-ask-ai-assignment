@@ -1,5 +1,6 @@
 import type { CompiledPlan } from "../core/compile.js";
-import { parseRef, valueAt } from "../core/refs.js";
+import { fieldOf, matches } from "../core/execute.js";
+import { parseRef, type Ref, substitute, valueAt } from "../core/refs.js";
 import type { Candidate, RegisteredAction, Registry } from "../registry/registry.js";
 import type { Store } from "../store/db.js";
 import type { SubmitPlan } from "./submit-plan.js";
@@ -57,6 +58,81 @@ export function emptyTargets(plan: CompiledPlan, looked: { id: string; output?: 
     } catch { /* A path the look result doesn't have is the compiler's and executor's to report. */ }
   }
   return out;
+}
+
+/**
+ * Weaker models pick the records a change runs on the wrong way round (exclude last week's leads where the request
+ * keeps only those) or write out ids they picked by hand from <looked>. Before the change runs, the filter and exclude
+ * steps that choose its records are said back in plain words, with what each keeps of the records already looked at,
+ * so the planner can check them against the request once.
+ */
+export function selectionReadback(plan: CompiledPlan, looked: { id: string; output?: unknown; error?: string }[], message: string): string[] {
+  const byId = new Map(plan.steps.map((s) => [s.id, s]));
+  const values = new Map<string, unknown>(looked.filter((l) => !l.error && l.output !== undefined).map((l) => [l.id, l.output]));
+  const chain = new Set<string>();
+  const loops = plan.steps.flatMap((s) => (s.kind === "forEach" && typeof s.in === "string" && s.calls.some((c) => c.action.risk !== "read") ? [{ ...s, in: s.in }] : []));
+  for (const loop of loops) {
+    for (let at = parseRef(loop.in)?.root; at && !chain.has(at); ) {
+      const s = byId.get(at);
+      if (!s || (s.kind !== "filter" && s.kind !== "exclude")) break;
+      chain.add(at);
+      at = parseRef(s.in)?.root;
+    }
+  }
+  if (!chain.size) return [];
+  const read = (r: Ref) => {
+    if (!values.has(r.root)) throw new Error("not looked");
+    return valueAt(values.get(r.root), r.path, r.root);
+  };
+  const source = (ref: string) => {
+    const s = byId.get(parseRef(ref)?.root ?? "");
+    return s?.kind === "action" ? ` (what ${s.id}, ${s.call.action.id} ${s.call.action.name} ${JSON.stringify(s.call.args)}, found)` : "";
+  };
+  const label = (x: unknown) => {
+    const o = (x ?? {}) as Record<string, unknown>;
+    return String(o.name ?? o.title ?? o.personName ?? o.contactName ?? o.id ?? JSON.stringify(x));
+  };
+  const lines: string[] = [];
+  const handPicked: string[] = [];
+  let counted = false;
+  for (const s of plan.steps) {
+    if (!chain.has(s.id) || (s.kind !== "filter" && s.kind !== "exclude")) continue;
+    let rule: string;
+    if (s.kind === "exclude") rule = `whose ${s.by} is NOT among ${s.set}${source(s.set)}`;
+    else {
+      rule = `where ${Object.entries(s.where).map(([field, cond]) => {
+        const conds = cond && typeof cond === "object" && !Array.isArray(cond) ? Object.entries(cond) : [["eq", cond] as const];
+        return conds.map(([op, v]) => {
+          if ((op === "in" || op === "nin") && Array.isArray(v) && v.length > 1 && v.every((x) => typeof x === "string" && /^[a-z]{2,4}_\w+$/.test(x) && !message.includes(x))) handPicked.push(`${s.id} (${JSON.stringify(v)})`);
+          const what = typeof v === "string" && parseRef(v) ? `${v}${source(v)}` : JSON.stringify(v);
+          return op === "in" ? `${field} is among ${what}` : op === "nin" ? `${field} is NOT among ${what}` : `${field} ${op} ${what}`;
+        }).join(" and ");
+      }).join(" and ")}`;
+    }
+    let count = "";
+    try {
+      const list = read(parseRef(s.in)!);
+      if (Array.isArray(list)) {
+        const kept = s.kind === "filter"
+          ? list.filter((x) => matches(x, substitute(s.where, read) as Record<string, unknown>))
+          : (() => {
+              const set = new Set((read(parseRef(s.set)!) as unknown[]).map(String));
+              return list.filter((x) => !set.has(String(fieldOf(x, s.by))));
+            })();
+        values.set(s.id, kept);
+        counted = true;
+        count = ` ${kept.length} of the ${list.length}${kept.length ? ` (${kept.slice(0, 8).map(label).join(", ")}${kept.length > 8 ? ", …" : ""})` : ""}`;
+      }
+    } catch { /* Not all of it was looked at: say the rule without counts. */ }
+    lines.push(`${s.id} keeps${count} items of ${s.in} ${rule}`);
+  }
+  if (!counted && !handPicked.length) return [];
+  const runs = loops.filter((l) => chain.has(parseRef(l.in)?.root ?? "")).map((l) => `${l.id} runs ${l.calls.map((c) => c.action.id).join(" and ")} on each`);
+  return [
+    `check which records this changes before it runs: ${lines.join("; ")}; ${runs.join("; ")}. ` +
+      `If those are exactly the records the request means, plan the same again. If a step keeps what the request leaves out or drops what it keeps, turn it round: exclude drops the items whose field is among the set, and filter {"<field>":{"in":"$sN.items[*].<field>"}} keeps only those` +
+      (handPicked.length ? `. ${handPicked.join(", ")} writes out ids picked by hand; the request's own condition decides which records those are, so read what decides it (an appointment booked, a reply) and filter or exclude by a $ref to that list instead` : ""),
+  ];
 }
 
 /** Bounded, read-only identity check. Qualifiers are validated, never silently dropped. */

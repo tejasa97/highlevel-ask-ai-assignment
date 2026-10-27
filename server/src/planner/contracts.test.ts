@@ -3,7 +3,7 @@ import { before, test } from "node:test";
 import { compile } from "../core/compile.js";
 import { loadRegistry, Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
-import { checkIdentity, emptyTargets, outcomeErrors } from "./contracts.js";
+import { checkIdentity, emptyTargets, outcomeErrors, selectionReadback } from "./contracts.js";
 import type { SubmitPlan } from "./submit-plan.js";
 
 let registry: Registry;
@@ -130,4 +130,31 @@ test("course qualifiers on lessons and enrollments take the course's title as we
     assert.ok(checkIdentity({ entity: "enrollment", name: "enrollment", whereJson: JSON.stringify(where) }, registry, w.store).count >= 1, JSON.stringify(where));
   }
   assert.equal(checkIdentity({ entity: "enrollment", name: "enrollment", whereJson: JSON.stringify({ course: "No Such Course" }) }, registry, w.store).count, 0);
+});
+
+test("the records a change runs on are said back with what each filter or exclude keeps of what was looked at", () => {
+  const plan = (pick: object) => {
+    const r = compile({ type: "plan", steps: [
+      { id: "s1", kind: "action", action: "M06.A03", argsJson: "{}" },
+      { id: "s2", kind: "action", action: "M06.A03", argsJson: JSON.stringify({ status: "open" }) },
+      { id: "s3", kind: "op", op: "filter", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: null, ...pick },
+      { id: "s4", kind: "op", op: "forEach", in: "$s3", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M06.A05", argsJson: JSON.stringify({ taskId: "$item.id", assigneeId: "us_5" }) }] },
+    ], question: null, options: null, reason: null, alternatives: null, query: null, text: null } satisfies SubmitPlan, registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    return r.plan;
+  };
+  const looked = [
+    { id: "s1", output: { items: [{ id: "tk_1", title: "Call Ana" }, { id: "tk_2", title: "Call Ben" }, { id: "tk_3", title: "Call Cy" }], total: 3 } },
+    { id: "s2", output: { items: [{ id: "tk_2", title: "Call Ben" }], total: 1 } },
+  ];
+  const dropped = selectionReadback(plan({ op: "exclude", by: "id", set: "$s2.items[*].id" }), looked, "reassign the tasks");
+  assert.equal(dropped.length, 1);
+  assert.match(dropped[0]!, /s3 keeps 2 of the 3 \(Call Ana, Call Cy\) items of \$s1\.items whose id is NOT among \$s2\.items\[\*\]\.id \(what s2, M06\.A03 .*found\); s4 runs M06\.A05 on each/);
+  const kept = selectionReadback(plan({ whereJson: JSON.stringify({ id: { in: "$s2.items[*].id" } }) }), looked, "reassign the tasks");
+  assert.match(kept[0]!, /s3 keeps 1 of the 3 \(Call Ben\) items of \$s1\.items where id is among \$s2/);
+  const byHand = selectionReadback(plan({ whereJson: JSON.stringify({ id: { nin: ["tk_1", "tk_3"] } }) }), [], "reassign the tasks");
+  assert.match(byHand[0]!, /s3 \(\["tk_1","tk_3"\]\) writes out ids picked by hand/);
+  // Ids the user wrote are theirs to pick; with nothing looked at and nothing written out there is nothing to say back.
+  assert.deepEqual(selectionReadback(plan({ whereJson: JSON.stringify({ id: { nin: ["tk_1", "tk_3"] } }) }), [], "reassign all but tk_1 and tk_3"), []);
+  assert.deepEqual(selectionReadback(plan({ op: "exclude", by: "id", set: "$s2.items[*].id" }), [], "reassign the tasks"), []);
 });

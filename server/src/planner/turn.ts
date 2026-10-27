@@ -11,7 +11,7 @@ import { readOnlyIntentError, toldPart } from "./completion.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
-import { emptyTargets, outcomeErrors, type Outcome } from "./contracts.js";
+import { emptyTargets, outcomeErrors, type Outcome, selectionReadback } from "./contracts.js";
 import { assessClarification, namesField } from "./clarification.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
@@ -216,6 +216,10 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let clarifyRepaired = false;
   let lookResults: Awaited<ReturnType<NonNullable<TurnDeps["look"]>>> = [];
   let emptyChecked = false;
+  // The plan whose records were said back to the planner. It compiled and passed every check, so when the reply after
+  // it doesn't hold up, that plan runs rather than nothing.
+  let selectionChecked: CompiledPlan | undefined;
+  const failedAfterCheck = (text: string) => (selectionChecked ? { kind: "plan" as const, plan: selectionChecked, carry: carryOf(selectionChecked, registry) } : failed(text));
   let lookPlan: CompiledPlan | undefined;
   let lookSteps: Step[] = [];
   let looks = 0;
@@ -255,7 +259,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       // A malformed reply is repaired like a plan that doesn't compile: the errors go back once.
       const errors = parsed.error.issues.map((i) => `submit_plan ${i.path.join(".") || "(reply)"}: ${i.message}`);
       emit({ type: "compile.errors", data: { errors } });
-      if (repaired) return failed(`The planner's reply still didn't match submit_plan after one repair:\n${errors.join("\n")}`);
+      if (repaired) return failedAfterCheck(`The planner's reply still didn't match submit_plan after one repair:\n${errors.join("\n")}`);
       repaired = true;
       reply = await call(repairBlock(user, reply.json, errors), "repair");
       continue;
@@ -370,7 +374,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
             : [...compiled.plan.steps.flatMap((s) => callsOf(s).filter((a) => a.risk !== "read").map((a) => `${s.id}: ${a.id} is a ${a.risk} action; a look may only read`)), ...staffInQuery(compiled.plan, named)];
       if (errors.length || !compiled.ok) {
         emit({ type: "compile.errors", data: { errors } });
-        if (!mayRepair(errors)) return failed(`The plan was still invalid after repair:\n${errors.join("\n")}`);
+        if (!mayRepair(errors)) return failedAfterCheck(`The plan was still invalid after repair:\n${errors.join("\n")}`);
         unfreezeRejected();
         reply = await call(repairBlock(user, reply.json, errors), "repair");
         continue;
@@ -395,7 +399,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         const answer = outcome?.effect !== "change" ? d.text?.trim() : undefined;
         return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry), ...(answer && !RAW_ID.test(answer) ? { answer } : {}) };
       }
-      if (repaired) return failed(`The requested outcome is still incomplete:\n${errors.join("\n")}`);
+      if (repaired) return failedAfterCheck(`The requested outcome is still incomplete:\n${errors.join("\n")}`);
       repaired = true;
       emit({ type: "compile.errors", data: { errors } });
       user = prompt();
@@ -463,6 +467,14 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         reply = await call(user, "answer after look");
         continue;
       }
+      const picked = !empty.length && !selectionChecked && outcome?.effect === "change" ? selectionReadback(compiled.plan, lookResults, input.message) : [];
+      if (picked.length) {
+        selectionChecked = compiled.plan;
+        emit({ type: "compile.errors", data: { errors: picked } });
+        user = prompt();
+        reply = await call(repairBlock(user, reply.json, picked), "check selection");
+        continue;
+      }
       if (!empty.length) {
         const which = store && oneOfSameNamed(compiled.plan, named, registry, store, request);
         if (which) return { kind: "reply", status: "clarify", ...which };
@@ -477,7 +489,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       continue;
     }
     emit({ type: "compile.errors", data: { errors } });
-    if (!mayRepair(errors)) return failed(`The plan was still invalid after repair:\n${errors.join("\n")}`);
+    if (!mayRepair(errors)) return failedAfterCheck(`The plan was still invalid after repair:\n${errors.join("\n")}`);
     unfreezeRejected();
     if (compiled.ok && remakes(compiled.plan, input).length) remadeChecked = true;
     reply = await call(repairBlock(user, reply.json, errors), "repair");

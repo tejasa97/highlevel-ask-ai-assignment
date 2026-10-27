@@ -213,6 +213,28 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(more.requests.length, 1);
   });
 
+  test("the records a change runs on are said back once after a look; a reply that then breaks runs the plan said back", async () => {
+    const outcome = { effect: "change" as const, actions: ["M06.A05"], destination: null };
+    const read = (id: string, args: object) => ({ id, kind: "action" as const, action: "M06.A03", argsJson: JSON.stringify(args) });
+    const op = (id: string, o: Record<string, unknown>) => ({ id, kind: "op", whereJson: null, by: null, set: null, roundRobin: null, do: null, ...o }) as unknown as NonNullable<SubmitPlan["steps"]>[number];
+    const looks = reply({ type: "look", steps: [read("s1", {}), read("s2", { status: "open" })], outcome });
+    const pick = reply({ steps: [op("s3", { op: "exclude", in: "$s1.items", by: "id", set: "$s2.items[*].id" }), op("s4", { op: "forEach", in: "$s3", do: [{ action: "M06.A05", argsJson: JSON.stringify({ taskId: "$item.id", assigneeId: "us_5" }) }] })], outcome });
+    const looked = async () => [
+      { id: "s1", output: { items: [{ id: "tk_1", title: "Call Ana" }, { id: "tk_2", title: "Call Ben" }], total: 2 } },
+      { id: "s2", output: { items: [{ id: "tk_2", title: "Call Ben" }], total: 1 } },
+    ];
+    const broken = reply({ steps: [read("s5", { nope: 1 })], outcome });
+    const planner = scripted(looks, pick, broken, broken);
+    const { out } = await run("Give Kim the tasks that aren't open", planner, {}, looked);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.match(planner.requests[2]!.user, /s3 keeps 1 of the 2 \(Call Ana\) items of \$s1\.items whose id is NOT among/);
+    assert.ok(out.plan.steps.some((s) => s.id === "s3" && s.kind === "exclude"));
+    // Planned the same again, it runs; it is not said back twice.
+    const again = scripted(looks, pick, pick);
+    assert.equal((await run("Give Kim the tasks that aren't open", again, {}, looked)).out.kind, "plan");
+    assert.equal(again.requests.length, 3);
+  });
+
   test("the reply after a look may name the change's actions afresh, but not turn it into a read", async () => {
     const guess = { effect: "change" as const, actions: ["M06.A01", "M06.A06"], destination: null };
     const planner = scripted({ ...tasks("look"), outcome: guess }, { ...createTask(), outcome: change });
