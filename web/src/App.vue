@@ -114,7 +114,7 @@ function scrollChat() {
 function newTurn(message) {
   const t = reactive({
     id: null, message, retrieval: [], planner: [], compileErrors: [], plan: null, steps: {}, calls: [], runs: [], changes: [], audit: [],
-    pending: null, error: null, ms: 0, live: true,
+    pending: null, error: null, ms: 0, live: true, approvals: 0,
   });
   turns.push(t);
   selected.value = turns.length - 1;
@@ -122,7 +122,8 @@ function newTurn(message) {
 }
 
 function onEvent(t, name, d) {
-  const phase = t.runs.length;
+  // Calls and changes after the first approval are labelled as such; a retried plan's run is not one.
+  const phase = t.approvals;
   switch (name) {
     case "turn": t.id = d.turnId; break;
     case "retrieval": t.retrieval.push(d); break;
@@ -148,7 +149,8 @@ function onEvent(t, name, d) {
       t.changes.push(...d.changes.map((c) => ({ ...c, phase })));
       t.audit.push(...d.audit);
       break;
-    case "confirm": t.pending = d.pending; break;
+    // A retried turn waits under its own id, so the approval has to name that one, not the first attempt's.
+    case "confirm": t.id = d.turnId; t.pending = d.pending; break;
     case "reply": {
       const pending = d.status === "awaiting_confirmation" ? t.pending : null;
       const options = d.options?.length ? d.options : undefined;
@@ -206,6 +208,7 @@ async function answer(msg, approve) {
   msg.answered = approve ? "approved" : "cancelled";
   const t = turns[msg.turn];
   selected.value = msg.turn;
+  if (approve) t.approvals++;
   await run("/api/confirm", { turnId: t.id, approve }, t);
 }
 
