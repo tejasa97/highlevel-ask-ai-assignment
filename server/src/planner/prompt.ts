@@ -134,6 +134,8 @@ export interface UserBlockOptions {
   context?: string;
   /** JSON results of a look round: [{id, output | error}]. */
   looked?: string;
+  /** The ids of the looked steps, so the plan can be told where its own ids start. */
+  lookIds?: string[];
   /** A plan for this message that ran and failed before changing anything: {steps, errors}. */
   failed?: string;
 }
@@ -154,7 +156,17 @@ export function userBlock(opts: UserBlockOptions): string {
     ...(opts.failed ? [`<failed_attempt>${escape(opts.failed)}</failed_attempt>`] : []),
     `<message>${escape(opts.message)}</message>`,
     ...(opts.looked ? [`<looked>${escape(opts.looked)}</looked>`] : []),
+    ...(opts.looked && opts.lookIds?.length ? [`<new_step_ids>${newStepIds(opts.lookIds)}</new_step_ids>`] : []),
   ].join("\n");
+}
+
+/**
+ * A weaker model numbers a plan after a look from s1 again while still meaning the looked s1 by $s1, so which step a
+ * ref means comes down to a guess. Naming the first free id is easier to follow than "ids <looked> doesn't use".
+ */
+export function newStepIds(lookIds: string[]): string {
+  const next = Math.max(0, ...lookIds.map((id) => Number(/^s(\d+)/.exec(id)?.[1] ?? 0))) + 1;
+  return `${lookIds.map((id) => `$${id}`).join(", ")} are the looked steps; number this reply's steps from s${next} (s${next}, s${next + 1}, …)`;
 }
 
 const mention = (m: { name: string; entity: string; count: number; of?: string }) => `${m.name}: ${m.count > 1 ? `${m.count} ${m.entity}s` : m.entity}${m.of ? ` (${m.of}'s own; resolve name ${JSON.stringify(m.name)} with whereJson {"contact":${JSON.stringify(m.of)}})` : ""}`;

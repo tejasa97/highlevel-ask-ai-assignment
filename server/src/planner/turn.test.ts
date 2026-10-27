@@ -648,7 +648,9 @@ describe("planTurn", () => {
       assert.deepEqual(ran, [["M06.A03"]]);
       assert.equal(planner.requests.length, 2);
       assert.match(planner.requests[1]!.user, /<looked>\[\{"id":"s1","output":\{"items":\[\{"title":"Call Ana &lt;soon&gt;"\}\]/);
-      assert.doesNotMatch(planner.requests[0]!.user, /<looked>/);
+      // The plan after it is told where its own ids start, so $s1 can only mean the looked s1.
+      assert.match(planner.requests[1]!.user, /<new_step_ids>\$s1 are the looked steps; number this reply's steps from s2 \(s2, s3, …\)<\/new_step_ids>/);
+      assert.doesNotMatch(planner.requests[0]!.user, /<looked>|<new_step_ids>/);
     });
 
     test("a ref to a look step re-runs that read as part of the plan, with no repair round", async () => {
