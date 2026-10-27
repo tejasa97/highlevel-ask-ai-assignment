@@ -49,49 +49,56 @@ const onTurn = (e: TurnEvent) => {
   }
 };
 const deps = { registry, retriever, planner, clock, store };
-const outcome = await planTurn({ message, tier }, deps, onTurn);
-if (outcome.kind === "reply") {
-  console.log(`\n[${outcome.status}] ${outcome.text}`);
-  if (outcome.options?.length) console.log(`options: ${outcome.options.join(" | ")}`);
-  done(outcome.status === "failed" ? 1 : 0);
-}
-let plan: CompiledPlan = outcome.plan;
-printPlan(plan);
+// Returns the exit code rather than calling process.exit(): exiting while the embedding model's onnxruntime threads
+// are still up aborts the process ("mutex lock failed", status 134) on macOS. A natural exit shuts them down first.
+process.exitCode = await main();
+console.log(`\n${timings.join(" · ")}`);
 
-let executionId = `ex_${plan.hash}_${Date.now().toString(36)}`;
-let t = performance.now();
-let run: RunResult = await execute(plan, registry, { store, clock }, { executionId, onEvent: debug ? (e) => console.log("  ·", JSON.stringify(e)) : undefined });
-timings.push(`execute ${Math.round(performance.now() - t)} ms`);
-// As in the app: a run that failed before any write, on something another plan could fix, gets one more plan.
-const failed = run.writesAttempted === false ? retryable(plan, run) : undefined;
-if (failed) {
-  const retry = await planTurn({ message, tier, failed }, deps, onTurn);
-  if (retry.kind === "reply") {
-    console.log(`\n[${retry.status}] ${retry.text}`);
-    done(retry.status === "failed" ? 1 : 0);
+async function main(): Promise<number> {
+  const outcome = await planTurn({ message, tier }, deps, onTurn);
+  if (outcome.kind === "reply") {
+    console.log(`\n[${outcome.status}] ${outcome.text}`);
+    if (outcome.options?.length) console.log(`options: ${outcome.options.join(" | ")}`);
+    return outcome.status === "failed" ? 1 : 0;
   }
-  plan = retry.plan;
-  executionId += "_replan";
+  let plan: CompiledPlan = outcome.plan;
   printPlan(plan);
-  run = await execute(plan, registry, { store, clock }, { executionId });
-}
 
-while (run.status === "awaiting_confirmation") {
-  console.log(`\n${summarize(plan, run, registry)}`);
-  for (const p of run.pending!.preview) console.log(`  - ${p.name}${p.label ? ` [${p.label}]` : ""} ${JSON.stringify(p.args)}`);
-  if (run.pending!.count * 2 > run.pending!.preview.length && run.pending!.preview.length >= 10) console.log("  …");
-  if (!(await confirm())) {
-    console.log("Cancelled. Nothing was changed by that step.");
-    done();
+  let executionId = `ex_${plan.hash}_${Date.now().toString(36)}`;
+  let t = performance.now();
+  let run: RunResult = await execute(plan, registry, { store, clock }, { executionId, onEvent: debug ? (e) => console.log("  ·", JSON.stringify(e)) : undefined });
+  timings.push(`execute ${Math.round(performance.now() - t)} ms`);
+  // As in the app: a run that failed before any write, on something another plan could fix, gets one more plan.
+  const failed = run.writesAttempted === false ? retryable(plan, run) : undefined;
+  if (failed) {
+    const retry = await planTurn({ message, tier, failed }, deps, onTurn);
+    if (retry.kind === "reply") {
+      console.log(`\n[${retry.status}] ${retry.text}`);
+      return retry.status === "failed" ? 1 : 0;
+    }
+    plan = retry.plan;
+    executionId += "_replan";
+    printPlan(plan);
+    run = await execute(plan, registry, { store, clock }, { executionId });
   }
-  t = performance.now();
-  run = await execute(plan, registry, { store, clock }, { executionId, approvals: [run.pending!] });
-  timings.push(`resume ${Math.round(performance.now() - t)} ms`);
-}
 
-console.log(`\n[${run.status}]\n${summarize(plan, run, registry)}`);
-if (debug) console.log(JSON.stringify(run.steps, null, 1));
-done();
+  while (run.status === "awaiting_confirmation") {
+    console.log(`\n${summarize(plan, run, registry)}`);
+    for (const p of run.pending!.preview) console.log(`  - ${p.name}${p.label ? ` [${p.label}]` : ""} ${JSON.stringify(p.args)}`);
+    if (run.pending!.count * 2 > run.pending!.preview.length && run.pending!.preview.length >= 10) console.log("  …");
+    if (!(await confirm())) {
+      console.log("Cancelled. Nothing was changed by that step.");
+      return 0;
+    }
+    t = performance.now();
+    run = await execute(plan, registry, { store, clock }, { executionId, approvals: [run.pending!] });
+    timings.push(`resume ${Math.round(performance.now() - t)} ms`);
+  }
+
+  console.log(`\n[${run.status}]\n${summarize(plan, run, registry)}`);
+  if (debug) console.log(JSON.stringify(run.steps, null, 1));
+  return 0;
+}
 
 async function confirm(): Promise<boolean> {
   if (flags.has("--yes")) {
@@ -116,9 +123,4 @@ function printPlan(p: CompiledPlan): void {
       : `forEach ${s.in}${s.roundRobin ? ` roundRobin ${s.roundRobin}` : ""}: ${s.calls.map((c) => `${c.action.id} ${JSON.stringify(c.args)}`).join(" ; ")}`;
     console.log(`  ${s.id}  ${body}`);
   }
-}
-
-function done(code = 0): never {
-  console.log(`\n${timings.join(" · ")}`);
-  process.exit(code);
 }
