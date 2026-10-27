@@ -147,6 +147,11 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
         if (s.op !== "forEach" && itemEnt && !itemEnt.ids) ents.set(s.id, itemEnt.entity);
 
         if (s.op === "filter") {
+          // A filter that keeps everything only names its list; the steps that read it can point at that list.
+          if (!s.whereJson?.trim()) {
+            err(`a filter needs whereJson, the condition the items it keeps meet. Without one it keeps all of ${JSON.stringify(s.in)}: where a step reads $${s.id}, write that list instead`);
+            continue;
+          }
           const where = parseObject(s.whereJson, "whereJson", err);
           if (!where) continue;
           checkWhere(where, item, scope, err);
@@ -430,6 +435,7 @@ type RawStep = NonNullable<SubmitPlan["steps"]>[number];
 /**
  * Slips with only one reading, rewritten rather than sent back, so a repair round goes on what is really wrong:
  * - an exclude whose "set" is written out (["ld_1"]) is a filter on "by" not in those values;
+ * - a filter with no condition that no step reads does nothing, so it goes;
  * - a step that reads a step listed after it runs after it: the plan is a graph, so the order it was written in is not
  *   the order it must run in. A cycle is left for compile to report.
  */
@@ -441,6 +447,10 @@ export function tidy(steps: RawStep[]): RawStep[] {
     }
     return s;
   });
+  const empty = (s: RawStep) => s.kind === "op" && s.op === "filter" && !s.whereJson?.trim();
+  const reads = (s: RawStep) => out.some((x) => x !== s && [...JSON.stringify(x).matchAll(/\$([A-Za-z_]\w*)/g)].some((m) => m[1] === s.id));
+  const kept = out.filter((s) => !empty(s) || reads(s));
+  if (kept.length && kept.length < out.length) return tidy(kept);
   const ids = new Set(out.map((s) => s.id));
   const needs = new Map(out.map((s) => [s.id, new Set([...JSON.stringify(s).matchAll(/\$([A-Za-z_]\w*)/g)].map((m) => m[1]!).filter((r) => r !== s.id && ids.has(r)))]));
   const order: RawStep[] = [];

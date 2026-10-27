@@ -231,8 +231,9 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   // Identity checks already run, by "entity:name": one more is allowed for a different record ("Sales" then "Noah").
   const checkedIdentity: string[] = [];
   const deliverySurfaces = registry.deliverySurfaces();
+  let lookSteps: Step[] = [];
   const prompt = () =>
-    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, failed: input.failed, looked, deliverySurfaces, identityCheck, outcome });
+    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, failed: input.failed, looked, lookIds: lookSteps.map((l) => l.id), deliverySurfaces, identityCheck, outcome });
   let resampled = false;
   const budget = turnBudget(deps);
   const call = async (user: string, label: string) => {
@@ -283,7 +284,6 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let selectionChecked: CompiledPlan | undefined;
   const failedAfterCheck = (text: string) => (selectionChecked ? { kind: "plan" as const, plan: selectionChecked, carry: carryOf(selectionChecked, registry) } : failed(text));
   let lookPlan: CompiledPlan | undefined;
-  let lookSteps: Step[] = [];
   let looks = 0;
   let lookClosed = false;
   const runLook = async (plan: CompiledPlan, steps: Step[]) => {

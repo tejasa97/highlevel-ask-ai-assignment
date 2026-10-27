@@ -274,6 +274,16 @@ describe("ref errors name the legal steps", () => {
     assert.match(cycle.errors.join("\n"), /\$s2 comes later in your plan; list it before this step/);
   });
 
+  test("a filter with no condition goes when no step reads it; one that is read says to write its list there", () => {
+    const loop = op("s4", "forEach", { in: "$s1.items", do: [{ action: "M03.A05", args: { leadId: "$item.id", ownerId: "us_1" } }] });
+    const r = compile(plan([action("s1", "M03.A03", {}), op("s2", "filter", { in: "$s1.items" }), op("s3", "filter", { in: "$s2" }), loop]), registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    assert.deepEqual(r.plan.steps.map((s) => s.id), ["s1", "s4"]);
+    const read = compile(plan([action("s1", "M03.A03", {}), op("s2", "filter", { in: "$s1.items[*].id" }), op("s3", "filter", { in: "$s1.items", where: { id: { in: "$s2" } } })]), registry);
+    assert.ok(!read.ok);
+    assert.match(read.errors.join("\n"), /step s2: a filter needs whereJson.*keeps all of "\$s1\.items\[\*\]\.id": where a step reads \$s2, write that list instead/);
+  });
+
   test("a {{template}} holding an expression is refused, since nothing in it would be computed", () => {
     const r = compile(plan([action("s1", "M06.A03", {}), action("s2", "M06.A06", { taskId: "{{$s1.items[0].id === 'tk_1' ? 'tk_2' : 'tk_3'}}", dueDate: "2026-10-22" })]), registry);
     assert.ok(!r.ok);
