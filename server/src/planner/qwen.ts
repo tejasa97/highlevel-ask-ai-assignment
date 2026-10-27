@@ -61,12 +61,14 @@ export class QwenPlanner implements Planner {
 
     const started = performance.now();
     const strict = this.strictFor(model);
-    let { response, raw, body } = await this.send(model, req, signal);
+    let { response, raw, body, attempts } = await this.send(model, req, signal);
     // A model can lose json_schema without warning, and failing every turn over the format is worse than
     // asking without it: retry once as json_object and remember the model for the rest of the process.
     if (response.status === 400 && strict && formatRejected(raw, body)) {
       this.noSchema.add(model);
-      ({ response, raw, body } = await this.send(model, req, signal));
+      const again = await this.send(model, req, signal);
+      ({ response, raw, body } = again);
+      attempts += again.attempts;
     }
 
     if (!response.ok) {
@@ -95,6 +97,7 @@ export class QwenPlanner implements Planner {
       json,
       text: content,
       latencyMs: performance.now() - started,
+      attempts,
       usage: { ...parseUsage(record(body)?.usage), billing: "subscription", costUsd: null },
     };
   }
@@ -127,8 +130,10 @@ export class QwenPlanner implements Planner {
     // One retry for a dropped connection, a gateway error or a short rate-limit wait;
     // a quota or a bad request fails at once, so the caller sees it.
     let response: Response | undefined;
+    let attempts = 0;
     for (let attempt = 0; !response; attempt++) {
       let retryIn: number;
+      attempts++;
       try {
         const reply = await fetch(this.endpoint, {
           method: "POST",
@@ -170,7 +175,7 @@ export class QwenPlanner implements Planner {
     } catch {
       body = undefined;
     }
-    return { response, raw, body };
+    return { response, raw, body, attempts };
   }
 }
 

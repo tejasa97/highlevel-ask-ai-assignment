@@ -501,3 +501,55 @@ describe("a create whose record is already there", () => {
     assert.equal(alone.steps[0]!.error?.code, "DUPLICATE");
   });
 });
+
+describe("writes over a search see every match", () => {
+  const tagged = (n: number) => {
+    const ctx = fresh();
+    const { id: _, ...base } = ctx.store.get<Record<string, unknown>>("contacts", "ct_1")!;
+    for (let i = 0; i < n; i++) ctx.store.insert("contacts", "ct", { ...base, firstName: `Bulk${i}`, email: `bulk${i}@example.com`, tags: ["bulk"] });
+    return ctx;
+  };
+  const bulk = (limit?: number) =>
+    compiled(plan([
+      action("s1", "M01.A03", { tag: "bulk", ...(limit ? { limit } : {}) }),
+      op("s2", "forEach", { in: "$s1.items", do: [{ action: "M01.A04", args: { contactId: "$item.id", company: "Bulk Co" } }] }),
+    ]));
+  const changed = (ctx: ReturnType<typeof fresh>) => ctx.store.all<{ company: string }>("contacts").filter((c) => c.company === "Bulk Co").length;
+
+  test("a loop over 120 matches changes all 120, not the first page", async () => {
+    const ctx = tagged(120), p = bulk();
+    const first = await execute(p, registry, ctx, { executionId: "bulk-120" });
+    assert.equal(first.status, "awaiting_confirmation");
+    assert.equal(first.pending?.count, 120);
+    const r = await execute(p, registry, ctx, { executionId: "bulk-120", approvals: [first.pending!] });
+    assert.equal(r.status, "done");
+    assert.equal(changed(ctx), 120);
+  });
+  test("more matches than one search loads: refuses and changes nothing", async () => {
+    const ctx = tagged(600);
+    const r = await execute(bulk(), registry, ctx, { executionId: "bulk-600" });
+    assert.equal(r.status, "failed");
+    assert.match(r.steps.at(-1)!.error!.message, /matched 600 records but one search loads at most 500, so nothing was changed/);
+    assert.equal(changed(ctx), 0);
+  });
+  test("a filter over a short search is short too", async () => {
+    const ctx = tagged(600);
+    const p = compiled(plan([
+      action("s1", "M01.A03", { tag: "bulk" }),
+      op("s2", "filter", { in: "$s1.items", where: { tags: { contains: "bulk" } } }),
+      op("s3", "forEach", { in: "$s2.items", do: [{ action: "M01.A04", args: { contactId: "$item.id", company: "Bulk Co" } }] }),
+    ]));
+    const r = await execute(p, registry, ctx, { executionId: "bulk-filter" });
+    assert.equal(r.status, "failed");
+    assert.match(r.steps.at(-1)!.error!.message, /\$s1 matched 600/);
+    assert.equal(changed(ctx), 0);
+  });
+  test("a limit the plan asked for is kept", async () => {
+    const ctx = tagged(120), p = bulk(10);
+    const first = await execute(p, registry, ctx, { executionId: "bulk-10" });
+    assert.equal(first.pending?.count, 10);
+    const r = await execute(p, registry, ctx, { executionId: "bulk-10", approvals: [first.pending!] });
+    assert.equal(r.status, "done");
+    assert.equal(changed(ctx), 10);
+  });
+});

@@ -6,7 +6,7 @@
 import { compile, type CompiledPlan } from "../core/compile.js";
 import { execute, type Pending, type RunResult } from "../core/execute.js";
 import { userBlock } from "../planner/prompt.js";
-import { type Carry, carryOf, type InfraKind, PLANNER_TIMEOUT_MS, withDeadline } from "../planner/turn.js";
+import { type Carry, callTrace, carryOf, type InfraKind, PLANNER_TIMEOUT_MS, TurnStopped, withDeadline } from "../planner/turn.js";
 import { type Planner, PlannerError, type Tier } from "../planner/types.js";
 import type { CallTrace } from "../registry/define.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
@@ -96,6 +96,7 @@ interface Turn {
   named: { name: string; entity: string; count: number }[];
   ran: CompiledPlan[];
   pending?: { plan: CompiledPlan; executionId: string; approval: Pending; label: string };
+  signal?: AbortSignal;
 }
 
 export class BaselineConversation {
@@ -116,7 +117,7 @@ export class BaselineConversation {
     this.history.length = 0;
   }
 
-  async ask(message: string, tier: Tier, actorId: string, emit: Emit): Promise<void> {
+  async ask(message: string, tier: Tier, actorId: string, emit: Emit, signal?: AbortSignal): Promise<void> {
     const { registry, retriever } = this.deps;
     const id = `t${this.turns.size + 1}_${Date.now().toString(36)}`;
     emit("turn", { turnId: id, message });
@@ -134,6 +135,7 @@ export class BaselineConversation {
       ran: [],
       context: this.history.length ? this.history.slice(-HISTORY_TURNS).map((h) => `user: ${h.user}\nassistant: ${h.assistant}`).join("\n") : undefined,
       named: mentions(query, registry, this.world.store),
+      signal,
     };
     this.turns.set(id, turn);
     await shortlist(turn, retriever, registry, query, this.carry, emit);
@@ -209,6 +211,7 @@ export class BaselineConversation {
         return this.close(turn, outcome(acted.map((s) => s.action!)), text, emit);
       }
     } catch (err) {
+      if (err instanceof TurnStopped) return this.close(turn, "failed", err.message, emit);
       if (!(err instanceof PlannerError)) throw err;
       const text = err.kind === "timeout" ? `${err.message}. Please try again.` : `The model failed: ${err.message}`;
       return this.close(turn, "failed", text, emit, undefined, err.kind === "bad_json" ? undefined : err.kind);
@@ -224,10 +227,12 @@ export class BaselineConversation {
     ].join("\n");
     const label = `step ${turn.rounds}`;
     emit("planner.request", { label, tier: turn.tier, system: BASELINE_SYSTEM, user, actions: turn.offered.map((a) => a.id) });
-    const r = await withDeadline(this.deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, (signal) =>
-      this.deps.planner.plan({ tier: turn.tier, system: BASELINE_SYSTEM, user, schema: BASELINE_SCHEMA, signal }),
+    const r = await withDeadline(
+      this.deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS,
+      (signal) => this.deps.planner.plan({ tier: turn.tier, system: BASELINE_SYSTEM, user, schema: BASELINE_SCHEMA, signal }),
+      turn.signal,
     );
-    emit("planner.reply", { label, model: r.model, latencyMs: Math.round(r.latencyMs), usage: r.usage, json: r.json });
+    emit("planner.reply", { ...callTrace(label, turn.rounds, BASELINE_SYSTEM, user, r), json: r.json });
     return r.json;
   }
 

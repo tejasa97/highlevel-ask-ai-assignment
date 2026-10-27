@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { compile, type CompiledPlan } from "../core/compile.js";
 import { narrowByRequest } from "../core/execute.js";
 import { lowerLookups } from "../core/lookups.js";
@@ -19,11 +20,17 @@ import { assessClarification, namesField } from "./clarification.js";
 //   planner says is missing), at most two look rounds (read-only steps run now, their results fed back, so a
 //   value can be worked out from a record: "same time, on Monday"; a second may build on the first) and at most
 //   one repair round (compile errors fed back; a second when the first left fewer errors), plus at most one repair of a malformed clarification (its own allowance, so it can't use up the plan's) and at most
-//   one grounded identity clarification retry → a compiled plan or a reply. At most six calls. The plan may only use
+//   one grounded identity clarification retry → a compiled plan or a reply. The plan may only use
 //   actions the planner was shown.
+// Every turn also has a budget: at most MAX_PLANNER_CALLS calls, TURN_DEADLINE_MS of wall clock across them, and
+// none at all once the caller's signal aborts (the client went away). A spent budget ends the turn with a reply.
 
 /** How long one planner call may take before the turn gives up on it. */
 export const PLANNER_TIMEOUT_MS = 120_000;
+/** Planner calls one turn may make. Turns in the evals use 1–3, and 8 at the most. */
+export const MAX_PLANNER_CALLS = 8;
+/** How long one turn may spend planning, across all its calls. */
+export const TURN_DEADLINE_MS = 180_000;
 
 export interface TurnDeps {
   registry: Registry;
@@ -34,6 +41,12 @@ export interface TurnDeps {
   store?: Store;
   /** Per planner call; defaults to PLANNER_TIMEOUT_MS. */
   plannerTimeoutMs?: number;
+  /** Defaults to MAX_PLANNER_CALLS. */
+  maxPlannerCalls?: number;
+  /** For the whole turn; defaults to TURN_DEADLINE_MS. */
+  turnDeadlineMs?: number;
+  /** Aborted when nobody is waiting for the turn any more: the call in flight is dropped and no other starts. */
+  signal?: AbortSignal;
   /** Runs a read-only plan and gives back each step's output, for a look round. Without it, look isn't offered. */
   look?: (plan: CompiledPlan) => Promise<{ id: string; output?: unknown; error?: string }[]>;
 }
@@ -63,7 +76,7 @@ export interface Carry {
 export type TurnEvent =
   | { type: "retrieval"; data: RetrievalTrace }
   | { type: "planner.request"; data: { label: string; tier: Tier; system: string; user: string; actions: string[] } }
-  | { type: "planner.reply"; data: { label: string; model: string; latencyMs: number; usage: PlanResult["usage"]; json: unknown } }
+  | { type: "planner.reply"; data: PlannerCallTrace & { json: unknown } }
   | { type: "compile.errors"; data: { errors: string[] } };
 
 export type TurnOutcome =
@@ -84,6 +97,47 @@ export type TurnOutcome =
     };
 
 export type InfraKind = Exclude<PlannerError["kind"], "bad_json">;
+
+/** One planner call, as the execution trace keeps it. */
+export interface PlannerCallTrace {
+  label: string;
+  /** 1-based, within the turn. */
+  call: number;
+  model: string;
+  /** Hashes of the system prompt (the cacheable prefix, which should never change) and of system + user. */
+  systemHash: string;
+  promptHash: string;
+  latencyMs: number;
+  /** Model time the provider reported; latencyMs minus this is client and process overhead. */
+  apiMs?: number;
+  /** Requests the provider sent, its own retries included. */
+  attempts: number;
+  modelCalls: number;
+  /** A repair round: compile or outcome errors fed back. */
+  repair: boolean;
+  usage: PlanResult["usage"];
+}
+
+export function callTrace(label: string, call: number, system: string, user: string, r: PlanResult): PlannerCallTrace {
+  return {
+    label,
+    call,
+    model: r.model,
+    systemHash: hash(system),
+    promptHash: hash(`${system}\n${user}`),
+    latencyMs: Math.round(r.latencyMs),
+    ...(r.apiMs !== undefined ? { apiMs: Math.round(r.apiMs) } : {}),
+    attempts: r.attempts ?? 1,
+    modelCalls: r.modelCalls ?? 1,
+    repair: label.startsWith("repair"),
+    usage: r.usage,
+  };
+}
+
+const hash = (text: string) => createHash("sha256").update(text).digest("hex").slice(0, 12);
+
+/** The turn stopped on its own budget or because its caller went away, not on a provider failure. */
+export class TurnStopped extends Error {}
 
 export interface RetrievalTrace {
   mode: Retrieval["mode"];
@@ -106,7 +160,9 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
   try {
     return await planTurnUnguarded(input, deps, emit);
   } catch (err) {
-    // A provider failure or a call that never returned ends the turn with a reply; anything else is a bug and surfaces.
+    // A provider failure, a call that never returned or a spent budget ends the turn with a reply; anything else is
+    // a bug and surfaces.
+    if (err instanceof TurnStopped) return failed(err.message);
     if (!(err instanceof PlannerError)) throw err;
     const text = err.kind === "timeout" ? `${err.message}. Nothing was changed; please try again.` : `The planner failed: ${err.message}`;
     return failed(text, err.kind === "bad_json" ? undefined : err.kind);
@@ -178,21 +234,27 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   const prompt = () =>
     userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, failed: input.failed, looked, deliverySurfaces, identityCheck, outcome });
   let resampled = false;
+  const budget = turnBudget(deps);
   const call = async (user: string, label: string) => {
     emit({ type: "planner.request", data: { label, tier: input.tier, system: SYSTEM, user, actions: offered.map((a) => a.id) } });
-    const ask = () => withDeadline(deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }));
-    let r: PlanResult;
+    // A resample is a call of its own, so it takes from the turn's budget too.
+    const ask = () => {
+      const { n, ms } = budget.next();
+      return withDeadline(ms, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }), deps.signal).then((r) => ({ r, n }));
+    };
+    let got: { r: PlanResult; n: number };
     try {
-      r = await ask();
+      got = await ask();
     } catch (err) {
       // A reply that isn't JSON (often a weaker model looping until the token cap) is a bad sample of a good request,
       // and there are no errors to repair it with: ask the same thing once more per turn.
       if (!(err instanceof PlannerError) || err.kind !== "bad_json" || resampled) throw err;
       resampled = true;
       emit({ type: "compile.errors", data: { errors: [`${err.message}; asked again`] } });
-      r = await ask();
+      got = await ask();
     }
-    emit({ type: "planner.reply", data: { label, model: r.model, latencyMs: Math.round(r.latencyMs), usage: r.usage, json: r.json } });
+    const { r, n } = got;
+    emit({ type: "planner.reply", data: { ...callTrace(label, n, SYSTEM, user, r), json: r.json } });
     return r;
   };
 
@@ -768,20 +830,51 @@ export function carryOf(plan: CompiledPlan, registry: Registry): Carry {
   return { prev, entities, ...(made.length ? { made } : {}) };
 }
 
-/** Runs `fn`, aborting its signal and rejecting if it hasn't settled after `ms`. */
-export async function withDeadline<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<T> {
+/**
+ * Hands out one turn's planner calls: each gets its number and how long it may take (the per-call timeout, or
+ * what is left of the turn's deadline if that is less). Throws once the calls or the time are spent, or the
+ * caller has gone.
+ */
+export function turnBudget(deps: Pick<TurnDeps, "plannerTimeoutMs" | "maxPlannerCalls" | "turnDeadlineMs" | "signal">) {
+  const max = deps.maxPlannerCalls ?? MAX_PLANNER_CALLS;
+  const deadlineMs = deps.turnDeadlineMs ?? TURN_DEADLINE_MS;
+  const ends = performance.now() + deadlineMs;
+  let n = 0;
+  return {
+    next(): { n: number; ms: number } {
+      if (deps.signal?.aborted) throw cancelled();
+      if (n >= max) throw new TurnStopped(`The planner used all ${max} of its calls for this message without settling on a plan. Nothing was changed; please rephrase it or split it up.`);
+      const left = ends - performance.now();
+      if (left <= 0) throw new PlannerError(`The planner used all ${Math.round(deadlineMs / 1000)} s this message may take`, "timeout");
+      return { n: ++n, ms: Math.min(deps.plannerTimeoutMs ?? PLANNER_TIMEOUT_MS, left) };
+    },
+  };
+}
+
+const cancelled = () => new TurnStopped("The request was cancelled. Nothing was changed.");
+
+/** Runs `fn`, aborting its signal and rejecting if it hasn't settled after `ms` or once `parent` aborts. */
+export async function withDeadline<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>, parent?: AbortSignal): Promise<T> {
+  if (parent?.aborted) throw cancelled();
   const ctl = new AbortController();
   let timer: NodeJS.Timeout | undefined;
+  let onAbort: (() => void) | undefined;
   const expired = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
       ctl.abort();
       reject(new PlannerError(`The planner didn't answer within ${Math.round(ms / 1000)} s`, "timeout"));
     }, ms);
+    onAbort = () => {
+      ctl.abort();
+      reject(cancelled());
+    };
+    parent?.addEventListener("abort", onAbort, { once: true });
   });
   try {
     return await Promise.race([fn(ctl.signal), expired]);
   } finally {
     clearTimeout(timer);
+    parent?.removeEventListener("abort", onAbort!);
   }
 }
 

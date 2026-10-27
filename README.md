@@ -238,6 +238,21 @@ The prompt doesn't grow with the catalog. The planner sees a fixed shortlist of 
 - **Evals.** The suites are per module group, so new modules add their own sets without touching the regression fingerprint. A full run at this size costs real planner quota, so CI should run the regression set and sample the rest.
 - **Execution and gates.** These scale per request, not per catalog. Risk comes from each action's registered `risk` (`read`, `write`, `destructive` or `external`), so a new action gets approval gates without any new gate code.
 
+## The Claude CLI planner, and what it can't measure
+
+The default planner (`server/src/planner/claude-cli.ts`) runs `claude -p` on a Claude subscription, with a clean environment, no tools and a JSON-schema output. This project has no Anthropic API key, and a subscription login must not be used for raw API calls, so that's how every benchmark number was measured. It has four limits, also listed in [BENCHMARK.md](BENCHMARK.md):
+
+- **Cost is an estimate.** Dollars are Claude Code's own figure at API list prices (`total_cost_usd`); nothing was billed. Input, cache-read, cache-write, output and thinking tokens are reported separately, and the benchmark leads with tokens and model calls.
+- **No temperature control,** so every scenario runs three times.
+- **No control over cache breakpoints.** Claude Code places them. The app keeps the system prompt byte-identical between calls so the prefix can be read from cache.
+- **Latency includes the CLI.** Each call starts a `claude` process (about 0.7 s). The planner answers as soon as the result JSON is printed, without waiting about 0.8 s for the process to exit, and records the CLI's reported model time (`apiMs`) beside the wall clock.
+
+**Every turn has a budget** (`server/src/planner/turn.ts`): at most 8 planner calls, repairs and look-ups included, and 180 seconds. Each call's timeout is cut to whatever time the turn has left. A web client that closes the stream (a closed tab, a reload) aborts the call in flight and kills the `claude` process. A turn that runs out of budget, or is cancelled, changes nothing. Approved runs are not cancelled by a disconnect.
+
+**Every planner call is traced.** The `planner.reply` event, and `plannerCalls` on each turn in `eval/results/*.json`, record the call number, model, a hash of the system prompt and of the user prompt, wall-clock and model latency, provider attempts, model requests, whether it was a repair, and token usage.
+
+**A new provider is one file.** `server/src/planner/qwen.ts` is a direct HTTP provider (OpenAI-compatible chat completions, JSON-schema output, retries with backoff, timeouts) behind the same `Planner` interface in `server/src/planner/types.ts`. Adding it took that file and one branch in `makePlanner` (`server/src/planner/index.ts`); nothing in retrieval, compiling, execution or approval changed. An Anthropic API provider would be the same shape.
+
 ## Layout
 
 ```

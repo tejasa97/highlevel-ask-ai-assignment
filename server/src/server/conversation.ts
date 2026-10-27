@@ -60,7 +60,8 @@ export class Conversation {
     this.records = [];
   }
 
-  async ask(message: string, tier: Tier, actorId: string, emit: Emit): Promise<void> {
+  /** `signal` aborts when the client stops listening: planning stops, and a plan already made doesn't run. */
+  async ask(message: string, tier: Tier, actorId: string, emit: Emit, signal?: AbortSignal): Promise<void> {
     const { registry, retriever, planner } = this.deps;
     const turnId = `t${this.turns.size + 1}_${Date.now().toString(36)}`;
     emit("turn", { turnId, message });
@@ -81,10 +82,11 @@ export class Conversation {
     for (let attempt = 0; attempt < 2; attempt++) {
       const outcome = await planTurn(
         { message, tier, context, carry: this.carry, answering, records: this.records, failed },
-        { registry, retriever, planner, clock: this.world.clock, store: this.world.store, look },
+        { registry, retriever, planner, clock: this.world.clock, store: this.world.store, look, signal },
         (e) => emit(e.type, e.data),
       );
       if (outcome.kind === "reply") return this.finish(message, outcome.status, outcome.text, emit, outcome.options, outcome.infra);
+      if (signal?.aborted) return this.finish(message, "failed", "The request was cancelled. Nothing was changed.", emit);
       this.carry = outcome.carry;
       const id = attempt ? `${turnId}_retry` : turnId;
       const turn: Turn = { id, message, request, plan: outcome.plan, executionId: `ex_${id}`, answer: outcome.answer };

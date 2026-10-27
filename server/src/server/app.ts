@@ -38,14 +38,21 @@ export function createApp({ registry, planner, retriever, openWorld }: AppDeps):
     res.end(JSON.stringify(data));
   }
 
-  async function stream(res: ServerResponse, fn: (emit: Emit) => Promise<void>): Promise<void> {
+  async function stream(res: ServerResponse, fn: (emit: Emit, signal: AbortSignal) => Promise<void>): Promise<void> {
     if (busy) return json(res, 409, { error: "Another request is still running" });
     busy = true;
     res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
-    const emit: Emit = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    // The client closing the stream before it ends (a closed tab, a reload) stops the turn, and frees `busy` sooner.
+    const gone = new AbortController();
+    res.on("close", () => {
+      if (!res.writableEnded) gone.abort();
+    });
+    const emit: Emit = (event, data) => {
+      if (!res.writableEnded && !res.destroyed) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
     const t = performance.now();
     try {
-      await fn(emit);
+      await fn(emit, gone.signal);
     } catch (err) {
       emit("error", { message: err instanceof Error ? err.message : String(err) });
     } finally {
@@ -64,7 +71,7 @@ export function createApp({ registry, planner, retriever, openWorld }: AppDeps):
         const message = String(b.message ?? "").trim();
         if (!message) return json(res, 400, { error: "message is required" });
         const tier: Tier = b.tier === "fast" ? "fast" : "strong";
-        return stream(res, (emit) => chat.ask(message, tier, String(b.actorId ?? DEFAULT_ACTOR), emit));
+        return stream(res, (emit, signal) => chat.ask(message, tier, String(b.actorId ?? DEFAULT_ACTOR), emit, signal));
       }
       if (req.method === "POST" && path === "/api/confirm") {
         const b = await body(req);

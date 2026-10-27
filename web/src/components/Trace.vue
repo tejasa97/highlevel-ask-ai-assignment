@@ -4,8 +4,15 @@ import Json from "./Json.vue";
 
 const props = defineProps({ turn: { type: Object, required: true } });
 
-const tokens = (u) => `${u.input.toLocaleString()} in (${u.cachedRead.toLocaleString()} cached) · ${u.output.toLocaleString()} out${u.thinking ? ` + ${u.thinking.toLocaleString()} reasoning` : ""}`;
+const tokens = (u) => `${u.input.toLocaleString()} in (${u.cachedRead.toLocaleString()} cached${u.cacheWrite ? `, ${u.cacheWrite.toLocaleString()} written` : ""}) · ${u.output.toLocaleString()} out${u.thinking ? ` + ${u.thinking.toLocaleString()} reasoning` : ""}`;
 const cost = (u) => u.billing === "subscription" ? "subscription usage" : u.costUsd == null ? "USD unavailable" : `$${u.costUsd.toFixed(4)}${u.billing === "api_estimate" ? " (API estimate)" : ""}`;
+// What a trace adds beyond time and tokens: model time inside the wall clock, retries, prompt identity.
+const traceLine = (r) => [
+  r.apiMs != null && `model ${(r.apiMs / 1000).toFixed(1)} s`,
+  r.attempts > 1 && `${r.attempts} attempts`,
+  r.modelCalls > 1 && `${r.modelCalls} model requests`,
+  r.systemHash && `system ${r.systemHash} · prompt ${r.promptHash}`,
+].filter(Boolean).join(" · ");
 const callsFor = (step) => {
   const ids = new Set((step.calls ?? []).map((c) => c.action));
   return props.turn.calls.filter((c) => ids.has(c.action));
@@ -91,12 +98,13 @@ const stepLine = (s) =>
     <h3>{{ num("planner") }} · Planner</h3>
     <div v-for="(p, i) in turn.planner" :key="i" class="card">
       <div class="card-head">
-        <span class="tag">{{ p.request.label }}</span>
+        <span class="tag">{{ p.reply?.call ? `#${p.reply.call} ` : "" }}{{ p.request.label }}</span>
         <span v-if="p.reply" class="mono">{{ p.reply.model }}</span>
         <span v-if="p.reply" class="muted small">{{ (p.reply.latencyMs / 1000).toFixed(1) }} s · {{ tokens(p.reply.usage) }} · {{ cost(p.reply.usage) }}</span>
         <span v-else-if="turn.live" class="live">waiting for model…</span>
         <span v-else class="muted small">no reply</span>
       </div>
+      <div v-if="p.reply && traceLine(p.reply)" class="muted small mono">{{ traceLine(p.reply) }}</div>
       <details class="sub"><summary>Prompt sent ({{ p.request.user.length.toLocaleString() }} chars, {{ p.request.actions.length }} action cards)</summary><pre class="prompt">{{ p.request.user }}</pre></details>
       <details class="sub"><summary>System prompt</summary><pre class="prompt">{{ p.request.system }}</pre></details>
       <Json v-if="p.reply" :value="p.reply.json" label="reply" :open="p.reply.json?.type !== 'plan'" />

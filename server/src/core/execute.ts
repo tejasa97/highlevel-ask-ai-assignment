@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { z } from "zod";
 import { ActionError, type ActionContext } from "../registry/define.js";
-import { norm } from "../registry/helpers.js";
+import { LIMIT_MAX, norm } from "../registry/helpers.js";
 import { DEFAULT_ACTOR, invoke } from "../registry/invoke.js";
 import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
@@ -125,6 +125,14 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   // What each search was asked for by name, and how long each filter's input was: for the guards below.
   const searched = new Map<string, { query: string; entity: string }>();
   const filteredFrom = new Map<string, number>();
+  // A search returns one page of its matches. A write over that page alone would quietly skip the rest,
+  // so a search feeding writes loads as many as a search can, and writes refuse a list that is still short.
+  const partial = new Map<string, { search: string; loaded: number; total: number }>();
+  const writeFeeds = new Set<string>();
+  for (const s of [...plan.steps].reverse()) {
+    const writes = s.kind === "forEach" ? s.calls.some((c) => c.action.risk !== "read") : s.kind === "action" && s.call.action.risk !== "read";
+    if (writes || ((s.kind === "filter" || s.kind === "exclude") && writeFeeds.has(s.id))) for (const root of listRoots(s)) writeFeeds.add(root);
+  }
   const results: StepResult[] = [];
   const bad = new Set<string>(); // failed or skipped: dependents are skipped
   // Consecutive independent preflight-capable sends share one approval, including known exclusions.
@@ -201,6 +209,18 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     }
     return { call: { ...call, args } };
   };
+  /** A filter or exclude over a short list is short too: records it never saw may belong in it. */
+  const carryPartial = (id: string, ...from: string[]) => {
+    const p = from.map((raw) => partial.get(parseRef(raw)?.root ?? "")).find(Boolean);
+    if (p) partial.set(id, p);
+  };
+  /** Refuses a write over a list that stops short of everything it matched; nothing is changed. */
+  const shortList = (step: CStep): StepError | undefined => {
+    for (const root of listRoots(step)) {
+      const p = partial.get(root);
+      if (p) return { code: "INVALID", message: `$${p.search} matched ${p.total} records but one search loads at most ${p.loaded}, so nothing was changed rather than only the first ${p.loaded}; narrow the search (by date, tag, owner…) and run it in parts` };
+    }
+  };
   const ask = (step: CStep, clarification: Clarification) => {
     results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });
     emit({ type: "clarify.required", clarification });
@@ -275,6 +295,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           const list = asList(refValue(step.in), step.in);
           const where = substitute(step.where, lookup()) as Record<string, unknown>;
           filteredFrom.set(step.id, list.length);
+          carryPartial(step.id, step.in);
           done(list.filter((x) => matches(x, where)));
           break;
         }
@@ -282,6 +303,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         case "exclude": {
           const list = asList(refValue(step.in), step.in);
           const set = new Set(asList(refValue(step.set), step.set).map(String));
+          carryPartial(step.id, step.in, step.set);
           done(list.filter((x) => !set.has(String(fieldOf(x, step.by)))));
           break;
         }
@@ -298,6 +320,14 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             fail(args.error);
             break;
           }
+          const short = step.call.action.risk === "read" ? undefined : shortList(step);
+          if (short) {
+            fail(short);
+            break;
+          }
+          // Left alone when the plan asked for a number ("the 10 newest"); otherwise every match it can.
+          const widened = writeFeeds.has(step.id) && args.value.limit === undefined && takesLimit(step.call.action);
+          if (widened) args.value.limit = LIMIT_MAX;
           const picked = step.call.action.risk === "read" ? undefined : pickedFirst(step);
           if (picked) return ask(step, picked);
           if (step.call.action.preflight && !checkedActions.has(step.id)) {
@@ -333,6 +363,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           else {
             const query = args.value.query ?? args.value.name;
             if (step.call.action.risk === "read" && typeof query === "string" && query.trim()) searched.set(step.id, { query, entity: step.call.action.entities?.produces ?? "record" });
+            const out = r.results![0];
+            if (widened && isPage(out) && out.total > out.items.length) partial.set(step.id, { search: step.id, loaded: out.items.length, total: out.total });
             done(r.results![0], r.replayed ? { items: [r] } : {});
           }
           break;
@@ -355,6 +387,11 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             const picked = opts.request ? narrowByRequest(candidates, opts.request) : candidates;
             if (picked.length > 1) return ask(step, { ...duplicate, candidates });
             list = list.filter((x, i) => itemKey(x, i) === picked[0]!.id);
+          }
+          const short = writes ? shortList(step) : undefined;
+          if (short) {
+            fail(short);
+            break;
           }
           const root = typeof step.in === "string" ? parseRef(step.in)?.root : undefined;
           if (writes && list.length === 0 && root && filteredFrom.get(root)) {
@@ -500,6 +537,20 @@ const takesNull = (s: unknown): boolean => {
 };
 
 /** Runs one item's calls in one transaction, replaying any write the ledger already has. */
+/** The lists a step takes whole: a loop's input, an exclude's sets, an action arg that takes every item ($s1.items[*].id). */
+function listRoots(step: CStep): string[] {
+  const roots =
+    step.kind === "forEach" || step.kind === "filter" ? [step.in]
+    : step.kind === "exclude" ? [step.in, step.set]
+    : step.kind === "action" ? collectRefs(step.call.args).map((r) => r.ref).filter((raw) => parseRef(raw)?.path.some((p) => "all" in p))
+    : [];
+  return roots.flatMap((raw) => (typeof raw === "string" ? [parseRef(raw)?.root] : [])).filter((r): r is string => !!r);
+}
+
+const takesLimit = (action: { input: unknown }) => !!(action.input as { shape?: Record<string, unknown> }).shape?.limit;
+const isPage = (x: unknown): x is { items: unknown[]; total: number } =>
+  !!x && typeof x === "object" && Array.isArray((x as { items?: unknown }).items) && typeof (x as { total?: unknown }).total === "number";
+
 function runItem(ctx: ActionContext, executionId: string, stepId: string, key: string, calls: ConcreteCall[]): ItemResult {
   let replayed = 0;
   try {
