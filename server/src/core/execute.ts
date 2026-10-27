@@ -8,7 +8,7 @@ import type { Call, CompiledPlan, CStep } from "./compile.js";
 import { ENTITIES } from "../store/entities.js";
 import { normalizeDateTimes } from "./datetimes.js";
 import { OTHER_THAN } from "./lookups.js";
-import { collectRefs, parseRef, pathOf, RefError, type Ref, substitute, valueAt } from "./refs.js";
+import { collectRefs, loopRead, parseRef, pathOf, RefError, type Ref, substitute, valueAt } from "./refs.js";
 
 // Stage 2: run a compiled plan.
 // - Refs are substituted, then the concrete args are parsed with the action's Zod schema.
@@ -570,7 +570,13 @@ function gateFor(
 
 /** An item's field, or a dotted path into it ("relatedTo.id"). */
 export function fieldOf(x: unknown, field: string): unknown {
-  return pathOf(field).reduce<unknown>((v, k) => (v && typeof v === "object" ? (v as Record<string, unknown>)[k] : undefined), x);
+  return pathOf(field).reduce<unknown>((v, k) => {
+    if (!v || typeof v !== "object") return undefined;
+    const o = v as Record<string, unknown>;
+    // A loop entry's field it doesn't have is what its one "do" call returned, as the plan compiled it.
+    if (!(k in o) && loopRead(o, k)) return ((o.results as Record<string, unknown>[])[0] ?? {})[k];
+    return o[k];
+  }, x);
 }
 
 export function matches(x: unknown, where: Record<string, unknown>): boolean {

@@ -36,10 +36,25 @@ describe("forEach over a literal list", () => {
   test("a field read off a forEach's items, not its results, is told where the results are", () => {
     const r = compile(plan([
       op("s1", "forEach", { in: ["literal_alpha", "literal_beta"], do: [{ action: "M06.A01", args: { title: "$item" } }] }),
-      op("s2", "forEach", { in: "$s1.items[*].relatedTo", do: [{ action: "M06.A01", args: { title: "$item" } }] }),
+      op("s2", "forEach", { in: "$s1.items[*].nope", do: [{ action: "M06.A01", args: { title: "$item" } }] }),
     ]), registry);
     assert.ok(!r.ok);
-    assert.match(r.errors.join("\n"), /has no field "relatedTo"; fields: item, results \(a forEach step's output.* is \$s1\[\*\]\.results\[0\]\.relatedTo/);
+    assert.match(r.errors.join("\n"), /has no field "nope"; fields: item, results \(a forEach step's output.* is \$s1\[\*\]\.results\[0\]\.nope/);
+  });
+
+  test("a field of what a loop's one call returned reads through to it; with two calls it is told where they are", () => {
+    const one = compile(plan([
+      op("s1", "forEach", { in: ["literal_alpha", "literal_beta"], do: [{ action: "M06.A01", args: { title: "$item" } }] }),
+      op("s2", "forEach", { in: "$s1[*].id", do: [{ action: "M06.A10", args: { taskId: "$item" } }] }),
+      op("s3", "filter", { in: "$s1", where: { status: "open" } }),
+    ]), registry);
+    assert.ok(one.ok, one.ok ? "" : one.errors.join("\n"));
+    const two = compile(plan([
+      op("s1", "forEach", { in: ["literal_alpha"], do: [{ action: "M06.A01", args: { title: "$item" } }, { action: "M06.A01", args: { title: "$item" } }] }),
+      op("s2", "forEach", { in: "$s1[*].id", do: [{ action: "M06.A10", args: { taskId: "$item" } }] }),
+    ]), registry);
+    assert.ok(!two.ok);
+    assert.match(two.errors.join("\n"), /has no field "id"; fields: item, results/);
   });
 
   test("a filter over a forEach's items can name a field of one of its results by position", () => {
