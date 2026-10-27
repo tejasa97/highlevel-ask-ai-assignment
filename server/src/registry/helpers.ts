@@ -88,7 +88,9 @@ export function listOf<T extends z.ZodType>(item: T) {
   return z.object({ items: z.array(item), total: z.number().describe("all matches, even past the limit") });
 }
 
-export const Limit = z.number().int().min(1).max(500).optional().describe("max items to return (default 50)");
+/** The most one search returns. */
+export const LIMIT_MAX = 500;
+export const Limit = z.number().int().min(1).max(LIMIT_MAX).optional().describe("max items to return (default 50)");
 
 export function page<T>(items: T[], limit = 50): { items: T[]; total: number } {
   return { items: items.slice(0, limit), total: items.length };
