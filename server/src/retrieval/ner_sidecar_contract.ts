@@ -1,8 +1,8 @@
 /**
  * Phase 0/1 NER sidecar wire contract (types only).
  *
- * Future TypeScript facade ↔ Python GLiNER sidecar. No runtime client, no
- * planTurn / mentions.ts wiring in this phase.
+ * TypeScript facade: ner_client.ts. Wired into planTurn when NER_SIDECAR=1
+ * (or ASK_NER=1). Ambiguous spans clarify before the planner LLM.
  *
  * Standing rules:
  * - The sidecar must NOT make live CRM/DB calls to resolve entities. Linking

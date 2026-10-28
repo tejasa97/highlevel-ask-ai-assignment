@@ -12,6 +12,16 @@ export interface Mention {
   count: number;
   /** The contact, named in the same message, whose record this is: "Starter" for Yusuf Silva is his subscription. */
   of?: string;
+  /** Store id when NER (or another linker) uniquely linked this span. Never set for ambiguous. */
+  linkedId?: string;
+  /** True when NER found multiple candidates; count mirrors candidate size. */
+  ambiguous?: boolean;
+  /** Ambiguous NER candidates (id/name/detail); never auto-picked for writes. */
+  candidates?: { id: string; name: string; detail?: string; entity?: string }[];
+  /** Linking method when known (exact|embed|rule). */
+  method?: string;
+  /** Best link score; informational only. */
+  score?: number;
 }
 
 /** Record types whose names are titles, not names of people or teams: too noisy to link. */

@@ -1,6 +1,6 @@
 # NER sidecar request/response contract (phase 0/1)
 
-**Status:** Contract freeze only. No Python sidecar, no `planTurn` / `mentions.ts` wiring, no runtime client.
+**Status:** Contract frozen; Python sidecar + TypeScript facade (`ner_client.ts`) wired behind `NER_SIDECAR=1`.
 
 **Grounding:** [`ask-ai-ner-poc/docs/integration-ask-ai-repo.md`](../../ask-ai-ner-poc/docs/integration-ask-ai-repo.md) (PoC analysis); TypeScript types in [`server/src/retrieval/ner_sidecar_contract.ts`](../server/src/retrieval/ner_sidecar_contract.ts).
 
@@ -15,8 +15,8 @@
 
 | Side | Role |
 | --- | --- |
-| TypeScript facade (future `server/src/retrieval/ner.ts` or similar) | Calls the sidecar; maps spans into mentions / clarify; never implemented in this commit |
-| Python GLiNER sidecar (future) | Extract spans + link against an index keyed by Store ids; returns this response |
+| TypeScript facade (`server/src/retrieval/ner_client.ts`) | Calls the sidecar; maps spans into mentions / clarify when `NER_SIDECAR=1` |
+| Python GLiNER sidecar (`server/ner-sidecar/`) | Extract spans + link against PoC index; maps `pe_`→`ct_` on the wire |
 
 ## Request
 

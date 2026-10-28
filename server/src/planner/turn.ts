@@ -5,6 +5,14 @@ import { lowerLookups } from "../core/lookups.js";
 import { card } from "../registry/card.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
 import { type Mention, mentions } from "../retrieval/mentions.js";
+import {
+  clarifyFromSpans,
+  extractAndLink,
+  mergeMentions,
+  nerSidecarEnabled,
+  NerSidecarError,
+  spansToMentions,
+} from "../retrieval/ner_client.js";
 import type { Retrieval, Retriever } from "../retrieval/retrieve.js";
 import type { Clock } from "../store/clock.js";
 import type { Store } from "../store/db.js";
@@ -173,7 +181,28 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   const { registry, retriever, planner, clock, store } = deps;
   const resolvable = registry.resolverEntities();
   const request = input.answering ? `${input.answering}\n${input.message}` : input.message;
-  const named: Mention[] = store ? mentions(request, registry, store) : [];
+  // Mentions: Title-Case Store resolvers by default. With NER_SIDECAR=1 (or ASK_NER=1), call the
+  // GLiNER sidecar first, merge linked spans into mentions, and short-circuit to clarify on
+  // ambiguous spans before any planner LLM call. Store resolvers stay authoritative for writes.
+  let named: Mention[] = store ? mentions(request, registry, store) : [];
+  let nerAmbiguousClarify: { text: string; options?: string[] } | undefined;
+  if (nerSidecarEnabled() && request.trim()) {
+    try {
+      const ner = await extractAndLink({
+        requestId: `turn_${Date.now().toString(36)}`,
+        utterance: request,
+        tier: input.tier,
+      }, { signal: deps.signal });
+      const fromNer = spansToMentions(ner.spans);
+      named = store ? mergeMentions(fromNer, named) : fromNer;
+      const clarify = clarifyFromSpans(ner.spans);
+      if (clarify) nerAmbiguousClarify = { text: clarify.text, options: clarify.options };
+    } catch (err) {
+      // Sidecar down / bad response → keep Title-Case mentions; do not fail the turn.
+      // AbortSignal and unexpected throws still surface.
+      if (!(err instanceof NerSidecarError)) throw err;
+    }
+  }
   const allChars = registry.list().map(card).join("\n").length;
   const exists = (id: string) => !store || store.holds(id);
 
@@ -260,6 +289,11 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   };
 
   await shortlist("retrieve", request, input.carry, named);
+  // Ambiguous NER → clarify with grounded options before any planner LLM call.
+  // Retrieval SSE already shows the NER mentions; never auto-pick candidates[0].
+  if (nerAmbiguousClarify) {
+    return { kind: "reply", status: "clarify", text: nerAmbiguousClarify.text, options: nerAmbiguousClarify.options };
+  }
   let user = prompt();
   let reply = await call(user, "plan");
   let searched = false;

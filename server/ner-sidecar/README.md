@@ -10,8 +10,10 @@ hash map + FAISS ANN (cosine cutoff **0.9**) over the PoC seed at
 `/workspace/ask-ai-ner-poc/data/`. Model weights stay in the PoC tree (path /
 symlink); they are **not** copied into this repo.
 
-Phase note: the TypeScript ask path (`planTurn`, `mentions.ts`) is **not** wired
-yet. Exercise this service with `curl` against `/v1/extract`.
+Phase note: the TypeScript ask path is wired behind **`NER_SIDECAR=1`** (or
+`ASK_NER=1`) via `server/src/retrieval/ner_client.ts` → `planTurn`. Ambiguous
+spans return a clarify reply **before** the planner LLM. Default (flag off)
+keeps Title-Case `mentions()` only.
 
 ## ID mapping (PoC → Store)
 
