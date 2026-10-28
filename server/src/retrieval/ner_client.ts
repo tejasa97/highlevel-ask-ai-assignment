@@ -167,7 +167,8 @@ function isNearMissSuggestion(span: NerLinkedSpan): boolean {
   const softScore = typeof span.score === "number" && span.score < 0.9;
   const embedNonExact =
     span.method === "embed" && cands.some((c) => normSurface(c.name) !== surface);
-  return nameDiffers || softScore || embedNonExact;
+  const editMethod = span.method === "edit";
+  return nameDiffers || softScore || embedNonExact || editMethod;
 }
 
 /** First ambiguous span → planner-style clarify reply (never picks a winner). */

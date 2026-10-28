@@ -31,6 +31,7 @@ DEFAULT_COMPANIES = Path(
 DEFAULT_ANN_DIR = Path(os.environ.get("NER_ANN_DIR", str(DEFAULT_POC_ROOT / "data" / "ann")))
 DEFAULT_EMBED_THRESHOLD = float(os.environ.get("NER_EMBED_THRESHOLD", "0.9"))
 DEFAULT_SUGGEST_THRESHOLD = float(os.environ.get("NER_SUGGEST_THRESHOLD", "0.75"))
+DEFAULT_EDIT_MAX_DISTANCE = int(os.environ.get("NER_EDIT_MAX_DISTANCE", "1"))
 DEFAULT_GLINER_THRESHOLD = float(os.environ.get("NER_GLINER_THRESHOLD", "0.4"))
 MODEL_NAME = os.environ.get("NER_MODEL_NAME", "gliner_small_v21_ft_head")
 
@@ -141,6 +142,7 @@ class NerService:
             "ann_dir": str(DEFAULT_ANN_DIR),
             "embed_threshold": DEFAULT_EMBED_THRESHOLD,
             "suggest_threshold": DEFAULT_SUGGEST_THRESHOLD,
+            "edit_max_distance": DEFAULT_EDIT_MAX_DISTANCE,
         }
         self.ready = True
         log.info("sidecar warm-load complete in %.1fs", time.time() - t0)
@@ -257,8 +259,10 @@ class NerService:
 
         embed_threshold = DEFAULT_EMBED_THRESHOLD
         suggest_threshold = DEFAULT_SUGGEST_THRESHOLD
+        edit_max_distance = DEFAULT_EDIT_MAX_DISTANCE
         embed_topk = int(os.environ.get("NER_EMBED_TOPK", "5"))
         ambiguous_margin = float(os.environ.get("NER_AMBIGUOUS_MARGIN", "0.03"))
+        max_candidates = int(os.environ.get("NER_MAX_CANDIDATES", "20"))
 
         contract_spans: list[dict] = []
         for s in uniq:
@@ -273,6 +277,8 @@ class NerService:
                 suggest_threshold=suggest_threshold,
                 embed_topk=embed_topk,
                 ambiguous_margin=ambiguous_margin,
+                edit_max_distance=edit_max_distance,
+                max_candidates=max_candidates,
             )
             contract_spans.append(self._span_from_link(s, utterance, link))
 

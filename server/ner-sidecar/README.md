@@ -7,10 +7,11 @@ Python HTTP sidecar that implements the frozen Ask AI contract:
 
 **This process does not call live CRM/DB.** Linking uses the PoC in-memory exact
 hash map + FAISS ANN (hard link cutoff **0.9**, soft suggest band default
-**0.75**) over the PoC seed at `/workspace/ask-ai-ner-poc/data/`. Near-miss
-neighbors in the suggest band surface as `status: "ambiguous"` with candidates
-("did you mean?") — never auto-linked. Model weights stay in the PoC tree
-(path / symlink); they are **not** copied into this repo.
+**0.75**) + Levenshtein edit distance (default max **1**, env
+`NER_EDIT_MAX_DISTANCE`) over the PoC seed at `/workspace/ask-ai-ner-poc/data/`.
+Near-miss soft ANN / one-edit neighbors surface as `status: "ambiguous"` with
+candidates ("did you mean?") — never auto-linked. Model weights stay in the PoC
+tree (path / symlink); they are **not** copied into this repo.
 
 Phase note: the TypeScript ask path is wired behind **`NER_SIDECAR=1`** (or
 `ASK_NER=1`) via `server/src/retrieval/ner_client.ts` → `planTurn`. Ambiguous
@@ -29,6 +30,20 @@ Examples: `pe_123` → `ct_123`, `pe_dupe_2_1` → `ct_dupe_2_1`, `co_1` → `co
 
 Never return raw `pe_` as canonical `linkedId`. Ambiguous spans never auto-pick
 the PoC top hit — `status: "ambiguous"` with `candidates[]` only (no `linkedId`).
+
+## Linking pipeline (order)
+
+1. **Exact** normalized name match → `linked` / `ambiguous`
+2. **ANN cosine ≥ 0.9** (`NER_EMBED_THRESHOLD`) → `linked` / `ambiguous`
+3. **Soft ANN ≥ 0.75** (`NER_SUGGEST_THRESHOLD`) → ambiguous suggestions (no auto-link)
+4. **Levenshtein ≤ 1** (`NER_EDIT_MAX_DISTANCE`, default **1**) against in-memory
+   name keys for that entity type → ambiguous suggestions; **union/dedupe** with
+   soft ANN by Store/PoC id; rank by edit distance ascending, then score
+5. Else **miss**
+
+Soft ANN and edit hits feed the same clarify chips / `status: "ambiguous"` +
+candidates + "Did you mean …?" copy. Never auto-pick `candidates[0]`. No new
+reply/status type. Method on edit hits is `"edit"` (soft ANN remains `"embed"`).
 
 ## Layout
 
@@ -51,6 +66,7 @@ the PoC top hit — `status: "ambiguous"` with `candidates[]` only (no `linkedId
 | `NER_ANN_DIR` | `$NER_POC_ROOT/data/ann` |
 | `NER_EMBED_THRESHOLD` | `0.9` (hard link / ambiguous-at-threshold) |
 | `NER_SUGGEST_THRESHOLD` | `0.75` (near-miss → ambiguous suggestions) |
+| `NER_EDIT_MAX_DISTANCE` | `1` (Levenshtein ≤ N → ambiguous suggestions) |
 | `NER_GLINER_THRESHOLD` | `0.4` |
 | `NER_LAZY_LOAD` | unset = warm-load on startup; `1` = load on first request |
 | `NER_PEOPLE_LIMIT` / `NER_COMPANIES_LIMIT` | optional caps for smoke tests |
@@ -129,6 +145,11 @@ curl -s http://127.0.0.1:8091/v1/extract \
 curl -s http://127.0.0.1:8091/v1/extract \
   -H 'content-type: application/json' \
   -d '{"requestId":"req_klar","utterance":"Email someone at Klar Finance"}' | jq .
+
+# One-edit typo (Clear Finace → Clear Finance, Levenshtein distance 1)
+curl -s http://127.0.0.1:8091/v1/extract \
+  -H 'content-type: application/json' \
+  -d '{"requestId":"req_finace","utterance":"What is Clear Finace status?"}' | jq .
 ```
 
 ### Clarify-shaped mapping (for a future TS facade)

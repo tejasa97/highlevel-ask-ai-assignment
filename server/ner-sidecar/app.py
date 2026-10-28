@@ -47,7 +47,7 @@ class LinkedSpan(BaseModel):
     linkedId: Optional[str] = None
     linkedEntity: Optional[str] = None
     candidates: Optional[list[Candidate]] = None
-    method: Optional[Literal["exact", "embed", "rule"]] = None
+    method: Optional[Literal["exact", "embed", "edit", "rule"]] = None
     score: Optional[float] = None
 
 

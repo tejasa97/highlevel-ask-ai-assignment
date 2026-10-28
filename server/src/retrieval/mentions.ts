@@ -18,7 +18,7 @@ export interface Mention {
   ambiguous?: boolean;
   /** Ambiguous NER candidates (id/name/detail); never auto-picked for writes. */
   candidates?: { id: string; name: string; detail?: string; entity?: string }[];
-  /** Linking method when known (exact|embed|rule). */
+  /** Linking method when known (exact|embed|edit|rule). */
   method?: string;
   /** Best link score; informational only. */
   score?: number;

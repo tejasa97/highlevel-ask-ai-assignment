@@ -60,7 +60,7 @@ Minimal body. Optional fields mirror `POST /api/ask` (`message`, `tier?`, `actor
 | `linkedId` | string | **Only** when `status === "linked"`; Store id (`ct_` / `ld_` / `us_` / …) |
 | `linkedEntity` | string | Optional CRM entity for the unique link |
 | `candidates` | array | When `ambiguous`: `{ id, name, score?, entity?, detail? }[]` |
-| `method` | `"exact"` \| `"embed"` \| `"rule"` | Optional |
+| `method` | `"exact"` \| `"embed"` \| `"edit"` \| `"rule"` | Optional |
 | `score` | number | Optional best score; **must not** auto-commit ambiguous hits |
 
 ### Example — unique link
@@ -114,9 +114,14 @@ Consumers **must not** treat a missing `linkedId` plus a non-empty `candidates` 
 ### Example — near-miss → ambiguous suggestions ("did you mean?")
 
 Typos / partials whose best ANN neighbor sits in the suggest band
-(`suggest_threshold` ≤ sim &lt; `embed_threshold`, defaults 0.75 / 0.9) reuse
+(`suggest_threshold` ≤ sim &lt; `embed_threshold`, defaults 0.75 / 0.9), **or**
+whose normalized name is within Levenshtein distance
+`NER_EDIT_MAX_DISTANCE` (default **1**) of an indexed key, reuse
 `status: "ambiguous"` with candidates — **no** `linkedId`, never auto-pick.
-True misses (no neighbor ≥ suggest threshold) stay `miss` with empty candidates.
+Edit hits use `method: "edit"`; soft ANN stays `"embed"`. Soft ANN and edit
+candidates are unioned (deduped by id) and ranked by edit distance ascending,
+then score. True misses (no soft ANN neighbor and no edit hit) stay `miss`
+with empty candidates.
 
 ```json
 {

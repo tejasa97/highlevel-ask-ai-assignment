@@ -41,7 +41,7 @@ export type NerSpanLabel =
   | "user";
 
 /** How the sidecar linked a span against its index. */
-export type NerLinkMethod = "exact" | "embed" | "rule";
+export type NerLinkMethod = "exact" | "embed" | "edit" | "rule";
 
 /** Per-span link outcome. Never treat "ambiguous" as unique. */
 export type NerSpanStatus = "linked" | "ambiguous" | "miss";
@@ -51,7 +51,7 @@ export interface NerCandidate {
   /** Store id (`ct_…` / `ld_…` / `us_…` / `co_…`). Not PoC `pe_…`. */
   id: string;
   name: string;
-  /** Optional score from exact/embed linking (higher = better). */
+  /** Optional score from exact/embed/edit linking (higher = better). */
   score?: number;
   /** Optional CRM entity type for this candidate. */
   entity?: string;
