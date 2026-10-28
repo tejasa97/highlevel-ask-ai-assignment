@@ -1,12 +1,12 @@
 # Planner providers
 
-The planner sits behind one interface (`Planner` in `server/src/planner/types.ts`), and `makePlanner` in `server/src/planner/index.ts` picks the provider. With `PLANNER` unset, a Token Plan key (`QWEN_API_KEY`) selects `qwen` on `deepseek-v4.1-flash-1017`, the setup [BENCHMARK.md](../BENCHMARK.md) measured; without one, `claude-cli` runs on `claude-haiku-5-5`. Every command (`serve`, `ask`, `probe:planner`, `eval:scenarios`) prints the provider it picked on stderr, so an eval can't run on the wrong one unnoticed. Set `PLANNER=qwen`, `PLANNER=claude-cli` or `PLANNER=codex-cli` to force one.
+The planner sits behind one interface (`Planner` in `server/src/planner/types.ts`), and `makePlanner` in `server/src/planner/index.ts` picks the provider. With `PLANNER` unset, a Token Plan key (`QWEN_API_KEY`) selects `qwen` on `deepseek-v4.1-flash-1017`, the setup [BENCHMARK.md](../BENCHMARK.md) measured; without one, `claude-cli` runs on `claude-haiku-5-5`. When `PLANNER` is unset, every command (`serve`, `ask`, `probe:planner`, `eval:scenarios`) prints the provider it picked on stderr, so an eval can't run on the wrong one unnoticed. Set `PLANNER=qwen`, `PLANNER=claude-cli` or `PLANNER=codex-cli` to force one.
 
-**A new provider is one file.** `server/src/planner/qwen.ts` is a direct HTTP provider (OpenAI-compatible chat completions, JSON-schema output, retries with backoff, timeouts) behind the same `Planner` interface. Adding it took that file and one branch in `makePlanner`; nothing in retrieval, compiling, execution or approval changed. An Anthropic API provider would be the same shape.
+**A new provider is one file.** `server/src/planner/qwen.ts` is a direct HTTP provider (OpenAI-compatible chat completions, JSON output checked against the schema, one retry for transient errors, timeouts) behind the same `Planner` interface. Adding it took that file and one branch in `makePlanner`; nothing in retrieval, compiling, execution or approval changed. An Anthropic API provider would be the same shape.
 
 **Every turn has a budget** (`server/src/planner/turn.ts`): at most 8 planner calls, repairs and look-ups included, and 180 seconds. Each call's timeout is cut to whatever time the turn has left. A web client that closes the stream (a closed tab, a reload) aborts the call in flight. A turn that runs out of budget, or is cancelled, changes nothing. Approved runs are not cancelled by a disconnect.
 
-**Every planner call is traced.** The `planner.reply` event, and `plannerCalls` on each turn in `eval/results/*.json`, record the call number, model, a hash of the system prompt and of the user prompt, wall-clock and model latency, provider attempts, model requests, whether it was a repair, and token usage.
+**Every planner call is traced.** The `planner.reply` event, and `plannerCalls` on each turn in `eval/results/*.json`, record the call number, model, a hash of the system prompt and a hash of the whole prompt (system plus user), wall-clock and model latency, provider attempts, model requests, whether it was a repair, and token usage.
 
 ## Qwen Token Plan (default, benchmarked)
 
@@ -54,9 +54,10 @@ repeats; development: 45 scenarios):
 | deepseek-v4.1-flash-1017 (adapter default) | 95.7% | 97.8% | 1.9 s / 1.1 s | 0.00048 / 0.00065 |
 
 DeepSeek's regression figure is the lower of two batches (the other was 98.6%) and Qwen's is a
-four-batch mean; a single batch moves by 1-3 points, so read gaps under ~5 points as noise. Batches:
-`eval/results/scenarios-ds-default-check-*.json`, `scenarios-base-ds-reg-3x-jo.json`,
-`scenarios-reg-fix{4,5,6,7}-qf-3x.json`, `scenarios-dev-smoke-compilerfix.json`.
+four-batch mean; a single batch moves by 1-3 points, so read gaps under ~5 points as noise. The batch
+files (`scenarios-ds-default-check-*.json`, `scenarios-base-ds-reg-3x-jo.json`,
+`scenarios-reg-fix{4,5,6,7}-qf-3x.json`, `scenarios-dev-smoke-compilerfix.json`) are no longer in
+`eval/results/`; they are in git history at commits `da0cc97` and `c52cc7f`.
 
 ## Claude CLI (fallback without a Token Plan key)
 
@@ -85,7 +86,7 @@ PLANNER=codex-cli npm run ask -- "create a task to call Jo"
 
 `CODEX_MODEL` and `CODEX_FAST_MODEL` select the strong/fast models (default `gpt-6.1-sol`).
 Set both to `gpt-6-luna` to use GPT-6 Luna. `CODEX_REASONING` and `CODEX_FAST_REASONING`
-accept `low`, `medium`, `high` or `xhigh` (default `low`; fast inherits strong if omitted).
+accept `low`, `medium`, `high` or `xhigh` (default `low`; fast inherits strong if omitted). Likewise `CODEX_FAST_MODEL` falls back to `CODEX_MODEL`.
 Model access depends on your account. `CODEX_BIN` optionally selects an executable;
 `CODEX_HOME` may select your existing CLI authentication directory.
 Card generation stays on Claude so its provenance stamp remains accurate.

@@ -10,12 +10,15 @@ before submission. They are in git history: `git show 0b24cca:docs/M45-M47-FINAL
 ## How to read the numbers
 
 - **Retrieval eval** (`npm run eval:retrieval`): no LLM. For each held-out question, is the action it needs in the
-  shortlist the planner sees? R@15 is "the right action is in the top 15". The trajectory uses one question set,
-  today's 105 held-out questions, and re-runs old commits on it, so the line is fair. Older saved results used a
-  smaller 63-question split and are shown apart.
+  shortlist the planner sees? R@15 is "the right action is in the top 15". Entries 3 to 21 compare on one question
+  set, the 105 held-out questions of 22 Oct, with old commits re-run on it so the line is fair; older saved results
+  used a smaller 63-question split. The test split has since grown to 150 questions (BENCHMARK.md, `26e7a36`), and
+  the trajectory's retrieval chart draws only runs on the newest set, so the 105-question re-runs are in the table.
 - **Scenario eval** (`npm run eval:scenarios -- --repeat 3`): real planner, fresh seeded database, end to end. A run
   passes when the status, the planned actions, their arguments, the database afterwards and the reply all check out.
   Runs the planner couldn't serve (quota, timeout, provider down) are **infra**: counted apart, never in the pass rate.
+  The trajectory's headline tiles follow the widest 3x suite that includes `eval/scenarios`: since entry 33, the
+  273-scenario release benchmark, not the original 23.
 - Every recorded run is one line in `eval/results/history.jsonl`, with the commit, whether there were uncommitted
   edits, and a fingerprint of the question set. Runs are comparable only when the fingerprint matches.
   A run of a change that was later reverted is marked `reverted`: it stays in the table, off the charts.
@@ -74,7 +77,7 @@ BM25. Long messages are split into clauses so each one gets its own candidates. 
 `search_tools` round (the planner asks for what's missing) and one repair round (compile errors fed back).
 
 **Result.** On the 63-question split of the day, the cards took R@15 from 70.6% (names only) to 93.1%. Re-run later on
-today's harder 105 questions, this commit scores 82.1%: the first split flattered BM25, which is why the
+the harder 105-question split of 22 Oct, this commit scores 82.1%: the first split flattered BM25, which is why the
 paraphrase questions were added.
 
 ## 4. Linking names in the message to records
@@ -86,8 +89,8 @@ needs weren't shortlisted, and the planner guessed whether Hiro was a contact or
 **Change.** Capitalized names are matched against contacts, leads, users and teams. A match adds that type's
 get and search actions to the shortlist, and a `<mentions>` line tells the planner "Hiro Reyes: lead".
 
-**Result.** Lookup questions: R@15 40% → 100%. All questions, re-measured: 82.1% → 85.9%. Turning it off today costs
-3.8 points (94.9% → 91.1%).
+**Result.** Lookup questions: R@15 40% → 100%. All questions, re-measured: 82.1% → 85.9%. Turning it off at `911b204`
+(22 Oct, 105 questions) cost 3.8 points (94.9% → 91.1%).
 
 ## 5. Planner deadline and server tests
 `905733e` · 2026-10-21
@@ -112,7 +115,7 @@ campaigns, appointments, invoices, payments).
 retrieval is unchanged (2 of 8 in both modes); the planner turns down the rest, and both unsupported scenarios pass
 every run.
 
-**Result.** R@15 85.9% → 94.9%, R@5 76.0% → 89.0%, MRR 0.58 → 0.66. Today's code with embeddings off: 87.1%, so most of the gain is the embeddings.
+**Result.** R@15 85.9% → 94.9%, R@5 76.0% → 89.0%, MRR 0.58 → 0.66. The same code with embeddings off (`911b204`, 22 Oct): 87.1%, so most of the gain is the embeddings.
 
 **Cost.** About 12 ms per question to embed it; ranking itself stays under 0.5 ms. Timed the same way, a
 retrieval eval question takes 13.3 ms hybrid against 1.5 ms BM25 alone.
@@ -376,9 +379,9 @@ makes one model call per record, where the planner writes one forEach.
 - M41.A01 needed a section id on a course with none; it now makes a default section.
 - Retrieval: "Archive every contact at Wayne" named no record, and contacts resolve by name, so no search was offered and the planner improvised with a saved smart list (a write nobody asked for). A request that says every, all or each now brings in the search for the type being acted on.
 
-**Result.** Wave 1 scenarios (Haiku, 3 repeats): 66.7% → 92% → 96% of clean runs, 24 of 25 passing every run. Retrieval after the bulk rule (357 questions, 6 added for it): R@15 97.2% → 97.5%, all@15 95.8% → 96.6%, test split 97.0% → 97.4%, mean shortlist 20.7 → 20.9. Final 23 × 3 benchmark on Haiku 5.5 (`BENCHMARK.md`): the whole-plan planner passed 98.6% (68/69) of runs against 91.3% (63/69) for the one-call-per-step baseline, with action selection at 100% against 93.8% and 2 model calls per complex task against 4. A Sonnet 5.5 run of the same planner earlier the same day went 95.7% → 98.6% (`multi-bulk-archive-declined` 0/3 → 3/3). Tests 2215 → 2222.
+**Result.** Wave 1 scenarios (Haiku, 3 repeats): 66.7% → 92% → 96% of clean runs, 24 of 25 passing every run. Retrieval after the bulk rule (357 questions, 6 added for it): R@15 97.2% → 97.5%, all@15 95.8% → 96.6%, test split 97.0% → 97.4%, mean shortlist 20.7 → 20.9. Final 23 × 3 benchmark of that day, on Haiku 5.5 (`BENCHMARK.md` as of `93c28a1`; entry 33 replaced it): the whole-plan planner passed 98.6% (68/69) of runs against 91.3% (63/69) for the one-call-per-step baseline, with action selection at 100% against 93.8% and 2 model calls per complex task against 4. A Sonnet 5.5 run of the same planner earlier the same day went 95.7% → 98.6% (`multi-bulk-archive-declined` 0/3 → 3/3). Tests 2215 → 2222.
 
-**Targets.** Committed 2026-10-23 before the final run: 4 of 8 met on Haiku (5 of 8 on the Sonnet run). The four misses are latency: direct first reply p50 8.1 s against 1.5 s and p95 23.9 s against 3 s, complex end-to-end p50 12.1 s against 6 s and p95 16.2 s against 12 s. They were written for a direct API call; the only planner here is `claude -p`, which starts a process per call (about 1.5 s of each). Not relaxed.
+**Targets.** Committed 2026-10-23 before the final run: 4 of 8 met on Haiku (5 of 8 on the Sonnet run). The four misses are latency: direct first reply p50 8.1 s against 1.5 s and p95 23.9 s against 3 s, complex end-to-end p50 12.1 s against 6 s and p95 16.2 s against 12 s. They were written for a direct API call; the only planner at the time was `claude -p`, which starts a process per call (about 1.5 s of each). Not relaxed. Entry 26 added a direct HTTPS provider; entry 33 measures the targets on it.
 
 **Still failing.** `w1-subscription-change-plan` is 0/3 on Haiku: "Move X from Starter to Pro" reads as an opportunity stage change. `direct-payment-request` is 2/3: in one run the planner found the invoice and stopped before creating the request. Neither was patched.
 
@@ -409,3 +412,201 @@ makes one model call per record, where the planner writes one forEach.
 **Verification.** Typecheck, web build and 2,353 deterministic tests pass. Combined development retrieval remains 97.6% recall, 96.9% all-needed, 21.8 mean cards; that measurement records dirty development source. Complete live suites at clean 48cbf80 use Luna/low once each: 16/22 older-suite clean attempts plus one timeout, and 69/73 coverage clean attempts plus two timeouts. Form submission, community post/pin, scoped stage refusal and Noah's team join pass. Neither run is a clean or repeated benchmark.
 
 **Caveat.** The older suite regressed from the preceding 21/23 checkpoint; this does not clear the merge gate. Investigated failures include model-authored read-step ID reuse, conflicting clarification selectors, unsupported polymorphic ID lookup, empty-target loops and premature report discovery. A genuinely required booking-page slug still produces a question. No scenario assertions, seed records, retrieval questions or frozen reporting data changed. Full evidence and every failure are in SCOPED-LOOKUPS-VALIDATION.md. Changes are committed locally, not pushed or merged.
+
+## 26. A second provider: the Qwen Token Plan, and DeepSeek on it
+`8728216` · 2026-10-24 · commits: `6fa53ec`, `76f5bef`, `8728216`
+
+**Problem.** Every planner so far ran through a CLI (`claude -p`, then Codex), which starts a process per call and
+can't meet the latency targets (entry 22). Subscription limits had also cut several runs short.
+
+**Change.** `planner/qwen.ts` calls the Token Plan's OpenAI-compatible endpoint directly, with the `submit_plan`
+schema as structured output. Thinking is off unless `QWEN_THINKING` is set; a dropped connection, a 5xx or a 429 with
+a short Retry-After gets one retry, while a quota fails at once; a truncated or filtered reply says so. Planners now
+declare their own billing and models, so eval cost totals, history and `--cache` files follow the provider. DeepSeek
+on the plan has no `json_schema` mode ("This response_format type is unavailable now"), so
+`QWEN_RESPONSE_FORMAT=json_object` puts the schema in the system message instead; the app still validates and
+repairs every plan.
+
+**Why this way.** One file per provider behind the same `Planner` interface: the prompt, compile checks, executor and
+evals don't change, so the models can be compared on the same scenarios.
+
+**Result.** First full suites, 3 repeats, no infra failures (result files in `8728216`, not kept in the final tree):
+deepseek-v4.1-flash-1017 passed regression 75.4%, development 93.3%, reporting 94.4%; qwen3.8-flash 62.3%, 86.7%
+and 55.6%. Both were well behind the Claude runs on the same suites, which entry 27 went after.
+
+**Cost.** Token Plan usage is prepaid and reports no dollars; cost cells were "–" until entry 29.
+
+## 27. Two looks, and compiler errors a weaker model can act on
+`c52cc7f` · 2026-10-25 · commits: `eac7788`, `19c0350`, `c52cc7f`
+
+**Problem.** On the Token Plan models the failures were planning mechanics, not choosing actions: one look wasn't
+enough when the second read depended on the first, answers came from nothing, plans used ids nobody had shown them,
+step refs pointed one step off, and a "resolve" written in the wrong field came back as "unknown action resolve".
+
+**Change.** A second look may build on the first; asking for a third gets one plain nudge. An answer with no
+`<context>` or `<looked>` behind it is nudged once to plan the read. Literal ids the planner was never shown and no
+record has are repaired before the plan runs. A write by id to one of several same-named records asks which. A ref
+to the step being written, to `s0` or to a later step names the id to use instead, so one repair fixes it. A
+resolve written in the action field becomes a resolve step instead of "unknown action resolve", and the errors for
+`$rr`, `$item` outside a forEach and `[*].results` say where the ref belongs and which earlier step to point at.
+
+**Why this way.** Compiler changes are mechanical and hold across models. Prompt additions on this model moved
+behaviour between cases without a net gain: six more lines describing what each step returns were tried and
+reverted after they won the two cases they targeted and lost three indirect ones.
+
+**Result.** From the line-B history (`git show bba0d86:eval/results/history.jsonl`; these runs were left out when
+the branch merged in `9511f89`): qwen3.8-flash regression 23 × 3 reached 88.4% after the look changes; three
+clean-tree batches before the compiler change passed 87.0%, 87.0% and 88.4%, and four batches with it 90.9% pooled
+(251/276), p ≈ 0.06 by permutation, so suggestive rather than proven. DeepSeek at `19c0350` passed regression
+98.6% (68/69) at 1.7 s p50.
+
+**Side effects.** Temperature 0 was measured and rejected: three repeats of one case gave three different plans, so
+the endpoint has no deterministic sampler to lean on.
+
+## 28. Which planner runs by default, decided three times
+`82e13a7` · 2026-10-25 · commits: `da0cc97`, `9706c83`, `148728d`, `bba0d86`, `82e13a7`
+
+**Problem.** The default had to be a model that was measured, and that a reviewer's checkout could actually run.
+
+**Change.** First DeepSeek became the default, with the reply format following the model: a 400 that blames the
+format is retried once as `json_object` and remembered, so a model that loses the mode degrades instead of failing
+every turn. Then the default went back to `claude-cli` on the `haiku` alias, with the Token Plan opt-in. A blank
+`CLAUDE_MODEL=` line reached `claude -p --model ""` and failed every turn; blank model variables now fall back to the
+default. Measuring the alias showed it resolved to an older Haiku on the installed CLI, so the default names
+`claude-haiku-5-5` by its full id.
+
+**Result.** All in the line-B history at `bba0d86`. DeepSeek as default: regression 95.7% (66/69) at 1.9 s p50,
+development 97.8% (44/45, one repeat) at 1.1 s. The `haiku` alias: regression 91.3% (21/23, one repeat) at 23.9 s
+p50. Haiku 5.5 by id: regression 100% of 184 runs (8 repeats) at 7.2 s p50, development 100% of 360.
+
+**What it says.** An alias is not a measurement: the same word ran a different model than every Haiku baseline.
+Entry 32 settles the default by which key is present.
+
+## 29. A benchmark on DeepSeek: the brief, parameters and regression, 86 scenarios
+`b92d7b2` · 2026-10-26 → 2026-10-27 · commits: `b43ebf3`, `d80b4b1`, `edbcb04`, `55461af`, `550a5df`, `b92d7b2`
+
+**Problem.** The 23 regression scenarios didn't include the brief's own examples or check parameters directly, and
+BENCHMARK.md still reported Haiku through `claude -p`.
+
+**Change.** Added the brief's examples with held-out variants (`eval/brief-scenarios`, 12) and 51
+parameter-accuracy scenarios (`eval/param-scenarios`), and fixed the general failures they exposed: forEach output
+paths explained in errors, a follow-up that would make again what the last turn made is asked first, a question
+about a name that fits two records goes to the user, and DUPLICATE reuses the existing record when later steps need
+it. A write loop over a search that found nothing used to end "done"; it now replans once, and a retry repeating the
+empty search is sent back with the look-alike search to try. The report prices prepaid DeepSeek tokens at Model
+Studio list rates, marked "(list rate)", and loads the scenario folders the reported run used.
+
+**Result.** 86 scenarios, one repeat each, at `94899ef`: planner 94.2% (81/86) against the baseline's 89.5%
+(77/86), action selection 100% against 94.5%, direct first reply p50 1.5 s against 2.7 s. After the empty-loop
+retry the planner passed 95.3% (82/86) in two separate runs. The report from the second (`550a5df`): cost per
+successful task $0.0044 against $0.0112 (list rate), complex end-to-end p95 12.3 s, just over its 12 s target.
+
+**Caveat.** One repeat per scenario; the baseline column is the earlier run, since the retry isn't on its path.
+
+## 30. Replies that don't parse, and plans that read the wrong thing
+`89300d1` · 2026-10-27 · commits: `659bd49`, `39e1f51`, `51bb812`, `e347a6a`, `d9d59c6`, `89300d1`
+
+**Problem.** DeepSeek's failures in the 86-scenario runs were mostly mechanical: a reply cut off at the token cap or
+wrapped in prose ended the turn; `"$s2.items[0].invoiceId}"` had a stray brace; a loop's results came back as a list
+per item, so `in`/`nin` filters and exclude sets silently matched nothing or everything; a narrowing follow-up ("just
+the Facebook ones, due tomorrow") restated the last request and was pushed to remake its records; plans after a look
+reused the looked steps' ids (`s1`, `s2`) for new steps while still meaning the looked ones.
+
+**Change.** A non-JSON reply is asked for once more per turn; the Qwen client trims prose around the object and drops
+trailing commas (never for a cut-off reply); a ref closed by an unopened brace reads as the ref. Loop results are
+typed per call and read as one flat list. A follow-up's stated outcome is checked against what the last turn made
+before it binds; a `{{template}}` holding an expression is refused. Before a write loop over looked-at records, the
+planner is told in plain words what each filter and exclude keeps, and if its next reply breaks, the plan said back
+runs. A filter with no condition that nothing reads is dropped. After a look, a `<new_step_ids>` line names the
+looked ids and the first free one.
+
+**Why this way.** Each is a rule in the compiler or the turn loop, not a scenario fix: they hold for any model that
+makes the same slip.
+
+**Result.** Not measured on their own; entry 33's 273 × 3 runs include all of them.
+
+## 31. Writes see every match; a turn has a budget; every planner call is traced
+`a3df7ba` · 2026-10-27 · commits: `1a2b89d`, `a3df7ba`, `1d7adb4`, `c3a0353`, `c9de7c2`
+
+**Problem.** A loop or bulk-id write fed by a search acted on its first page (50) and still reported done. A turn had
+no overall limit: repairs, looks and retries could keep calling the model, and a closed browser tab didn't stop it.
+Nothing recorded which call in a turn was slow or why.
+
+**Change.** A search whose results feed a write loads every match (up to 500); if more match, the write refuses and
+changes nothing, naming the search and the counts. A limit the plan asked for ("the 10 newest") is kept. One approval
+over a run of sends lists every step it covers, and the approval preview lays out recipients, subject and body
+instead of raw JSON. A turn makes at most 8 planner calls in 180 s, each call's timeout cut to the time left; a closed
+stream aborts the call in flight. A turn that runs out changes nothing. Every planner call carries a trace (call
+number, model, prompt hashes, wall-clock and model time, attempts, usage), shown in the debug view and `ask`.
+BENCHMARK.md leads with tokens and model calls.
+
+**Why this way.** Silent truncation is the worst outcome for a bulk write: the user sees success. Refusing with the
+counts is safe and says what to narrow.
+
+## 32. DeepSeek on the Token Plan is the default when a key is present
+`d74874f` · 2026-10-27 · commits: `e9a1204`, `5920bf5`, `d74874f`
+
+**Problem.** The benchmarked model (entry 33) was opt-in, while the default was Haiku through a CLI a reviewer might
+not have.
+
+**Change.** With `PLANNER` unset, a Token Plan key selects qwen, now defaulting to deepseek-v4.1-flash-1017; no key
+falls back to `claude-cli` on Haiku 5.5. Key detection trims each key, falls through from `QWEN_API_KEY` to the
+`ALIBABA_TOKEN_PLAN_API_KEY` alias and ignores the `.env.example` placeholder, so an old `.env` copy falls back to
+Claude instead of failing every turn with 401. Every command prints which planner it picked. A missing Claude CLI
+fails with how to install it or set a key, not a bare spawn error.
+
+**Why this way.** The default is the measured setup when it can run, and a working one when it can't; `PLANNER`
+still forces either.
+
+## 33. Final benchmark: 273 scenarios × 3 on DeepSeek, planner against baseline
+`0b24cca` · 2026-10-27 · commits: `5801aef`, `0b24cca`, `1b0806d` · runs: final-deepseek-planner-3x → release-deepseek-planner-3x
+
+**Problem.** Every earlier benchmark was a subset: 23 scenarios, or 86. The submission claims all 50 modules.
+
+**Change.** One run over eleven scenario folders (regression, brief, parameters, module coverage, Wave 1,
+M45–M47 development, reporting and trails, questions, role ids, partial confirmation): 273 scenarios, 3 repeats,
+both agents on deepseek-v4.1-flash-1017 through the qwen adapter. Two commerce scenarios gained asserted M25 actions
+so every module is checked. The first run (`5801aef`) measured `b3a94d4` with uncommitted edits; it was re-run from a
+clean checkout at `d74874f`, after entries 30–32, and that run is the one BENCHMARK.md reports. A run that timed out
+before any model answered no longer blanks every cost. The build-time reports were removed (`1b0806d`); git history
+keeps them.
+
+**Result.** At `b3a94d4`+: planner 96.5% (790/819) against the baseline's 90.8% (744/819). Release at `d74874f`:
+planner 96.9% (789/814 clean runs, 5 infra) against 91.6% (744/812, 7 infra); 254 of 273 scenarios pass every run.
+Action selection 98.7% against 96.3%, parameters 98.1% against 94.9%, final data 98.7% against 96.5%. Median model
+calls per complex task 1 against 5. On the brief's 12 scenarios the planner passed 29 of 35 clean runs, the
+baseline 20 of 34. Seven of eight targets are met; the miss is direct first-reply p95, 4.3 s against 3.0 s (p50
+1.3 s); complex end-to-end is 1.6 s p50 and 7.8 s p95.
+
+**Cost.** Tokens per run 12,852 in / 209 out against 21,063 / 214. At Model Studio list rates (the plan is prepaid),
+$0.0043 per successful task against $0.0073; $3.38 for the whole planner run.
+
+**Still failing.** `param-create-ticket` 0/3 (the owner is left off the ticket), `merge-two-sarahs` and
+`direct-card-refund-request` 1/3 each, the brief's Facebook follow-ups, and six coverage scenarios that failed once each,
+mostly by not planning an offered action (report comparisons, tax, pipeline stages, a form submission, a community
+pin). BENCHMARK.md lists every failing run.
+
+## 34. After the release run: a retried turn's approval, and limits nobody asked for
+`a2d2d13` · 2026-10-27 · commits: `3f7e2b0`, `405749a`, `a2d2d13`
+
+**Problem.** Two bugs found after the release run. A retried turn waits for approval as `<turnId>_retry`, but the UI
+posted the first attempt's id, so Approve failed with "Nothing is waiting for approval". And planners copy the
+schema's default `limit: 50` into searches, which turned off entry 31's widening: a write could stop at the first 50
+matches and report success. 50 of the 819 release planner runs wrote that limit, the brief's complex leads example
+among them.
+
+**Change.** The confirm event updates the turn's id. A limit is read against everything the user said in the turns
+the planner saw: any limit of 50 or more their words never give is dropped, a smaller one ("the newest", "top three")
+is kept, and amounts, shares and spans ("$50", "50%", "50 days") don't count as asking for that many. A limit the
+user did give still applies, and the approval and reply say "the first N of the M found". A capped list that an
+exclude or filter checks against refuses the write.
+
+**Result.** Not re-measured: the release numbers in entry 33 predate both fixes.
+
+## 35. README brought to the release run
+`beddc34` · 2026-10-27 · commits: `4373b3a`, `0b459b6`, `cd43fc9`, `beddc34`
+
+**Change.** The README's scores, latency and brief-suite numbers now come from the release run; links to files not in
+the repo are gone. It says that filtering and joins run in memory over loaded records, and what real data volumes
+would need instead. Provider detail moved to `docs/PROVIDERS.md` and build history to `docs/IMPLEMENTATION-NOTES.md`,
+with sections on what is real and what is mocked, and the trade-offs.

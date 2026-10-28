@@ -210,6 +210,7 @@ const retrLine = retr.filter((h) => h.set === retrSet);
 const retrNow = retrLine.at(-1);
 const ablations = history.filter((h) => h.suite === "retrieval" && h.set === retrSet && h.git?.sha === retrNow?.git?.sha && h.config.ablation);
 // Scenario runs are drawn for the latest planner and tier only; a run on another model is in the table.
+// The headline tiles follow the widest suite that includes eval/scenarios (the benchmark), not the 23 alone.
 const scen3 = headlineScenarios;
 
 // ---- headline ----
@@ -221,7 +222,7 @@ const usd = (v, digits = 3) => Number.isFinite(v) ? "$" + v.toFixed(digits) : "U
 $("tiles").innerHTML = [
   first && retrNow ? tile("Retrieval R@15", pct(first.metrics.r15), pct(retrNow.metrics.r15), retrNow.metrics.questions + " held-out questions") : "",
   first && retrNow ? tile("Retrieval R@5", pct(first.metrics.r5), pct(retrNow.metrics.r5), "right action in the top 5") : "",
-  firstS && lastS ? tile("Scenario runs passed", pct(firstS.metrics.passRate), pct(lastS.metrics.passRate), "eval/scenarios · " + lastS.metrics.allPass + "/" + lastS.metrics.measured + " scenarios pass every run" + (firstS.set !== lastS.set ? "; the set changed between" : "")) : tile("Scenario runs passed", null, "Not measured", "No eligible 3× eval/scenarios run"),
+  firstS && lastS ? tile("Scenario runs passed", pct(firstS.metrics.passRate), pct(lastS.metrics.passRate), lastS.metrics.measured + " scenarios × " + lastS.config.repeat + " · " + (lastS.config.model || lastS.config.planner) + " · " + lastS.metrics.allPass + "/" + lastS.metrics.measured + " scenarios pass every run" + (firstS.set !== lastS.set ? "; the set changed between" : "")) : tile("Scenario runs passed", null, "Not measured", "No eligible 3× eval/scenarios run"),
   firstS && lastS ? tile("Median time per scenario", (firstS.metrics.e2eP50Ms / 1000).toFixed(1) + " s", (lastS.metrics.e2eP50Ms / 1000).toFixed(1) + " s", "end to end, real planner") : "",
 ].join("");
 

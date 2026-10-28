@@ -35,13 +35,13 @@ Try:
 
 ## Architecture
 
-Each turn is one planner call wrapped in code. The full design is in [docs/PLAN.md](docs/PLAN.md), §1–§3; [docs/PROMPT-EXAMPLE.md](docs/PROMPT-EXAMPLE.md) shows the planner prompt over two turns, with real payloads and token counts.
+Each turn is one planner call wrapped in code. The full design is in [docs/PLAN.md](docs/PLAN.md), §1–§3; [docs/PROMPT-EXAMPLE.md](docs/PROMPT-EXAMPLE.md) walks through the planner prompt over two turns: the prompt as today's code builds it, with the replies, token counts and timings recorded in the release benchmark.
 
 1. **Retrieve** (`server/src/retrieval/`, no LLM). BM25 and local embeddings rank about 22 action cards out of 500 (see below). Named records in the message are resolved to typed mentions.
 2. **Plan** (`server/src/planner/`, one LLM call). The model returns a typed JSON plan through `submit_plan`. Steps reference earlier outputs with `$refs`. When the model needs to see data before it can plan, it can return a read-only look first. Each turn allows two looks.
-3. **Validate** (`server/src/core/compile.ts`). Code checks action ids, arguments, refs and required inputs. A plan that fails gets one repair call that sees the error.
+3. **Validate** (`server/src/core/compile.ts`). Code checks action ids, arguments, refs and required inputs. A plan that fails gets a repair call that sees the errors, and a second one if the first got closer (fewer errors).
 4. **Execute** (`server/src/core/execute.ts`). A deterministic runner walks the plan's step graph. It runs the registered handlers along with `filter`, `exclude` and `forEach`. If a step fails before anything changed, there is one retry, and that retry sees the failure.
-5. **Summarize** (`server/src/core/summarize.ts`). The reply is built from the step results, not written by the model: a verdict for questions, then the records touched, and which steps completed, failed or are waiting.
+5. **Summarize** (`server/src/core/summarize.ts`). The reply is built from the step results, not written by the model: the records touched, and which steps completed, failed or are waiting. The one exception is a question about records: after its look, the model writes the verdict (Yes, No, or the number) from what the reads returned, and the looked records are shown under it.
 
 **Context across turns.** The planner never sees the raw transcript. It gets two things. The first is the last four turns as text, in `<context>`. The second is up to 12 typed record identities from the chat, in `<recent_records>`. Follow-ups such as "make those due tomorrow" resolve against those identities. The identities are only ids and labels, so the records' current contents are read again when a plan uses them.
 
@@ -73,7 +73,7 @@ The planner never sees all 500 actions. Retrieval starts with 15 ranked slots, t
 Look-alike actions in different modules ("send email" exists in several) are told apart three ways: each card's description says how it differs from its siblings, the siblings are linked so the planner sees them side by side, and the record types named in the message pull in the matching lookups.
 
 - **Cards.** `server/src/retrieval/cards.json` holds LLM-generated descriptions, synonyms, record types and look-alike siblings; at runtime, each module's registered descriptions, entities and synonyms refine them. The generator never sees `eval/`, and `retrieve.test.ts` fails if a synonym copies an eval paraphrase. Only some modules' cards were reviewed by hand ([status](docs/IMPLEMENTATION-NOTES.md#search-card-review-status)).
-- **Measured.** `npm run eval:retrieval` reports recall@k per question group, with a held-out split. Across all 500 actions and 357 questions, hybrid recall@15 is 97.5% (97.4% on the held-out split). On the original question set it was 94.9%, against 86.8% for BM25 alone. This is retrieval recall, not task success. Off-topic requests aren't rejected by retrieval; the planner rejects them.
+- **Measured.** `npm run eval:retrieval` reports recall@k per question group, with a held-out split. Across all 500 actions and 357 scored questions, hybrid recall@15 is 97.6% (97.4% on the 150-question held-out split). On the original question set it was 94.9%, against 86.8% for BM25 alone. This is retrieval recall, not task success. Off-topic requests aren't rejected by retrieval; the planner rejects them.
 
 ## Module catalog, action schemas and registration
 
@@ -93,7 +93,7 @@ Look-alike actions in different modules ("send email" exists in several) are tol
 - **Checks at registration.** An id that isn't in the catalog fails, so does registering an id twice, and so does marking a destructive or external action as a side-effect-free query.
 - **Search cards.** `npm run cards` has a model write the retrieval cards for modules missing from `server/src/retrieval/cards.json`, or rewrite the modules named. Rewriting overwrites any hand edits.
 
-How to add a module, step by step: [docs/ADDING-A-MODULE.md](docs/ADDING-A-MODULE.md). The module contract: [docs/MODULE-CONTRACT.md](docs/MODULE-CONTRACT.md). Product decisions made without an owner to ask (which actions need which permission, what was left out) are in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md).
+How to add a module, step by step, and the contract each module follows: [docs/ADDING-A-MODULE.md](docs/ADDING-A-MODULE.md). Product decisions made without an owner to ask (which actions need which permission, what was left out) are in [WAVE1-ASSUMPTIONS.md](WAVE1-ASSUMPTIONS.md).
 
 ## Real vs mocked
 
@@ -109,7 +109,7 @@ Cost is real tokens priced at list rates: the Token Plan is prepaid, so no money
 
 ## Verify and evaluate
 
-In `server/`, `npm run typecheck` and `npm test` run the 2,602 deterministic tests. They include the **smoke test of all 500 handlers** (`server/src/registry/smoke.test.ts`): every action's example call, a made-up param and an unknown id, and a check that each module registers all ten of its catalog actions. In `web/`, run `npm run build`.
+In `server/`, `npm run typecheck` and `npm test` run the 2,603 deterministic tests. They include the **smoke test of all 500 handlers** (`server/src/registry/smoke.test.ts`): every action's example call, a made-up param and, for actions with a required id, an unknown id, and a check that each module registers all ten of its catalog actions. In `web/`, run `npm run build`.
 
 **The eval dataset** is 273 scenarios across all 50 modules, with at least one checked action in every module: 150 direct, 25 indirect, 44 multi-step, 13 follow-up, 11 ambiguous, 3 unsupported and 27 failure cases. Each scenario is a JSON conversation with expected outcomes and automated assertions on the status, the actions planned, their arguments, the reply, and the **final database state** (SQL queries). Every run starts from a fresh seeded database and goes through the same conversation code as the web app.
 
@@ -129,7 +129,7 @@ In `server/`, `npm run typecheck` and `npm test` run the 2,602 deterministic tes
 
 Task success per suite over 3 runs each, from `eval/results/scenarios-release-deepseek-{planner,baseline}-3x.json`. Runs that failed outside the app (timeouts: 5 planner, 7 baseline) are left out of the rates, as in BENCHMARK.md. The baseline wins one row: the single role-id scenario, 3/3 against the planner's 1/3. The partial-confirmation scenarios need the subset approval only the planner's gate produces, so the baseline fails all of them. Small suites move a lot on one run.
 
-**Reproduce** from `server/` with the Token Plan key in `.env`. The planner run takes about 8.5 minutes and the baseline about 14:
+**Reproduce** from `server/` with the Token Plan key in `.env`. The planner run took about 10.5 minutes and the baseline about 15.7:
 
 ```sh
 export PLANNER=qwen QWEN_MODEL=deepseek-v4.1-flash-1017
@@ -138,7 +138,7 @@ npm run eval:scenarios -- --scenario-dir $DIRS --repeat 3 --label release-deepse
 npm run eval:scenarios -- --scenario-dir $DIRS --repeat 3 --label release-deepseek-baseline-3x --agent baseline
 npm run report -- --label release-deepseek-planner-3x --compare release-deepseek-baseline-3x   # writes BENCHMARK.md
 npm run eval:retrieval     # retrieval recall@k
-npm run trajectory         # docs/trajectory.html, every recorded run charted
+npm run trajectory         # docs/trajectory.html, every recorded planner run charted
 ```
 
 Both agents ran at commit `d74874f` on 2026-10-27, over the same scenario files (set `958de2e6710f`). Every run is kept in `eval/results/`, and `eval/results/history.jsonl` lists them; earlier benchmarks (DeepSeek over 86 scenarios, Haiku 5.5 over 23 × 3) are in git history. Each turn's trace (retrieval, planner calls with tokens and latency, every handler call) is in the result files and in the UI's Trace tab.
@@ -172,14 +172,14 @@ The targets were committed in [docs/PLAN.md](docs/PLAN.md) on 2026-10-23, before
 ## Known limitations
 
 - **The direct-reply p95 target is missed:** 4.3 s against 3.0 s. Most of a direct reply is one DeepSeek call, whose speed varies by day.
-- **Multi-step follow-ups are the weak spot.** The brief's suite passes 82.9% of runs for the planner (58.8% for the baseline). Its follow-up "Only include leads from the Facebook campaign, and make those tasks due tomorrow" and the held-out lead-filtering variants fail most; these are model misreads (an inverted filter, a filter read as a field update) that the validator can't catch because the plan is well-formed. Two question scenarios fail on the reply's wording (a missing leading "no"), not on the data.
+- **Multi-step follow-ups are the weak spot.** The brief's suite passes 82.9% of runs for the planner (58.8% for the baseline). Its follow-up "Only include leads from the Facebook campaign, and make those tasks due tomorrow" and the held-out lead-filtering variants fail most. Most of those are model misreads (an inverted filter, a filter read as a field update) that the validator can't catch because the plan is well-formed; one run ended with a plan still invalid after repair. Two question scenarios fail on the reply's wording (a missing leading "no"), not on the data.
 - **Known misses are recorded, not patched.** BENCHMARK.md lists [every failing run](BENCHMARK.md#every-failing-run); no scenario was edited to pass.
 - **The final benchmark is one model.** It ran on DeepSeek only. Earlier Haiku, GPT-6.1 Sol and GPT-6 Luna numbers are on different scenario sets and commits, so they don't compare with it.
 - **Cost is unknown on subscription planners.** The Claude and Codex CLIs and the prepaid Token Plan report no USD cost; the figures here come from list rates.
-- **Retrieval can miss.** Hybrid recall@15 is 97.5%, so about 1 question in 40 doesn't get the right card into the shortlist. The planner can ask for another retrieval round (`search_tools`, up to twice), but it can't use an action it never sees.
-- **Each turn is bounded.** A turn gets two looks, two `search_tools` rounds, one compile repair and one retry after a failed run. Requests that need longer chains of read-then-decide steps stop with an honest partial reply.
+- **Retrieval can miss.** Hybrid recall@15 is 97.6%, so about 1 question in 40 doesn't get the right card into the shortlist. The planner can ask for another retrieval round (`search_tools`, up to twice), but it can't use an action it never sees.
+- **Each turn is bounded.** A turn gets two looks, two `search_tools` rounds, one compile repair (two if the first got closer) and one retry after a failed run, within eight planner calls and 180 seconds. Requests that need longer chains of read-then-decide steps stop with an honest partial reply.
 - **Everything is simulated.** See [Real vs mocked](#real-vs-mocked).
-- **The cards are LLM-generated.** Only the first five modules and M45–M47 were reviewed by hand. Regenerating the cards overwrites hand edits.
+- **The cards are LLM-generated.** Only the first five modules built (M01, M03, M06, M48, M49) and M45–M47 were reviewed by hand. Regenerating the cards overwrites hand edits.
 - **Context is short.** The planner gets the last four turns and 12 record identities. Anything older has to be named again.
 
 ## Scaling beyond 500 actions
@@ -188,7 +188,7 @@ The prompt doesn't grow with the catalog. The planner sees a fixed shortlist of 
 
 - **Retrieval index.** BM25 and the in-memory cosine scan are linear in the number of cards, and both take milliseconds at 500. The card vectors are cached on disk (`server/data/vectors-*.bin`), keyed by a hash of all card texts. Changing any card re-embeds the whole set, which takes about 30 s at 500 because cards are embedded one at a time. At 5,000 or more cards, three changes would be needed: cache each card by its own hash, embed in batches, and replace the scan with an approximate-nearest-neighbour index.
 - **Precision drops before recall.** More actions means more near-duplicates ("send email" in five modules). Two things already help here: the look-alike sibling links on cards, and the lookup helpers pulled in for the record types the message names. The next step would be a two-stage retrieval: pick modules first, then actions within them. Recall@k should be re-measured per module group as the catalog grows.
-- **Cards and registration.** Each new module follows [docs/ADDING-A-MODULE.md](docs/ADDING-A-MODULE.md): a handler file, its schemas, a generated card and smoke coverage. The smoke test checks every action automatically for a valid call, an unknown param and an unknown id. That keeps the per-action cost low, but card review is manual, and at thousands of actions it would need sampling.
+- **Cards and registration.** Each new module follows [docs/ADDING-A-MODULE.md](docs/ADDING-A-MODULE.md): a handler file, its schemas, a generated card and smoke coverage. The smoke test checks every action automatically for a valid call, an unknown param and (where an id is required) an unknown id. That keeps the per-action cost low, but card review is manual, and at thousands of actions it would need sampling.
 - **Evals.** The suites are per module group, so new modules add their own sets without touching the regression fingerprint. A full run at this size costs real planner quota, so CI should run the regression set and sample the rest.
 - **Execution and gates.** These scale per request, not per catalog. Risk comes from each action's registered `risk` (`read`, `write`, `destructive` or `external`), so a new action gets approval gates without any new gate code.
 - **Filtering and joins run in application memory.** Each handler loads its rows with `store.find(table, predicate)` over JSON-document rows. A cross-module question ("leads from last week with no reply") is joined in memory by the generic filter and exclude steps. Three things make that the right choice here. First, the catalog fixes the actions: `M11.A10` takes no list of lead ids, and `M03.A03` has no "not replied" filter. Second, the seed data is tiny, so a scan takes well under a millisecond and the planner call dominates. Third, the generic join steps let the planner combine any of the 500 actions. With real data volumes, three changes would be needed:
@@ -210,4 +210,6 @@ docs/     design, module contract, planner notes, providers
 - [docs/PLANNER-CHANGES.md](docs/PLANNER-CHANGES.md): what changed in shared lookup, retrieval and planner handling, and why each change was needed
 - [docs/PROVIDERS.md](docs/PROVIDERS.md): the Qwen, Claude CLI and Codex providers, turn budgets and planner tracing
 - [docs/IMPLEMENTATION-NOTES.md](docs/IMPLEMENTATION-NOTES.md): build history, and the rules for reviews, listings and tickets
-- `docs/trajectory.html` charts every recorded eval run
+- [docs/JOURNEY.md](docs/JOURNEY.md): what was tried, what failed and what changed, in order, with the numbers at each step
+- [docs/ai-for-backend-engineers.html](docs/ai-for-backend-engineers.html): a guide to how the app works, for backend engineers new to LLM systems
+- `docs/trajectory.html` charts every recorded planner run
