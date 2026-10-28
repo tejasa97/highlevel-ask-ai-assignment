@@ -72,3 +72,10 @@ test("another folder's provider, reverted or unmeasured runs cannot hijack headl
   once.config.repeat = 1;
   assert.deepEqual(headlineScenarios([once]), []);
 });
+test("a 3x suite that includes eval/scenarios and measures more scenarios becomes the headline", () => {
+  const old = row("old"),
+    suite = row("release", "eval/scenarios,eval/brief-scenarios", { metrics: { measured: 273, passRate: 96.9 } }),
+    dev = row("dev", "eval/module-scenarios/m45-m47/development", { metrics: { measured: 300, passRate: 90 } });
+  assert.deepEqual(headlineScenarios([old, suite, dev]).map((r) => r.label), ["release"]);
+  assert.deepEqual(headlineScenarios([suite, old]).map((r) => r.label), ["release"]);
+});

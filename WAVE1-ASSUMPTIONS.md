@@ -1,6 +1,6 @@
 # Wave 1 assumptions
 
-Decisions made without a product owner to ask. Each one is an assumption, so each can be reversed. Where a decision is in code, the place is named.
+Decisions made during the Wave 1 hardening (October 2026) without a product owner to ask. Each one is an assumption, so each can be reversed. Where a decision is in code, the place is named. The hardening report these notes came from was removed from the tree; read it with `git show 0b24cca:WAVE1-HARDENING-REPORT.md`.
 
 ## A1. Which write actions need a permission
 
@@ -34,15 +34,15 @@ The same rule was then applied to the other public-facing publish and unpublish 
 
 Not gated, on purpose: **M38.A08** (schedule a post) only sets a future date and publishes nothing by itself, and **M36.A10** is a read. Whether scheduling should also need the permission is an open question for the product owner.
 
-### A3. No quote email row
+## A2. No quote email row
 
-M27.A08 (send quote) still stores no `emails` row. Adding a `quote` email kind means changing `EMAIL_KINDS` in M13 and making quote sends obey do-not-disturb and the send queue, which changes behaviour that the M27 description and tests state explicitly. That is a feature decision, not a hardening fix, so it was left alone one day before submission.
+M27.A08 (send quote) stores no `emails` row. Adding a `quote` email kind means changing `EMAIL_KINDS` in M13 and making quote sends obey do-not-disturb and the send queue, which changes behaviour that the M27 description and tests state explicitly. That is a feature decision, not a hardening fix, so it was left alone in the final hardening pass on 23 October 2026.
 
-## A4. Standing assumptions from earlier in the hardening
+## A3. Standing assumptions from earlier in the hardening
 
 - **A default actor is admin.** When a call has no `actorId`, it runs as admin. Tests of a refusal must pass an explicit actor. An actor id that is not a known, active user is refused with `PERMISSION`.
-- **Cash cannot be refunded through a processor.** A cash payment has no processor to send money back through, so M33 refuses the refund with `CONFLICT` at request, approve and execute (report 3.1). The alternative, recording a manual cash refund, was not built.
-- **A sibling link goes both ways.** If A lists B as a look-alike, retrieving B also brings A (report 3.2). This is applied when the cards are built, not by editing every module.
-- **M22 slots keep the full meeting length.** A local time that happens twice (clocks going back) is its first occurrence. One that never happens (clocks going forward) lands the same distance after the gap, as if the old offset still applied (report 3.4).
-- **Releasing a coupon on cancel.** Cancelling an order frees the coupon redemption it held, so the same coupon can be used again (report 3.5).
-- **Brief limits stayed in force.** Nothing under `store/`, `registry/`, `retrieval/`, `planner/`, `core/`, `docs/`, `eval/` or `m48-users` was changed beyond the two structural edits already named in the report (`noChange`, mutual siblings).
+- **Cash cannot be refunded through a processor.** A cash payment has no processor to send money back through, so M33 refuses the refund with `CONFLICT` at request, approve and execute (commit `51951eb`). The alternative, recording a manual cash refund, was not built.
+- **A sibling link goes both ways.** If A lists B as a look-alike, retrieving B also brings A (commit `73f0a87`, `retrieval/cards.ts`). This is applied when the cards are built, not by editing every module.
+- **M22 slots keep the full meeting length.** A local time that happens twice (clocks going back) is its first occurrence. One that never happens (clocks going forward) lands the same distance after the gap, as if the old offset still applied (commit `46cabdb`).
+- **Releasing a coupon on cancel.** Cancelling an order frees the coupon redemption it held, so the same coupon can be used again (M32.A09, commit `3371395`).
+- **Brief limits stayed in force.** During the Wave 1 hardening, nothing under `store/`, `registry/`, `retrieval/`, `planner/`, `core/`, `docs/`, `eval/` or `m48-users` was changed beyond two structural edits: the `noChange` helper in `registry/helpers.ts` and mutual siblings in `retrieval/cards.ts`. Later shared work has since changed those folders.

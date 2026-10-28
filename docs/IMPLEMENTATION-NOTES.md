@@ -4,16 +4,9 @@ Build history and module-specific rules that the [README](../README.md) leaves o
 
 ## How main came together
 
-All 500 actions in all 50 modules are executable. The first 18 modules (Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams) were built in depth first and carry the regression and module evals; the other 32 were added in Wave 1 and then hardened (assumptions in [WAVE1-ASSUMPTIONS.md](../WAVE1-ASSUMPTIONS.md)). Wave 1's own set of 27 planner scenarios (`eval/module-scenarios/wave1`) scored 96% of clean runs on Haiku (3 repeats), up from 66.7% before the failure classes it exposed were fixed; in that Haiku run, "Move X from Starter to Pro" was read as an opportunity stage change every time instead of a subscription plan change. DeepSeek passes that scenario 3 of 3 in the release benchmark.
+All 500 actions in all 50 modules are executable. The first 18 modules (Contacts, Leads, Opportunities, Tasks, Notes, Tags, Conversations, SMS, Email, Campaigns, Appointments, Invoices, Payments, Reviews, Business Listings, Support Tickets, Users and Teams) were built in depth first and carry the regression and module evals; the other 32 were added in Wave 1 and then hardened (assumptions in [WAVE1-ASSUMPTIONS.md](../WAVE1-ASSUMPTIONS.md)). Wave 1's own planner scenarios (`eval/module-scenarios/wave1`) numbered 25 during the hardening runs. On those 25, Haiku scored 96% of clean runs (3 repeats), up from 66.7% before the failure classes they exposed were fixed. In that Haiku run, "Move X from Starter to Pro" was read as an opportunity stage change every time instead of a subscription plan change; DeepSeek passes that scenario 3 of 3 in the release benchmark. Two scenarios were added afterwards, so the folder now holds 27.
 
-Two planner lines were developed in parallel and merged into main: one on GPT-6 Luna through Codex, one on DeepSeek/Qwen through the Token Plan. The lookup and retrieval work came first: consistent named lookup, child names bound to their parents, and clarifying questions tied to the action arguments that are actually missing ([rationale](PLANNER-CHANGES.md), [scoped lookups and clarifications](SCOPED-LOOKUPS-AND-CLARIFICATIONS.md)). The two lines then added:
-
-- Id arguments named for a role look up their record type.
-- Invoices, quotes, orders and subscriptions can be named by state or owner, as in "Marco Patel's open invoice".
-- Clarification repair, plus repair for invented ids.
-- Up to two looks per turn, and a retry when a search finds nothing.
-- Answers to questions start with a verdict, with record cards under it.
-- The Qwen Token Plan adapter.
+The shared planner work is explained in [PLANNER-CHANGES.md](PLANNER-CHANGES.md) and [scoped lookups and clarifications](SCOPED-LOOKUPS-AND-CLARIFICATIONS.md). In short: records are looked up by name in code, child names are bound to their parent, ids named for a role look up the right record type, contact-owned records (invoices, quotes, orders, subscriptions, enrollments) can be named by owner and state, and clarifying questions must point at an argument that is actually missing.
 
 ## Reviews, listings and tickets (M45–M47)
 
@@ -35,7 +28,7 @@ npm run eval:scenarios -- --scenario-dir eval/module-scenarios/m45-m47/reporting
 npx tsx src/scripts/eval-module-retrieval.ts
 ```
 
-The 45 development cases cover all thirty action IDs. The 12 reporting cases and matching seed IDs were frozen before the handlers, in commit `080618f`; reporting outcomes were not used for tuning. Development revision 2 corrects one test that counted existing seeded requests and asserts appointment reads through actual calls (which may run in a look); its original bytes/results are archived and its fingerprint changes. Seed and reporting definitions remain unchanged. The old 23-scenario regression fingerprint is unchanged **but its seeded database has expanded**. Legacy-row hashes check that existing records were not rewritten.
+The 45 development cases cover all thirty action IDs. The 12 reporting cases and matching seed IDs were frozen before the handlers, in commit `080618f`; reporting outcomes were not used for tuning. Development revision 2 corrects one test that counted existing seeded requests and asserts appointment reads through actual calls (which may run in a look); its original bytes/results are archived and its fingerprint changes. Seed and reporting definitions remain unchanged. When M45–M47 landed, the 23-scenario regression set kept its fingerprint (`fcc7ddef4615`) **but its seeded database expanded**. The set has since been edited twice (`ab4218f` replaced the card-refund scenario, `9a973d8` edited `followup.json`); it is still 23 scenarios, and the current fingerprint, `6b297b0555d4`, is pinned in `server/src/eval/selection.test.ts`. Legacy-row hashes check that existing records were not rewritten.
 
 ## Search-card review status
 

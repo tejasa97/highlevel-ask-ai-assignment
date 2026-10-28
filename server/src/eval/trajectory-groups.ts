@@ -27,10 +27,13 @@ export function scenarioGroups(history: HistoryEntry[]) {
     };
   });
 }
+/** The headline is the benchmark suite: of the 3x series whose folders include eval/scenarios, the one that
+ *  measures the most scenarios (the release run's eleven folders beat eval/scenarios alone). */
 export function headlineScenarios(history: HistoryEntry[]) {
-  return (
-    scenarioGroups(history)
-      .find((g) => g.folder === "eval/scenarios")
-      ?.runs.filter((h) => Number(h.config.repeat) >= 3) ?? []
-  );
+  const size = (runs: HistoryEntry[]) => runs.at(-1)?.metrics.measured ?? 0;
+  return scenarioGroups(history)
+    .filter((g) => g.folder.split(",").map((f) => f.trim()).includes("eval/scenarios"))
+    .map((g) => g.runs.filter((h) => Number(h.config.repeat) >= 3))
+    .filter((runs) => runs.length)
+    .reduce<HistoryEntry[]>((best, runs) => (size(runs) > size(best) ? runs : best), []);
 }
