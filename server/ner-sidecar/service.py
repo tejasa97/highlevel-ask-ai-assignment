@@ -30,6 +30,7 @@ DEFAULT_COMPANIES = Path(
 )
 DEFAULT_ANN_DIR = Path(os.environ.get("NER_ANN_DIR", str(DEFAULT_POC_ROOT / "data" / "ann")))
 DEFAULT_EMBED_THRESHOLD = float(os.environ.get("NER_EMBED_THRESHOLD", "0.9"))
+DEFAULT_SUGGEST_THRESHOLD = float(os.environ.get("NER_SUGGEST_THRESHOLD", "0.75"))
 DEFAULT_GLINER_THRESHOLD = float(os.environ.get("NER_GLINER_THRESHOLD", "0.4"))
 MODEL_NAME = os.environ.get("NER_MODEL_NAME", "gliner_small_v21_ft_head")
 
@@ -139,6 +140,7 @@ class NerService:
             "companies_path": str(DEFAULT_COMPANIES),
             "ann_dir": str(DEFAULT_ANN_DIR),
             "embed_threshold": DEFAULT_EMBED_THRESHOLD,
+            "suggest_threshold": DEFAULT_SUGGEST_THRESHOLD,
         }
         self.ready = True
         log.info("sidecar warm-load complete in %.1fs", time.time() - t0)
@@ -180,6 +182,16 @@ class NerService:
             return out
 
         if link.miss:
+            # Near-miss soft hits → ambiguous suggestions ("did you mean?"); never linkedId.
+            if link.hits:
+                max_cands = int(os.environ.get("NER_MAX_CANDIDATES", "20"))
+                hits = list(link.hits[:max_cands]) if max_cands > 0 else list(link.hits)
+                out["status"] = "ambiguous"
+                out["candidates"] = [self._candidate_from_hit(h, label) for h in hits]
+                out["method"] = link.method or "embed"
+                if link.score is not None:
+                    out["score"] = float(link.score)
+                return out
             out["status"] = "miss"
             if link.method:
                 out["method"] = link.method
@@ -244,6 +256,7 @@ class NerService:
             uniq.append(s)
 
         embed_threshold = DEFAULT_EMBED_THRESHOLD
+        suggest_threshold = DEFAULT_SUGGEST_THRESHOLD
         embed_topk = int(os.environ.get("NER_EMBED_TOPK", "5"))
         ambiguous_margin = float(os.environ.get("NER_AMBIGUOUS_MARGIN", "0.03"))
 
@@ -257,6 +270,7 @@ class NerService:
                 s.get("text", ""),
                 label,
                 embed_threshold=embed_threshold,
+                suggest_threshold=suggest_threshold,
                 embed_topk=embed_topk,
                 ambiguous_margin=ambiguous_margin,
             )

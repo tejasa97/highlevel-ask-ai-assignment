@@ -91,6 +91,69 @@ describe("spansToMentions / clarify", () => {
     assert.equal(c!.status, "clarify");
     assert.deepEqual(c!.options, ["Sarah Johnson (Brightside)", "Sarah Johnson (gmail)"]);
     assert.match(c!.text, /Sarah Johnson/);
+    assert.match(c!.text, /I found 2 matching/);
+  });
+
+  test("near-miss typo with one candidate uses Did you mean <name>?", () => {
+    const nearMiss: NerLinkedSpan = {
+      text: "Klar Finance",
+      label: "company",
+      start: 16,
+      end: 28,
+      status: "ambiguous",
+      candidates: [{ id: "co_1", name: "Clear Finance", score: 0.82, entity: "company" }],
+      method: "embed",
+      score: 0.82,
+    };
+    const c = clarifyFromSpans([nearMiss]);
+    assert.ok(c);
+    assert.equal(c!.status, "clarify");
+    assert.equal(c!.text, "Did you mean Clear Finance?");
+    assert.deepEqual(c!.options, ["Clear Finance"]);
+    assert.equal(c!.options?.[0], nearMiss.candidates?.[0]?.name);
+  });
+
+  test("near-miss with several candidates uses Did you mean one of these instead of …?", () => {
+    const nearMiss: NerLinkedSpan = {
+      text: "Sara Jonson",
+      label: "person",
+      start: 8,
+      end: 19,
+      status: "ambiguous",
+      candidates: [
+        { id: "ct_a", name: "Sarah Johnson", detail: "Brightside", entity: "contact", score: 0.81 },
+        { id: "ct_b", name: "Sarah Johnson", detail: "gmail", entity: "contact", score: 0.8 },
+      ],
+      method: "embed",
+      score: 0.81,
+    };
+    const c = clarifyFromSpans([nearMiss]);
+    assert.ok(c);
+    assert.equal(c!.text, "Did you mean one of these instead of Sara Jonson?");
+    assert.deepEqual(c!.options, ["Sarah Johnson (Brightside)", "Sarah Johnson (gmail)"]);
+  });
+
+  test("miss without candidates still omits from spansToMentions and clarify", () => {
+    assert.deepEqual(spansToMentions([miss]), []);
+    assert.equal(clarifyFromSpans([miss, linked]), undefined);
+  });
+
+  test("near-miss ambiguous still becomes a mention with candidates (no linkedId)", () => {
+    const nearMiss: NerLinkedSpan = {
+      text: "Clear Fin",
+      label: "company",
+      start: 0,
+      end: 9,
+      status: "ambiguous",
+      candidates: [{ id: "co_1", name: "Clear Finance", score: 0.88, entity: "company" }],
+      method: "embed",
+      score: 0.88,
+    };
+    const m = spansToMentions([nearMiss]);
+    assert.equal(m.length, 1);
+    assert.equal(m[0]!.ambiguous, true);
+    assert.equal(m[0]!.linkedId, undefined);
+    assert.equal(m[0]!.candidates?.[0]?.name, "Clear Finance");
   });
 
   test("entityForSpan prefers linkedEntity / candidate entity over person→contact", () => {

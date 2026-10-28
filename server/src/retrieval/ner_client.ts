@@ -149,16 +149,45 @@ export function mergeMentions(ner: Mention[], legacy: Mention[]): Mention[] {
 
 const normKey = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
 
+function normSurface(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^\p{L}\p{N} ]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** True when candidates look like near-miss suggestions (typo/partial), not exact-name dupes. */
+function isNearMissSuggestion(span: NerLinkedSpan): boolean {
+  const cands = span.candidates ?? [];
+  if (cands.length === 0) return false;
+  const surface = normSurface(span.text);
+  const nameDiffers = cands.some((c) => normSurface(c.name) !== surface);
+  const softScore = typeof span.score === "number" && span.score < 0.9;
+  const embedNonExact =
+    span.method === "embed" && cands.some((c) => normSurface(c.name) !== surface);
+  return nameDiffers || softScore || embedNonExact;
+}
+
 /** First ambiguous span → planner-style clarify reply (never picks a winner). */
 export function clarifyFromSpans(spans: NerLinkedSpan[]): NerClarifyReply | undefined {
   for (const span of spans) {
     if (span.status !== "ambiguous") continue;
     const entity = entityForSpan(span) ?? "record";
-    const n = span.candidates?.length;
-    const text =
-      n && n > 0
-        ? `I found ${n} matching ${entity.replaceAll("_", " ")} records named ${span.text}. Which one did you mean?`
-        : `Which ${entity.replaceAll("_", " ")} did you mean by ${span.text}?`;
+    const n = span.candidates?.length ?? 0;
+    const firstName = span.candidates?.[0]?.name;
+    let text: string;
+    if (n > 0 && isNearMissSuggestion(span)) {
+      text =
+        n === 1 && firstName
+          ? `Did you mean ${firstName}?`
+          : `Did you mean one of these instead of ${span.text}?`;
+    } else if (n > 0) {
+      text = `I found ${n} matching ${entity.replaceAll("_", " ")} records named ${span.text}. Which one did you mean?`;
+    } else {
+      text = `Which ${entity.replaceAll("_", " ")} did you mean by ${span.text}?`;
+    }
     return clarifyFromAmbiguousSpan(span, text) ?? { status: "clarify", text, options: ambiguousOptions(span) };
   }
   return undefined;

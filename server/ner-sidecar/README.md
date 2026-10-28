@@ -6,9 +6,11 @@ Python HTTP sidecar that implements the frozen Ask AI contract:
 - Docs: `docs/ner-sidecar-contract.md`
 
 **This process does not call live CRM/DB.** Linking uses the PoC in-memory exact
-hash map + FAISS ANN (cosine cutoff **0.9**) over the PoC seed at
-`/workspace/ask-ai-ner-poc/data/`. Model weights stay in the PoC tree (path /
-symlink); they are **not** copied into this repo.
+hash map + FAISS ANN (hard link cutoff **0.9**, soft suggest band default
+**0.75**) over the PoC seed at `/workspace/ask-ai-ner-poc/data/`. Near-miss
+neighbors in the suggest band surface as `status: "ambiguous"` with candidates
+("did you mean?") — never auto-linked. Model weights stay in the PoC tree
+(path / symlink); they are **not** copied into this repo.
 
 Phase note: the TypeScript ask path is wired behind **`NER_SIDECAR=1`** (or
 `ASK_NER=1`) via `server/src/retrieval/ner_client.ts` → `planTurn`. Ambiguous
@@ -47,7 +49,8 @@ the PoC top hit — `status: "ambiguous"` with `candidates[]` only (no `linkedId
 | `NER_PEOPLE_PATH` | `$NER_POC_ROOT/data/people.jsonl` |
 | `NER_COMPANIES_PATH` | `$NER_POC_ROOT/data/companies.jsonl` |
 | `NER_ANN_DIR` | `$NER_POC_ROOT/data/ann` |
-| `NER_EMBED_THRESHOLD` | `0.9` |
+| `NER_EMBED_THRESHOLD` | `0.9` (hard link / ambiguous-at-threshold) |
+| `NER_SUGGEST_THRESHOLD` | `0.75` (near-miss → ambiguous suggestions) |
 | `NER_GLINER_THRESHOLD` | `0.4` |
 | `NER_LAZY_LOAD` | unset = warm-load on startup; `1` = load on first request |
 | `NER_PEOPLE_LIMIT` / `NER_COMPANIES_LIMIT` | optional caps for smoke tests |
@@ -121,6 +124,11 @@ curl -s http://127.0.0.1:8091/v1/extract \
 curl -s http://127.0.0.1:8091/v1/extract \
   -H 'content-type: application/json' \
   -d '{"requestId":"req_email","utterance":"ping ana.ruiz@brightside.example"}' | jq .
+
+# Near-miss typo → ambiguous suggestions (did you mean Clear Finance?)
+curl -s http://127.0.0.1:8091/v1/extract \
+  -H 'content-type: application/json' \
+  -d '{"requestId":"req_klar","utterance":"Email someone at Klar Finance"}' | jq .
 ```
 
 ### Clarify-shaped mapping (for a future TS facade)

@@ -111,6 +111,38 @@ Minimal body. Optional fields mirror `POST /api/ask` (`message`, `tier?`, `actor
 
 Consumers **must not** treat a missing `linkedId` plus a non-empty `candidates` list as “use `candidates[0]`”. Even if a future sidecar mirrors PoC and also emits a top `linked` field internally, this contract’s `status: "ambiguous"` forbids auto-binding.
 
+### Example — near-miss → ambiguous suggestions ("did you mean?")
+
+Typos / partials whose best ANN neighbor sits in the suggest band
+(`suggest_threshold` ≤ sim &lt; `embed_threshold`, defaults 0.75 / 0.9) reuse
+`status: "ambiguous"` with candidates — **no** `linkedId`, never auto-pick.
+True misses (no neighbor ≥ suggest threshold) stay `miss` with empty candidates.
+
+```json
+{
+  "requestId": "req_01JKLAR",
+  "spans": [
+    {
+      "text": "Klar Finance",
+      "label": "company",
+      "start": 16,
+      "end": 28,
+      "status": "ambiguous",
+      "candidates": [
+        { "id": "co_1", "name": "Clear Finance", "score": 0.82, "entity": "company" }
+      ],
+      "method": "embed",
+      "score": 0.82
+    }
+  ]
+}
+```
+
+Facade clarify copy for near-misses prefers `Did you mean Clear Finance?` (one
+candidate) or `Did you mean one of these instead of Klar Finance?` (several).
+Exact-name duplicate ambiguous spans keep the existing "I found N matching …"
+wording.
+
 ### Example — miss + rule span (email)
 
 ```json
@@ -204,6 +236,16 @@ Built from the ambiguous Sarah span above (same shape Conversation emits on `rep
     "Sarah Johnson (Acme)",
     "Sarah Johnson (Brightside)"
   ]
+}
+```
+
+Near-miss (Klar → Clear Finance) uses did-you-mean copy, still `status: "clarify"`:
+
+```json
+{
+  "status": "clarify",
+  "text": "Did you mean Clear Finance?",
+  "options": ["Clear Finance"]
 }
 ```
 
