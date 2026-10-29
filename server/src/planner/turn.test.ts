@@ -1061,3 +1061,32 @@ test("a retry that runs the search the failed attempt found nothing with, unchan
   assert.equal(out.kind, "plan");
   assert.match(planner.requests[1]!.user, /s1: M02\.A03 \{"query":"Wayne"\} already found nothing in <failed_attempt>.*M01\.A03 Search contacts/);
 });
+
+describe("planner debug log", () => {
+  test("PLANNER_DEBUG=1 records every call with its reason, prompt and raw reply, as an event and a JSONL line", async () => {
+    const { mkdtempSync, readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { tmpdir } = await import("node:os");
+    const file = join(mkdtempSync(join(tmpdir(), "pdbg-")), "planner_debug.jsonl");
+    const saved = { on: process.env.PLANNER_DEBUG, file: process.env.PLANNER_DEBUG_FILE };
+    process.env.PLANNER_DEBUG = "1";
+    process.env.PLANNER_DEBUG_FILE = file;
+    try {
+      const { events } = await run("Add a task to call Ana", scripted(reply({ type: "search_tools", query: "create a task" }), createTask()));
+      const debug = events.flatMap((e) => (e.type === "planner.debug" ? [e.data] : []));
+      assert.deepEqual(debug.map((d) => [d.round, d.reason, d.label, d.model]), [[1, "initial", "plan", "fake"], [2, "after retrieval", "plan after search_tools", "fake"]]);
+      assert.match(debug[0]!.user, /Add a task to call Ana/);
+      assert.equal(debug[1]!.raw, JSON.stringify(createTask()));
+      const lines = readFileSync(file, "utf8").trim().split("\n").map((l) => JSON.parse(l));
+      assert.deepEqual(lines.map((l) => l.round), [1, 2]);
+    } finally {
+      for (const [k, v] of [["PLANNER_DEBUG", saved.on], ["PLANNER_DEBUG_FILE", saved.file]] as const) if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+  });
+
+  test("off by default: no planner.debug events", async () => {
+    delete process.env.PLANNER_DEBUG;
+    const { events } = await run("Add a task to call Ana", scripted(createTask()));
+    assert.ok(!events.some((e) => e.type === "planner.debug"));
+  });
+});

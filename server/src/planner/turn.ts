@@ -22,6 +22,7 @@ import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
 import { emptyTargets, outcomeErrors, type Outcome, selectionReadback } from "./contracts.js";
 import { assessClarification, namesField } from "./clarification.js";
+import { appendPlannerDebug, debugReason, type PlannerDebug, plannerDebugEnabled } from "./debug.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
 //   retrieve a shortlist → prompt → plan, with at most two search_tools rounds (a second retrieval for what the
@@ -85,6 +86,7 @@ export type TurnEvent =
   | { type: "retrieval"; data: RetrievalTrace }
   | { type: "planner.request"; data: { label: string; tier: Tier; system: string; user: string; actions: string[] } }
   | { type: "planner.reply"; data: PlannerCallTrace & { json: unknown } }
+  | { type: "planner.debug"; data: PlannerDebug }
   | { type: "compile.errors"; data: { errors: string[] } };
 
 export type TurnOutcome =
@@ -265,12 +267,28 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, failed: input.failed, looked, lookIds: lookSteps.map((l) => l.id), deliverySurfaces, identityCheck, outcome });
   let resampled = false;
   const budget = turnBudget(deps);
+  let round = 0;
+  const debug = (label: string, user: string, d: Pick<PlannerDebug, "raw" | "parsed" | "model" | "usage" | "latencyMs" | "error">) => {
+    round++;
+    if (!plannerDebugEnabled()) return;
+    const entry: PlannerDebug = { at: new Date().toISOString(), round, reason: debugReason(label, !!input.failed), label, tier: input.tier, system: SYSTEM, user, ...d, latencyMs: Math.round(d.latencyMs) };
+    emit({ type: "planner.debug", data: entry });
+    appendPlannerDebug(entry);
+  };
   const call = async (user: string, label: string) => {
     emit({ type: "planner.request", data: { label, tier: input.tier, system: SYSTEM, user, actions: offered.map((a) => a.id) } });
     // A resample is a call of its own, so it takes from the turn's budget too.
-    const ask = () => {
+    const ask = async () => {
       const { n, ms } = budget.next();
-      return withDeadline(ms, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }), deps.signal).then((r) => ({ r, n }));
+      const started = performance.now();
+      try {
+        const r = await withDeadline(ms, (signal) => planner.plan({ tier: input.tier, system: SYSTEM, user, schema: SUBMIT_PLAN_SCHEMA, signal }), deps.signal);
+        debug(label, user, { raw: r.text, parsed: r.json, model: r.model, usage: r.usage, latencyMs: r.latencyMs });
+        return { r, n };
+      } catch (err) {
+        debug(label, user, { raw: err instanceof PlannerError ? (err.text ?? null) : null, parsed: null, model: planner.models?.[input.tier] ?? planner.name, usage: null, latencyMs: performance.now() - started, error: err instanceof Error ? err.message : String(err) });
+        throw err;
+      }
     };
     let got: { r: PlanResult; n: number };
     try {
