@@ -111,6 +111,14 @@ def test_unknown_or_stale_scope_fails_closed():
         raise AssertionError(f"{scope}/{version} should fail closed")
 
 
+def test_two_versions_of_a_scope_coexist():
+    S.register_scope("ask", "v2", ASK[:1])
+    (sp,) = spans("Email Sarah Johnson", "ask", "v2")
+    assert sp["status"] == "linked" and sp["linkedId"] == "ct_31"
+    (sp,) = spans("Email Sarah Johnson", "ask", "v1")
+    assert ids(sp) == {"ct_31", "ct_32"}
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

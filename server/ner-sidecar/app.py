@@ -148,4 +148,4 @@ def get_scope(name: str) -> dict[str, Any]:
     got = service.scopes.get(name)
     if got is None:
         raise HTTPException(status_code=404, detail=f"scope {name!r} is not registered")
-    return {"scope": name, "version": got[0]}
+    return {"scope": name, "versions": list(got.keys())}

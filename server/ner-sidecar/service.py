@@ -9,6 +9,8 @@ import logging
 import os
 import re
 import sys
+import threading
+from collections import OrderedDict
 import time
 from pathlib import Path
 from typing import Any
@@ -93,7 +95,11 @@ class NerService:
         self.index = None
         # Named, caller-supplied indexes (scope -> (version, EntityIndex)). The Ask app registers "ask" with its own
         # records; a request naming a scope links only against that scope's index.
-        self.scopes: dict[str, tuple[str, Any]] = {}
+        # Several versions per scope are kept (each Ask conversation may hold its own copy of the data), newest last.
+        self.scopes: dict[str, "OrderedDict[str, Any]"] = {}
+        # FastAPI runs sync endpoints on a thread pool. Two threads embedding at once (a scope build next to a link)
+        # crashes torch/faiss on macOS, so building a scope and linking take turns.
+        self.lock = threading.Lock()
         self.ready = False
         self.model_path = DEFAULT_MODEL
         self.load_error: str | None = None
@@ -156,6 +162,14 @@ class NerService:
 
     def register_scope(self, name: str, version: str, entities: list[dict]) -> dict[str, Any]:
         """Build an in-memory EntityIndex (exact + ANN + edit) from the caller's own records."""
+        with self.lock:
+            got = self.scopes.get(name)
+            if got is not None and version in got:
+                got.move_to_end(version)
+                return {"scope": name, "version": version, "unchanged": True}
+            return self._build_scope(name, version, entities)
+
+    def _build_scope(self, name: str, version: str, entities: list[dict]) -> dict[str, Any]:
         _ensure_poc_scripts_on_path()
         from entity_index import Entity, EntityIndex  # type: ignore
 
@@ -175,7 +189,10 @@ class NerService:
         if self.index is not None and getattr(self.index, "_embedder", None) is not None:
             idx._embedder = self.index._embedder
         ann = idx.build_ann(embed_model=os.environ.get("NER_EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")) if entities else {}
-        self.scopes[name] = (version, idx)
+        versions = self.scopes.setdefault(name, OrderedDict())
+        versions[version] = idx
+        while len(versions) > int(os.environ.get("NER_SCOPE_VERSIONS", "16")):
+            versions.popitem(last=False)
         return {"scope": name, "version": version, "entities": len(entities), "ann": ann}
 
     def _index_for(self, scope: str | None, version: str | None):
@@ -184,9 +201,12 @@ class NerService:
         got = self.scopes.get(scope)
         if got is None:
             raise ScopeUnavailable(f"scope {scope!r} is not registered")
-        if version is not None and got[0] != version:
-            raise ScopeUnavailable(f"scope {scope!r} is at version {got[0]}, not {version}")
-        return got[1]
+        if version is None:
+            return next(reversed(got.values()))
+        if version not in got:
+            raise ScopeUnavailable(f"scope {scope!r} has no version {version}")
+        got.move_to_end(version)
+        return got[version]
 
     def _candidate_from_hit(self, hit, label: str) -> dict[str, Any]:
         e = hit.entity
@@ -271,6 +291,10 @@ class NerService:
         return out
 
     def extract(self, request_id: str, utterance: str, scope: str | None = None, scope_version: str | None = None) -> dict:
+        with self.lock:
+            return self._extract(request_id, utterance, scope, scope_version)
+
+    def _extract(self, request_id: str, utterance: str, scope: str | None, scope_version: str | None) -> dict:
         if not self.ready or self.model is None or self.index is None:
             raise RuntimeError("NER service not ready")
         index = self._index_for(scope, scope_version)
