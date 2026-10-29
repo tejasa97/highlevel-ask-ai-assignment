@@ -14,7 +14,7 @@ from typing import Any, Literal, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from service import MODEL_NAME, service
+from service import MODEL_NAME, ScopeUnavailable, service
 
 logging.basicConfig(
     level=os.environ.get("NER_LOG_LEVEL", "INFO"),
@@ -28,6 +28,21 @@ class ExtractRequest(BaseModel):
     utterance: str
     actorId: Optional[str] = None
     tier: Optional[Literal["fast", "strong"]] = None
+    # Link only against this registered scope's index (the Ask app sends "ask"). Unset = the big seed index.
+    scope: Optional[str] = None
+    scopeVersion: Optional[str] = None
+
+
+class ScopeEntity(BaseModel):
+    id: str = Field(..., min_length=1)
+    name: str
+    entity: Literal["contact", "lead", "user", "company"]
+    detail: Optional[str] = None
+
+
+class ScopeRequest(BaseModel):
+    version: str = Field(..., min_length=1)
+    entities: list[ScopeEntity]
 
 
 class Candidate(BaseModel):
@@ -56,6 +71,7 @@ class ExtractResponse(BaseModel):
     spans: list[LinkedSpan]
     model: Optional[str] = None
     latencyMs: Optional[float] = None
+    scope: Optional[str] = None
 
 
 @asynccontextmanager
@@ -103,7 +119,11 @@ def health() -> dict[str, Any]:
 
 def _extract(body: ExtractRequest) -> ExtractResponse:
     _ensure_ready()
-    raw = service.extract(body.requestId, body.utterance)
+    try:
+        raw = service.extract(body.requestId, body.utterance, body.scope, body.scopeVersion)
+    except ScopeUnavailable as e:
+        # Fail closed: a scoped caller never gets the big index.
+        raise HTTPException(status_code=409, detail=str(e)) from e
     return ExtractResponse(**raw)
 
 
@@ -115,3 +135,17 @@ def extract_v1(body: ExtractRequest) -> ExtractResponse:
 @app.post("/extract", response_model=ExtractResponse)
 def extract_alias(body: ExtractRequest) -> ExtractResponse:
     return _extract(body)
+
+
+@app.put("/v1/scopes/{name}")
+def put_scope(name: str, body: ScopeRequest) -> dict[str, Any]:
+    _ensure_ready()
+    return service.register_scope(name, body.version, [e.model_dump() for e in body.entities])
+
+
+@app.get("/v1/scopes/{name}")
+def get_scope(name: str) -> dict[str, Any]:
+    got = service.scopes.get(name)
+    if got is None:
+        raise HTTPException(status_code=404, detail=f"scope {name!r} is not registered")
+    return {"scope": name, "version": got[0]}

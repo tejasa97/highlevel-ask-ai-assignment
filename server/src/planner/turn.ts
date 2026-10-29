@@ -6,9 +6,9 @@ import { card } from "../registry/card.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
 import { type Mention, mentions } from "../retrieval/mentions.js";
 import type { NerSidecarResponse } from "../retrieval/ner_sidecar_contract.js";
+import { askScopedExtract } from "../retrieval/ner_ask_scope.js";
 import { bindNerLookups, fromNer } from "./ner_bind.js";
 import {
-  extractAndLink,
   mergeMentions,
   nerSidecarEnabled,
   NerSidecarError,
@@ -200,7 +200,9 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   // (ids, ambiguity candidates, did-you-mean suggestions) join them as hints for retrieval and the planner. They never
   // end the turn here: only an argument that needs an existing record is bound against them, after planning.
   let named: Mention[] = store ? mentions(request, registry, store) : [];
-  const ner = deps.ner ?? (nerSidecarEnabled() ? (utterance: string, signal?: AbortSignal) => extractAndLink({ requestId: `turn_${Date.now().toString(36)}`, utterance, tier: input.tier }, { signal }) : undefined);
+  // The Ask app only ever links against its own records (scope "ask"); with no store there is nothing to scope to,
+  // so no NER at all rather than the sidecar's default fine-tuning index.
+  const ner = deps.ner ?? (nerSidecarEnabled() && store ? (utterance: string, signal?: AbortSignal) => askScopedExtract(store, { requestId: `turn_${Date.now().toString(36)}`, utterance, tier: input.tier }, { signal }) : undefined);
   if (ner && request.trim()) {
     try {
       const fromSpans = spansToMentions((await ner(request, deps.signal)).spans);

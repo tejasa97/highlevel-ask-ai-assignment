@@ -83,10 +83,17 @@ def to_utf16_offsets(text: str, start: int | None, end: int | None, span_text: s
     return int(start or 0), int(end or 0)
 
 
+class ScopeUnavailable(Exception):
+    """A caller asked for a named scope that isn't registered (or is stale). Never fall back to the big index."""
+
+
 class NerService:
     def __init__(self) -> None:
         self.model = None
         self.index = None
+        # Named, caller-supplied indexes (scope -> (version, EntityIndex)). The Ask app registers "ask" with its own
+        # records; a request naming a scope links only against that scope's index.
+        self.scopes: dict[str, tuple[str, Any]] = {}
         self.ready = False
         self.model_path = DEFAULT_MODEL
         self.load_error: str | None = None
@@ -146,6 +153,40 @@ class NerService:
         }
         self.ready = True
         log.info("sidecar warm-load complete in %.1fs", time.time() - t0)
+
+    def register_scope(self, name: str, version: str, entities: list[dict]) -> dict[str, Any]:
+        """Build an in-memory EntityIndex (exact + ANN + edit) from the caller's own records."""
+        _ensure_poc_scripts_on_path()
+        from entity_index import Entity, EntityIndex  # type: ignore
+
+        idx = EntityIndex()
+        for e in entities:
+            kind = (e.get("entity") or "").lower()
+            idx.add(
+                Entity(
+                    id=e["id"],
+                    name=e["name"],
+                    entity_type="company" if kind == "company" else "person",
+                    role=None if kind == "company" else kind,
+                    company=e.get("detail"),
+                )
+            )
+        # Share the big index's embedder when it is loaded, so registering a scope never reloads the model.
+        if self.index is not None and getattr(self.index, "_embedder", None) is not None:
+            idx._embedder = self.index._embedder
+        ann = idx.build_ann(embed_model=os.environ.get("NER_EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")) if entities else {}
+        self.scopes[name] = (version, idx)
+        return {"scope": name, "version": version, "entities": len(entities), "ann": ann}
+
+    def _index_for(self, scope: str | None, version: str | None):
+        if scope is None:
+            return self.index
+        got = self.scopes.get(scope)
+        if got is None:
+            raise ScopeUnavailable(f"scope {scope!r} is not registered")
+        if version is not None and got[0] != version:
+            raise ScopeUnavailable(f"scope {scope!r} is at version {got[0]}, not {version}")
+        return got[1]
 
     def _candidate_from_hit(self, hit, label: str) -> dict[str, Any]:
         e = hit.entity
@@ -229,9 +270,10 @@ class NerService:
             out["score"] = float(score)
         return out
 
-    def extract(self, request_id: str, utterance: str) -> dict:
+    def extract(self, request_id: str, utterance: str, scope: str | None = None, scope_version: str | None = None) -> dict:
         if not self.ready or self.model is None or self.index is None:
             raise RuntimeError("NER service not ready")
+        index = self._index_for(scope, scope_version)
 
         t0 = time.time()
         ents = self.model.predict_entities(utterance, LABELS, threshold=DEFAULT_GLINER_THRESHOLD)
@@ -270,7 +312,7 @@ class NerService:
             if s.get("source") == "rule" or label in ("email", "id", "phone", "team", "product"):
                 contract_spans.append(self._span_from_link(s, utterance, None))
                 continue
-            link = self.index.link(
+            link = index.link(
                 s.get("text", ""),
                 label,
                 embed_threshold=embed_threshold,
@@ -288,6 +330,7 @@ class NerService:
             "spans": contract_spans,
             "model": MODEL_NAME,
             "latencyMs": latency_ms,
+            **({"scope": scope} if scope else {}),
         }
 
 

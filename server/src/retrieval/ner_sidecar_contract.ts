@@ -96,6 +96,10 @@ export interface NerSidecarRequest {
   actorId?: string;
   /** Optional planner tier (POST /api/ask tier). */
   tier?: "fast" | "strong";
+  /** Link only against this registered caller index ("ask" = the Ask app's own records). Unset = the sidecar's default index. */
+  scope?: string;
+  /** Version of the scope's index the caller expects; a mismatch is a 409, never a fallback. */
+  scopeVersion?: string;
 }
 
 /** Sidecar extract+link response. */
@@ -106,6 +110,8 @@ export interface NerSidecarResponse {
   model?: string;
   /** Wall time in ms if the sidecar reports it. */
   latencyMs?: number;
+  /** The scope the spans were linked against, echoed back by the sidecar. */
+  scope?: string;
 }
 
 /**
