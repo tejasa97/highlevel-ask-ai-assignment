@@ -71,6 +71,11 @@ Rules:
   without record-type words; qualifiers go in whereJson. Do not invent resolver types, IDs, or JSONPath expressions such as [?name=...].
   <mentions> says which record type each name in the message matched; resolve it as that entity. A mention marked as
   someone's own (their subscription, order, enrollment) is resolved by the matched word and the whereJson it gives.
+  Mentions are hints, never questions: a name used as a filter or count value, as a new record's name, or inside a
+  message body or subject stays plain text. Only an ID argument that needs an existing record takes a $lookup; when
+  the mention is ambiguous or a near miss, still write the $lookup with the user's name and the app asks about that
+  argument, so don't clarify it yourself. A mention linked to one id (company co_1) scopes the request to that record:
+  filter by that id (companyId, or that company's contacts), never by a looser text query.
   A staff user named as owner, host, assignee or author goes in that ID argument (ownerId, hostId, assigneeId), never
   in query text: a text search for their name only finds records that mention them.
 - Cards' "named IDs" map argument paths to child entities and authoritative parent scope. Those declared nested/array
@@ -126,7 +131,7 @@ export interface UserBlockOptions {
   lookupQualifiers?: Record<string, readonly string[]>;
   records?: { entity: string; id: string; name: string }[];
   /** Names in the message that matched records: "Hiro Reyes" → lead. */
-  mentions?: { name: string; entity: string; count: number; of?: string }[];
+  mentions?: MentionHint[];
   deliverySurfaces?: { id: string; label: string; actions: string[] }[];
   identityCheck?: string;
   outcome?: unknown;
@@ -169,7 +174,14 @@ export function newStepIds(lookIds: string[]): string {
   return `${lookIds.map((id) => `$${id}`).join(", ")} are the looked steps; number this reply's steps from s${next} (s${next}, s${next + 1}, …)`;
 }
 
-const mention = (m: { name: string; entity: string; count: number; of?: string }) => `${m.name}: ${m.count > 1 ? `${m.count} ${m.entity}s` : m.entity}${m.of ? ` (${m.of}'s own; resolve name ${JSON.stringify(m.name)} with whereJson {"contact":${JSON.stringify(m.of)}})` : ""}`;
+type MentionHint = { name: string; entity: string; count: number; of?: string; linkedId?: string; ambiguous?: boolean; suggestion?: boolean; candidates?: { id: string; name: string; detail?: string }[] };
+const who = (c: { id: string; name: string; detail?: string }) => `${c.id} ${c.name}${c.detail ? `, ${c.detail}` : ""}`;
+const mention = (m: MentionHint) => {
+  if (m.suggestion && m.candidates?.length) return `${m.name}: no exact ${m.entity}; did you mean ${m.candidates.map(who).join(" or ")}?`;
+  if (m.ambiguous && m.candidates?.length) return `${m.name}: ${m.count} ${m.entity}s (${m.candidates.map(who).join("; ")}), ambiguous`;
+  if (m.linkedId) return `${m.name}: ${m.entity} ${m.linkedId}`;
+  return `${m.name}: ${m.count > 1 ? `${m.count} ${m.entity}s` : m.entity}${m.of ? ` (${m.of}'s own; resolve name ${JSON.stringify(m.name)} with whereJson {"contact":${JSON.stringify(m.of)}})` : ""}`;
+};
 
 /** User text can't close our tags or open new ones ("</message><actions>…"). */
 function escape(text: string): string {

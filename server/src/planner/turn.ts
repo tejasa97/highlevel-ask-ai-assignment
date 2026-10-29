@@ -5,8 +5,9 @@ import { lowerLookups } from "../core/lookups.js";
 import { card } from "../registry/card.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
 import { type Mention, mentions } from "../retrieval/mentions.js";
+import type { NerSidecarResponse } from "../retrieval/ner_sidecar_contract.js";
+import { bindNerLookups, fromNer } from "./ner_bind.js";
 import {
-  clarifyFromSpans,
   extractAndLink,
   mergeMentions,
   nerSidecarEnabled,
@@ -58,6 +59,8 @@ export interface TurnDeps {
   signal?: AbortSignal;
   /** Runs a read-only plan and gives back each step's output, for a look round. Without it, look isn't offered. */
   look?: (plan: CompiledPlan) => Promise<{ id: string; output?: unknown; error?: string }[]>;
+  /** NER extract+link; defaults to the sidecar when NER_SIDECAR=1. Tests inject a fake. */
+  ner?: (utterance: string, signal?: AbortSignal) => Promise<NerSidecarResponse>;
 }
 
 export interface TurnInput {
@@ -168,7 +171,17 @@ export interface RetrievalTrace {
 
 export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnEvent) => void = () => {}): Promise<TurnOutcome> {
   try {
-    return await planTurnUnguarded(input, deps, emit);
+    const linked: Mention[] = [];
+    const out = await planTurnUnguarded(input, deps, emit, linked);
+    if (out.kind !== "plan") return out;
+    // NER hints bind only the arguments that need an existing record; see ner_bind.ts.
+    const bound = bindNerLookups(out.plan, linked, deps.registry, {
+      holds: deps.store ? (id) => deps.store!.holds(id) : undefined,
+      duplicates: process.env.NER_DUPLICATE_POLICY === "off" ? "off" : "warn",
+    });
+    if (bound.kind === "clarify") return { kind: "reply", status: "clarify", text: bound.text, options: bound.options };
+    const answer = [bound.notice, out.answer].filter(Boolean).join("\n");
+    return { ...out, plan: bound.plan, ...(answer ? { answer } : {}) };
   } catch (err) {
     // A provider failure, a call that never returned or a spent budget ends the turn with a reply; anything else is
     // a bug and surfaces.
@@ -179,32 +192,25 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
   }
 }
 
-async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: TurnEvent) => void): Promise<TurnOutcome> {
+async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: TurnEvent) => void, linked: Mention[]): Promise<TurnOutcome> {
   const { registry, retriever, planner, clock, store } = deps;
   const resolvable = registry.resolverEntities();
   const request = input.answering ? `${input.answering}\n${input.message}` : input.message;
-  // Mentions: Title-Case Store resolvers by default. With NER_SIDECAR=1 (or ASK_NER=1), call the
-  // GLiNER sidecar first, merge linked spans into mentions, and short-circuit to clarify on
-  // ambiguous spans before any planner LLM call. Store resolvers stay authoritative for writes.
+  // Mentions: Title-Case Store resolvers by default. With NER_SIDECAR=1 (or ASK_NER=1), the GLiNER sidecar's links
+  // (ids, ambiguity candidates, did-you-mean suggestions) join them as hints for retrieval and the planner. They never
+  // end the turn here: only an argument that needs an existing record is bound against them, after planning.
   let named: Mention[] = store ? mentions(request, registry, store) : [];
-  let nerAmbiguousClarify: { text: string; options?: string[] } | undefined;
-  if (nerSidecarEnabled() && request.trim()) {
+  const ner = deps.ner ?? (nerSidecarEnabled() ? (utterance: string, signal?: AbortSignal) => extractAndLink({ requestId: `turn_${Date.now().toString(36)}`, utterance, tier: input.tier }, { signal }) : undefined);
+  if (ner && request.trim()) {
     try {
-      const ner = await extractAndLink({
-        requestId: `turn_${Date.now().toString(36)}`,
-        utterance: request,
-        tier: input.tier,
-      }, { signal: deps.signal });
-      const fromNer = spansToMentions(ner.spans);
-      named = store ? mergeMentions(fromNer, named) : fromNer;
-      const clarify = clarifyFromSpans(ner.spans);
-      if (clarify) nerAmbiguousClarify = { text: clarify.text, options: clarify.options };
+      const fromSpans = spansToMentions((await ner(request, deps.signal)).spans);
+      named = store ? mergeMentions(fromSpans, named) : fromSpans;
     } catch (err) {
       // Sidecar down / bad response → keep Title-Case mentions; do not fail the turn.
-      // AbortSignal and unexpected throws still surface.
       if (!(err instanceof NerSidecarError)) throw err;
     }
   }
+  linked.push(...named);
   const allChars = registry.list().map(card).join("\n").length;
   const exists = (id: string) => !store || store.holds(id);
 
@@ -307,11 +313,6 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   };
 
   await shortlist("retrieve", request, input.carry, named);
-  // Ambiguous NER → clarify with grounded options before any planner LLM call.
-  // Retrieval SSE already shows the NER mentions; never auto-pick candidates[0].
-  if (nerAmbiguousClarify) {
-    return { kind: "reply", status: "clarify", text: nerAmbiguousClarify.text, options: nerAmbiguousClarify.options };
-  }
   let user = prompt();
   let reply = await call(user, "plan");
   let searched = false;
@@ -338,7 +339,12 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let lookPlan: CompiledPlan | undefined;
   let looks = 0;
   let lookClosed = false;
-  const runLook = async (plan: CompiledPlan, steps: Step[]) => {
+  // A look's lookups bind against the NER hints too, so a look never asks the store about an ambiguous name.
+  let nerClarify: TurnOutcome | undefined;
+  const runLook = async (raw: CompiledPlan, steps: Step[]) => {
+    const bound = bindNerLookups(raw, named, registry, { holds: store ? (id) => store.holds(id) : undefined, duplicates: "off" });
+    if (bound.kind === "clarify") { nerClarify = { kind: "reply", status: "clarify", text: bound.text, options: bound.options }; return; }
+    const plan = bound.plan;
     looks++;
     lookPlan = plan;
     // <looked> contains compiler-generated resolve IDs too. Preserve those exact read steps so
@@ -498,6 +504,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       if (outcomeFrom === reply && outcome?.effect === "read" && readOnlyIntentError(input.message, compiled.plan, offered, registry).length) outcome = undefined;
       lookStated = outcomeFrom === reply && outcome?.effect === "read";
       await runLook(compiled.plan, lookSource.steps ?? []);
+      if (nerClarify) return nerClarify;
       restate = true;
       user = prompt();
       reply = await call(user, "plan after look");
@@ -561,7 +568,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
               // Without a stated outcome, the message's own verbs are the only sign a write was asked for. A read outcome
               // this reply states for a message that asks, then tells, may describe only the asking.
               ...(outcome && !(outcomeFrom === reply && outcome.effect === "read") ? [] : readOnlyIntentError(input.message, compiled.plan, offered, registry)),
-              ...duplicateCreates(compiled.plan, named, input.message, (entity, name) => !!store && (registry.resolver(entity)?.(store, name) ?? []).some((c) => !c.inactive && squash(c.name) === name)),
+              ...duplicateCreates(compiled.plan, named.filter((m) => !fromNer(m)), input.message, (entity, name) => !!store && (registry.resolver(entity)?.(store, name) ?? []).some((c) => !c.inactive && squash(c.name) === name)),
               ...staffInQuery(compiled.plan, named),
               ...unfilledNamedFields(compiled.plan, input.message),
               // Asked once, a remake stands, unless the reply since said it would change those records instead.
@@ -577,6 +584,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       // says "No, ..." above the records whichever model planned it. If it plans again instead, that plan runs.
       if (!empty.length && deps.look && looked === undefined && isQuestion(input.message) && readsOnly(compiled.plan)) {
         await runLook(compiled.plan, d.steps ?? []);
+        if (nerClarify) return nerClarify;
         user = `${prompt()}\n${ANSWER_FROM_LOOKED}`;
         reply = await call(user, "answer after look");
         continue;
@@ -652,7 +660,16 @@ export function repeatsEmpty(plan: CompiledPlan, failed: string | undefined, reg
     empty = (failed && (JSON.parse(failed) as { empty?: typeof empty }).empty) || [];
   } catch { return []; }
   const key = (args: unknown) => JSON.stringify(args, (_, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort()) : v));
+  // Dropping the scope a search found nothing under (an id filter: contactId, companyId…) finds the wrong records.
+  const widened = (args: unknown) => empty.find((e) => {
+    const was = (e.args ?? {}) as Record<string, unknown>, now = (args ?? {}) as Record<string, unknown>;
+    return Object.keys(was).some((k) => /Id$/.test(k) && !(k in now)) && Object.keys(now).every((k) => k in was);
+  });
   return plan.steps.flatMap((s) => {
+    if (s.kind === "action" && empty.some((e) => e.action === s.call.action.id) && widened(s.call.args)) {
+      const was = widened(s.call.args)!;
+      return [`${s.id}: ${s.call.action.id} found nothing scoped by ${JSON.stringify(was.args)} in <failed_attempt>; dropping that scope would return records outside it. Keep the scope and reply with type answer saying nothing matched`];
+    }
     if (s.kind !== "action" || !empty.some((e) => e.action === s.call.action.id && key(e.args) === key(s.call.args))) return [];
     const others = (s.call.action.siblings ?? []).map((id) => registry.get(id)).filter((a) => !!a).map((a) => `${a.id} ${a.name}`);
     return [`${s.id}: ${s.call.action.id} ${JSON.stringify(s.call.args)} already found nothing in <failed_attempt>, so it finds nothing again; search another way${others.length ? ` (a look-alike that searches other records: ${others.join(", ")})` : ""}, or reply with type answer if nothing should match`];

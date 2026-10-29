@@ -118,6 +118,7 @@ export function spansToMentions(spans: NerLinkedSpan[]): Mention[] {
           })),
           method: span.method,
           score: span.score,
+          ...(isNearMissSuggestion(span) ? { suggestion: true } : {}),
         });
       }
       continue;
@@ -129,8 +130,10 @@ export function spansToMentions(spans: NerLinkedSpan[]): Mention[] {
         entity,
         count: 1,
         linkedId: span.linkedId,
+        ...(span.candidates?.length ? { candidates: span.candidates.map((c) => ({ id: c.id, name: c.name, detail: c.detail, entity: c.entity })) } : {}),
         method: span.method,
         score: span.score,
+        ...(span.method === "edit" ? { suggestion: true } : {}),
       });
     }
   }
@@ -159,7 +162,7 @@ function normSurface(s: string): string {
 }
 
 /** True when candidates look like near-miss suggestions (typo/partial), not exact-name dupes. */
-function isNearMissSuggestion(span: NerLinkedSpan): boolean {
+export function isNearMissSuggestion(span: NerLinkedSpan): boolean {
   const cands = span.candidates ?? [];
   if (cands.length === 0) return false;
   const surface = normSurface(span.text);

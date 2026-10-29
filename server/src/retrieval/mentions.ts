@@ -22,6 +22,8 @@ export interface Mention {
   method?: string;
   /** Best link score; informational only. */
   score?: number;
+  /** NER found no exact name, only near misses (a typo, a partial): its candidates are "did you mean" suggestions. */
+  suggestion?: boolean;
 }
 
 /** Record types whose names are titles, not names of people or teams: too noisy to link. */

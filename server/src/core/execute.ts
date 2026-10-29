@@ -289,6 +289,10 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     try {
       switch (step.kind) {
         case "resolve": {
+          if (step.pinned) {
+            done({ ...step.pinned });
+            break;
+          }
           const { [OTHER_THAN]: other, ...where } = substitute(step.where ?? {}, lookup()) as Record<string, string>;
           // The same name in two arguments of one call (merge the two Sarah Johnsons) means two different records.
           const all = registry.resolver(step.entity)!(ctx.store, step.name, where).filter((c) => c.id !== other);

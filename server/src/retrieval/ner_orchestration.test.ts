@@ -81,21 +81,6 @@ function scripted(...replies: SubmitPlan[]): Planner & { requests: PlanRequest[]
   };
 }
 
-/** Throws if the planner is ever invoked — proves ambiguous path skips the LLM. */
-function refusePlanner(): Planner & { calls: number } {
-  let calls = 0;
-  return {
-    name: "refuse",
-    get calls() {
-      return calls;
-    },
-    async plan() {
-      calls++;
-      throw new Error("planner must not be called when NER returns ambiguous");
-    },
-  };
-}
-
 describe("NER orchestration (sidecar + /api/ask)", { skip: !up }, () => {
   let registry: Registry;
   let retriever: Retriever;
@@ -154,26 +139,18 @@ describe("NER orchestration (sidecar + /api/ask)", { skip: !up }, () => {
 
   const last = (evs: Sse[], event: string) => evs.findLast((e) => e.event === event)?.data;
 
-  test("ambiguous person: clarify options, retrieval mentions, no planner call", async () => {
-    const planner = refusePlanner();
+  test("ambiguous person is a hint, not an early clarify: the planner runs with the candidates", async () => {
+    const planner = scripted(reply({ type: "answer", text: "Two people share that name." }));
     const app = await start(planner);
     const evs = await app.ask("What is Sarah Johnson's status?");
-    assert.equal(planner.calls, 0, "planner must not run for ambiguous NER");
-    assert.ok(!evs.some((e) => e.event === "planner.request"), "no planner.request SSE");
-    assert.ok(!evs.some((e) => e.event === "planner.reply"), "no planner.reply SSE");
-
+    assert.ok(planner.calls >= 1, "planner runs; NER no longer ends the turn early");
     const retrieval = last(evs, "retrieval");
-    assert.ok(retrieval, "retrieval SSE expected before clarify");
-    const named = (retrieval.mentions as { name: string; ambiguous?: boolean; count: number; linkedId?: string }[]) ?? [];
+    const named = (retrieval?.mentions as { name: string; ambiguous?: boolean; count: number; linkedId?: string }[]) ?? [];
     assert.ok(
       named.some((m) => m.name === "Sarah Johnson" && (m.ambiguous || m.count > 1) && !m.linkedId),
       `expected ambiguous Sarah mention, got ${JSON.stringify(named)}`,
     );
-
-    const replyEv = last(evs, "reply");
-    assert.equal(replyEv?.status, "clarify");
-    assert.ok(Array.isArray(replyEv?.options) && replyEv.options.length >= 2, "clarify options required");
-    assert.match(String(replyEv?.text ?? ""), /Sarah Johnson|Which one/i);
+    assert.match(planner.requests[0]!.user, /Sarah Johnson: \d+ \w+s \(.*ambiguous/);
   });
 
   test("resolved company: retrieval shows Store-prefix linkedId; planner may run", async () => {

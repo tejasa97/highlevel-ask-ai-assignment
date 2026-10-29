@@ -24,7 +24,7 @@ export interface Call {
 
 export type CStep = { id: string; deps: string[]; type: JsonSchema } & (
   | { kind: "action"; call: Call }
-  | { kind: "resolve"; entity: string; name: string; where?: Record<string, string> }
+  | { kind: "resolve"; entity: string; name: string; where?: Record<string, string>; /** Bound from the NER index: used as is, no store lookup. */ pinned?: { id: string; name: string } }
   | { kind: "filter"; in: string; where: Record<string, unknown> }
   | { kind: "exclude"; in: string; by: string; set: string }
   | { kind: "forEach"; in: string | string[]; roundRobin: string | string[] | null; calls: Call[] }
