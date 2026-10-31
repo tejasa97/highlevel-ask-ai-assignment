@@ -158,6 +158,8 @@ function onEvent(t, name, d) {
       const asked = d.status === "clarify" || d.status === "needs_clarification";
       messages.push({
         role: "assistant", status: asked ? "clarify" : d.status, options, turn: turns.indexOf(t), records: d.records ?? [], pending,
+        // A stored record question: a click answers it by token, so the server never re-reads the label.
+        clarification: asked ? d.clarification ?? null : null,
         // What the record cards, the approval preview or the option chips say again in full is shown there instead.
         text: d.text.split("\n").filter((l) => !(d.records ?? []).some((r) => r.replaces === l) && !(pending && /^Can(not)? proceed for \d+:/.test(l)) && !(options && /^Alternatives: /.test(l))).join("\n")
           .replace(options && asked ? `: ${options.join(", ")}` : "\0", ""),
@@ -210,6 +212,16 @@ async function answer(msg, approve) {
   selected.value = msg.turn;
   if (approve) t.approvals++;
   await run("/api/confirm", { turnId: t.id, approve }, t);
+}
+
+// Answer a stored record question with the option's token, or with none of them.
+async function choose(msg, option) {
+  if (busy.value) return;
+  const text = option ? option.label : "None of these";
+  const t = newTurn(text);
+  messages.push({ role: "user", text, turn: turns.indexOf(t) });
+  scrollChat();
+  await run("/api/clarify", option ? { clarificationId: msg.clarification.id, optionToken: option.token } : { clarificationId: msg.clarification.id, none: true }, t);
 }
 
 // Send a failed request again: a new turn for a message, the same turn for an approval.
@@ -299,10 +311,14 @@ const tabs = computed(() => [
               <div v-else class="muted small">{{ m.answered }}</div>
             </div>
             <StepList v-if="m.role === 'assistant' && !m.pending && turns[m.turn]?.plan?.steps.length > 1" :turn="turns[m.turn]" />
-            <div v-if="m.options?.length" class="chips">
+            <div v-if="m.clarification" class="chips">
+              <button v-for="o in m.clarification.options" :key="o.token" class="chip" @click.stop="choose(m, o)" :disabled="busy || i !== lastAssistant">{{ o.label }}</button>
+              <button class="chip" @click.stop="choose(m, null)" :disabled="busy || i !== lastAssistant">None of these</button>
+            </div>
+            <div v-else-if="m.options?.length" class="chips">
               <button v-for="o in m.options" :key="o" class="chip" @click.stop="send(o)" :disabled="busy || i !== lastAssistant">{{ o }}</button>
             </div>
-            <div v-if="m.options?.length && m.status === 'clarify' && i === lastAssistant" class="muted small">Pick one, or type your own answer.</div>
+            <div v-if="(m.clarification || m.options?.length) && m.status === 'clarify' && i === lastAssistant" class="muted small">Pick one, or type your own answer.</div>
             <div v-if="m.retry && !m.retried && i === lastAssistant" class="row">
               <button class="primary small" @click.stop="retry(m)" :disabled="busy">↻ Retry</button>
             </div>
