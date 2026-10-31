@@ -40,7 +40,7 @@ This one decision carries most of the latency, cost and quality story.
 ┌──────────── Vue 3 chat ────────────┐
 │ messages · step timeline · confirm │
 └───────────────┬────────────────────┘
-                │ POST /api/ask, /api/confirm  →  SSE stream of events
+                │ POST /api/ask, /api/confirm, /api/clarify  →  SSE stream of events
 ┌───────────────▼─────────────────────────────────────────┐
 │ Node (TypeScript, plain node:http)                      │
 │                                                         │
@@ -218,7 +218,7 @@ per turn (at most 8 planner calls, 180 s):
 - **A yes/no or count question can be answered** from the looked records with an `answer`; the reads then run as the plan so the reply shows the records under the verdict.
 - **Structured conditions don't loop:** "skip customers reminded this week" or "if score > 80" are `filter` and `exclude` ops.
 - **Failures:** a failed run gets the one bounded replan in ⑥, not another loop.
-- **Across user turns:** a pending confirmation is kept with its execution id and approvals, and `/api/confirm` resumes it. A clarification ends the turn; the answer arrives as the next message with the question attached.
+- **Across user turns:** a pending confirmation is kept with its execution id and approvals, and `/api/confirm` resumes it. A clarification ends the turn. A "which record?" question is stored with the compiled plan (`server/src/server/clarify.ts`): a click on `/api/clarify` with its option token, or a typed answer matched against the stored candidates, resumes that plan after revalidating the pick. A question about a missing input arrives as the next message with the question attached.
 
 **Measuring it:** model calls per turn are logged on every run. In the benchmark the planner made 1.39 calls per run, the median complex task took 1, and the one-call-per-step baseline took 5. The routed, plan-only and observe-loop variants planned here were not run.
 
