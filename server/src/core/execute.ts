@@ -67,6 +67,8 @@ export interface Clarification {
   kind?: "ambiguous" | "suggest";
   /** The identity resolver's full answer, ranked candidates with their match reasons. */
   resolution?: IdentityResolution;
+  /** The resolve step's scope as it ran (refs filled in), so a pick binds and revalidates in the same place. */
+  where?: Record<string, string>;
 }
 
 export interface StepError {
@@ -326,7 +328,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             done({ id: r.binding.id, name: r.binding.name });
           } else if (r.kind === "ambiguous" || r.kind === "suggest") {
             const candidates = r.candidates.map(({ id, name, detail }) => ({ id, name, ...(detail ? { detail } : {}) }));
-            return ask(step, { stepId: step.id, entity: step.entity, name: step.name, candidates, kind: r.kind, resolution: r });
+            return ask(step, { stepId: step.id, entity: step.entity, name: step.name, candidates, kind: r.kind, resolution: r, ...(Object.keys(where).length ? { where } : {}) });
           } else if (r.unusable.length) {
             // Only unusable records match (a deactivated user, a closed deal): say so, rather than "no match".
             fail({ code: "CONFLICT", message: r.unusable.map((c) => `${c.name} is ${c.inactive}`).join("; ") });

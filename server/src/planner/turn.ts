@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { compile, type CompiledPlan } from "../core/compile.js";
 import { narrowByRequest } from "../core/execute.js";
 import { lowerLookups } from "../core/lookups.js";
+import type { IdentityResolution } from "../core/identity.js";
 import { card } from "../registry/card.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
 import { type Mention, mentions } from "../retrieval/mentions.js";
@@ -109,6 +110,8 @@ export type TurnOutcome =
       options?: string[];
       /** Set when the planner couldn't be reached or didn't answer: the turn failed for a reason outside the app. */
       infra?: InfraKind;
+      /** A record question the resolver asked about one step of a compiled plan: the plan waits on the answer. */
+      paused?: { plan: CompiledPlan; stepId: string; resolution: IdentityResolution };
     };
 
 export type InfraKind = Exclude<PlannerError["kind"], "bad_json">;
@@ -183,7 +186,10 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
       duplicates: process.env.NER_DUPLICATE_POLICY === "off" ? "off" : "warn",
     });
     for (const d of bound.decisions) emit({ type: "identity.resolved", data: d });
-    if (bound.kind === "clarify") return { kind: "reply", status: "clarify", text: bound.text, options: bound.options };
+    if (bound.kind === "clarify") {
+      const paused = bound.resolution && bound.stepId ? { plan: out.plan, stepId: bound.stepId, resolution: bound.resolution } : undefined;
+      return { kind: "reply", status: "clarify", text: bound.text, options: bound.options, ...(paused ? { paused } : {}) };
+    }
     const answer = [bound.notice, out.answer].filter(Boolean).join("\n");
     return { ...out, plan: bound.plan, ...(answer ? { answer } : {}) };
   } catch (err) {
