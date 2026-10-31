@@ -23,6 +23,8 @@ One deterministic identity resolver, [core/identity.ts](../../server/src/core/id
 - **Tracing:** every decision is an `identity.resolved` event, from both the executor and the turn.
 - **Approval card:** the card's `pending.identities` lists how each record was bound.
 
+**The planner's job stays small, deliberately.** The aim is that small, cheap planner models (for example GPT 6 Luna) plan reliably, and [JOURNEY §16](../JOURNEY.md#16-codex-integration-implementation-verified-ai-acceptance-remains-unmet) logs Luna failing on unnecessary clarification and invented step references. So the planner only emits a plain selector for a record argument: the existing `$lookup` with entity, the user's words, and an optional `where` scope. This change adds no planner field and no prompt text. Matching, ranking, ambiguity and the decision to ask all happen in code. The qualifier that narrows "Sarah Johnson at Brightside" is read from the user's message, not from anything the planner fills in. A future change should add a planner field only when code cannot recover the information.
+
 ## Rejected options
 
 Each option carries the measured trigger that would reopen it. Triggers are read from the `identity.resolved` trace and the sidecar's own timings.
