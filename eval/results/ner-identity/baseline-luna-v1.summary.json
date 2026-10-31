@@ -1,0 +1,375 @@
+{
+ "label": "baseline-luna-v1",
+ "at": "2026-10-31T19:25:12.723Z",
+ "git": {
+  "sha": "0d2781c",
+  "dirty": true
+ },
+ "cases": "eval/ner-identity/cases.v1.json",
+ "version": 1,
+ "set": "2b24caef4a95",
+ "caseCount": 59,
+ "byCategory": {
+  "aggregate": 6,
+  "create-existing": 5,
+  "quoted": 5,
+  "message-body": 5,
+  "missing-lookalike": 6,
+  "duplicate": 8,
+  "typo": 6,
+  "email": 6,
+  "scoped": 6,
+  "non-english": 6
+ },
+ "args": [
+  "--models",
+  "luna",
+  "--repeat",
+  "3",
+  "--concurrency",
+  "4",
+  "--label",
+  "baseline-luna-v1"
+ ],
+ "cells": [
+  {
+   "cell": "1-off.classic.luna",
+   "setup": "1-off",
+   "pipeline": "classic",
+   "model": "luna",
+   "env": {
+    "NER_MODE": "off",
+    "NER_SIDECAR": "0",
+    "ASK_NER": "0",
+    "RESOLVER": "off",
+    "PLANNER_PIPELINE": "classic",
+    "PLANNER": "codex-cli",
+    "CODEX_MODEL": "gpt-6-luna",
+    "CODEX_FAST_MODEL": "gpt-6-luna",
+    "CODEX_REASONING": "low",
+    "CODEX_FAST_REASONING": "low"
+   },
+   "planner": "codex-cli",
+   "plannerModel": "gpt-6-luna",
+   "billing": "subscription",
+   "repeat": 3,
+   "replayed": false,
+   "notRun": 0,
+   "summary": {
+    "runs": 177,
+    "infraRuns": 4,
+    "pass": 98,
+    "passRate": 56.6,
+    "casesPassingEveryRepeat": 27,
+    "caseCount": 59,
+    "wrongRecordRuns": 0,
+    "wrongRecords": [],
+    "failuresByCause": {
+     "wrong-record": 0,
+     "unneeded-question": 6,
+     "missed-question": 28,
+     "missing-action": 0,
+     "invented-reference": 0,
+     "wrong-action": 0,
+     "omitted-change": 19,
+     "bad-arguments": 1,
+     "other": 25
+    },
+    "asked": 30,
+    "askedThenFinished": 11,
+    "luckyGuesses": 11,
+    "byCategory": {
+     "aggregate": {
+      "runs": 15,
+      "pass": 12
+     },
+     "create-existing": {
+      "runs": 15,
+      "pass": 0
+     },
+     "quoted": {
+      "runs": 15,
+      "pass": 14
+     },
+     "message-body": {
+      "runs": 15,
+      "pass": 15
+     },
+     "missing-lookalike": {
+      "runs": 18,
+      "pass": 12
+     },
+     "duplicate": {
+      "runs": 24,
+      "pass": 1
+     },
+     "typo": {
+      "runs": 18,
+      "pass": 5
+     },
+     "email": {
+      "runs": 18,
+      "pass": 11
+     },
+     "scoped": {
+      "runs": 18,
+      "pass": 16
+     },
+     "non-english": {
+      "runs": 17,
+      "pass": 12
+     }
+    },
+    "byLabel": {
+     "filter": {
+      "runs": 21,
+      "pass": 16
+     },
+     "create+warn": {
+      "runs": 15,
+      "pass": 0
+     },
+     "bind": {
+      "runs": 68,
+      "pass": 60
+     },
+     "not_found": {
+      "runs": 21,
+      "pass": 15
+     },
+     "ask": {
+      "runs": 48,
+      "pass": 7
+     }
+    },
+    "ms": {
+     "p50": 6624,
+     "p95": 22213
+    },
+    "perTurn": {
+     "modelCalls": 1.83,
+     "modelCallsMax": 6,
+     "input": 27694,
+     "cachedRead": 12850,
+     "output": 252,
+     "costUsd": null
+    },
+    "costUsd": null
+   },
+   "failing": [
+    "agg-acme-count: other",
+    "agg-acme-count: other",
+    "agg-femi-count: infra provider",
+    "agg-stark-count: infra provider",
+    "agg-stark-count: other",
+    "agg-wayne-leads: infra provider",
+    "create-hiro-ruiz-lead: other",
+    "create-hiro-ruiz-lead: other",
+    "create-hiro-ruiz-lead: other",
+    "create-marcus-lee: other",
+    "create-marcus-lee: other",
+    "create-marcus-lee: other",
+    "create-priya-lead: other",
+    "create-priya-lead: other",
+    "create-priya-lead: other",
+    "create-rosa-ito: other",
+    "create-rosa-ito: other",
+    "create-rosa-ito: other",
+    "create-zoe-costa: other",
+    "create-zoe-costa: other",
+    "create-zoe-costa: other",
+    "dup-assign-femi: missed-question",
+    "dup-assign-femi: missed-question",
+    "dup-assign-femi: missed-question",
+    "dup-email-hiro: missed-question",
+    "dup-email-hiro: missed-question",
+    "dup-email-hiro: missed-question",
+    "dup-note-sarah: omitted-change",
+    "dup-note-sarah: omitted-change",
+    "dup-note-sarah: omitted-change",
+    "dup-owner-zoe: omitted-change",
+    "dup-owner-zoe: omitted-change",
+    "dup-qualify-kai: omitted-change",
+    "dup-qualify-kai: omitted-change",
+    "dup-qualify-kai: missed-question",
+    "dup-tag-priya: missed-question",
+    "dup-tag-priya: missed-question",
+    "dup-tag-priya: missed-question",
+    "dup-task-nina: missed-question",
+    "dup-task-nina: missed-question",
+    "dup-task-nina: missed-question",
+    "dup-text-sarah-gmail: omitted-change",
+    "dup-text-sarah-gmail: omitted-change",
+    "dup-text-sarah-gmail: omitted-change",
+    "email-note-rosa: unneeded-question,omitted-change",
+    "email-note-rosa: unneeded-question",
+    "email-note-rosa: omitted-change",
+    "email-tag-zoe: omitted-change",
+    "email-text-sarah-gmail: unneeded-question,omitted-change",
+    "email-text-sarah-gmail: unneeded-question,omitted-change",
+    "email-text-sarah-gmail: omitted-change",
+    "intl-de-task-marcus: infra provider",
+    "intl-es-count-stark: other",
+    "intl-es-count-stark: unneeded-question",
+    "intl-es-text-sarah: omitted-change",
+    "intl-es-text-sarah: omitted-change",
+    "intl-es-text-sarah: omitted-change",
+    "missing-dana-whitfield: other",
+    "missing-marta-patel: other",
+    "missing-marta-patel: other",
+    "missing-marta-patel: other",
+    "missing-quincy-reyes: other",
+    "missing-victor-browning: other",
+    "quoted-task-marcus: unneeded-question",
+    "scoped-zoe-acme-none: missed-question",
+    "scoped-zoe-acme-none: missed-question",
+    "typo-assign-yusuf: missed-question",
+    "typo-email-omar: missed-question",
+    "typo-email-omar: missed-question",
+    "typo-email-omar: missed-question",
+    "typo-lead-grace: missed-question",
+    "typo-lead-grace: missed-question",
+    "typo-lead-grace: missed-question",
+    "typo-note-rosa: missed-question",
+    "typo-note-rosa: missed-question",
+    "typo-tag-elena: missed-question,bad-arguments",
+    "typo-task-marcus: missed-question",
+    "typo-task-marcus: missed-question",
+    "typo-task-marcus: missed-question"
+   ]
+  },
+  {
+   "cell": "1-off.staged.luna",
+   "setup": "1-off",
+   "pipeline": "staged",
+   "model": "luna",
+   "env": {
+    "NER_MODE": "off",
+    "NER_SIDECAR": "0",
+    "ASK_NER": "0",
+    "RESOLVER": "off",
+    "PLANNER_PIPELINE": "staged",
+    "PLANNER": "codex-cli",
+    "CODEX_MODEL": "gpt-6-luna",
+    "CODEX_FAST_MODEL": "gpt-6-luna",
+    "CODEX_REASONING": "low",
+    "CODEX_FAST_REASONING": "low"
+   },
+   "skipped": "this build reads no PLANNER_PIPELINE, \"staged\""
+  },
+  {
+   "cell": "2-resolver.classic.luna",
+   "setup": "2-resolver",
+   "pipeline": "classic",
+   "model": "luna",
+   "env": {
+    "NER_MODE": "off",
+    "NER_SIDECAR": "0",
+    "ASK_NER": "0",
+    "RESOLVER": "on",
+    "PLANNER_PIPELINE": "classic",
+    "PLANNER": "codex-cli",
+    "CODEX_MODEL": "gpt-6-luna",
+    "CODEX_FAST_MODEL": "gpt-6-luna",
+    "CODEX_REASONING": "low",
+    "CODEX_FAST_REASONING": "low"
+   },
+   "skipped": "this build reads no RESOLVER"
+  },
+  {
+   "cell": "2-resolver.staged.luna",
+   "setup": "2-resolver",
+   "pipeline": "staged",
+   "model": "luna",
+   "env": {
+    "NER_MODE": "off",
+    "NER_SIDECAR": "0",
+    "ASK_NER": "0",
+    "RESOLVER": "on",
+    "PLANNER_PIPELINE": "staged",
+    "PLANNER": "codex-cli",
+    "CODEX_MODEL": "gpt-6-luna",
+    "CODEX_FAST_MODEL": "gpt-6-luna",
+    "CODEX_REASONING": "low",
+    "CODEX_FAST_REASONING": "low"
+   },
+   "skipped": "this build reads no RESOLVER, PLANNER_PIPELINE, \"staged\""
+  },
+  {
+   "cell": "3-gliner.classic.luna",
+   "setup": "3-gliner",
+   "pipeline": "classic",
+   "model": "luna",
+   "env": {
+    "NER_MODE": "on",
+    "NER_SIDECAR": "1",
+    "RESOLVER": "on",
+    "NER_EMBED": "off",
+    "PLANNER_PIPELINE": "classic",
+    "PLANNER": "codex-cli",
+    "CODEX_MODEL": "gpt-6-luna",
+    "CODEX_FAST_MODEL": "gpt-6-luna",
+    "CODEX_REASONING": "low",
+    "CODEX_FAST_REASONING": "low"
+   },
+   "skipped": "this build reads no RESOLVER, NER_MODE, NER_EMBED"
+  },
+  {
+   "cell": "3-gliner.staged.luna",
+   "setup": "3-gliner",
+   "pipeline": "staged",
+   "model": "luna",
+   "env": {
+    "NER_MODE": "on",
+    "NER_SIDECAR": "1",
+    "RESOLVER": "on",
+    "NER_EMBED": "off",
+    "PLANNER_PIPELINE": "staged",
+    "PLANNER": "codex-cli",
+    "CODEX_MODEL": "gpt-6-luna",
+    "CODEX_FAST_MODEL": "gpt-6-luna",
+    "CODEX_REASONING": "low",
+    "CODEX_FAST_REASONING": "low"
+   },
+   "skipped": "this build reads no RESOLVER, NER_MODE, NER_EMBED, PLANNER_PIPELINE, \"staged\""
+  },
+  {
+   "cell": "4-embed.classic.luna",
+   "setup": "4-embed",
+   "pipeline": "classic",
+   "model": "luna",
+   "env": {
+    "NER_MODE": "on",
+    "NER_SIDECAR": "1",
+    "RESOLVER": "on",
+    "NER_EMBED": "on",
+    "PLANNER_PIPELINE": "classic",
+    "PLANNER": "codex-cli",
+    "CODEX_MODEL": "gpt-6-luna",
+    "CODEX_FAST_MODEL": "gpt-6-luna",
+    "CODEX_REASONING": "low",
+    "CODEX_FAST_REASONING": "low"
+   },
+   "skipped": "this build reads no RESOLVER, NER_MODE, NER_EMBED"
+  },
+  {
+   "cell": "4-embed.staged.luna",
+   "setup": "4-embed",
+   "pipeline": "staged",
+   "model": "luna",
+   "env": {
+    "NER_MODE": "on",
+    "NER_SIDECAR": "1",
+    "RESOLVER": "on",
+    "NER_EMBED": "on",
+    "PLANNER_PIPELINE": "staged",
+    "PLANNER": "codex-cli",
+    "CODEX_MODEL": "gpt-6-luna",
+    "CODEX_FAST_MODEL": "gpt-6-luna",
+    "CODEX_REASONING": "low",
+    "CODEX_FAST_REASONING": "low"
+   },
+   "skipped": "this build reads no RESOLVER, NER_MODE, NER_EMBED, PLANNER_PIPELINE, \"staged\""
+  }
+ ]
+}
