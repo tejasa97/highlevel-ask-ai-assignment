@@ -10,6 +10,7 @@
 2. **Ambiguous → clarify.** Never auto-resolve a PoC top `linked` hit into writes when the span status is `ambiguous`. PoC `LinkResult` may still set `linked` to the top neighbor; consumers of this contract must ignore that for write binding and force clarify.
 3. **Canonical ids are Store ids:** `ct_` (contact), `ld_` (lead), `us_` (user), `co_` (company), `tm_` (team). PoC corpus ids (`pe_…`) must **not** leak as canonical `linkedId` / candidate `id` on this wire.
 4. This phase freezes the facade ↔ sidecar JSON shape and the clarify mapping. Later phases add the sidecar process and a feature-flagged mention merge.
+5. **Links are hints, never bindings.** Even a `linked` span (exact or embedding) only adds a candidate; the identity resolver checks it against the store and scope and decides, and a write binds only on a unique strong key. See [ADR 0001](adr/0001-ner-suggests-resolver-decides.md).
 
 ## Parties
 

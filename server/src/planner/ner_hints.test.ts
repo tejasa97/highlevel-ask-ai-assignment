@@ -45,8 +45,9 @@ const sarahs = (u: string): NerLinkedSpan => ({
   ],
 });
 
-async function run(message: string, planner: Planner, spans: (u: string) => NerLinkedSpan[]) {
+async function run(message: string, planner: Planner, spans: (u: string) => NerLinkedSpan[], setup?: (w: ReturnType<typeof world>) => void) {
   const w = world();
+  setup?.(w);
   const events: TurnEvent[] = [];
   const out = await planTurn({ message, tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store, ner: async (u) => ({ requestId: "t", spans: spans(u) }) }, (e) => events.push(e));
   return { out, events };
@@ -73,17 +74,48 @@ describe("NER hints", () => {
     const { out } = await run(u, planner, (u) => [{ text: "Ana Ruiz", label: "person", ...at(u, "Ana Ruiz"), status: "linked", linkedId: "ct_3", linkedEntity: "contact", method: "exact", score: 1 }, sarahs(u)]);
     assert.equal(out.kind, "plan", JSON.stringify(out));
     const resolve = out.kind === "plan" ? out.plan.steps.find((s) => s.kind === "resolve") : undefined;
-    assert.deepEqual(resolve && resolve.kind === "resolve" && resolve.pinned, { id: "ct_3", name: "Ana Ruiz" });
+    // The resolver bound it (a unique exact name in the store), not the NER link: the record's own name and how.
+    const b = resolve && resolve.kind === "resolve" ? resolve.bound : undefined;
+    assert.deepEqual(b && [b.id, b.name, b.provenance, b.matchReason], ["ct_3", "Ana Ruiz", "exact-unique", "exact-name"]);
   });
 
   test("one-edit typo in a company argument: did you mean, at that argument", async () => {
     const u = "Link Ana Ruiz to Clear Finace";
     const planner = scripted(reply({ steps: [step("M02.A06", { contactId: lookup("contact", "Ana Ruiz"), companyId: lookup("company", "Clear Finace") })], outcome: { effect: "change", actions: ["M02.A06"], destination: null } }));
-    const { out } = await run(u, planner, (u) => [{ text: "Clear Finace", label: "company", ...at(u, "Clear Finace"), status: "ambiguous", method: "edit", score: 0.5, candidates: [{ id: "co_1", name: "Clear Finance", entity: "company" }] }]);
+    const { out } = await run(u, planner, (u) => [{ text: "Clear Finace", label: "company", ...at(u, "Clear Finace"), status: "ambiguous", method: "edit", score: 0.5, candidates: [{ id: "co_1", name: "Clear Finance", entity: "company" }] }], (w) => {
+      // The resolver only offers records the store holds: the seed has no companies.
+      const co = w.store.insert("companies", "co", { name: "Clear Finance", domain: null, industry: null, size: null, phone: null, address: null, accountManagerId: null, status: "active", mergedInto: null });
+      assert.equal(co.id, "co_1");
+    });
     assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
     assert.match(out.text, /^Did you mean Clear Finance for .*companyId/);
     assert.deepEqual(out.options, ["Clear Finance"]);
     assert.match(planner.requests[0]!.user, /Clear Finace: no exact company; did you mean co_1 Clear Finance\?/);
+  });
+
+  test("a near-miss recipient NER linked by embedding asks, and never binds", async () => {
+    const u = "Email Ana Ruis about the renewal";
+    const planner = scripted(reply({ steps: [step("M13.A01", { contactId: lookup("contact", "Ana Ruis"), subject: "Renewal", body: "About your renewal." })], outcome: { effect: "change", actions: ["M13.A01"], destination: null } }));
+    const { out, events } = await run(u, planner, (u) => [{ text: "Ana Ruis", label: "person", ...at(u, "Ana Ruis"), status: "linked", linkedId: "ct_3", linkedEntity: "contact", method: "embed", score: 0.95 }]);
+    assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
+    assert.match(out.text, /^Did you mean Ana Ruiz for .*contactId/);
+    const d = events.find((e) => e.type === "identity.resolved");
+    assert.ok(d && d.type === "identity.resolved" && d.data.kind === "suggest" && !d.data.binding, JSON.stringify(d));
+  });
+
+  test("a missing person with a 0.92 embedding lookalike asks, and never binds", async () => {
+    const u = "Email Sara Johnston about the renewal";
+    const planner = scripted(reply({ steps: [step("M13.A01", { contactId: lookup("contact", "Sara Johnston"), subject: "Renewal", body: "About your renewal." })], outcome: { effect: "change", actions: ["M13.A01"], destination: null } }));
+    const { out } = await run(u, planner, (u) => [{ text: "Sara Johnston", label: "person", ...at(u, "Sara Johnston"), status: "linked", linkedId: "ct_31", linkedEntity: "contact", method: "embed", score: 0.92 }]);
+    assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
+    assert.match(out.text, /^Did you mean Sarah Johnson/);
+  });
+
+  test("a read that names an ambiguous person neither asks nor binds before execution", async () => {
+    const planner = scripted(reply({ steps: [step("M01.A02", { contactId: lookup("contact", "Sarah Johnson") })], outcome: { effect: "read", actions: ["M01.A02"], destination: null } }));
+    const { out } = await run("Show me Sarah Johnson", planner, (u) => [sarahs(u)]);
+    assert.equal(out.kind, "plan", JSON.stringify(out));
+    assert.ok(out.kind === "plan" && out.plan.steps.every((s) => s.kind !== "resolve" || !s.bound));
   });
 
   test("ambiguous Sarah Johnson as an email recipient still asks which one, for contactId", async () => {
@@ -91,6 +123,7 @@ describe("NER hints", () => {
     const { out } = await run("Email Sarah Johnson about the renewal", planner, (u) => [sarahs(u)]);
     assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
     assert.match(out.text, /2 contact records named Sarah Johnson\. Which one should I use for .*contactId/);
-    assert.deepEqual(out.options, ["Sarah Johnson (Brightside)", "Sarah Johnson (sjohnson@gmail.example)"]);
+    // The picker shows the store's own detail for each record, not the sidecar's.
+    assert.deepEqual(out.options, ["Sarah Johnson (sarah.johnson@brightside.example, +15550100001, Brightside)", "Sarah Johnson (sjohnson@gmail.example, +15550100001)"]);
   });
 });

@@ -7,7 +7,7 @@ import type { RegisteredAction, Registry } from "../registry/registry.js";
 import { type Mention, mentions } from "../retrieval/mentions.js";
 import type { NerSidecarResponse } from "../retrieval/ner_sidecar_contract.js";
 import { askScopedExtract } from "../retrieval/ner_ask_scope.js";
-import { bindNerLookups, fromNer } from "./ner_bind.js";
+import { bindNerLookups, fromNer, type IdentityDecision } from "./ner_bind.js";
 import {
   mergeMentions,
   nerSidecarEnabled,
@@ -90,7 +90,9 @@ export type TurnEvent =
   | { type: "planner.request"; data: { label: string; tier: Tier; system: string; user: string; actions: string[] } }
   | { type: "planner.reply"; data: PlannerCallTrace & { json: unknown } }
   | { type: "planner.debug"; data: PlannerDebug }
-  | { type: "compile.errors"; data: { errors: string[] } };
+  | { type: "compile.errors"; data: { errors: string[] } }
+  /** An identity resolver decision made while binding the plan's lookups (see ner_bind.ts). */
+  | { type: "identity.resolved"; data: IdentityDecision };
 
 export type TurnOutcome =
   | {
@@ -176,9 +178,11 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
     if (out.kind !== "plan") return out;
     // NER hints bind only the arguments that need an existing record; see ner_bind.ts.
     const bound = bindNerLookups(out.plan, linked, deps.registry, {
-      holds: deps.store ? (id) => deps.store!.holds(id) : undefined,
+      store: deps.store,
+      request: input.answering ? `${input.answering}\n${input.message}` : input.message,
       duplicates: process.env.NER_DUPLICATE_POLICY === "off" ? "off" : "warn",
     });
+    for (const d of bound.decisions) emit({ type: "identity.resolved", data: d });
     if (bound.kind === "clarify") return { kind: "reply", status: "clarify", text: bound.text, options: bound.options };
     const answer = [bound.notice, out.answer].filter(Boolean).join("\n");
     return { ...out, plan: bound.plan, ...(answer ? { answer } : {}) };
@@ -344,7 +348,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   // A look's lookups bind against the NER hints too, so a look never asks the store about an ambiguous name.
   let nerClarify: TurnOutcome | undefined;
   const runLook = async (raw: CompiledPlan, steps: Step[]) => {
-    const bound = bindNerLookups(raw, named, registry, { holds: store ? (id) => store.holds(id) : undefined, duplicates: "off" });
+    const bound = bindNerLookups(raw, named, registry, { store, request, duplicates: "off" });
+    for (const d of bound.decisions) emit({ type: "identity.resolved", data: d });
     if (bound.kind === "clarify") { nerClarify = { kind: "reply", status: "clarify", text: bound.text, options: bound.options }; return; }
     const plan = bound.plan;
     looks++;
