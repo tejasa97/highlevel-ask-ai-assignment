@@ -12,13 +12,16 @@
  *   to the top hit; that must not become a write binding).
  * - Canonical linkedId values are Store ids (`ct_`, `ld_`, `us_`, `co_`, …).
  *   PoC corpus ids (`pe_…`) must not appear as canonical linkedId on this wire.
- * - This file freezes the request/response shape only.
+ * - The shape is checked at runtime: the zod schemas below must match the shared JSON Schema
+ *   (server/ner-sidecar/contract/ner-sidecar.schema.json, exported from the sidecar's Pydantic models), and both
+ *   sides run the same fixtures (contract/fixtures.json). Optional fields are absent, never null.
  *
  * Grounding: ask-ai-ner-poc/docs/integration-ask-ai-repo.md; Clarification in
  * server/src/core/execute.ts; Candidate in server/src/registry/registry.ts;
  * clarify reply SSE in server/src/server/conversation.ts; TurnOutcome reply in
  * server/src/planner/turn.ts.
  */
+import { z } from "zod";
 
 /** Store entity id prefixes used as canonical linkedId / candidate.id values. */
 export type StoreIdPrefix = "ct_" | "ld_" | "us_" | "co_" | "tm_";
@@ -112,6 +115,14 @@ export interface NerSidecarResponse {
   latencyMs?: number;
   /** The scope the spans were linked against, echoed back by the sidecar. */
   scope?: string;
+  /** What produced the spans: sidecar code, model (name@revision) and the index linked against. */
+  versions?: NerVersions;
+}
+
+export interface NerVersions {
+  code: string;
+  model: string;
+  index?: string;
 }
 
 /**
@@ -186,3 +197,96 @@ export function clarifyFromAmbiguousSpan(
     ...(options.length ? { options } : {}),
   };
 }
+
+// ---- Runtime validation, mirroring the shared JSON Schema (ner_sidecar_contract.test.ts compares the two) ----
+
+export const STORE_ID_PREFIXES = ["ct_", "ld_", "us_", "co_", "tm_"] as const;
+const isStoreId = (id: string) => STORE_ID_PREFIXES.some((p) => id.startsWith(p));
+
+const SPAN_LABELS = ["person", "company", "email", "phone", "id", "team", "product", "contact", "lead", "user"] as const;
+
+export const nerCandidateSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  score: z.number().optional(),
+  entity: z.string().optional(),
+  detail: z.string().optional(),
+});
+
+/** The JSON Schema's x-invariants on LinkedSpan; JSON Schema can't say them, so both sides check them in code. */
+const spanInvariants = (span: z.infer<typeof linkedSpanShape>, ctx: z.RefinementCtx) => {
+  if ((span.status === "linked") !== (span.linkedId !== undefined)) ctx.addIssue({ code: "custom", path: ["linkedId"], message: `status ${span.status} ${span.status === "linked" ? "requires" : "must not have"} linkedId` });
+  if (span.start > span.end) ctx.addIssue({ code: "custom", path: ["end"], message: "start > end" });
+  if (span.linkedId !== undefined && !isStoreId(span.linkedId)) ctx.addIssue({ code: "custom", path: ["linkedId"], message: `${span.linkedId} is not a Store id` });
+  span.candidates?.forEach((c, i) => { if (!isStoreId(c.id)) ctx.addIssue({ code: "custom", path: ["candidates", i, "id"], message: `${c.id} is not a Store id` }); });
+};
+
+const linkedSpanShape = z.object({
+  text: z.string(),
+  label: z.enum(SPAN_LABELS),
+  start: z.int().min(0),
+  end: z.int().min(0),
+  status: z.enum(["linked", "ambiguous", "miss"]),
+  linkedId: z.string().optional(),
+  linkedEntity: z.string().optional(),
+  candidates: z.array(nerCandidateSchema).optional(),
+  method: z.enum(["exact", "embed", "edit", "rule"]).optional(),
+  score: z.number().optional(),
+});
+export const nerLinkedSpanSchema = linkedSpanShape.superRefine(spanInvariants);
+
+export const nerVersionsSchema = z.object({ code: z.string(), model: z.string(), index: z.string().optional() });
+
+export const nerSidecarResponseSchema = z.object({
+  requestId: z.string(),
+  spans: z.array(nerLinkedSpanSchema),
+  model: z.string().optional(),
+  latencyMs: z.number().min(0).optional(),
+  scope: z.string().optional(),
+  versions: nerVersionsSchema.optional(),
+});
+
+export const nerSidecarRequestSchema = z.object({
+  requestId: z.string().min(1),
+  utterance: z.string(),
+  actorId: z.string().optional(),
+  tier: z.enum(["fast", "strong"]).optional(),
+  scope: z.string().optional(),
+  scopeVersion: z.string().optional(),
+});
+
+export const nerScopeEntitySchema = z.object({ id: z.string().min(1), name: z.string(), entity: z.enum(["contact", "lead", "user", "company"]), detail: z.string().optional() });
+export const nerScopeRequestSchema = z.object({ version: z.string().min(1), entities: z.array(nerScopeEntitySchema) });
+export const nerScopeResponseSchema = z.object({
+  scope: z.string(),
+  version: z.string(),
+  unchanged: z.boolean().optional(),
+  entities: z.int().optional(),
+  ann: z.record(z.string(), z.unknown()).optional(),
+});
+export type NerScopeResponse = z.infer<typeof nerScopeResponseSchema>;
+
+/** Schema name in the shared JSON Schema's $defs → the zod schema that must match it. */
+export const NER_WIRE_SCHEMAS = {
+  Candidate: nerCandidateSchema,
+  LinkedSpan: nerLinkedSpanSchema,
+  Versions: nerVersionsSchema,
+  ExtractRequest: nerSidecarRequestSchema,
+  ExtractResponse: nerSidecarResponseSchema,
+  ScopeEntity: nerScopeEntitySchema,
+  ScopeRequest: nerScopeRequestSchema,
+  ScopeResponse: nerScopeResponseSchema,
+} as const;
+
+/** One line naming the first few problems, for logs and the ner trace event. */
+export function describeIssues(err: z.ZodError, max = 3): string {
+  const parts = err.issues.slice(0, max).map((i) => `${i.path.length ? i.path.join(".") : "(root)"}: ${i.message}`);
+  return parts.join("; ") + (err.issues.length > max ? ` (+${err.issues.length - max} more)` : "");
+}
+
+// The hand-written interfaces above and the schemas describe the same values.
+type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+const _sameResponse: Same<z.infer<typeof nerSidecarResponseSchema>, NerSidecarResponse> = true;
+const _sameRequest: Same<z.infer<typeof nerSidecarRequestSchema>, NerSidecarRequest> = true;
+const _sameSpan: Same<z.infer<typeof nerLinkedSpanSchema>, NerLinkedSpan> = true;
+void _sameResponse, _sameRequest, _sameSpan;

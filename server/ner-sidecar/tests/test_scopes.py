@@ -52,7 +52,7 @@ def make_service() -> svc.NerService:
     s = svc.NerService()
     s.model = StubModel()
     s.index = big_index()
-    s.ready = True
+    s.loaded = s.ready = True
     s.register_scope("ask", "v1", ASK)
     return s
 

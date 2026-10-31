@@ -5,27 +5,27 @@ Thin wrapper: imports ``entity_index`` from the PoC via PYTHONPATH
 """
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import re
+import subprocess
 import sys
 import threading
 from collections import OrderedDict
+from contextlib import contextmanager
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from ids import linked_entity_for_label, to_store_id
+from model_pin import PinnedModel, resolve_embedder, resolve_gliner
 
 log = logging.getLogger("ner-sidecar")
 
-DEFAULT_POC_ROOT = Path(os.environ.get("NER_POC_ROOT", "/workspace/ask-ai-ner-poc"))
-DEFAULT_MODEL = Path(
-    os.environ.get(
-        "NER_MODEL_PATH",
-        str(DEFAULT_POC_ROOT / "models" / "gliner_small_v21_ft_head" / "final"),
-    )
-)
+__version__ = "0.2.0"
+
+DEFAULT_POC_ROOT = Path(os.environ.get("NER_POC_ROOT", str(Path(__file__).resolve().parents[3] / "ask-ai-ner-poc")))
 DEFAULT_PEOPLE = Path(os.environ.get("NER_PEOPLE_PATH", str(DEFAULT_POC_ROOT / "data" / "people.jsonl")))
 DEFAULT_COMPANIES = Path(
     os.environ.get("NER_COMPANIES_PATH", str(DEFAULT_POC_ROOT / "data" / "companies.jsonl"))
@@ -35,7 +35,11 @@ DEFAULT_EMBED_THRESHOLD = float(os.environ.get("NER_EMBED_THRESHOLD", "0.9"))
 DEFAULT_SUGGEST_THRESHOLD = float(os.environ.get("NER_SUGGEST_THRESHOLD", "0.75"))
 DEFAULT_EDIT_MAX_DISTANCE = int(os.environ.get("NER_EDIT_MAX_DISTANCE", "1"))
 DEFAULT_GLINER_THRESHOLD = float(os.environ.get("NER_GLINER_THRESHOLD", "0.4"))
-MODEL_NAME = os.environ.get("NER_MODEL_NAME", "gliner_small_v21_ft_head")
+# Bounded concurrency: inference runs one at a time (self.lock); up to NER_MAX_QUEUE more requests wait at most
+# NER_QUEUE_TIMEOUT_MS for it. Anything beyond that gets a fast 503 instead of piling up behind the model.
+MAX_QUEUE = int(os.environ.get("NER_MAX_QUEUE", "4"))
+QUEUE_TIMEOUT_S = int(os.environ.get("NER_QUEUE_TIMEOUT_MS", "500")) / 1000
+WARMUP_UTTERANCE = "Email Sarah Johnson at Acme about the renewal"
 
 LABELS = ["person", "company", "team", "product"]
 
@@ -89,6 +93,32 @@ class ScopeUnavailable(Exception):
     """A caller asked for a named scope that isn't registered (or is stale). Never fall back to the big index."""
 
 
+class Overloaded(Exception):
+    """The wait queue is full, or the wait for the model ran out: answer 503 now rather than queue without bound."""
+
+
+def code_version() -> str:
+    """Sidecar code version: NER_CODE_VERSION (the image build sets it to the git sha), else the checkout's HEAD."""
+    sha = os.environ.get("NER_CODE_VERSION")
+    if not sha:
+        try:
+            sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=Path(__file__).parent, capture_output=True, text=True, timeout=2).stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            sha = ""
+    return f"{__version__}+{sha}" if sha else __version__
+
+
+def seed_version(paths: list[Path], *extra: str) -> str:
+    """Content hash of the seed files (and the row limits applied), naming the default index."""
+    h = hashlib.sha256()
+    for p in paths:
+        with p.open("rb") as f:
+            while block := f.read(1 << 22):
+                h.update(block)
+    h.update("|".join(extra).encode())
+    return "seed:" + h.hexdigest()[:16]
+
+
 class NerService:
     def __init__(self) -> None:
         self.model = None
@@ -100,15 +130,70 @@ class NerService:
         # FastAPI runs sync endpoints on a thread pool. Two threads embedding at once (a scope build next to a link)
         # crashes torch/faiss on macOS, so building a scope and linking take turns.
         self.lock = threading.Lock()
+        self._load_lock = threading.Lock()
+        self._admit_lock = threading.Lock()
+        self._admitted = 0
+        self.rejected = 0
+        # loaded: model + index in memory. ready: loaded and one warmup extract has run (readiness probe).
+        self.loaded = False
         self.ready = False
-        self.model_path = DEFAULT_MODEL
         self.load_error: str | None = None
         self.stats: dict[str, Any] = {}
+        self.code_version = code_version()
+        self.gliner: PinnedModel | None = None
+        self.embedder: PinnedModel | None = None
+        self.index_version: str | None = None
+
+    @property
+    def model_label(self) -> str:
+        return os.environ.get("NER_MODEL_NAME") or (self.gliner.label if self.gliner else "unloaded")
+
+    def versions(self, index: str | None) -> dict[str, Any]:
+        return {"code": self.code_version, "model": self.model_label, **({"index": index} if index else {})}
+
+    @contextmanager
+    def _turn(self, wait_s: float = QUEUE_TIMEOUT_S) -> Iterator[None]:
+        """Take the model: one at a time, at most MAX_QUEUE waiting, each for at most wait_s."""
+        with self._admit_lock:
+            if self._admitted >= 1 + MAX_QUEUE:
+                self.rejected += 1
+                raise Overloaded(f"{self._admitted} requests in flight or queued (NER_MAX_QUEUE={MAX_QUEUE})")
+            self._admitted += 1
+        try:
+            if not self.lock.acquire(timeout=wait_s):
+                with self._admit_lock:
+                    self.rejected += 1
+                raise Overloaded(f"waited {int(wait_s * 1000)} ms for the model")
+            try:
+                yield
+            finally:
+                self.lock.release()
+        finally:
+            with self._admit_lock:
+                self._admitted -= 1
+
+    def queue_stats(self) -> dict[str, Any]:
+        return {"inFlightOrQueued": self._admitted, "maxQueue": MAX_QUEUE, "queueTimeoutMs": int(QUEUE_TIMEOUT_S * 1000), "rejected": self.rejected}
+
+    def load_once(self) -> None:
+        """warm_load unless another thread already did (lazy mode: the first requests race to load)."""
+        with self._load_lock:
+            if not self.ready:
+                self.warm_load()
 
     def warm_load(self) -> None:
         t0 = time.time()
         _ensure_poc_scripts_on_path()
+        # torch before faiss (entity_index imports it): the other way round, GLiNER.from_pretrained segfaults on
+        # macOS, since both bundle an OpenMP runtime.
+        import torch  # noqa: F401
         from entity_index import EntityIndex  # type: ignore
+
+        # Pin first: a wrong checkpoint should fail in milliseconds, not after a minute of indexing.
+        t_pin = time.time()
+        self.gliner = resolve_gliner(DEFAULT_POC_ROOT)
+        self.embedder = resolve_embedder()
+        log.info("models pinned in %.1fs: %s, %s", time.time() - t_pin, self.gliner.label, self.embedder.label)
 
         people_limit = os.environ.get("NER_PEOPLE_LIMIT")
         companies_limit = os.environ.get("NER_COMPANIES_LIMIT")
@@ -124,32 +209,43 @@ class NerService:
             companies_limit=companies_limit_i,
         )
         log.info("exact maps ready in %.1fs", time.time() - t_idx)
+        t_ver = time.time()
+        self.index_version = seed_version([DEFAULT_PEOPLE, DEFAULT_COMPANIES], people_limit or "", companies_limit or "")
+        log.info("default index version %s (hashed in %.1fs)", self.index_version, time.time() - t_ver)
+
+        from sentence_transformers import SentenceTransformer
 
         t_ann = time.time()
+        # The index keys its ANN cache by the repo name; the weights it embeds with are the pinned snapshot.
+        self.index._embedder = SentenceTransformer(str(self.embedder.path))
         ann_stats = self.index.ensure_ann(
             DEFAULT_ANN_DIR,
-            embed_model=os.environ.get("NER_EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2"),
+            embed_model=self.embedder.name,
             rebuild=os.environ.get("NER_REBUILD_ANN", "").lower() in ("1", "true", "yes"),
         )
         log.info("ANN ready in %.1fs", time.time() - t_ann)
 
-        if not self.model_path.exists():
-            raise FileNotFoundError(
-                f"GLiNER checkpoint not found at {self.model_path}. "
-                "Set NER_MODEL_PATH or symlink the PoC final/ directory."
-            )
-
-        log.info("loading GLiNER from %s", self.model_path)
+        log.info("loading GLiNER from %s", self.gliner.path)
         t_m = time.time()
         from gliner import GLiNER
 
-        self.model = GLiNER.from_pretrained(str(self.model_path))
+        self.model = GLiNER.from_pretrained(str(self.gliner.path))
         log.info("GLiNER ready in %.1fs", time.time() - t_m)
+        self.loaded = True
+
+        # Readiness means a request will be answered at normal speed: run one extract so lazy torch/tokenizer
+        # initialisation happens here, not on a user's turn.
+        t_w = time.time()
+        with self.lock:
+            self._extract("warmup", WARMUP_UTTERANCE, None, None)
+        warmup_ms = round((time.time() - t_w) * 1000, 1)
 
         self.stats = {
             "ann": ann_stats,
-            "model_path": str(self.model_path),
+            "model": self.gliner.describe(),
+            "embedder": self.embedder.describe(),
             "warm_load_s": round(time.time() - t0, 2),
+            "warmup_ms": warmup_ms,
             "people_path": str(DEFAULT_PEOPLE),
             "companies_path": str(DEFAULT_COMPANIES),
             "ann_dir": str(DEFAULT_ANN_DIR),
@@ -157,12 +253,13 @@ class NerService:
             "suggest_threshold": DEFAULT_SUGGEST_THRESHOLD,
             "edit_max_distance": DEFAULT_EDIT_MAX_DISTANCE,
         }
+        self.load_error = None
         self.ready = True
-        log.info("sidecar warm-load complete in %.1fs", time.time() - t0)
+        log.info("sidecar ready in %.1fs (warmup extract %.0f ms)", time.time() - t0, warmup_ms)
 
     def register_scope(self, name: str, version: str, entities: list[dict]) -> dict[str, Any]:
         """Build an in-memory EntityIndex (exact + ANN + edit) from the caller's own records."""
-        with self.lock:
+        with self._turn():
             got = self.scopes.get(name)
             if got is not None and version in got:
                 got.move_to_end(version)
@@ -188,7 +285,7 @@ class NerService:
         # Share the big index's embedder when it is loaded, so registering a scope never reloads the model.
         if self.index is not None and getattr(self.index, "_embedder", None) is not None:
             idx._embedder = self.index._embedder
-        ann = idx.build_ann(embed_model=os.environ.get("NER_EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")) if entities else {}
+        ann = idx.build_ann(embed_model=self.embedder.name if self.embedder else "sentence-transformers/all-MiniLM-L6-v2") if entities else {}
         versions = self.scopes.setdefault(name, OrderedDict())
         versions[version] = idx
         while len(versions) > int(os.environ.get("NER_SCOPE_VERSIONS", "16")):
@@ -291,13 +388,18 @@ class NerService:
         return out
 
     def extract(self, request_id: str, utterance: str, scope: str | None = None, scope_version: str | None = None) -> dict:
-        with self.lock:
+        with self._turn():
             return self._extract(request_id, utterance, scope, scope_version)
 
+    def _scope_version(self, scope: str, version: str | None) -> str | None:
+        got = self.scopes.get(scope)
+        return version or (next(reversed(got.keys())) if got else None)
+
     def _extract(self, request_id: str, utterance: str, scope: str | None, scope_version: str | None) -> dict:
-        if not self.ready or self.model is None or self.index is None:
+        if not self.loaded or self.model is None or self.index is None:
             raise RuntimeError("NER service not ready")
         index = self._index_for(scope, scope_version)
+        index_version = self._scope_version(scope, scope_version) if scope else self.index_version
 
         t0 = time.time()
         ents = self.model.predict_entities(utterance, LABELS, threshold=DEFAULT_GLINER_THRESHOLD)
@@ -352,9 +454,10 @@ class NerService:
         return {
             "requestId": request_id,
             "spans": contract_spans,
-            "model": MODEL_NAME,
+            "model": self.model_label,
             "latencyMs": latency_ms,
             **({"scope": scope} if scope else {}),
+            "versions": self.versions(f"{scope}:{index_version}" if scope and index_version else index_version),
         }
 
 

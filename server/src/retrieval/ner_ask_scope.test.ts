@@ -17,7 +17,7 @@ function fakeSidecar(answer: (body: any, registered: any) => { status?: number; 
     const path = new URL(url).pathname;
     const body = JSON.parse(String(init.body));
     calls.push({ method: init.method ?? "GET", path, body });
-    if (init.method === "PUT") { registered = body; return new Response(JSON.stringify({ ok: true }), { status: 200 }); }
+    if (init.method === "PUT") { registered = body; return new Response(JSON.stringify({ scope: ASK_SCOPE, version: body.version, entities: body.entities.length }), { status: 200 }); }
     const r = answer(body, registered);
     return new Response(JSON.stringify(r.json ?? { detail: "x" }), { status: r.status ?? 200 });
   }) as unknown as typeof fetch;

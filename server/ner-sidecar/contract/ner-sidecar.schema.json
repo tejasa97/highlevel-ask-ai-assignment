@@ -1,0 +1,271 @@
+{
+  "$defs": {
+    "Candidate": {
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "entity": {
+          "type": "string"
+        },
+        "id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "Candidate",
+      "type": "object"
+    },
+    "ExtractRequest": {
+      "properties": {
+        "actorId": {
+          "type": "string"
+        },
+        "requestId": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "scopeVersion": {
+          "type": "string"
+        },
+        "tier": {
+          "enum": [
+            "fast",
+            "strong"
+          ],
+          "type": "string"
+        },
+        "utterance": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "requestId",
+        "utterance"
+      ],
+      "title": "ExtractRequest",
+      "type": "object"
+    },
+    "ExtractResponse": {
+      "properties": {
+        "latencyMs": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "model": {
+          "type": "string"
+        },
+        "requestId": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "spans": {
+          "items": {
+            "$ref": "#/$defs/LinkedSpan"
+          },
+          "type": "array"
+        },
+        "versions": {
+          "$ref": "#/$defs/Versions"
+        }
+      },
+      "required": [
+        "requestId",
+        "spans"
+      ],
+      "title": "ExtractResponse",
+      "type": "object"
+    },
+    "LinkedSpan": {
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Candidate"
+          },
+          "type": "array"
+        },
+        "end": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "label": {
+          "enum": [
+            "person",
+            "company",
+            "email",
+            "phone",
+            "id",
+            "team",
+            "product",
+            "contact",
+            "lead",
+            "user"
+          ],
+          "type": "string"
+        },
+        "linkedEntity": {
+          "type": "string"
+        },
+        "linkedId": {
+          "type": "string"
+        },
+        "method": {
+          "enum": [
+            "exact",
+            "embed",
+            "edit",
+            "rule"
+          ],
+          "type": "string"
+        },
+        "score": {
+          "type": "number"
+        },
+        "start": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "linked",
+            "ambiguous",
+            "miss"
+          ],
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "label",
+        "start",
+        "end",
+        "status"
+      ],
+      "title": "LinkedSpan",
+      "type": "object",
+      "x-invariants": [
+        "status 'linked' requires linkedId; 'ambiguous' and 'miss' must not have one",
+        "start <= end",
+        "linkedId and candidate ids start with a Store prefix: ct_, ld_, us_, co_, tm_"
+      ]
+    },
+    "ScopeEntity": {
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "entity": {
+          "enum": [
+            "contact",
+            "lead",
+            "user",
+            "company"
+          ],
+          "type": "string"
+        },
+        "id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "entity"
+      ],
+      "title": "ScopeEntity",
+      "type": "object"
+    },
+    "ScopeRequest": {
+      "properties": {
+        "entities": {
+          "items": {
+            "$ref": "#/$defs/ScopeEntity"
+          },
+          "type": "array"
+        },
+        "version": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "entities"
+      ],
+      "title": "ScopeRequest",
+      "type": "object"
+    },
+    "ScopeResponse": {
+      "properties": {
+        "ann": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "entities": {
+          "type": "integer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "unchanged": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scope",
+        "version"
+      ],
+      "title": "ScopeResponse",
+      "type": "object"
+    },
+    "Versions": {
+      "description": "What produced the spans: sidecar code, model (name@revision) and the index linked against.",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "index": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "model"
+      ],
+      "title": "Versions",
+      "type": "object"
+    }
+  },
+  "$id": "ner-sidecar.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Generated from server/ner-sidecar/contract.py by `python contract.py`. Do not edit by hand.",
+  "title": "Ask AI NER sidecar wire contract"
+}

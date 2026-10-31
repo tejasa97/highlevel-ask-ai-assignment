@@ -12,8 +12,8 @@
  */
 import { createHash } from "node:crypto";
 import type { Store } from "../store/db.js";
-import { extractAndLink, NerSidecarError, nerSidecarUrl } from "./ner_client.js";
-import type { NerLinkedSpan, NerSidecarRequest, NerSidecarResponse } from "./ner_sidecar_contract.js";
+import { extractAndLink, fetchFailure, httpFailure, NerSidecarError, nerSidecarUrl } from "./ner_client.js";
+import { describeIssues, type NerLinkedSpan, type NerSidecarRequest, type NerSidecarResponse, nerScopeResponseSchema } from "./ner_sidecar_contract.js";
 
 export const ASK_SCOPE = "ask";
 
@@ -57,13 +57,18 @@ const pushed = new Map<string, string>();
 
 async function pushScope(entities: AskEntity[], version: string, opts: AskScopeOpts, base: string): Promise<void> {
   const fetchImpl = opts.fetchImpl ?? fetch;
-  let res: Response;
+  let json: unknown;
   try {
-    res = await fetchImpl(`${base}/v1/scopes/${ASK_SCOPE}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ version, entities }), signal: opts.signal });
+    const res = await fetchImpl(`${base}/v1/scopes/${ASK_SCOPE}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ version, entities }), signal: opts.signal });
+    if (!res.ok) throw await httpFailure(res, `NER scope ${ASK_SCOPE} registration failed`);
+    json = await res.json().catch(() => undefined);
   } catch (err) {
-    throw new NerSidecarError(`NER sidecar unreachable at ${base}: ${err instanceof Error ? err.message : String(err)}`, err);
+    if (err instanceof NerSidecarError) throw err;
+    throw fetchFailure(err, base, opts.signal);
   }
-  if (!res.ok) throw new NerSidecarError(`NER scope ${ASK_SCOPE} registration failed: HTTP ${res.status}`);
+  const parsed = nerScopeResponseSchema.safeParse(json);
+  if (!parsed.success) throw new NerSidecarError(`NER scope ${ASK_SCOPE} registration answer breaks the contract: ${describeIssues(parsed.error)}`, "invalid");
+  if (parsed.data.scope !== ASK_SCOPE || parsed.data.version !== version) throw new NerSidecarError(`NER sidecar registered ${parsed.data.scope}@${parsed.data.version}, not ${ASK_SCOPE}@${version}`, "invalid");
   pushed.set(base, version);
 }
 
@@ -79,11 +84,11 @@ export async function askScopedExtract(store: Store, request: Omit<NerSidecarReq
     res = await extractAndLink(scoped, opts);
   } catch (err) {
     // 409: the sidecar restarted or holds an older version. Push once and retry; a second failure ends NER for this turn.
-    if (!(err instanceof NerSidecarError) || !/HTTP 409/.test(err.message)) throw err;
+    if (!(err instanceof NerSidecarError) || err.kind !== "http" || err.status !== 409) throw err;
     await pushScope(entities, version, opts, base);
     res = await extractAndLink(scoped, opts);
   }
-  if (res.scope !== ASK_SCOPE) throw new NerSidecarError(`NER sidecar answered from scope ${res.scope ?? "default"}, not ${ASK_SCOPE}`);
+  if (res.scope !== ASK_SCOPE) throw new NerSidecarError(`NER sidecar answered from scope ${res.scope ?? "default"}, not ${ASK_SCOPE}`, "invalid");
   return { ...res, spans: keepAskIds(res.spans, new Set(entities.map((e) => e.id))) };
 }
 

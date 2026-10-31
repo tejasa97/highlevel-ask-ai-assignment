@@ -10,8 +10,13 @@ import { askScopedExtract } from "../retrieval/ner_ask_scope.js";
 import { bindNerLookups, fromNer } from "./ner_bind.js";
 import {
   mergeMentions,
-  nerSidecarEnabled,
-  NerSidecarError,
+  nerBreaker,
+  type NerMode,
+  nerMode,
+  nerSidecarUrl,
+  nerTimeoutMs,
+  type NerTrace,
+  runNer,
   spansToMentions,
 } from "../retrieval/ner_client.js";
 import type { Retrieval, Retriever } from "../retrieval/retrieve.js";
@@ -59,8 +64,12 @@ export interface TurnDeps {
   signal?: AbortSignal;
   /** Runs a read-only plan and gives back each step's output, for a look round. Without it, look isn't offered. */
   look?: (plan: CompiledPlan) => Promise<{ id: string; output?: unknown; error?: string }[]>;
-  /** NER extract+link; defaults to the sidecar when NER_SIDECAR=1. Tests inject a fake. */
+  /** NER extract+link; defaults to the sidecar when NER_MODE is on or shadow (or NER_SIDECAR=1). Tests inject a fake. */
   ner?: (utterance: string, signal?: AbortSignal) => Promise<NerSidecarResponse>;
+  /** Defaults to nerMode() from the environment; with an injected `ner` and no mode, on. */
+  nerMode?: NerMode;
+  /** Per NER call; defaults to NER_TIMEOUT_MS, and never more than the turn's deadline. */
+  nerTimeoutMs?: number;
 }
 
 export interface TurnInput {
@@ -90,7 +99,8 @@ export type TurnEvent =
   | { type: "planner.request"; data: { label: string; tier: Tier; system: string; user: string; actions: string[] } }
   | { type: "planner.reply"; data: PlannerCallTrace & { json: unknown } }
   | { type: "planner.debug"; data: PlannerDebug }
-  | { type: "compile.errors"; data: { errors: string[] } };
+  | { type: "compile.errors"; data: { errors: string[] } }
+  | { type: "ner"; data: NerTrace };
 
 export type TurnOutcome =
   | {
@@ -202,14 +212,19 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let named: Mention[] = store ? mentions(request, registry, store) : [];
   // The Ask app only ever links against its own records (scope "ask"); with no store there is nothing to scope to,
   // so no NER at all rather than the sidecar's default fine-tuning index.
-  const ner = deps.ner ?? (nerSidecarEnabled() && store ? (utterance: string, signal?: AbortSignal) => askScopedExtract(store, { requestId: `turn_${Date.now().toString(36)}`, utterance, tier: input.tier }, { signal }) : undefined);
-  if (ner && request.trim()) {
-    try {
-      const fromSpans = spansToMentions((await ner(request, deps.signal)).spans);
+  // NER is optional: slow, down or wrong means no hints this turn, never a failed turn; a user cancel ends it.
+  // Shadow mode calls the sidecar and traces what it found, but nothing reaches retrieval or the planner.
+  const mode = deps.nerMode ?? (deps.ner ? "on" : nerMode());
+  const nerRequestId = `ner_${createHash("sha1").update(`${request}\0${performance.now()}\0${Math.random()}`).digest("hex").slice(0, 12)}`;
+  const ner = mode === "off" ? undefined : deps.ner ?? (store ? (utterance: string, signal?: AbortSignal) => askScopedExtract(store, { requestId: nerRequestId, utterance, tier: input.tier }, { signal }) : undefined);
+  if (mode !== "off" && ner && request.trim()) {
+    const timeoutMs = Math.min(deps.nerTimeoutMs ?? nerTimeoutMs(), deps.turnDeadlineMs ?? TURN_DEADLINE_MS);
+    const { response, trace } = await runNer((signal) => ner(request, signal), { requestId: nerRequestId, mode, timeoutMs, signal: deps.signal, breaker: deps.ner ? undefined : nerBreaker(nerSidecarUrl()) });
+    emit({ type: "ner", data: trace });
+    if (trace.outcome === "cancelled") throw cancelled();
+    if (response && trace.applied) {
+      const fromSpans = spansToMentions(response.spans);
       named = store ? mergeMentions(fromSpans, named) : fromSpans;
-    } catch (err) {
-      // Sidecar down / bad response → keep Title-Case mentions; do not fail the turn.
-      if (!(err instanceof NerSidecarError)) throw err;
     }
   }
   linked.push(...named);
