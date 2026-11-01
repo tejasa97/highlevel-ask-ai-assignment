@@ -128,3 +128,73 @@ if __name__ == "__main__":
             except Exception as e:  # noqa: BLE001
                 fails += 1; print("FAIL", name, repr(e))
     sys.exit(1 if fails else 0)
+
+
+def test_embed_off_links_by_exact_and_edit_only():
+    # "Globx" is one edit from Globex: still a suggestion without the ANN, and the ANN is never consulted.
+    s = make_service()
+    idx = s.scopes["ask"]["v1"]
+    calls = []
+    real = idx.embed_texts
+    idx.embed_texts = lambda *a, **k: calls.append(a) or real(*a, **k)
+    (sp,) = s.extract("t", "Email Globx", "ask", "v1", embed=False)["spans"]
+    assert ids(sp) == {"co_8"} and sp["status"] == "ambiguous" and calls == []
+    s.extract("t", "Email Globx", "ask", "v1")
+    assert calls, "embed on uses the ANN"
+    assert idx._faiss, "the registered index keeps its ANN"
+
+
+def test_scope_build_lets_extracts_in_between_chunks(monkeypatch):
+    import threading
+    import time as _t
+
+    monkeypatch.setattr(svc, "SCOPE_EMBED_CHUNK", 1)
+    s = make_service()
+    idx_cls_embed = EntityIndex.embed_texts
+    in_build = threading.Event()
+
+    def slow_embed(self, texts, batch_size=256):
+        if len(texts) == 1 and texts[0] in {"person 0", "person 1", "person 2", "person 3"}:
+            in_build.set()
+            _t.sleep(0.05)
+        return idx_cls_embed(self, texts, batch_size=batch_size)
+
+    monkeypatch.setattr(EntityIndex, "embed_texts", slow_embed)
+    many = [{"id": f"ct_{900 + i}", "name": f"Person {i}", "entity": "contact"} for i in range(4)]
+    t = threading.Thread(target=s.register_scope, args=("ask", "v2", ASK + many))
+    t.start()
+    in_build.wait(5)
+    started = _t.perf_counter()
+    s.extract("t", "Email Sarah Johnson", "ask", "v1")  # the old version still answers while v2 builds
+    waited = _t.perf_counter() - started
+    t.join()
+    assert in_build.is_set()
+    assert waited < 0.15, f"extract waited {waited:.2f}s behind the build"
+    assert list(s.scopes["ask"]) == ["v1", "v2"]
+
+
+def test_a_second_put_for_the_same_version_joins_the_build(monkeypatch):
+    import threading
+
+    s = make_service()
+    builds = []
+    gate = threading.Event()
+    real = svc.NerService._build_scope
+
+    def counted(self, name, version, entities):
+        builds.append(version)
+        gate.wait(5)
+        return real(self, name, version, entities)
+
+    monkeypatch.setattr(svc.NerService, "_build_scope", counted)
+    out = []
+    ts = [threading.Thread(target=lambda: out.append(s.register_scope("ask", "v3", ASK))) for _ in range(2)]
+    for t in ts:
+        t.start()
+    import time as _t
+    _t.sleep(0.05)
+    gate.set()
+    for t in ts:
+        t.join()
+    assert builds == ["v3"] and len(out) == 2 and out[0] == out[1]
+    assert s.register_scope("ask", "v3", ASK)["unchanged"] is True

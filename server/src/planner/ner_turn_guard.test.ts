@@ -75,6 +75,23 @@ describe("NER turn guard", () => {
     assert.ok(performance.now() - started < 2000);
   });
 
+  test("NER gets only what is left of the turn, and its time is the turn's", async () => {
+    // A hanging sidecar with a generous NER timeout: the turn's 80 ms deadline caps it, and the planner then finds
+    // the turn's time spent instead of a fresh deadline.
+    const started = performance.now();
+    const { out, trace, calls } = await run("on", () => new Promise(() => {}), { nerTimeoutMs: 60_000, turnDeadlineMs: 80 });
+    assert.equal(trace?.outcome, "timeout");
+    assert.ok(performance.now() - started < 2000);
+    assert.equal(calls, 0, "no time left for the planner after NER used the turn");
+    assert.notEqual(out.kind, "plan");
+  });
+
+  test("with no turn time left NER is skipped as no_time_left", async () => {
+    let called = false;
+    const { trace } = await run("on", async (u) => { called = true; return sarahs(u); }, { turnDeadlineMs: 0 });
+    assert.deepEqual([trace?.outcome, trace?.reason, called], ["skipped", "no_time_left", false]);
+  });
+
   test("a sidecar error is no hints, not a failed turn", async () => {
     const { NerSidecarError } = await import("../retrieval/ner_client.js");
     const { out, trace } = await run("on", () => Promise.reject(new NerSidecarError("bad body", "invalid")));

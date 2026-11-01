@@ -66,6 +66,8 @@ class ExtractRequest(Wire):
     # Link only against this registered scope's index (the Ask app sends "ask"). Unset = the default seed index.
     scope: Optional[str] = None
     scopeVersion: Optional[str] = None
+    # false: link by exact name and edit distance only, no embedding matches. Unset = on.
+    embed: Optional[bool] = None
 
 
 class Candidate(Wire):

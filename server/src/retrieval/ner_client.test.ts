@@ -8,23 +8,16 @@ import {
   extractAndLink,
   mergeMentions,
   nerMode,
-  nerSidecarEnabled,
   NerSidecarError,
   nerSidecarUrl,
   nerTimeoutMs,
+  nerEmbed,
   runNer,
   spansToMentions,
 } from "./ner_client.js";
 import type { NerLinkedSpan } from "./ner_sidecar_contract.js";
 
 describe("ner_client flag / url", () => {
-  test("NER_SIDECAR / ASK_NER enable the facade", () => {
-    assert.equal(nerSidecarEnabled({}), false);
-    assert.equal(nerSidecarEnabled({ NER_SIDECAR: "1" }), true);
-    assert.equal(nerSidecarEnabled({ ASK_NER: "true" }), true);
-    assert.equal(nerSidecarEnabled({ NER_SIDECAR: "0" }), false);
-  });
-
   test("NER_MODE off|shadow|on wins over the older flag; an unknown mode is off", () => {
     assert.equal(nerMode({}), "off");
     assert.equal(nerMode({ NER_SIDECAR: "1" }), "on");
@@ -32,7 +25,8 @@ describe("ner_client flag / url", () => {
     assert.equal(nerMode({ NER_MODE: "ON" }), "on");
     assert.equal(nerMode({ NER_MODE: "off", NER_SIDECAR: "1" }), "off");
     assert.equal(nerMode({ NER_MODE: "sometimes" }), "off");
-    assert.equal(nerSidecarEnabled({ NER_MODE: "shadow" }), true);
+    assert.equal(nerMode({ ASK_NER: "true" }), "on");
+    assert.equal(nerMode({ NER_SIDECAR: "0" }), "off");
   });
 
   test("NER_TIMEOUT_MS defaults to 1500 and ignores nonsense", () => {
@@ -215,6 +209,27 @@ describe("extractAndLink failure classes", () => {
     assert.equal(await kindOf(extractAndLink(req, { url: "http://ner", fetchImpl: fetchOf(async () => new Response('{"requestId":"r1"}')) })), "invalid");
   });
 
+  test("a span with a label this client doesn't know is dropped and logged; the rest of the answer stands", async () => {
+    const lines: Record<string, unknown>[] = [];
+    const body = { requestId: "r1", spans: [
+      { text: "Sarah", label: "person", start: 6, end: 11, status: "miss" },
+      { text: "Q3", label: "quarter", start: 15, end: 17, status: "miss" },
+    ] };
+    const res = await extractAndLink(req, { url: "http://ner", fetchImpl: fetchOf(async () => new Response(JSON.stringify(body))), log: (l) => void lines.push(l) });
+    assert.deepEqual(res.spans.map((s) => s.label), ["person"]);
+    assert.deepEqual(lines.map((l) => [l.evt, l.labels]), [["ner.unknown_label", ["quarter"]]]);
+    // A known label with a broken span is still a contract violation.
+    const bad = { requestId: "r1", spans: [{ text: "Sarah", label: "person", start: 6, end: 11, status: "linked" }] };
+    assert.equal(await kindOf(extractAndLink(req, { url: "http://ner", fetchImpl: fetchOf(async () => new Response(JSON.stringify(bad))) })), "invalid");
+  });
+
+  test("a 503 with Retry-After carries the pause it asks for", async () => {
+    const busy = fetchOf(async () => new Response('{"overloaded":true}', { status: 503, headers: { "retry-after": "1" } }));
+    await assert.rejects(extractAndLink(req, { url: "http://ner", fetchImpl: busy }), (e: unknown) => e instanceof NerSidecarError && e.retryAfterMs === 1000);
+    const plain = fetchOf(async () => new Response("no", { status: 500, headers: { "retry-after": "1" } }));
+    await assert.rejects(extractAndLink(req, { url: "http://ner", fetchImpl: plain }), (e: unknown) => e instanceof NerSidecarError && e.retryAfterMs === undefined);
+  });
+
   test("an aborted signal is a timeout when it timed out, else a cancel", async () => {
     assert.equal(await kindOf(extractAndLink(req, { url: "http://ner", fetchImpl: hang, signal: AbortSignal.timeout(10) })), "timeout");
     const ctl = new AbortController();
@@ -287,6 +302,48 @@ describe("runNer", () => {
     const healed = await runNer(async () => ({ requestId: "r1", spans: [] }), o);
     assert.deepEqual([healed.trace.outcome, healed.trace.breaker], ["ok", "closed"]);
     assert.deepEqual(changes, ["closed>open", "open>half_open", "half_open>open", "open>half_open", "half_open>closed"]);
+  });
+
+  test("overload 503s pause for their Retry-After and never trip the breaker", async () => {
+    let now = 0;
+    const changes: string[] = [];
+    const breaker = new CircuitBreaker(3, 30_000, (from, to) => void changes.push(`${from}>${to}`), () => now);
+    const busy = () => Promise.reject(new NerSidecarError("NER sidecar: HTTP 503 overloaded", "http", { status: 503, retryAfterMs: 1000 }));
+    for (let i = 0; i < 3; i++) {
+      const t = await runNer(busy, { ...base, breaker });
+      assert.deepEqual([t.trace.outcome, t.trace.status, t.trace.reason], ["http", 503, "overloaded"]);
+      const skipped = await runNer(busy, { ...base, breaker });
+      assert.deepEqual([skipped.trace.outcome, skipped.trace.reason], ["skipped", "overloaded"]);
+      now += 1000;
+    }
+    assert.equal(breaker.state, "closed");
+    assert.deepEqual(changes, []);
+  });
+
+  test("answers that break the contract are logged but don't trip the breaker; outages still do", async () => {
+    const breaker = new CircuitBreaker(2, 30_000);
+    const bad = () => Promise.reject(new NerSidecarError("breaks the contract", "invalid"));
+    for (let i = 0; i < 4; i++) assert.equal((await runNer(bad, { ...base, breaker })).trace.outcome, "invalid");
+    assert.equal(breaker.state, "closed");
+    const down = () => Promise.reject(new NerSidecarError("down", "unreachable"));
+    await runNer(down, { ...base, breaker });
+    await runNer(down, { ...base, breaker });
+    assert.equal(breaker.state, "open");
+  });
+
+  test("a timeout spent waiting on a scope push is traced as such and doesn't count against the sidecar", async () => {
+    const breaker = new CircuitBreaker(1, 30_000);
+    const t = await runNer(() => new Promise(() => {}), { ...base, timeoutMs: 20, breaker, pending: () => "scope_push" });
+    assert.deepEqual([t.trace.outcome, t.trace.reason, breaker.state], ["timeout", "scope_push", "closed"]);
+    const plain = await runNer(() => new Promise(() => {}), { ...base, timeoutMs: 20, breaker, pending: () => undefined });
+    assert.deepEqual([plain.trace.outcome, breaker.state], ["timeout", "open"]);
+  });
+
+  test("NER_EMBED is on unless set off", () => {
+    assert.equal(nerEmbed({}), true);
+    assert.equal(nerEmbed({ NER_EMBED: "on" }), true);
+    assert.equal(nerEmbed({ NER_EMBED: "off" }), false);
+    assert.equal(nerEmbed({ NER_EMBED: "0" }), false);
   });
 
   test("no time left in the turn: skipped without calling", async () => {

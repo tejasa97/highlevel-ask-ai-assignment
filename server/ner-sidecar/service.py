@@ -12,7 +12,9 @@ import re
 import subprocess
 import sys
 import threading
+import copy
 from collections import OrderedDict
+from concurrent.futures import Future
 from contextlib import contextmanager
 import time
 from pathlib import Path
@@ -23,7 +25,7 @@ from model_pin import PinnedModel, resolve_embedder, resolve_gliner
 
 log = logging.getLogger("ner-sidecar")
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 DEFAULT_POC_ROOT = Path(os.environ.get("NER_POC_ROOT", str(Path(__file__).resolve().parents[3] / "ask-ai-ner-poc")))
 DEFAULT_PEOPLE = Path(os.environ.get("NER_PEOPLE_PATH", str(DEFAULT_POC_ROOT / "data" / "people.jsonl")))
@@ -39,6 +41,8 @@ DEFAULT_GLINER_THRESHOLD = float(os.environ.get("NER_GLINER_THRESHOLD", "0.4"))
 # NER_QUEUE_TIMEOUT_MS for it. Anything beyond that gets a fast 503 instead of piling up behind the model.
 MAX_QUEUE = int(os.environ.get("NER_MAX_QUEUE", "4"))
 QUEUE_TIMEOUT_S = int(os.environ.get("NER_QUEUE_TIMEOUT_MS", "500")) / 1000
+# A scope build embeds this many keys per hold of the model, then lets queued extracts in.
+SCOPE_EMBED_CHUNK = int(os.environ.get("NER_SCOPE_EMBED_CHUNK", "256"))
 WARMUP_UTTERANCE = "Email Sarah Johnson at Acme about the renewal"
 
 LABELS = ["person", "company", "team", "product"]
@@ -109,12 +113,15 @@ def code_version() -> str:
 
 
 def seed_version(paths: list[Path], *extra: str) -> str:
-    """Content hash of the seed files (and the row limits applied), naming the default index."""
+    """Names the default index from each seed file's path, size and mtime (and the row limits applied).
+
+    Not a content hash: the people seed is hundreds of MB, and hashing it cost every start seconds. Replacing a file
+    changes its size or mtime, which is what the version has to notice.
+    """
     h = hashlib.sha256()
     for p in paths:
-        with p.open("rb") as f:
-            while block := f.read(1 << 22):
-                h.update(block)
+        st = p.stat()
+        h.update(f"{p.resolve()}|{st.st_size}|{st.st_mtime_ns}\n".encode())
     h.update("|".join(extra).encode())
     return "seed:" + h.hexdigest()[:16]
 
@@ -130,6 +137,9 @@ class NerService:
         # FastAPI runs sync endpoints on a thread pool. Two threads embedding at once (a scope build next to a link)
         # crashes torch/faiss on macOS, so building a scope and linking take turns.
         self.lock = threading.Lock()
+        # Scope builds in flight, by (scope, version): a second PUT for the same version waits on the first.
+        self._builds: dict[tuple[str, str], Future] = {}
+        self._builds_lock = threading.Lock()
         self._load_lock = threading.Lock()
         self._admit_lock = threading.Lock()
         self._admitted = 0
@@ -146,7 +156,8 @@ class NerService:
 
     @property
     def model_label(self) -> str:
-        return os.environ.get("NER_MODEL_NAME") or (self.gliner.label if self.gliner else "unloaded")
+        # Always the verified checkpoint (name@sha), so versions.model says what actually answered.
+        return self.gliner.label if self.gliner else "unloaded"
 
     def versions(self, index: str | None) -> dict[str, Any]:
         return {"code": self.code_version, "model": self.model_label, **({"index": index} if index else {})}
@@ -258,13 +269,34 @@ class NerService:
         log.info("sidecar ready in %.1fs (warmup extract %.0f ms)", time.time() - t0, warmup_ms)
 
     def register_scope(self, name: str, version: str, entities: list[dict]) -> dict[str, Any]:
-        """Build an in-memory EntityIndex (exact + ANN + edit) from the caller's own records."""
-        with self._turn():
+        """Build an in-memory EntityIndex (exact + ANN + edit) from the caller's own records.
+
+        The build does not hold the model for its whole length: it embeds in chunks of SCOPE_EMBED_CHUNK keys, taking
+        the model for each, so extracts queued meanwhile keep being answered. The finished index is swapped in under
+        the model lock. A PUT for a version already being built joins that build and gets its answer.
+        """
+        key = (name, version)
+        with self._builds_lock:
             got = self.scopes.get(name)
             if got is not None and version in got:
                 got.move_to_end(version)
                 return {"scope": name, "version": version, "unchanged": True}
-            return self._build_scope(name, version, entities)
+            job = self._builds.get(key)
+            owner = job is None
+            if owner:
+                job = self._builds[key] = Future()
+        if not owner:
+            return job.result()
+        try:
+            out = self._build_scope(name, version, entities)
+            job.set_result(out)
+            return out
+        except BaseException as e:
+            job.set_exception(e)
+            raise
+        finally:
+            with self._builds_lock:
+                self._builds.pop(key, None)
 
     def _build_scope(self, name: str, version: str, entities: list[dict]) -> dict[str, Any]:
         _ensure_poc_scripts_on_path()
@@ -285,12 +317,38 @@ class NerService:
         # Share the big index's embedder when it is loaded, so registering a scope never reloads the model.
         if self.index is not None and getattr(self.index, "_embedder", None) is not None:
             idx._embedder = self.index._embedder
-        ann = idx.build_ann(embed_model=self.embedder.name if self.embedder else "sentence-transformers/all-MiniLM-L6-v2") if entities else {}
-        versions = self.scopes.setdefault(name, OrderedDict())
-        versions[version] = idx
-        while len(versions) > int(os.environ.get("NER_SCOPE_VERSIONS", "16")):
-            versions.popitem(last=False)
+        ann = self._build_ann_chunked(idx, self.embedder.name if self.embedder else "sentence-transformers/all-MiniLM-L6-v2") if entities else {}
+        with self.lock:
+            versions = self.scopes.setdefault(name, OrderedDict())
+            versions[version] = idx
+            while len(versions) > int(os.environ.get("NER_SCOPE_VERSIONS", "16")):
+                versions.popitem(last=False)
         return {"scope": name, "version": version, "entities": len(entities), "ann": ann}
+
+    def _build_ann_chunked(self, idx, embed_model: str) -> dict[str, Any]:
+        """EntityIndex.build_ann, one chunk of keys per hold of self.lock (torch and faiss never run in two threads)."""
+        import entity_index  # type: ignore
+        import numpy as np
+
+        idx.embed_model = embed_model
+        stats: dict[str, Any] = {"model": embed_model, "types": {}}
+        t_all = time.time()
+        for et, keys in idx._keys.items():
+            t0 = time.time()
+            parts = []
+            for i in range(0, len(keys), max(1, SCOPE_EMBED_CHUNK)):
+                with self.lock:
+                    parts.append(idx.embed_texts(keys[i : i + SCOPE_EMBED_CHUNK]))
+                time.sleep(0.001)  # let a waiting extract take the lock before the next chunk
+            vecs = np.concatenate(parts) if parts else np.zeros((0, 1), dtype=np.float32)
+            with self.lock:
+                index = entity_index.faiss.IndexFlatIP(int(vecs.shape[1]))
+                index.add(vecs)
+            idx._faiss[et] = index
+            stats["types"][et] = {"unique_keys": len(keys), "dim": int(vecs.shape[1]), "embed_and_index_s": round(time.time() - t0, 2)}
+        stats["total_build_s"] = round(time.time() - t_all, 2)
+        idx.build_stats = stats
+        return stats
 
     def _index_for(self, scope: str | None, version: str | None):
         if scope is None:
@@ -387,18 +445,22 @@ class NerService:
             out["score"] = float(score)
         return out
 
-    def extract(self, request_id: str, utterance: str, scope: str | None = None, scope_version: str | None = None) -> dict:
+    def extract(self, request_id: str, utterance: str, scope: str | None = None, scope_version: str | None = None, embed: bool = True) -> dict:
         with self._turn():
-            return self._extract(request_id, utterance, scope, scope_version)
+            return self._extract(request_id, utterance, scope, scope_version, embed)
 
     def _scope_version(self, scope: str, version: str | None) -> str | None:
         got = self.scopes.get(scope)
         return version or (next(reversed(got.keys())) if got else None)
 
-    def _extract(self, request_id: str, utterance: str, scope: str | None, scope_version: str | None) -> dict:
+    def _extract(self, request_id: str, utterance: str, scope: str | None, scope_version: str | None, embed: bool = True) -> dict:
         if not self.loaded or self.model is None or self.index is None:
             raise RuntimeError("NER service not ready")
         index = self._index_for(scope, scope_version)
+        if not embed:
+            # Exact name and edit distance only: link against a view of the index without its ANN.
+            index = copy.copy(index)
+            index._faiss = {}
         index_version = self._scope_version(scope, scope_version) if scope else self.index_version
 
         t0 = time.time()

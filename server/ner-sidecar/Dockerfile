@@ -7,7 +7,9 @@
 #   docker run -p 8091:8091 \
 #     -v $POC/models/gliner_small_v21_base:/models/gliner:ro \
 #     -v $HF_CACHE/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41:/models/embedder:ro \
-#     -v $POC/data:/data:ro ask-ai-ner-sidecar
+#     -v $POC/data:/data:ro -v ner-cache:/cache ask-ai-ner-sidecar
+# /data (seed) stays read-only; the ANN cache is built into the writable /cache volume on first start and reused after
+# (a named volume keeps it across restarts; without one it is rebuilt each start).
 # Both models are checked against models.lock.json at load; /health/ready stays 503 until that and a warmup pass.
 FROM python:3.11.16-slim-bookworm
 
@@ -29,13 +31,14 @@ ENV NER_CODE_VERSION=${NER_CODE_VERSION} \
     NER_EMBED_MODEL_PATH=/models/embedder \
     NER_PEOPLE_PATH=/data/people.jsonl \
     NER_COMPANIES_PATH=/data/companies.jsonl \
-    NER_ANN_DIR=/data/ann \
+    NER_ANN_DIR=/cache/ann \
     HF_HUB_OFFLINE=1 \
     TRANSFORMERS_OFFLINE=1 \
     PORT=8091
 
-RUN useradd --system --uid 10001 --home-dir /app ner && chown -R ner /app
+RUN useradd --system --uid 10001 --home-dir /app ner && mkdir -p /cache/ann && chown -R ner /app /cache
 USER ner
+VOLUME /cache
 
 EXPOSE 8091
 # Liveness only: the process answers. Orchestrators should gate traffic on /health/ready.

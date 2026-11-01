@@ -66,12 +66,18 @@ reply/status type. Method on edit hits is `"edit"` (soft ANN remains `"embed"`).
 | `shadow` | Called and traced (`ner` turn event, logs); nothing reaches retrieval or the planner. Use to watch latency and outcomes in production before turning it on. |
 | `on` | Linked spans become planner hints. `NER_SIDECAR=1` / `ASK_NER=1` still mean `on`. |
 
-Each call gets `min(NER_TIMEOUT_MS, the turn's deadline)` via `AbortSignal.any` with the turn's own signal. Every
+Each call gets `min(NER_TIMEOUT_MS, what is left of the turn's deadline)` via `AbortSignal.any` with the turn's own
+signal; NER time counts against the turn, and with nothing left the call is skipped (`reason: "no_time_left"`). Every
 outcome is classified: `ok`, `skipped` (breaker open / no time left), `unreachable`, `timeout`, `http` (with status,
 e.g. 503 overloaded, 409 scope unavailable), `invalid` (non-JSON, schema violation, requestId mismatch), `cancelled`
 (the user's cancel: the turn ends). Everything but `cancelled` means "no hints". An in-process circuit breaker per
-sidecar URL opens after `NER_BREAKER_FAILURES` consecutive failures, skips calls for `NER_BREAKER_COOLDOWN_MS`, then
-lets one probe through; each state change is logged (`evt: "ner.breaker"`). Cancels don't count as failures.
+sidecar URL opens after `NER_BREAKER_FAILURES` consecutive outages, skips calls for `NER_BREAKER_COOLDOWN_MS`, then
+lets one probe through; each state change is logged (`evt: "ner.breaker"`). Only outages count: unreachable,
+timeout, an HTTP error without `Retry-After`. A 503 overload (`Retry-After`) pauses calls for that long (at most
+10 s; skips trace `reason: "overloaded"`) without opening the breaker. `invalid` answers and cancels give no verdict,
+nor does a timeout while the Ask scope push is still running (`reason: "scope_push"`): that push has its own budget
+(`NER_SCOPE_TIMEOUT_MS`) and finishes in the background, and a later turn joins it rather than pushing again. A span
+with a label the client doesn't know is dropped and logged (`ner.unknown_label`), not the whole answer.
 
 Every turn that calls NER emits a `ner` trace event and (per `NER_LOG`) one JSON log line on stderr:
 `{evt: "ner", requestId, mode, outcome, latencyMs, timeoutMs, breaker, status?, error?, spans?, versions: {code, model, index}}`.
@@ -87,9 +93,12 @@ The same `requestId` is sent as `x-request-id` and in the body, and appears in t
 | `POST /v1/extract` (also `/extract`) | Extract + link. 503 + `Retry-After: 1` when overloaded or not ready; 409 for an unknown scope/version (fail closed: never the default index). |
 | `PUT /v1/scopes/{name}`, `GET /v1/scopes/{name}` | Register / list a scope's versions (`NER_SCOPE_VERSIONS` kept per scope). |
 
-**Admission control.** Inference and scope builds take turns (torch + faiss in one process are not safe to run
-concurrently on macOS). One runs; up to `NER_MAX_QUEUE` wait, each at most `NER_QUEUE_TIMEOUT_MS`. Beyond that the
-request gets an immediate 503, which the client treats as "no hints", instead of queuing behind a slow model.
+**Admission control.** Inference runs one at a time (torch + faiss in one process are not safe to run concurrently
+on macOS). One runs; up to `NER_MAX_QUEUE` wait, each at most `NER_QUEUE_TIMEOUT_MS`. Beyond that the request gets
+an immediate 503, which the client treats as "no hints", instead of queuing behind a slow model. A scope build isn't
+admitted as one long turn: it builds its exact maps without the model, embeds `NER_SCOPE_EMBED_CHUNK` keys per hold
+of it so queued extracts get in between, and swaps the finished index in. A PUT for a version already being built
+waits for that build and gets its answer.
 
 ## Layout
 
@@ -117,16 +126,16 @@ Sidecar:
 | `NER_MODEL_SHA256` | required for a checkpoint not in `models.lock.json` (sha256 of its weights file) |
 | `NER_MODEL_VERIFY` | `1`; `0` skips the sha256 checks (local experiments; `/health` shows `verified: false`) |
 | `NER_EMBED_MODEL_PATH` | unset = the pinned revision from the Hugging Face cache (cache first, download only if missing) |
-| `NER_MODEL_NAME` | overrides the reported model label |
 | `NER_CODE_VERSION` | git sha (the image build sets it); else `git rev-parse` of the checkout |
 | `NER_PEOPLE_PATH` / `NER_COMPANIES_PATH` | `$NER_POC_ROOT/data/{people,companies}.jsonl` |
-| `NER_ANN_DIR` | `$NER_POC_ROOT/data/ann` (`NER_REBUILD_ANN=1` rebuilds) |
+| `NER_ANN_DIR` | `$NER_POC_ROOT/data/ann` (`NER_REBUILD_ANN=1` rebuilds); `/cache/ann` in the image |
 | `NER_PEOPLE_LIMIT` / `NER_COMPANIES_LIMIT` | optional caps for smoke tests |
 | `NER_EMBED_THRESHOLD` / `NER_SUGGEST_THRESHOLD` / `NER_EDIT_MAX_DISTANCE` | `0.9` / `0.75` / `1` |
 | `NER_GLINER_THRESHOLD` | `0.4` |
 | `NER_MAX_CANDIDATES` | `20` (0 = no cap) |
 | `NER_MAX_QUEUE` / `NER_QUEUE_TIMEOUT_MS` | `4` / `500` |
 | `NER_SCOPE_VERSIONS` | `16` |
+| `NER_SCOPE_EMBED_CHUNK` | `256` (keys embedded per hold of the model during a scope build) |
 | `NER_LAZY_LOAD` | unset = warm-load at start (in the background); `1` = on the first request |
 | `NER_LOG_LEVEL` | `INFO` |
 | `PORT` | `8091` |
@@ -137,7 +146,9 @@ Node (`server/`):
 | --- | --- |
 | `NER_MODE` | `off` (`NER_SIDECAR=1` / `ASK_NER=1` = `on`) |
 | `NER_SIDECAR_URL` | `http://127.0.0.1:8091` |
-| `NER_TIMEOUT_MS` | `1500` (capped by the turn deadline) |
+| `NER_TIMEOUT_MS` | `1500` (capped by what is left of the turn deadline) |
+| `NER_SCOPE_TIMEOUT_MS` | `10000` (one Ask scope push; it outlives the turn that started it) |
+| `NER_EMBED` | `on`; `off` sends `embed: false` (exact + edit distance only), read on every call |
 | `NER_BREAKER_FAILURES` / `NER_BREAKER_COOLDOWN_MS` | `3` / `30000` |
 | `NER_LOG` | `errors` (`all` logs successes too; `off`) |
 
@@ -162,10 +173,16 @@ NER_POC_ROOT=/path/to/ask-ai-ner-poc python -m pytest tests
 python contract.py --check   # the committed JSON Schema matches contract.py
 ```
 
+The Node tests that talk to a real sidecar (`ner_ask_scope.test.ts`, `ner_orchestration.test.ts`, via
+`src/retrieval/ner_live.ts`) run only with `NER_LIVE_TESTS=1`, and only when `NER_SIDECAR_URL` answers
+`/health/ready` with code from this checkout (`versions.code` starts with `__version__` in `service.py`); otherwise
+they are skipped with the reason.
+
 ## Docker
 
 See the header of the [`Dockerfile`](Dockerfile) for build and run. Code and the hash-locked dependencies are baked
-in; weights and seed data are mounted read-only, the image runs offline (`HF_HUB_OFFLINE=1`) as a non-root user,
+in; weights and seed data are mounted read-only, the ANN cache is built into a writable `/cache` volume (keep it as
+a named volume so restarts reuse it), the image runs offline (`HF_HUB_OFFLINE=1`) as a non-root user,
 and its `HEALTHCHECK` is liveness only. Gate traffic on `/health/ready`. Run exactly **one worker** per container:
 scopes and the admission queue are in-process state. Scale by containers, each pushed its scope by the Node server
 (scope pushes are versioned and idempotent).

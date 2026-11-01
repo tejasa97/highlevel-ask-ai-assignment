@@ -6,7 +6,7 @@ import { card } from "../registry/card.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
 import { type Mention, mentions } from "../retrieval/mentions.js";
 import type { NerSidecarResponse } from "../retrieval/ner_sidecar_contract.js";
-import { askScopedExtract } from "../retrieval/ner_ask_scope.js";
+import { askScopedExtract, askScopePushPending } from "../retrieval/ner_ask_scope.js";
 import { bindNerLookups, fromNer } from "./ner_bind.js";
 import {
   mergeMentions,
@@ -68,7 +68,7 @@ export interface TurnDeps {
   ner?: (utterance: string, signal?: AbortSignal) => Promise<NerSidecarResponse>;
   /** Defaults to nerMode() from the environment; with an injected `ner` and no mode, on. */
   nerMode?: NerMode;
-  /** Per NER call; defaults to NER_TIMEOUT_MS, and never more than the turn's deadline. */
+  /** Per NER call; defaults to NER_TIMEOUT_MS, and never more than what is left of the turn's deadline. */
   nerTimeoutMs?: number;
 }
 
@@ -217,9 +217,12 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   const mode = deps.nerMode ?? (deps.ner ? "on" : nerMode());
   const nerRequestId = `ner_${createHash("sha1").update(`${request}\0${performance.now()}\0${Math.random()}`).digest("hex").slice(0, 12)}`;
   const ner = mode === "off" ? undefined : deps.ner ?? (store ? (utterance: string, signal?: AbortSignal) => askScopedExtract(store, { requestId: nerRequestId, utterance, tier: input.tier }, { signal }) : undefined);
+  // The turn's clock starts before NER: NER time is the turn's, and NER gets only what is left of it.
+  const budget = turnBudget(deps);
   if (mode !== "off" && ner && request.trim()) {
-    const timeoutMs = Math.min(deps.nerTimeoutMs ?? nerTimeoutMs(), deps.turnDeadlineMs ?? TURN_DEADLINE_MS);
-    const { response, trace } = await runNer((signal) => ner(request, signal), { requestId: nerRequestId, mode, timeoutMs, signal: deps.signal, breaker: deps.ner ? undefined : nerBreaker(nerSidecarUrl()) });
+    const timeoutMs = Math.min(deps.nerTimeoutMs ?? nerTimeoutMs(), budget.left());
+    const sidecar = deps.ner ? undefined : nerSidecarUrl();
+    const { response, trace } = await runNer((signal) => ner(request, signal), { requestId: nerRequestId, mode, timeoutMs, signal: deps.signal, breaker: sidecar ? nerBreaker(sidecar) : undefined, pending: sidecar ? () => (askScopePushPending(sidecar) ? "scope_push" : undefined) : undefined });
     emit({ type: "ner", data: trace });
     if (trace.outcome === "cancelled") throw cancelled();
     if (response && trace.applied) {
@@ -289,7 +292,6 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   const prompt = () =>
     userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, failed: input.failed, looked, lookIds: lookSteps.map((l) => l.id), deliverySurfaces, identityCheck, outcome });
   let resampled = false;
-  const budget = turnBudget(deps);
   let round = 0;
   const debug = (label: string, user: string, d: Pick<PlannerDebug, "raw" | "parsed" | "model" | "usage" | "latencyMs" | "error">) => {
     round++;
@@ -927,6 +929,8 @@ export function turnBudget(deps: Pick<TurnDeps, "plannerTimeoutMs" | "maxPlanner
   const ends = performance.now() + deadlineMs;
   let n = 0;
   return {
+    /** Milliseconds left of the turn's deadline (0 once spent). */
+    left: () => Math.max(0, Math.round(ends - performance.now())),
     next(): { n: number; ms: number } {
       if (deps.signal?.aborted) throw cancelled();
       if (n >= max) throw new TurnStopped(`The planner used all ${max} of its calls for this message without settling on a plan. Nothing was changed; please rephrase it or split it up.`);

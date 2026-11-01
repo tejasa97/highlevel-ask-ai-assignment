@@ -19,6 +19,8 @@ The schema is defined once, as Pydantic models in [`server/ner-sidecar/contract.
 - `status: "linked"` ⇔ `linkedId` is present; `start <= end`; every `linkedId` and candidate `id` has a Store prefix (`ct_ ld_ us_ co_ tm_`).
 - `requestId` in the response must echo the request's.
 - A response that breaks any of these is rejected as `invalid`, and the turn gets no hints. Deploy order follows from that: upgrade the sidecar with or before the Node server, since a pre-contract sidecar (which sent `null`s) is treated as invalid.
+- One exception, so a sidecar can add a label first: the client drops a span whose `label` it doesn't know (logged as `evt: "ner.unknown_label"`) and validates the rest. The wire schema still lists the known labels; the fixture `malformed: unknown label` is marked `"client": "drops the span"`.
+- `invalid` doesn't trip the client's circuit breaker: the sidecar answered, and quickly, so skipping it would only hide the version skew; each invalid answer is logged instead. Only outages count (unreachable, timeout, an HTTP error without `Retry-After`); a 503 with `Retry-After` pauses calls for that long.
 
 ## Parties
 
@@ -39,6 +41,7 @@ Minimal body. Optional fields mirror `POST /api/ask` (`message`, `tier?`, `actor
 | `tier` | `"fast"` \| `"strong"` | no | Planner tier |
 | `scope` | string | no | Link only against this registered scope (`PUT /v1/scopes/{name}`); unknown scope or version → 409, never the default index |
 | `scopeVersion` | string | no | Version of `scope` to link against |
+| `embed` | boolean | no | `false`: link by exact name and edit distance only, no embedding (ANN) matches. Unset = on. The Node server sends `false` when `NER_EMBED=off` |
 
 ### Example request
 
@@ -60,7 +63,7 @@ Minimal body. Optional fields mirror `POST /api/ask` (`message`, `tier?`, `actor
 | `model` | string | no | Sidecar / checkpoint id |
 | `latencyMs` | number | no | Optional timing |
 | `scope` | string | no | Echo of the scope linked against |
-| `versions` | `{ code, model, index? }` | no | Sidecar code version, pinned model (`name@revision`), index version (`seed:<hash>` or `<scope>:<version>`) |
+| `versions` | `{ code, model, index? }` | no | Sidecar code version, pinned model (`name@revision`), index version (`seed:<hash>` of the seed files' path, size, mtime and row limits, or `<scope>:<version>`) |
 
 ### Span fields (`NerLinkedSpan`)
 

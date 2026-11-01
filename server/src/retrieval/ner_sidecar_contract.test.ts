@@ -9,7 +9,7 @@ import { NER_WIRE_SCHEMAS, nerCandidateSchema, nerSidecarRequestSchema, nerSidec
 
 const contractDir = new URL("../../ner-sidecar/contract/", import.meta.url);
 const shared = JSON.parse(readFileSync(new URL("ner-sidecar.schema.json", contractDir), "utf8")) as { $defs: Record<string, unknown> };
-type Fixture = { name: string; kind: string; valid: boolean; body: unknown };
+type Fixture = { name: string; kind: string; valid: boolean; client?: string; body: unknown };
 const fixtures = JSON.parse(readFileSync(new URL("fixtures.json", contractDir), "utf8")) as { extractResponse: Fixture[]; extractRequest: Fixture[] };
 
 /** Only what constrains a value: refs inlined, annotations and each generator's spelling of "anything goes" dropped. */
@@ -67,6 +67,8 @@ describe("NER sidecar contract", () => {
       const fetchImpl = (async () => new Response(JSON.stringify(f.body), { status: 200 })) as unknown as typeof fetch;
       const call = extractAndLink({ requestId: "req_1", utterance: "x" }, { url: "http://ner", fetchImpl });
       if (f.valid) assert.ok((await call).spans, f.name);
+      // Tolerant reader: a span with a label this client doesn't know is dropped (and logged), not the whole answer.
+      else if (f.client === "drops the span") assert.deepEqual((await call).spans, [], f.name);
       else await assert.rejects(call, (e: unknown) => e instanceof NerSidecarError && e.kind === "invalid", f.name);
     }
   });

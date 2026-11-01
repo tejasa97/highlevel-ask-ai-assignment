@@ -108,7 +108,7 @@ def _extract(body: ExtractRequest) -> ExtractResponse:
     _ensure_ready()
     t0 = time.perf_counter()
     try:
-        raw = service.extract(body.requestId, body.utterance, body.scope, body.scopeVersion)
+        raw = service.extract(body.requestId, body.utterance, body.scope, body.scopeVersion, body.embed is not False)
     except ScopeUnavailable as e:
         # Fail closed: a scoped caller never gets the big index.
         log.info("extract requestId=%s scope=%s outcome=scope_unavailable", body.requestId, body.scope)

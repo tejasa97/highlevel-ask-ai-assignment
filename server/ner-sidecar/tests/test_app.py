@@ -60,7 +60,7 @@ def test_ready_after_load_and_reports_versions(svc_state, monkeypatch):
 
 def test_response_omits_absent_fields(svc_state, monkeypatch):
     monkeypatch.setattr(svc_state, "ready", True)
-    monkeypatch.setattr(svc_state, "extract", lambda rid, u, scope, v: {"requestId": rid, "spans": [{"text": "Acme", "label": "company", "start": 0, "end": 4, "status": "miss"}], "versions": {"code": "c", "model": "m"}})
+    monkeypatch.setattr(svc_state, "extract", lambda rid, u, scope, v, embed: {"requestId": rid, "spans": [{"text": "Acme", "label": "company", "start": 0, "end": 4, "status": "miss"}], "versions": {"code": "c", "model": "m"}})
     r = client.post("/v1/extract", json={"requestId": "r1", "utterance": "Acme"})
     assert r.status_code == 200
     assert r.json() == {"requestId": "r1", "spans": [{"text": "Acme", "label": "company", "start": 0, "end": 4, "status": "miss"}], "versions": {"code": "c", "model": "m"}}
@@ -69,7 +69,7 @@ def test_response_omits_absent_fields(svc_state, monkeypatch):
 def test_overloaded_is_a_fast_503_with_retry_after(svc_state, monkeypatch):
     monkeypatch.setattr(svc_state, "ready", True)
 
-    def busy(*_a):
+    def busy(*_a, **_k):
         raise svc.Overloaded("queue full")
 
     monkeypatch.setattr(svc_state, "extract", busy)
@@ -193,3 +193,33 @@ def test_a_failed_background_load_shows_on_readiness(svc_state, monkeypatch):
             time.sleep(0.01)
         r = c.get("/health/ready")
         assert r.status_code == 503 and "pinned def" in r.json()["error"]
+
+
+def test_embed_false_reaches_the_service(svc_state, monkeypatch):
+    monkeypatch.setattr(svc_state, "ready", True)
+    seen = []
+    monkeypatch.setattr(svc_state, "extract", lambda rid, u, scope, v, embed: seen.append(embed) or {"requestId": rid, "spans": []})
+    client.post("/v1/extract", json={"requestId": "a", "utterance": "x"})
+    client.post("/v1/extract", json={"requestId": "b", "utterance": "x", "embed": False})
+    client.post("/v1/extract", json={"requestId": "c", "utterance": "x", "embed": True})
+    assert seen == [True, False, True]
+
+
+def test_model_label_is_the_pinned_checkpoint_whatever_NER_MODEL_NAME_says(svc_state, monkeypatch):
+    monkeypatch.setenv("NER_MODEL_NAME", "something-else")
+    monkeypatch.setattr(svc_state, "gliner", type("P", (), {"label": "gliner_small@sha256:abcde"})())
+    assert svc_state.model_label == "gliner_small@sha256:abcde"
+    assert svc_state.versions(None)["model"] == "gliner_small@sha256:abcde"
+
+
+def test_seed_version_reads_metadata_not_content(tmp_path, monkeypatch):
+    f = tmp_path / "people.jsonl"
+    f.write_bytes(b"a" * 1000)
+    v1 = svc.seed_version([f], "", "")
+    real_open = Path.open
+    monkeypatch.setattr(Path, "open", lambda *a, **k: (_ for _ in ()).throw(AssertionError("seed file was read")))
+    assert svc.seed_version([f], "", "") == v1
+    assert svc.seed_version([f], "100", "") != v1, "the row limits are part of the version"
+    monkeypatch.setattr(Path, "open", real_open)
+    f.write_bytes(b"b" * 1001)
+    assert svc.seed_version([f], "", "") != v1, "a replaced file has another size"

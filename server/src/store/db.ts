@@ -72,6 +72,11 @@ export class Store {
     return doc;
   }
 
+  /** Rows inserted, updated or deleted through this store so far (rolled-back ones included): a cheap "changed since?". */
+  changes(): number {
+    return (this.db.prepare("SELECT total_changes() AS n").get() as { n: number }).n;
+  }
+
   /** Entity tables that have been created, in name order. */
   tables(): string[] {
     const rows = this.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE '\\_%' ESCAPE '\\' AND name NOT IN ('writes', 'audit', 'faults', 'sqlite_sequence') ORDER BY name").all() as { name: string }[];

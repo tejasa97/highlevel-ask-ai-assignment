@@ -103,6 +103,8 @@ export interface NerSidecarRequest {
   scope?: string;
   /** Version of the scope's index the caller expects; a mismatch is a 409, never a fallback. */
   scopeVersion?: string;
+  /** false: link by exact name and edit distance only, no embedding matches. Unset = on. */
+  embed?: boolean;
 }
 
 /** Sidecar extract+link response. */
@@ -204,6 +206,8 @@ export const STORE_ID_PREFIXES = ["ct_", "ld_", "us_", "co_", "tm_"] as const;
 const isStoreId = (id: string) => STORE_ID_PREFIXES.some((p) => id.startsWith(p));
 
 const SPAN_LABELS = ["person", "company", "email", "phone", "id", "team", "product", "contact", "lead", "user"] as const;
+/** A label this version knows. The client drops spans with any other label (tolerant reader), see ner_client.ts. */
+export const isSpanLabel = (label: string): label is NerSpanLabel => (SPAN_LABELS as readonly string[]).includes(label);
 
 export const nerCandidateSchema = z.object({
   id: z.string().min(1),
@@ -253,6 +257,7 @@ export const nerSidecarRequestSchema = z.object({
   tier: z.enum(["fast", "strong"]).optional(),
   scope: z.string().optional(),
   scopeVersion: z.string().optional(),
+  embed: z.boolean().optional(),
 });
 
 export const nerScopeEntitySchema = z.object({ id: z.string().min(1), name: z.string(), entity: z.enum(["contact", "lead", "user", "company"]), detail: z.string().optional() });
