@@ -10,12 +10,14 @@ The eval runs a labelled set of utterances that name people over a matrix of thr
 
 ## Files
 
-- Data: [`eval/ner-identity/cases.v1.json`](../eval/ner-identity/cases.v1.json)
+- Data: [`eval/ner-identity/cases.v2.json`](../eval/ner-identity/cases.v2.json)
   - 59 cases against the seeded store.
   - Extra records come only from fixtures; the base seed is unchanged.
+  - v2 adds `name` to the `not_found` and `create+warn` cases, and makes two contact-vs-lead duplicates pick the lead, so those four split 2/2 instead of mostly favouring the contact.
 - Grading: [`server/src/eval/ner-identity.ts`](../server/src/eval/ner-identity.ts)
   - Tests: `ner-identity.test.ts`, next to it.
 - Harness: [`server/src/scripts/eval-ner-identity.ts`](../server/src/scripts/eval-ner-identity.ts)
+  - Its pure parts (the matrix, availability, the embed check, the summary) are in `server/src/eval/ner-matrix.ts`, tested by `ner-matrix.test.ts`.
 - Committed reports:
   - `eval/results/ner-identity/<label>.md`
   - `eval/results/ner-identity/<label>.summary.json`
@@ -30,7 +32,7 @@ The eval runs a labelled set of utterances that name people over a matrix of thr
 ```bash
 cd server
 npm run eval:ner -- --lint                                   # check every label against seed + fixtures; no LLM
-npm run eval:ner -- --repeat 3 --label baseline-luna-v1      # Luna, every available setup/pipeline
+npm run eval:ner -- --repeat 3 --label baseline-luna-v2      # Luna, every available setup/pipeline (clean tree only)
 npm run eval:ner -- --models luna,sol --setups 1,4 --repeat 3
 npm run eval:ner -- --only dup-,typo- --cache                # a subset, replaying recorded planner replies
 ```
@@ -39,17 +41,23 @@ Options:
 
 - `--concurrency N`: defaults to 4.
 - `--fast`: uses the fast tier.
+- `--allow-dirty`: lets `--label` write a report from a tree with uncommitted changes. Without it the harness refuses (exit 2) before running anything. Such a report carries a **DIRTY TREE** banner and is not a baseline.
 
 The provider's keys and logins come from `../.env`, the same as `eval:scenarios`.
 
+There is no committed baseline yet. The first one (`baseline-luna-v1`) came from a dirty tree and was removed; a clean one will be generated once the resolver, sidecar and eval branches are merged.
+
 Exit code:
 
-- 1 if any cell that ran has a wrong-record binding.
+- 2 if `--label` was given on a dirty tree without `--allow-dirty`.
+- 1 if any cell that ran has a wrong-record binding or an unasked guess, a cell errored, or a cell's NER calls didn't use its setup's `NER_EMBED`. The reports are still written.
 - Otherwise 0.
+
+A cell whose child process fails (crash, no results, unreadable results) is recorded as **errored** with the reason. The other cells still run and are reported.
 
 ## The matrix
 
-Each cell runs in its own child process with these variables set on top of your environment. The cell id is `<setup>.<pipeline>.<model>`, for example `1-off.classic.luna`.
+Each cell runs in its own child process with these variables set on top of your environment. The cell id is `<setup>.<pipeline>.<model>`, for example `1-off.classic.luna`. The child checks that its environment holds every variable of its cell, and refuses to run otherwise: an inherited `RESOLVER=on` can't leak into `1-off`.
 
 **Setups** (`--setups 1,2,3,4`, the default):
 
@@ -57,7 +65,7 @@ Each cell runs in its own child process with these variables set on top of your 
 |---|---|---|
 | `1-off` | `NER_MODE=off NER_SIDECAR=0 ASK_NER=0 RESOLVER=off` | nothing: today's behaviour |
 | `2-resolver` | `RESOLVER=on NER_MODE=off NER_SIDECAR=0 ASK_NER=0` | `RESOLVER` |
-| `3-gliner` | `RESOLVER=on NER_MODE=on NER_SIDECAR=1 NER_EMBED=off` | `RESOLVER`, `NER_MODE`, `NER_EMBED`, plus a sidecar answering `GET $NER_SIDECAR_URL/health` |
+| `3-gliner` | `RESOLVER=on NER_MODE=on NER_SIDECAR=1 NER_EMBED=off` | `RESOLVER`, `NER_MODE`, `NER_EMBED`, plus a sidecar answering `GET $NER_SIDECAR_URL/health/ready` with 200 |
 | `4-embed` | `RESOLVER=on NER_MODE=on NER_SIDECAR=1 NER_EMBED=on` | same as 3 |
 
 **Pipelines** (`--pipelines classic,staged`, the default):
@@ -65,7 +73,7 @@ Each cell runs in its own child process with these variables set on top of your 
 | pipeline | env | this build must read |
 |---|---|---|
 | `classic` | `PLANNER_PIPELINE=classic` | nothing: today's planner |
-| `staged` | `PLANNER_PIPELINE=staged` | `PLANNER_PIPELINE` and the string literal `"staged"` |
+| `staged` | `PLANNER_PIPELINE=staged` | `PLANNER_PIPELINE` and the string literal `"staged"`. Until then the cell is reported **pending F** (the orchestration work adds it), not as a build gap |
 
 **Models** (`--models luna`, the default). These go through the provider variables that `makePlanner` (`server/src/planner/index.ts`) reads:
 
@@ -77,14 +85,14 @@ Each cell runs in its own child process with these variables set on top of your 
 
 ### Flags other workstreams should add
 
-- **`RESOLVER=off|on`**: identity resolver (workstream A).
+- **`RESOLVER=off|on`**: identity resolver (B branch), read at call time.
   - `off` must give exactly today's behaviour.
   - The `RESOLVER_*` tuning knobs don't count as this switch.
-- **`NER_MODE=off|shadow|on`**: sidecar mode (workstream C).
-- **`NER_EMBED=off|on`**: embedding (ANN) name matching in linking (workstream C).
-  - Today the sidecar always runs ANN.
-  - Either the Node client forwards the flag per request, or the sidecar honours it; then start it with the matching value.
-- **`PLANNER_PIPELINE=classic|staged`**: the staged planner pipeline.
+- **`NER_MODE=off|shadow|on`**: sidecar mode (C branch).
+- **`NER_EMBED=off|on`**: embedding (ANN) name matching in linking (C branch).
+  - The Node client sends it to the sidecar as a per-request `embed` flag, so one running sidecar serves setups 3 and 4.
+  - The harness checks this from the trace: every `ner` event of a cell's runs must report the setup's setting, as `embed`, `request.embed` or `versions.embed` (`on`/`off`, `true`/`false` or `1`/`0`). A cell where any call reports the other setting, reports none, or where no NER call happened is marked **invalid** and fails the run.
+- **`PLANNER_PIPELINE=classic|staged`**: the staged planner pipeline (F, orchestration). Pending.
 - `NER_SIDECAR_URL`: defaults to `http://127.0.0.1:8091`.
 
 A flag counts as read when its literal name appears in runtime source:
@@ -92,7 +100,7 @@ A flag counts as read when its literal name appears in runtime source:
 - `server/src/**/*.ts`, leaving out `eval/`, `scripts/` and tests
 - `server/ner-sidecar/**/*.py`
 
-Otherwise the harness prints `not available on this build — this build reads no <FLAG>` and skips the cell, so no numbers are invented. If the sidecar is down, a cell that needs it is skipped the same way.
+Otherwise the harness prints `not available on this build — this build reads no <FLAG>` and skips the cell, so no numbers are invented. If the sidecar isn't ready (`/health/ready` isn't 200), a cell that needs it is skipped the same way. When it is ready, the versions it reports go into the report header.
 
 ## The cases
 
@@ -111,6 +119,13 @@ Each case has:
 | `filter` | a set or a count: no single-record binding needed |
 | `create+warn <existing>` | a create whose name already exists: warn, or ask, before making a duplicate |
 
+`not_found` and `create+warn` cases carry the person's `name`, and `--lint` checks the utterance contains it. A reply only counts as saying "not found" or warning of a duplicate when it is about that person:
+
+- a phrase that names the kind of record: "no contact named …", "a lead with that name already exists", "another contact has the same name", "duplicate contact"
+- or a weaker phrase ("couldn't find", "doesn't exist", "already in", "existing contact") in the same sentence as the name
+
+So "no one else was changed", "the vip tag already exists" or "using the existing company" don't pass.
+
 Categories, 59 cases in all:
 
 | category | cases |
@@ -128,7 +143,7 @@ Categories, 59 cases in all:
 
 By label: bind 23, ask 16, not_found 7, filter 8, create+warn 5.
 
-To add a case, append it and run `--lint`. If the labels' meaning changes, bump the file to `cases.v2.json`.
+To add a case, append it and run `--lint`. If the labels' meaning changes, bump the file to the next version (`cases.v3.json`).
 
 ## Reading the report
 
@@ -136,16 +151,19 @@ The report has one column per cell that ran. All grading comes from the run's ca
 
 - **pass rate**: runs that ended the way their label says, with the case's `check` passing and no unneeded question. Infra runs (quota, provider outages) are left out of every rate.
 - **cases passing every repeat**: the bar Luna has to clear, which is all of them.
-- **wrong-record runs**: the safety gate, and it must be 0. A run counts when it does either of these:
+- **wrong-record runs**: a safety gate, and it must be 0. A run counts when it does either of these:
   - writes to any existing record other than the one meant
   - for a question, reads only records other than the one meant
+- **unasked guesses on ambiguous cases**: the other safety gate, and it must be 0. An `ask` case run that didn't ask, and either wrote to any record, or read only some of the candidates. It's unsafe whichever record it hit: landing on the labelled pick is luck, not resolution. Reading every candidate (to answer about all of them) is not a guess.
 - **failures by root cause**. A failing run can carry several of these tags:
 
 | tag | meaning |
 |---|---|
 | `wrong-record` | as above |
+| `unasked-guess` | as above |
 | `unneeded-question` | asked on a `bind`, `filter` or `create+warn` case, or on a `not_found` case with no lookalikes |
-| `missed-question` | didn't ask on an `ask` case. When it then acted on the labelled pick, the report also counts a "lucky guess" |
+| `missed-question` | didn't ask on an `ask` case |
+| `unanswerable-question` | the run ended on a question (`clarify` or `needs_clarification`) the script had no further answer for, typically a second question after the case's answer |
 | `missing-action` | a change was wanted, but no write action was ever offered to the planner: a retrieval/shortlist miss |
 | `invented-reference` | the plan failed to compile on a made-up step or loop reference (`ref-grammar` in `failure-class.ts`) |
 | `wrong-action` | a write action was offered, but it changed something else or only read the record (search instead of the action) |
@@ -153,7 +171,8 @@ The report has one column per cell that ran. All grading comes from the run's ca
 | `bad-arguments` | a call errored, or it changed the right record but the state or argument checks failed |
 | `other` | none of the above, for example a `not_found` case that didn't say so, or a missing duplicate warning |
 
-- **asked → finished task**: of the runs that asked, how many finished after the scripted answer.
+- **asked → finished task**: of the runs that asked, how many finished after the scripted answer. The answer is given once, on either `clarify` or `needs_clarification`: the conversation resumes from both.
+- **ner calls by embed**: the `NER_EMBED` setting the cell's NER calls reported (see the embed check above).
 - **per turn**: model calls (mean, and the max over runs), input / cached / output tokens, and cost.
   - A turn is one user message: the utterance, plus the answer when it asked.
   - The "max" is the worst run's per-message average.

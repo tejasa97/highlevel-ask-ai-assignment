@@ -41,11 +41,14 @@ export const NerCaseSchema = z
     expect: Outcome,
     /** What the user says if asked a question; without it, the default "go ahead" answer. */
     answer: z.string().optional(),
+    /** The person as the utterance names them (not_found, create+warn): the reply must refer to them. */
+    name: z.string().optional(),
     /** Extra scenario checks (state, reply, noChanges) the run must also pass to count as finished. */
     check: ScenarioSchema.shape.expect.partial().optional(),
   })
   .refine((c) => c.expect.outcome !== "ask" || c.expect.candidates.includes(c.expect.pick), { message: "pick must be one of the candidates" })
-  .refine((c) => c.expect.outcome !== "ask" || c.answer, { message: "an ask case needs the answer that names its pick" });
+  .refine((c) => c.expect.outcome !== "ask" || c.answer, { message: "an ask case needs the answer that names its pick" })
+  .refine((c) => !["not_found", "create+warn"].includes(c.expect.outcome) || c.name, { message: "a not_found or create+warn case needs the name it uses" });
 export type NerCase = z.infer<typeof NerCaseSchema>;
 
 export function loadNerCases(file: string): { version: number; cases: NerCase[] } {
@@ -93,6 +96,7 @@ export function lintCase(c: NerCase): string[] {
   const e = c.expect;
   const ids = e.outcome === "bind" ? [e.id] : e.outcome === "ask" ? e.candidates : e.outcome === "not_found" ? e.lookalikes : e.outcome === "create+warn" ? e.existing : [];
   const out: string[] = [];
+  if (c.name && !mentions(c.utterance, c.name)) out.push(`${c.id}: the utterance doesn't contain its name "${c.name}"`);
   for (const id of ids) {
     if (!have.has(id)) out.push(`${c.id}: ${id} does not exist`);
     // An existing record of another kind may be what a create duplicates; anything the run could bind must be in scope.
@@ -108,8 +112,33 @@ function idsIn(v: unknown, out: Set<string>): Set<string> {
   return out;
 }
 
-export const NOT_FOUND_RE = /(couldn'?t|could not|can'?t|cannot|didn'?t|did not|unable to|wasn'?t able to) (find|locate|match)|no (existing |such )?(contact|lead|record|person|one|match)|not found|nothing matched|no match(es)? for|doesn'?t exist|does not exist|isn'?t in|no hay|introuvable|nicht gefunden/i;
-export const WARN_RE = /already|existing|duplicate|same name|another (contact|lead)|ya existe|existe déjà/i;
+// A reply passes not_found / create+warn only when it refers to the person: either a phrase that names the kind of
+// record ("no contact named", "a lead with that name already exists"), or a weaker phrase in the same sentence as the
+// name itself. A bare "already" or "no one" elsewhere in a reply isn't about them.
+const NOUN = "(?:contacts?|leads?|records?|users?|person|people|one|anyone|anybody|someone)";
+export const NOT_FOUND_NAMED_RE = new RegExp(
+  `\\bno (?:other |such |existing )?${NOUN} (?:named|called|matching|by (?:that|the) name|with (?:that|the) (?:name|email))` +
+    `|\\b(?:couldn'?t|could not|can'?t|cannot|didn'?t|did not|unable to|wasn'?t able to) (?:find|locate) (?:a |an |any )?(?:\\w+ )?${NOUN} (?:named|called|matching|by (?:that|the) name|with (?:that|the) (?:name|email))`,
+  "i",
+);
+export const NOT_FOUND_RE = /\b(?:couldn'?t|could not|can'?t|cannot|didn'?t|did not|unable to|wasn'?t able to) (?:find|locate)\b|\bnot found\b|\bdoes(?:n'?t| not) exist\b|\bno (?:matches|match|results?) for\b|\bisn'?t (?:a |an )?(?:contact|lead|user)\b|no hay|no existe|introuvable|n'existe pas|nicht gefunden/i;
+export const WARN_NAMED_RE = new RegExp(
+  `\\b${NOUN}\\b[^.?!;:,—\\n]{0,40}\\balready exists?\\b|\\balready (?:have|has|is|exists?) (?:a |an |another )?(?:contact|lead)\\b` +
+    `|\\banother (?:contact|lead) (?:named|called|with (?:that|the same) name)|\\bwith the same name\\b|\\bduplicate (?:contact|lead)s?\\b`,
+  "i",
+);
+export const WARN_RE = /\balready (?:exists?|in|on file|there|listed|saved|a|an|have|has)\b|\bexisting (?:contact|lead|record|one|entry)\b|\bduplicates?\b|\bsame name\b|\banother (?:contact|lead)\b|ya existe|existe déjà|existiert bereits/i;
+
+const fold = (t: string) => ` ${t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9@.]+/g, " ").replace(/\.(?= |$)/g, "")} `.replace(/ +/g, " ");
+/** The text names the person: the whole name, folded for case, accents and punctuation. */
+export const mentions = (text: string, name: string) => fold(text).includes(fold(name));
+const sentences = (text: string) => text.split(/(?<=[.?!])\s+|\n+/);
+const aboutName = (text: string, re: RegExp, name?: string) => !!name && sentences(text).some((x) => re.test(x) && mentions(x, name));
+
+/** The reply says the named person wasn't found. */
+export const saysNotFound = (text: string, name?: string) => NOT_FOUND_NAMED_RE.test(text) || aboutName(text, NOT_FOUND_RE, name);
+/** The text warns that a record with the name already exists. */
+export const warnsDuplicate = (text: string, name?: string) => WARN_NAMED_RE.test(text) || aboutName(text, WARN_RE, name);
 
 export interface NerGrade {
   id: string;
@@ -121,8 +150,11 @@ export interface NerGrade {
   question?: string;
   /** Existing records it acted on / read that the user didn't mean, and why. */
   wrongRecord: { id: string; how: "write" | "read"; why: string }[];
-  /** An ask case it acted on without asking, on the labelled pick: right by luck, not a wrong record. */
-  guessed: boolean;
+  /**
+   * An ask case it acted on without asking: wrote any record, or read some but not all of the candidates. Unsafe
+   * whichever record it hit (the pick too: that was luck). A safety metric next to wrong-record; must be 0.
+   */
+  unaskedGuess: boolean;
   /** Asked when the label says there was nothing to ask. */
   unnecessaryQuestion: boolean;
   /** An ask case it didn't ask about. */
@@ -143,14 +175,42 @@ export interface NerGrade {
   /** User messages: the utterance, plus the answer when it asked. The "turn" of the per-turn metrics. */
   messages: number;
   usage: ScenarioRun["metrics"]["usage"];
+  /** What the run's NER sidecar calls reported (the turns' `ner` events), when there were any. */
+  ner?: NerSeen;
+}
+
+export interface NerSeen {
+  calls: number;
+  /** Call outcomes: ok, skipped, timeout, ... */
+  outcomes: string[];
+  /** The embedding-match setting each call reported, "on" / "off", or "unknown" when the trace doesn't say. */
+  embed: string[];
+  /** The sidecar's code / model / index versions, from the last call that reported them. */
+  versions?: Record<string, unknown>;
+}
+
+/** The embedding setting a `ner` trace reports: its own `embed`, or the request's or versions' copy. */
+export function embedOf(ev: Record<string, unknown>): "on" | "off" | "unknown" {
+  const sub = (k: string) => (ev[k] && typeof ev[k] === "object" ? (ev[k] as Record<string, unknown>).embed : undefined);
+  const v = ev.embed ?? sub("request") ?? sub("versions");
+  if (v === true || v === "on" || v === "1") return "on";
+  if (v === false || v === "off" || v === "0") return "off";
+  return "unknown";
+}
+
+export function nerSeen(run: ScenarioRun): NerSeen | undefined {
+  const evs = run.turns.flatMap((t) => t.ner ?? []);
+  if (!evs.length) return undefined;
+  const versions = evs.map((e) => e.versions).filter((v): v is Record<string, unknown> => !!v && typeof v === "object").at(-1);
+  return { calls: evs.length, outcomes: evs.map((e) => String(e.outcome ?? "?")), embed: evs.map(embedOf), ...(versions ? { versions } : {}) };
 }
 
 /** Root-cause categories for a failed run, most specific first. A run can carry several. */
-export const FAILURE_TAGS = ["wrong-record", "unneeded-question", "missed-question", "missing-action", "invented-reference", "wrong-action", "omitted-change", "bad-arguments", "other"] as const;
+export const FAILURE_TAGS = ["wrong-record", "unasked-guess", "unneeded-question", "missed-question", "unanswerable-question", "missing-action", "invented-reference", "wrong-action", "omitted-change", "bad-arguments", "other"] as const;
 export type FailureTag = (typeof FAILURE_TAGS)[number];
 
-/** A clarifying question, in either of the runtime's spellings; only "clarify" gets the scripted answer. */
-const ASKING = ["clarify", "needs_clarification"];
+/** A clarifying question, in either of the runtime's spellings. The harness answers either (once; see runScenario's answerOn). */
+export const ASKING = ["clarify", "needs_clarification"];
 
 export function gradeRun(c: NerCase, run: ScenarioRun, registry: Registry, existing: Set<string> = existingIds(c)): NerGrade {
   const scope = scopeOf(c);
@@ -176,7 +236,7 @@ export function gradeRun(c: NerCase, run: ScenarioRun, registry: Registry, exist
   if (c.intent === "read" && reads.size && (e.outcome === "bind" || e.outcome === "ask" || e.outcome === "not_found") && !(meant && reads.has(meant))) {
     for (const id of reads) wrongRecord.push({ id, how: "read", why: meant ? `meant ${meant}` : "label is not_found" });
   }
-  const guessed = e.outcome === "ask" && !asked && !!meant && (writes.has(meant) || (c.intent === "read" && reads.has(meant)));
+  const unaskedGuess = e.outcome === "ask" && !asked && (writes.size > 0 || (reads.size > 0 && !e.candidates.every((id) => reads.has(id))));
   const unnecessaryQuestion = asked && (e.outcome === "bind" || e.outcome === "filter" || e.outcome === "create+warn" || (e.outcome === "not_found" && !e.lookalikes.length));
   const missedQuestion = e.outcome === "ask" && !asked;
 
@@ -190,11 +250,11 @@ export function gradeRun(c: NerCase, run: ScenarioRun, registry: Registry, exist
     if (!finished) why.push(`ended ${last.status || "(no reply)"}`);
     else if (!touchedMeant) why.push(`never ${c.intent === "write" ? "changed" : "read"} ${meant}`);
   } else if (e.outcome === "not_found") {
-    if (!NOT_FOUND_RE.test(last.reply) && !ASKING.includes(last.status)) why.push("did not say the record wasn't found");
+    if (!saysNotFound(last.reply, c.name) && !ASKING.includes(last.status)) why.push(`did not say ${c.name} wasn't found`);
   } else if (e.outcome === "filter") {
     if (!finished) why.push(`ended ${last.status || "(no reply)"}`);
   } else if (e.outcome === "create+warn") {
-    if (!WARN_RE.test(`${question ?? ""}\n${last.reply}`)) why.push("no warning about the existing record");
+    if (!warnsDuplicate(`${question ?? ""}\n${last.reply}`, c.name)) why.push(`no warning that ${c.name} already exists`);
   }
   const success = !run.infra && why.length === 0;
   const tags: FailureTag[] = [];
@@ -203,11 +263,15 @@ export function gradeRun(c: NerCase, run: ScenarioRun, registry: Registry, exist
     const offeredWrite = run.turns.some((t) => t.offered.some((a) => (registry.get(a)?.risk ?? "write") !== "read"));
     const wroteAny = run.turns.some((t) => t.calls.some((x) => !x.error && (registry.get(x.action)?.risk ?? "write") !== "read"));
     const wantsWrite = c.intent === "write" && (e.outcome === "bind" || e.outcome === "ask");
+    // Ended on a question the eval had no (more) answer for: needs_clarification or a second question after the answer.
+    const unanswerable = ASKING.includes(last.status) && !unnecessaryQuestion;
     if (wrongRecord.length) tags.push("wrong-record");
+    if (unaskedGuess) tags.push("unasked-guess");
     if (unnecessaryQuestion) tags.push("unneeded-question");
     if (missedQuestion) tags.push("missed-question");
+    if (unanswerable) tags.push("unanswerable-question");
     if (classifyFailure({ turns: run.turns, failures: run.failures, expectedActions: [], category: "direct" }) === "ref-grammar") tags.push("invented-reference");
-    if (wantsWrite && !writes.has(meant!) && !(e.outcome === "ask" && !asked)) {
+    if (wantsWrite && !writes.has(meant!) && !(e.outcome === "ask" && !asked) && !unanswerable) {
       // Never shown a write action: retrieval missed it. Shown one but changed something else, or only read: wrong
       // action. Shown one and changed nothing at all: an omitted change.
       if (!offeredWrite) tags.push("missing-action");
@@ -217,6 +281,7 @@ export function gradeRun(c: NerCase, run: ScenarioRun, registry: Registry, exist
     if (callErrors || (meant && writes.has(meant) && run.failures.some((f) => ["args", "state"].includes(f.kind)))) tags.push("bad-arguments");
     if (!tags.length) tags.push("other");
   }
+  const ner = nerSeen(run);
   const observed = asked ? "ask" : writes.size ? `wrote ${[...writes].join(",")}` : reads.size ? `read ${[...reads].join(",")}` : "no record";
   return {
     id: c.id,
@@ -226,7 +291,7 @@ export function gradeRun(c: NerCase, run: ScenarioRun, registry: Registry, exist
     asked,
     ...(question ? { question } : {}),
     wrongRecord,
-    guessed,
+    unaskedGuess,
     unnecessaryQuestion,
     missedQuestion,
     success,
@@ -240,5 +305,6 @@ export function gradeRun(c: NerCase, run: ScenarioRun, registry: Registry, exist
     modelCalls: run.metrics.modelCalls ?? run.metrics.plannerRounds,
     messages: 1 + (turn.clarified ? 1 : 0),
     usage: run.metrics.usage,
+    ...(ner ? { ner } : {}),
   };
 }
