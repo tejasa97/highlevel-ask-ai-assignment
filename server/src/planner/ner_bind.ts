@@ -6,7 +6,7 @@
 // inside a message body never asks anything. See docs/adr/0001-ner-suggests-resolver-decides.md.
 import { argumentRole, type CompiledPlan, type CStep } from "../core/compile.js";
 import { identityRisk } from "../core/execute.js";
-import { type Hint, type IdentityBinding, type IdentityResolution, legacyResolution, optionLabel, resolveIdentity, resolverOff } from "../core/identity.js";
+import { type Hint, type IdentityBinding, type IdentityResolution, legacyResolution, narrowByRequest, optionLabel, resolveIdentity, resolverOff } from "../core/identity.js";
 import type { Registry } from "../registry/registry.js";
 import type { Mention } from "../retrieval/mentions.js";
 import type { Store } from "../store/db.js";
@@ -45,8 +45,12 @@ function hintsOf(m: Mention, entity: string): Hint[] {
 
 /** The argument a resolve step feeds, for the question: "the recipient (contactId)". */
 function roleOf(plan: CompiledPlan, stepId: string): string | undefined {
+  // Only worth saying when the plan looks up more than one record; the schema's notes ("ct_…; give this or leadId")
+  // are for the planner, not the user.
+  if (plan.steps.filter((s) => s.kind === "resolve").length < 2) return undefined;
   const role = argumentRole(plan, stepId);
-  return role && (role.description ? `${role.description} (${role.arg})` : role.arg);
+  const said = role?.description?.split(";")[0]!.replace(/\s*\([^)]*\)/g, "").trim();
+  return role && (said ? `${said} (${role.arg})` : role.arg);
 }
 
 /**
@@ -63,21 +67,32 @@ export function bindNerLookups(
   raw: CompiledPlan,
   named: Mention[],
   registry: Registry,
-  opts: { store?: Store; request?: string; duplicates?: "warn" | "off"; picks?: IdentityBinding[] } = {},
+  opts: { store?: Store; request?: string; duplicates?: "warn" | "off"; picks?: IdentityBinding[]; answering?: boolean } = {},
 ): Bound {
   const plan = bindPicks(raw, opts.picks);
   const ner = named.filter(fromNer);
   const decisions: IdentityDecision[] = [];
   if (!ner.length) return { kind: "plan", plan, decisions };
   if (resolverOff()) return pinNerLinks(plan, ner, registry, opts);
+  // An answer to a question already asked plans with that question in view: it settles the type, never asks it again.
+  const doubt = opts.store && !opts.answering ? typeDoubt(plan, ner, registry, opts.store, opts.request ?? "") : undefined;
+  if (doubt) return { ...doubt, decisions };
+  const typo = opts.store && !opts.answering ? searchedTypo(plan, ner, registry, opts.store) : undefined;
+  if (typo) return { ...typo, decisions };
   const steps: CStep[] = [];
-  for (const [i, s] of plan.steps.entries()) {
+  for (const [i, planned] of plan.steps.entries()) {
     // A lookup scoped by an earlier step's result can't be checked before that step runs; execution resolves it.
-    if (s.kind !== "resolve" || s.bound || (s.where && JSON.stringify(s.where).includes("$"))) { steps.push(s); continue; }
+    if (planned.kind !== "resolve" || planned.bound || (planned.where && JSON.stringify(planned.where).includes("$"))) { steps.push(planned); continue; }
+    // A name the user never wrote that is NER's did-you-mean for one they did ("Rosa Ito" for "Rosalind Ito") is the
+    // planner taking the suggestion: the user's own name is looked up instead, so the suggestion is asked, not used.
+    const suggested = opts.request && !norm(opts.request).includes(norm(planned.name))
+      ? ner.find((x) => x.suggestion && x.candidates?.some((c) => (!c.entity || c.entity === planned.entity) && norm(c.name) === norm(planned.name)))
+      : undefined;
+    const s = suggested ? { ...planned, name: suggested.name } : planned;
     const key = norm(s.name);
     const m = ner.find((x) => norm(x.name) === key && (x.entity === s.entity || x.candidates?.some((c) => c.entity === s.entity)));
     // Reads never ask or bind here: the name only filters, and execution looks it up.
-    if (!m || identityRisk(plan, s.id) === "read") { steps.push(s); continue; }
+    if (!m || identityRisk(plan, s.id) === "read") { steps.push(planned); continue; }
     const role = roleOf(plan, s.id);
     const forRole = role ? ` for ${role}` : "";
     const ask = (r: Pick<IdentityResolution, "kind" | "candidates">, resolution?: IdentityResolution): Bound => {
@@ -104,6 +119,60 @@ export function bindNerLookups(
     steps.push(r.kind === "bound" ? { ...s, bound: r.binding } : s);
   }
   return withNotice(plan, steps, ner, decisions, opts.duplicates);
+}
+
+/**
+ * A read that searches by a name no record has, when NER only found near misses for it ("Omar Lassen's email"): the
+ * search can only come back empty, so the user is asked the did-you-mean a lookup of that name would have asked.
+ */
+function searchedTypo(plan: CompiledPlan, ner: Mention[], registry: Registry, store: Store): Omit<Extract<Bound, { kind: "clarify" }>, "decisions"> | undefined {
+  for (const s of plan.steps) {
+    if (s.kind !== "action" || s.call.action.risk !== "read") continue;
+    const query = (s.call.args as { query?: unknown }).query;
+    const entity = s.call.action.entities?.produces;
+    const resolver = entity ? registry.resolver(entity) : undefined;
+    if (typeof query !== "string" || !entity || !resolver) continue;
+    const m = ner.find((x) => x.suggestion && norm(x.name) === norm(query));
+    if (!m || resolver(store, query)?.some((c) => norm(c.name) === norm(query))) continue;
+    const cands = (m.candidates ?? []).filter((c) => !c.entity || c.entity === entity).flatMap((c) => resolver(store, c.name)?.filter((r) => r.id === c.id && !r.inactive) ?? []);
+    if (!cands.length) continue;
+    const text = cands.length === 1 ? `I couldn't find a ${label(entity)} named ${query}. Did you mean ${cands[0]!.name}?` : `I couldn't find a ${label(entity)} named ${query}. Did you mean one of these?`;
+    return { kind: "clarify", text, options: cands.map(optionLabel), plan };
+  }
+  return undefined;
+}
+
+/**
+ * A write naming someone who is exactly a record of more than one type ("Femi Silva" is a contact and a lead) when the
+ * request doesn't say which type: a planner that has to pick one guesses, and one that hedges writes both. The user is
+ * asked before anything runs; the answer plans the message again with the question in view.
+ */
+function typeDoubt(plan: CompiledPlan, ner: Mention[], registry: Registry, store: Store, request: string): Omit<Extract<Bound, { kind: "clarify" }>, "decisions"> | undefined {
+  const asked = new Set<string>();
+  for (const s of plan.steps) {
+    if (s.kind !== "resolve" || (s.bound && s.bound.provenance === "user-selected") || identityRisk(plan, s.id) === "read") continue;
+    const key = norm(s.name);
+    if (asked.has(key)) continue;
+    asked.add(key);
+    const doubt = typeDoubtOf(s.name, s.entity, ner, registry, store, request);
+    if (doubt) return { kind: "clarify", ...doubt, plan };
+  }
+  return undefined;
+}
+
+/** The question for one name that is exactly a record of more than one type, when the request doesn't say which. */
+export function typeDoubtOf(name: string, entity: string, ner: Mention[], registry: Registry, store: Store, request: string): { text: string; options: string[] } | undefined {
+  const said = ` ${norm(request)} `;
+  const named = (e: string) => [label(e), `${label(e)}s`].some((w) => said.includes(` ${w} `));
+  const key = norm(name);
+  const m = ner.find((x) => norm(x.name) === key);
+  if (!m) return undefined;
+  const types = [...new Set([entity, m.entity, ...(m.candidates ?? []).map((c) => c.entity)].filter((e): e is string => !!e && !!registry.resolver(e)))];
+  const found = types.flatMap((e) => (registry.resolver(e)!(store, name) ?? []).filter((c) => !c.inactive && norm(c.name) === key).map((c) => ({ ...c, entity: e })));
+  const kinds = [...new Set(found.map((c) => c.entity))];
+  if (kinds.length < 2 || kinds.some(named) || narrowByRequest(found, request).length === 1) return undefined;
+  const what = kinds.map((k) => `a ${label(k)}`).join(" and ");
+  return { text: `${name} is ${kinds.length === 2 ? "both " : ""}${what}. Which one did you mean?`, options: found.map((c) => `The ${label(c.entity)} ${optionLabel(c)}`) };
 }
 
 /**

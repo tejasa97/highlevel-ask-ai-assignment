@@ -235,7 +235,10 @@ describe("compile errors the planner can act on", () => {
   });
 
   test("list where a single value is needed", () => {
-    assert.match(errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: "$s1.items", ownerId: "us_2" })])), /needs a single value/);
+    assert.match(errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: "$s1.items", ownerId: "us_2" })])), /needs a single value, but \$s1\.items is a list; write \$s1\.items\[\*\]\.id/);
+    const wrapped = errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: { $ref: "$s1.items" }, ownerId: "us_2" })]));
+    assert.match(wrapped, /\$s1\.items is a list/, "a {$ref} object is read as the ref inside it");
+    assert.doesNotMatch(wrapped, /expected string, received object/);
     const inLoop = op("s2", "forEach", { in: "$s1.items", do: [{ action: "M03.A05", args: { leadId: "$s1.items[*].id", ownerId: "us_2" } }] });
     assert.match(errs(plan([action("s1", "M03.A03", {}), inLoop])), /needs a single value/);
   });
@@ -342,6 +345,14 @@ describe("runtime outcomes", () => {
     const p = compiled(plan([{ id: "s1", kind: "resolve", entity: "contact", name: "Quinn Leadonly" }]));
     const r = await execute(p, registry, ctx, { executionId: "wrong-type" });
     assert.equal(r.steps[0]!.error?.message, 'no contact matches "Quinn Leadonly" (but a lead does)');
+  });
+
+  test("a company that is only contacts' text says which records carry it", async () => {
+    const ctx = fresh();
+    ctx.f.contact({ firstName: "Ana", lastName: "One", company: "Umbrellaco" });
+    ctx.f.contact({ firstName: "Ben", lastName: "Two", company: "umbrellaco" });
+    const r = await execute(compiled(plan([{ id: "s1", kind: "resolve", entity: "company", name: "Umbrellaco" }])), registry, ctx, { executionId: "text-company" });
+    assert.equal(r.steps[0]!.error?.message, 'no company matches "Umbrellaco" (2 contacts have company "Umbrellaco")');
   });
 
   test("a name that only matches an unusable record says why, and nothing runs on it", async () => {
@@ -500,6 +511,20 @@ describe("a create whose record is already there", () => {
     const alone = await execute(compiled(plan([action("s1", "M08.A01", { name: tag.name })])), registry, ctx, { executionId: "tag-alone" });
     assert.equal(alone.status, "failed");
     assert.equal(alone.steps[0]!.error?.code, "DUPLICATE");
+  });
+
+  test("a search, a create of the same record and a write from the search: the create is a get-or-create", async () => {
+    const ctx = fresh();
+    const tag = ctx.store.all<{ id: string; name: string }>("tags")[0]!;
+    const contact = ctx.store.all<{ id: string; name: string; tags: string[] }>("contacts").find((c) => !c.tags.includes(tag.name))!;
+    const p = compiled(plan([
+      action("s1", "M08.A02", { query: tag.name }),
+      action("s2", "M08.A01", { name: tag.name }),
+      action("s3", "M08.A06", { tagId: "$s1.items[0].id", recordType: "contact", recordId: contact.id }),
+    ]));
+    const r = await execute(p, registry, ctx, { executionId: "find-or-make" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps));
+    assert.ok(ctx.store.get<{ tags: string[] }>("contacts", contact.id)!.tags.includes(tag.name));
   });
 });
 

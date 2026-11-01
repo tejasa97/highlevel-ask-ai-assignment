@@ -649,6 +649,13 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
   const parsedArgs = parseObject(argsJson, "argsJson", err);
   if (!parsedArgs) return null;
   const args = normalizeDateTimes(parsedArgs, action.inputSchema) as Record<string, unknown>;
+  // A record-type sibling left out ("recordType") is the type the id's ref holds.
+  for (const [idPath, typePath] of Object.entries(action.typedIds ?? {})) {
+    if (/[.[]/.test(idPath + typePath) || args[typePath] !== undefined) continue;
+    const v = args[idPath];
+    const held = typeof v === "string" && parseRef(v.trim()) ? listEnt(v, scope) : null;
+    if (held?.ids) args[typePath] = held.entity;
+  }
 
   // Refs: each must type-check, and its shape must fit the arg it fills.
   const refs = collectRefs(args);
@@ -672,8 +679,11 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
       continue;
     }
     if (have !== "any" && need !== "any" && have !== need) {
+      // A search's records where one id belongs: the one-match form is the fix, not [0].
+      const records = have === "array" && need === "scalar" && !r.ref.includes("[") && !!((unwrap(t).items as JsonSchema | undefined)?.properties as Record<string, unknown> | undefined)?.id;
       err(
-        `${id} arg ${r.at.join(".")} needs a ${need === "scalar" ? "single value" : need}, but ${r.ref} is ${have === "scalar" ? "a single value" : `a ${have}`}`,
+        `${id} arg ${r.at.join(".")} needs a ${need === "scalar" ? "single value" : need}, but ${r.ref} is ${have === "scalar" ? "a single value" : `a ${have === "array" ? "list" : have}`}` +
+          (records ? `; write ${r.ref}[*].id to use the one record it finds (the step runs only when exactly one matched)` : ""),
       );
       ok = false;
       continue;

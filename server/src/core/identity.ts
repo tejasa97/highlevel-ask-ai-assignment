@@ -11,7 +11,8 @@ import { OTHER_THAN } from "./lookups.js";
 //
 // Policy, by what the record is for:
 // - read: the unique match is used (a wrong read is visible and harmless); several ask, as a single-record read must
-//   still pick one. A name the planner used as a filter value never reaches here at all.
+//   still pick one, and only near misses are offered back ("did you mean"). A name the planner used as a filter value
+//   never reaches here at all.
 // - create: never binds or asks; a same-named record is a duplicate warning for the reply.
 // - write (any change or send aimed at one record): binds only on a strong key unique in scope (its id, its email,
 //   or its exact normalized name). Several exact matches are "ambiguous"; only near misses are "suggest".
@@ -68,7 +69,7 @@ interface Base {
 export type IdentityResolution =
   | (Base & { kind: "bound"; binding: IdentityBinding })
   | (Base & { kind: "ambiguous" })
-  | (Base & { kind: "suggest" })
+  | (Base & { kind: "suggest"; /** The qualifier matched none of them: picking one drops it. */ dropsWhere?: true })
   | (Base & { kind: "not_found"; /** Records that match but can't be used (deactivated, merged): to say why. */ unusable: RankedCandidate[] });
 
 /** Candidate links from NER or another linker, by name. Never trusted: every id is checked against the store and scope. */
@@ -115,7 +116,8 @@ export function identityConfig(env: NodeJS.ProcessEnv = process.env): IdentityCo
 
 const SCORE: Record<MatchReason, number> = { id: 1, email: 1, "exact-name": 1, alias: 0.95, name: 0.7, edit: 0.6, ner: 0.5, embed: 0.5 };
 const RANK: MatchReason[] = ["id", "email", "exact-name", "alias", "name", "edit", "embed", "ner"];
-const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/['’]s\b/gu, "").replace(/[^\p{L}\p{N} ]/gu, " ").replace(/\s+/g, " ").trim();
+// Accents are dropped, not split on: "Muñoz" is "munoz", not "mun oz".
+const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").replace(/['’]s\b/gu, "").replace(/[^\p{L}\p{N} ]/gu, " ").replace(/\s+/g, " ").trim();
 const ID = /^[a-z]{1,6}_\d+(_\d+)*$/i;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -140,7 +142,7 @@ export function tableOfId(id: string): string | undefined {
 }
 
 /** The store table for an entity name ("contact" → "contacts", "opportunity" → "opportunities"). */
-function tableOf(entity: string): string | undefined {
+export function tableOf(entity: string): string | undefined {
   const tables = Object.keys(ENTITIES);
   return [`${entity}s`, `${entity.replace(/y$/, "ies")}`, `${entity}es`, entity].find((t) => tables.includes(t));
 }
@@ -169,6 +171,9 @@ function levenshtein(a: string, b: string, max: number): number {
  * Resolves a name to a record of one entity type within one scope. Every candidate, whatever produced it, is one the
  * entity's own resolver returns for that scope: a hint for a record of another type, or outside the parent, is dropped.
  */
+/** Every word of the request's name is a whole word of the record's: "tom" in "Tom Becker", not "to" or "becke". */
+const wholeWords = (key: string, name: string) => { const words = new Set(norm(name).split(" ")); return key.split(" ").every((w) => words.has(w)); };
+
 export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; store: Store; config?: IdentityConfig }): IdentityResolution {
   const config = deps.config ?? identityConfig();
   const resolver = deps.registry.resolver(q.entity);
@@ -245,10 +250,22 @@ export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; st
   const usable = all.filter((c) => !c.inactive);
   const base = { entity: q.entity, text, actionRisk: q.actionRisk };
   const top = (cs: RankedCandidate[]) => cs.slice(0, config.suggestMax);
-  const bind = (c: RankedCandidate, provenance: Provenance, decision: string): IdentityResolution => ({
+  const bind = (c: RankedCandidate, provenance: Provenance, decision: string, scope = q.where): IdentityResolution => ({
     ...base, kind: "bound", candidates: [c], decision,
-    binding: bindingOf(q.entity, text, c, provenance, deps.store, Object.keys(q.where ?? {}).length ? q.where : undefined),
+    binding: bindingOf(q.entity, text, c, provenance, deps.store, Object.keys(scope ?? {}).length ? scope : undefined),
   });
+  if (!usable.length && Object.keys(where).length && q.actionRisk !== "create" && !Object.keys(where).some((k) => resolver.parentQualifiers?.includes(k))) {
+    // "Call Zoe Costa at Acme" when no Zoe Costa is at Acme but two are elsewhere: the qualifier may be the slip, so
+    // offer the records the name alone matches rather than a dead end. Never across a parent: Yusuf's subscription is
+    // never someone else's.
+    const held = other === undefined ? undefined : { [OTHER_THAN]: other } as LookupWhere;
+    const loose = resolveIdentity({ ...q, where: held, qualifiers: undefined }, deps);
+    const cs = loose.candidates.filter((c) => !c.inactive);
+    // where {email: "gmail.com"} for the Sarah Johnson at sjohnson@gmail.example: the qualifier's words still pick one.
+    const picked = cs.length > 1 ? narrowByRequest(cs, `${Object.values(where).join(" ")} ${q.qualifiers ?? ""}`) : [];
+    if (picked.length === 1 && q.actionRisk !== "read") return bind(picked[0]!, "lookup", `no exact match where ${JSON.stringify(where)}; its words pick one`, held ?? {});
+    if (cs.length) return { ...base, kind: "suggest", candidates: top(cs), dropsWhere: true, decision: `no match where ${JSON.stringify(where)}; the name alone matches, asking` };
+  }
   if (!usable.length) return { ...base, kind: "not_found", candidates: [], unusable: all, decision: all.length ? "only unusable records match" : "no candidate" };
 
   if (q.actionRisk === "create") {
@@ -263,7 +280,8 @@ export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; st
     const cs = narrow(matched);
     if (cs.length === 1) return bind(cs[0]!, STRONG.has(cs[0]!.matchReason) && matched.length === 1 ? "exact-unique" : "lookup", "read: unique match");
     if (cs.length > 1) return { ...base, kind: "ambiguous", candidates: top(cs), decision: "read: several matches" };
-    return { ...base, kind: "not_found", candidates: top(usable), unusable: [], decision: "read: only near misses, not used" };
+    // "What's Omar Lassen's email?" with an Omar Larsen on file: a dead end helps nobody, so offer the near miss.
+    return { ...base, kind: "suggest", candidates: top(usable), decision: "read: only near misses, asking" };
   }
 
   const strong = usable.filter((c) => STRONG.has(c.matchReason));
@@ -274,6 +292,8 @@ export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; st
     return { ...base, kind: "ambiguous", candidates: top(strong), decision: `write: ${strong.length} strong matches` };
   }
   if (config.writeBind === "unique" && matched.length === 1) return bind(matched[0]!, "lookup", "write: unique partial match (RESOLVER_WRITE_BIND=unique)");
+  // A record people call by part of its name ("Tom" for Tom Becker) binds when it is the only whole-word match.
+  if (resolver.partialNameBinds && matched.length === 1 && wholeWords(key, matched[0]!.name)) return bind(matched[0]!, "lookup", "write: unique whole-word match (partialNameBinds)");
   return { ...base, kind: "suggest", candidates: top(usable), decision: "write: no strong key, asking" };
 }
 
@@ -286,6 +306,12 @@ function bindingOf(entity: string, text: string, c: RankedCandidate, provenance:
     fingerprint: fingerprint(c),
     ...(where ? { where } : {}),
   };
+}
+
+/** The scope a pick from this question still holds: all of it, or only the exclusions when its qualifier matched none. */
+export function heldWhere(r: Pick<IdentityResolution, "kind"> & { dropsWhere?: true }, where?: LookupWhere): LookupWhere | undefined {
+  if (!r.dropsWhere || !where) return where;
+  return OTHER_THAN in where ? { [OTHER_THAN]: where[OTHER_THAN] } as LookupWhere : undefined;
 }
 
 /** A binding the user made by picking a candidate from a question. */
@@ -310,9 +336,16 @@ export function revalidate(b: IdentityBinding, deps: { registry: Registry; store
 }
 
 /** A detail of exactly one candidate in the user's words ("Sarah Johnson at Brightside") picks it. */
-export function narrowByRequest<T extends { detail?: string }>(found: T[], request: string): T[] {
-  const said = ` ${plain(request.replace(/\s+/g, " "))} `;
-  const partsOf = (c: T) => (c.detail ?? "").split(",").map((p) => plain(p)).filter((p) => p.length > 1);
+export function narrowByRequest<T extends { detail?: string; name?: string }>(found: T[], request: string): T[] {
+  // An email's words count too ("the gmail one" is sjohnson@gmail.example), except the words of the names themselves:
+  // "Sarah" in sarah.johnson@ is no detail when the request is about Sarah Johnson.
+  const words = (s: string) => plain(s.replace(/[@._+-]/g, " ")).split(" ");
+  const said = ` ${plain(request.replace(/\s+/g, " "))} ${words(request).join(" ")} `;
+  const names = new Set(found.flatMap((c) => words(c.name ?? "")));
+  const partsOf = (c: T) => {
+    const parts = (c.detail ?? "").split(",");
+    return [...parts.map((p) => plain(p)), ...parts.filter((p) => p.includes("@")).flatMap(words).filter((w) => w.length > 2 && !names.has(w))].filter((p) => p.length > 1);
+  };
   const shared = (p: string) => found.every((c) => partsOf(c).includes(p));
   const hit = found.filter((c) => partsOf(c).some((p) => !shared(p) && said.includes(` ${p} `)));
   return hit.length === 1 ? hit : found;

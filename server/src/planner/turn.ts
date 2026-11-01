@@ -2,13 +2,13 @@ import { createHash } from "node:crypto";
 import { compile, type CompiledPlan } from "../core/compile.js";
 import { narrowByRequest } from "../core/execute.js";
 import { lowerLookups } from "../core/lookups.js";
-import { type IdentityBinding, type IdentityResolution, optionLabel } from "../core/identity.js";
+import { type IdentityBinding, type IdentityResolution, optionLabel, resolveIdentity } from "../core/identity.js";
 import { card } from "../registry/card.js";
-import type { RegisteredAction, Registry } from "../registry/registry.js";
-import { type Mention, mentions } from "../retrieval/mentions.js";
+import type { LookupWhere, RegisteredAction, Registry } from "../registry/registry.js";
+import { type Mention, mentions, withTextFields } from "../retrieval/mentions.js";
 import type { NerSidecarResponse } from "../retrieval/ner_sidecar_contract.js";
 import { askScopedExtract, askScopePushPending } from "../retrieval/ner_ask_scope.js";
-import { bindNerLookups, fromNer, type IdentityDecision } from "./ner_bind.js";
+import { bindNerLookups, fromNer, type IdentityDecision, typeDoubtOf } from "./ner_bind.js";
 import {
   mergeMentions,
   nerBreaker,
@@ -201,6 +201,7 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
       request: input.answering ? `${input.answering}\n${input.message}` : input.message,
       duplicates: process.env.NER_DUPLICATE_POLICY === "off" ? "off" : "warn",
       ...(input.picks ? { picks: input.picks } : {}),
+      answering: !!input.answering,
     });
     for (const d of bound.decisions) emit({ type: "identity.resolved", data: d });
     if (bound.kind === "clarify") {
@@ -247,6 +248,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       named = store ? mergeMentions(fromSpans, named) : fromSpans;
     }
   }
+  if (store) named = withTextFields(named, registry, store);
   linked.push(...named);
   const allChars = registry.list().map(card).join("\n").length;
   const exists = (id: string) => !store || store.holds(id);
@@ -306,8 +308,10 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   const checkedIdentity: string[] = [];
   const deliverySurfaces = registry.deliverySurfaces();
   let lookSteps: Step[] = [];
+  // An answer to a question is planned with the message it answers in view: a bare "The lead from Wayne." loses what
+  // was asked for ("as partner") however much <context> says.
   const prompt = () =>
-    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, failed: input.failed, looked, lookIds: lookSteps.map((l) => l.id), deliverySurfaces, identityCheck, outcome });
+    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: request, context: input.context, failed: input.failed, looked, lookIds: lookSteps.map((l) => l.id), deliverySurfaces, identityCheck, outcome });
   let resampled = false;
   let round = 0;
   const debug = (label: string, user: string, d: Pick<PlannerDebug, "raw" | "parsed" | "model" | "usage" | "latencyMs" | "error">) => {
@@ -378,7 +382,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   // A look's lookups bind against the NER hints too, so a look never asks the store about an ambiguous name.
   let nerClarify: TurnOutcome | undefined;
   const runLook = async (raw: CompiledPlan, steps: Step[]) => {
-    const bound = bindNerLookups(raw, named, registry, { store, request, duplicates: "off", ...(input.picks ? { picks: input.picks } : {}) });
+    const bound = bindNerLookups(raw, named, registry, { store, request, duplicates: "off", ...(input.picks ? { picks: input.picks } : {}), answering: !!input.answering });
     for (const d of bound.decisions) emit({ type: "identity.resolved", data: d });
     if (bound.kind === "clarify") {
       // Stored like a plan's question; the answer plans the message again with the pick bound, since a look isn't the plan.
@@ -427,6 +431,15 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       continue;
     }
     const d = parsed.data;
+    // An id the catalog doesn't have ("M03.A??", written before the planner had searched) names no operation. Kept,
+    // it would be a requested operation no plan can ever include; dropped, the real id fills in once it's found.
+    if (d.outcome?.actions.some((id) => !registry.get(id))) d.outcome = { ...d.outcome, actions: d.outcome.actions.filter((id) => registry.get(id)) };
+    // A real action the shortlist missed but the planner named (a card's "to put a tag on a record, use M08.A06"):
+    // offer it, rather than turn a right plan away and send the planner searching for what it already has.
+    for (const id of namedActions(d)) {
+      const impl = !offered.some((a) => a.id === id) ? registry.get(id) : undefined;
+      if (impl) { offered.push(impl); seen.add(id); }
+    }
     if (remadeChecked && remakeAnswer === undefined) remakeAnswer = d.outcome?.actions ?? null;
     // An outcome that makes again what the last turn made is asked about once, before its actions bind the repairs.
     if (!remadeChecked && !outcome?.actions.length && (d.type === "plan" || d.type === "look")) {
@@ -465,16 +478,49 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         reply = await call(repairBlock(user, reply.json, errors), "repair clarification binding");
         continue;
       }
+      // A question with no text is nothing to show the user; it is usually a value the message already gives.
+      if (assessed.kind === "question" && !d.question?.trim() && !clarifyRepaired) {
+        clarifyRepaired = true;
+        const arg = d.missing ? `${d.missing.action} ${d.missing.argument}` : "the missing input";
+        const errors = [`a clarify needs a question for the user, and this one has none. If the message already says what ${arg} should be (a title from what the task is for, a body from what to say), write it and plan; otherwise ask in question.`];
+        emit({ type: "compile.errors", data: { errors } });
+        user = prompt();
+        reply = await call(repairBlock(user, reply.json, errors), "repair empty question");
+        continue;
+      }
       if (assessed.kind === "question") return { kind: "reply", status: "clarify", text: d.question ?? "Please supply the missing input.", options: d.options ?? undefined };
       if (assessed.kind === "identity") {
         const { check, lookup } = assessed;
-        identityCheck = check.digest;
+        // "Contact or lead?" about a name that is exactly both is the app's question, whatever the planner found by one type.
+        const doubt = !input.answering && store ? typeDoubtOf(lookup.name, lookup.entity, named, registry, store, input.message) : undefined;
+        if (doubt) return { kind: "reply", status: "clarify", ...doubt };
         identityKey = `${lookup.entity}:${lookup.name.trim().toLowerCase()}`;
-        if (check.count > 1) return { kind: "reply", status: "clarify", text: `I found ${check.count} matching ${lookup.entity.replaceAll("_", " ")} records. ${check.options ? roleQuestion(registry, d.missing) : "Please give a more specific name or qualifier."}`, options: check.options };
+        // The user already picked one for this name (the message is planned again after their answer): that's the answer.
+        const pick = input.picks?.find((p) => p.entity === lookup.entity && p.text.trim().toLowerCase() === lookup.name.trim().toLowerCase());
+        identityCheck = pick ? JSON.stringify({ entity: lookup.entity, name: lookup.name, chosenByUser: { id: pick.id, name: pick.name }, instruction: "The user chose this record. Plan with its id; don't ask again." }) : check.digest;
+        if (pick && !checkedIdentity.includes(identityKey)) {
+          checkedIdentity.push(identityKey);
+          user = prompt();
+          reply = await call(user, "plan after identity check");
+          continue;
+        }
+        if (check.count > 1) {
+          const paused = store && check.options ? namePause(lookup, registry, store) : undefined;
+          if (paused) return { kind: "reply", status: "clarify", text: `I found ${paused.resolution.candidates.length} ${lookup.entity.replaceAll("_", " ")} records named ${lookup.name}. ${roleQuestion(registry, d.missing)}`, options: paused.resolution.candidates.map(optionLabel), paused };
+          return { kind: "reply", status: "clarify", text: `I found ${check.count} matching ${lookup.entity.replaceAll("_", " ")} records. ${check.options ? roleQuestion(registry, d.missing) : "Please give a more specific name or qualifier."}`, options: check.options };
+        }
         // The only match can't be used (e.g. a deactivated user): that is the answer, whatever the planner asks next.
         if (check.match?.inactive) return { kind: "reply", status: "clarify", text: `${check.match.name} is ${check.match.inactive}, so I can't use ${lookup.entity.replaceAll("_", " ")} ${check.match.name}. Nothing was changed. Who should I use instead?` };
         if (checkedIdentity.includes(identityKey) || checkedIdentity.length > 1) {
-          if (!check.count) return { kind: "reply", status: "clarify", text: `I couldn't find a matching ${lookup.entity.replaceAll("_", " ")}. Please give a fuller name or qualifier.` };
+          if (!check.count) {
+            // Nothing in the account is close to the name: "who is Dana Whitfield?" is a question nobody can answer from
+            // here, so not found is the reply. A near miss ("Victor Browne") is still offered.
+            const what = lookup.entity.replaceAll("_", " ");
+            const where = lookup.whereJson ? JSON.parse(lookup.whereJson) as LookupWhere : undefined;
+            const near = resolveIdentity({ entity: lookup.entity, text: lookup.name, ...(where ? { where } : {}), actionRisk: "write" }, { registry, store: store! });
+            if (near.kind === "suggest" && near.candidates.length) return { kind: "reply", status: "clarify", text: `I couldn't find a ${what} named "${lookup.name}". Did you mean ${near.candidates.length === 1 ? optionLabel(near.candidates[0]!) : "one of these"}?`, options: near.candidates.map(optionLabel) };
+            return failed(`I couldn't find a ${what} named "${lookup.name}", so nothing was changed.`);
+          }
           return failed("The account lookup found one matching record, but the planner still asked which one. Nothing was changed; please try again.");
         }
       } else {
@@ -482,6 +528,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         identityKey = "";
         // Shown the records, the planner still asks which one: when the message's name fits several, that is the question.
         if (checkedIdentity.length && assessed.ambiguous) return { kind: "reply", status: "clarify", text: d.question ?? "Which one did you mean?", options: d.options ?? undefined };
+        if (checkedIdentity.length && assessed.none) return failed(`I couldn't find a ${assessed.none.entity.replaceAll("_", " ")} named "${assessed.none.name}", so nothing was changed.`);
         if (checkedIdentity.length) return failed("Matching account records were already supplied, but the planner still asked for that identity. Nothing was changed; please try again.");
       }
       checkedIdentity.push(identityKey);
@@ -557,7 +604,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     // summary stays. A question that only reads ("is that the only one?") also keeps the planner's verdict on
     // top, unless it leaks raw ids.
     if (d.type === "answer" && (lookPlan || outcome?.effect === "change") && !emptyChecked) {
-      const errors = lookPlan ? [...outcomeErrors(lookPlan, outcome), ...(outcome ? [] : readOnlyIntentError(input.message, lookPlan, offered, registry))] : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
+      const errors = lookPlan ? [...outcomeErrors(lookPlan, outcome, undefined, (id) => registry.get(id)?.name), ...(outcome ? [] : readOnlyIntentError(input.message, lookPlan, offered, registry))] : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
       if (!errors.length && lookPlan) {
         const answer = outcome?.effect !== "change" ? d.text?.trim() : undefined;
         return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry), ...(answer && !RAW_ID.test(answer) ? { answer } : {}) };
@@ -606,7 +653,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         ? inventedIds(compiled.plan, user, exists)
         : compiled.plan.steps.some((s) => callsOf(s).length)
           ? [
-              ...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }),
+              ...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }, (id) => registry.get(id)?.name),
               // Without a stated outcome, the message's own verbs are the only sign a write was asked for. A read outcome
               // this reply states for a message that asks, then tells, may describe only the asking.
               ...(outcome && !(outcomeFrom === reply && outcome.effect === "read") ? [] : readOnlyIntentError(input.message, compiled.plan, offered, registry)),
@@ -640,7 +687,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         continue;
       }
       if (!empty.length) {
-        const which = store && oneOfSameNamed(compiled.plan, named, registry, store, request);
+        const which = store && oneOfSameNamed(compiled.plan, named, registry, store, request, input.picks);
         if (which) return { kind: "reply", status: "clarify", ...which };
         return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
       }
@@ -827,8 +874,9 @@ export function inventedIds(plan: CompiledPlan, shown: string, exists: (id: stri
 /**
  * A write that names one of several same-named records by id ("Maple Dental" twice; it looked and took bl_1) when
  * the user's words don't say which: the user is asked, as a resolve step would. Writing to all of them is a choice.
+ * A record the user picked when asked is not asked about again.
  */
-export function oneOfSameNamed(plan: CompiledPlan, named: Mention[], registry: Registry, store: Store, request: string): { text: string; options: string[] } | undefined {
+export function oneOfSameNamed(plan: CompiledPlan, named: Mention[], registry: Registry, store: Store, request: string, picks: IdentityBinding[] = []): { text: string; options: string[] } | undefined {
   const ids = new Set<string>();
   const visit = (v: unknown): void => {
     if (typeof v === "string") ids.add(v);
@@ -845,6 +893,8 @@ export function oneOfSameNamed(plan: CompiledPlan, named: Mention[], registry: R
   for (const m of named.filter((n) => n.count > 1)) {
     const found = (registry.resolver(m.entity)?.(store, m.name) ?? []).filter((c) => !c.inactive);
     const hit = found.filter((c) => ids.has(c.id));
+    // The one the user picked when asked: the question was answered.
+    if (hit.every((c) => picks.some((p) => p.id === c.id))) continue;
     if (found.length < 2 || !hit.length || hit.length === found.length || narrowByRequest(found, request).length === 1) continue;
     const options = found.map(optionLabel);
     return { text: `More than one ${m.entity} matches "${m.name}": ${options.join(", ")}. Which one?`, options };
@@ -865,6 +915,13 @@ const ANSWER_FROM_LOOKED = "The reads in <looked> ran. Reply type answer to the 
 
 const callsOf = (s: CompiledPlan["steps"][number]) => (s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []);
 
+/** Every action id a reply names: its outcome, its clarification, and its steps' calls. */
+export const namedActions = (d: SubmitPlan): string[] => [
+  ...(d.outcome?.actions ?? []),
+  ...(d.missing?.action ? [d.missing.action] : []),
+  ...(d.steps ?? []).flatMap((s) => (s.kind === "action" ? [s.action] : "do" in s ? (s.do ?? []).map((c) => c.action) : [])),
+];
+
 const squash = (s: unknown) => (typeof s === "string" ? s.toLowerCase().replace(/\s+/g, " ").trim() : "");
 
 /**
@@ -882,7 +939,12 @@ export function duplicateCreates(plan: CompiledPlan, named: Mention[], message: 
     const made = action.entities?.produces;
     const name = squash(args.name) || squash([args.firstName, args.lastName].filter((v) => typeof v === "string").join(" "));
     if (!made || !name) continue;
-    const existing = named.find((m) => !m.of && m.entity === made && squash(m.name) === name);
+    // A name the mentions missed ("Tag Elena as vip": no extractor knows tags) still counts when the message says it,
+    // the store holds it, and the create only feeds a later step. "Create a contact called Marcus Lee" asks for the
+    // record itself; two people can share a name, and the resolver warns about it instead.
+    const feeds = plan.steps.some((t) => t.deps.includes(s.id));
+    const existing = named.find((m) => !m.of && m.entity === made && squash(m.name) === name) ??
+      (sameName && feeds && ` ${squash(message.replace(/["'“”.,!?]/g, " "))} `.includes(` ${name} `) ? { name: String(args.name ?? name), count: 1 } : undefined);
     if (existing && (!sameName || sameName(made, name))) errors.push(`${s.id}: ${existing.name} already exists as a ${made}${existing.count > 1 ? ` (${existing.count} of them)` : ""}; resolve and use it instead of creating a duplicate with ${action.id}`);
   }
   return errors;
@@ -992,6 +1054,17 @@ export async function withDeadline<T>(ms: number, fn: (signal: AbortSignal) => P
 }
 
 const failed = (text: string, infra?: InfraKind): TurnOutcome => ({ kind: "reply", status: "failed", text, ...(infra ? { infra } : {}) });
+
+/** The planner's question about a name several records share, stored like a look's: the answer ("the one with the gmail
+ * address") picks a record, and the message is planned again with that pick bound to the name. Left to the planner as
+ * plain text, the answer was searched for again and every match written to. */
+function namePause(lookup: NonNullable<SubmitPlan["lookup"]>, registry: Registry, store: Store): Extract<TurnOutcome, { kind: "reply" }>["paused"] {
+  const where = lookup.whereJson ? JSON.parse(lookup.whereJson) as LookupWhere : undefined;
+  const resolution = resolveIdentity({ entity: lookup.entity, text: lookup.name, ...(where ? { where } : {}), actionRisk: "write" }, { registry, store });
+  if (resolution.kind !== "ambiguous" || resolution.candidates.length < 2) return undefined;
+  const c = compile(SubmitPlan.parse({ type: "plan", steps: [{ id: "who", kind: "resolve", entity: lookup.entity, name: lookup.name, whereJson: lookup.whereJson }] }), registry);
+  return c.ok ? { plan: c.plan, stepId: "who", resolution, replan: true } : undefined;
+}
 
 /** "Which one is the contact that stays?" for an argument named for its role (a merge's keepId); otherwise "Which one do you mean?". */
 function roleQuestion(registry: Registry, missing: SubmitPlan["missing"]): string {

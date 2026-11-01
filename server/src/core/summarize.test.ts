@@ -82,7 +82,7 @@ describe("summarize: a plan that only reads still answers", () => {
   test("a loop of reads over nothing says so instead of going quiet", async () => {
     const loop = { id: "s2", kind: "op" as const, op: "forEach" as const, in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M47.A10", argsJson: JSON.stringify({ ticketId: "$item.id" }) }] };
     const { text } = await reply([action("s1", "M47.A03", { query: "no ticket is called this" }), loop]);
-    assert.match(text, /nothing/i);
+    assert.match(text, /^Couldn't find any tickets matching "no ticket is called this"/, text);
   });
 
   test("a search capped by its limit still counts everything, not just what came back", async () => {
@@ -115,7 +115,24 @@ describe("summarize: a plan that only reads still answers", () => {
 
   test("an empty search says so, with what it searched for", async () => {
     const { text } = await reply([action("s1", "M03.A03", { query: "nobody-by-this-name" })]);
-    assert.equal(text, "No leads found matching query nobody-by-this-name.");
+    assert.equal(text, "Couldn't find any leads matching \"nobody-by-this-name\".");
+  });
+
+  test("a write fed the first of an empty search says the search found nobody, not the reference error", async () => {
+    const { text } = await reply([
+      action("s1", "M01.A03", { query: "Victor Browning" }),
+      action("s2", "M08.A06", { tagId: "tg_1", recordType: "contact", recordId: "$s1.items[0].id" }),
+    ]);
+    assert.match(text, /^Couldn't find any contacts matching "Victor Browning", so I didn't /, text);
+    assert.doesNotMatch(text, /\$s1|0 items/);
+  });
+
+  test("a loop over an empty search says what the search was for", async () => {
+    const { text } = await reply([
+      action("s1", "M01.A03", { query: "Victor Browning" }),
+      { id: "s2", kind: "op" as const, op: "forEach" as const, in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M08.A06", argsJson: JSON.stringify({ tagId: "tg_1", recordType: "contact", recordId: "$item.id" }) }] },
+    ]);
+    assert.match(text, /^Couldn't find any contacts matching "Victor Browning", so I didn't apply tag to record\./, text);
   });
 
   test("a get returns the one record", async () => {

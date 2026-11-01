@@ -27,6 +27,8 @@ export type Resolver = ((store: Store, name: string, where?: LookupWhere) => Can
   exactMention?: boolean;
   /** At least one of these parent qualifiers must be supplied for child lookup. */
   parentQualifiers?: readonly string[];
+  /** Records people call by part of their name, like staff by first name: a write binds a unique whole-word match. */
+  partialNameBinds?: boolean;
 };
 
 export interface ModuleExports {

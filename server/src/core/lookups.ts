@@ -80,6 +80,11 @@ export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; 
           return `$${id}.id`;
         }
       }
+      // {"$ref": "$s1.items[0].id"} is the JSON-Schema spelling of a ref: the ref is the string inside it.
+      if (object(value) && Object.keys(value).length === 1 && typeof value.$ref === "string" && schema.type === "string") {
+        const ref = value.$ref.trim();
+        return ref.startsWith("$") ? ref : `$${ref}`;
+      }
       if (object(value) && Object.hasOwn(value, "$lookup") && schema.type === "string" && argumentEntities(def, path, parsedArgs).length) {
         if (!!rule !== children) return value;
         const lookup = value.$lookup;

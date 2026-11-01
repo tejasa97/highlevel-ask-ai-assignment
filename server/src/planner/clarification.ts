@@ -10,7 +10,7 @@ type Check = ReturnType<typeof checkIdentity>;
 export type ClarificationCheck =
   | { kind: "question" }
   | { kind: "identity"; lookup: Lookup; check: Check }
-  | { kind: "facts"; digest: string; ambiguous: boolean };
+  | { kind: "facts"; digest: string; ambiguous: boolean; /** Set when the only names found match no record. */ none?: { entity: string; name: string } };
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const present = (v: unknown) => v !== undefined && v !== "";
 
@@ -90,10 +90,14 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
     // cannot evade grounding merely by being labelled "choice" instead of "identity".
     if (store && entities.length && field.schema.type === "string") {
       const where = scopedWhere(binding, {}, parent);
+      // A name the question repeats from the message ("What should Dana Whitfield be assigned to?") that no record has
+      // is a fact too: the planner learns nothing matches, rather than asking the user who it is.
       const facts = namedFacts(message, entities, where, registry, store);
+      if (!facts.length) for (const name of sharedNames(message, d.question ?? "")) facts.push({ entity: entities[0]!, name, count: 0, candidates: [], truncated: false });
       // The fullest name the message gives ("zoe costa", not "zoe") matching more than one record is real ambiguity.
       const ambiguous = facts.some((f) => f.count > 1 && !facts.some((g) => g !== f && g.name.includes(f.name)));
-      if (facts.length) return { kind: "facts", ambiguous, digest: JSON.stringify({ action: id, argument: path, matches: facts, instruction: "These are account facts, not permission to choose a target. Preserve the user's full request and plan or clarify actual ambiguity." }) };
+      const none = facts.length && facts.every((f) => !f.count) ? { entity: facts[0]!.entity, name: facts[0]!.name } : undefined;
+      if (facts.length) return { kind: "facts", ambiguous, ...(none ? { none } : {}), digest: JSON.stringify({ action: id, argument: path, matches: facts, instruction: "These are account facts, not permission to choose a target. Preserve the user's full request and plan or clarify actual ambiguity." }) };
     }
   } catch (err) {
     if (err instanceof ParentChoice) return { kind: "identity", lookup: err.lookup, check: err.check };
@@ -104,6 +108,20 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
 
 const norm = (s: string) => s.normalize("NFKD").toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").replace(/\s+/g, " ").trim();
 const STOP = new Set("a an the it me my we our i you your who which what to for of in on and or is are please".split(" "));
+
+/** Runs of two or more words the message and the question both say, as the message writes them, longest first. */
+function sharedNames(message: string, question: string): string[] {
+  const tokens = message.split(/[^\p{L}\p{M}\p{N}'’-]+/u).filter(Boolean).slice(0, 64);
+  const asked = ` ${norm(question)} `;
+  const out: string[] = [];
+  for (let size = Math.min(4, tokens.length); size > 1; size--) for (let n = 0; n <= tokens.length - size; n++) {
+    const span = tokens.slice(n, n + size);
+    const name = span.join(" ");
+    if (span.some((w) => STOP.has(norm(w))) || !asked.includes(` ${norm(name)} `) || out.some((o) => norm(o).includes(norm(name)))) continue;
+    out.push(name);
+  }
+  return out;
+}
 
 /** Bounded mention scan for the argument's entity only. Never resolves a write target automatically. */
 function namedFacts(message: string, entities: string[], where: Record<string, string>, registry: Registry, store: Store): { entity: string; name: string; count: number; candidates: unknown[]; truncated: boolean }[] {

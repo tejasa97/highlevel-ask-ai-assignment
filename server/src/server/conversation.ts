@@ -2,7 +2,7 @@
 // The HTTP app streams its events to the web UI; the scenario evals drive it headless, so both take the same path.
 import { type CompiledPlan, type CStep, fedArgument, planDigest } from "../core/compile.js";
 import { execute, type Approval, type Pending, type RunResult } from "../core/execute.js";
-import { type IdentityBinding, type IdentityResolution, optionLabel, resolveIdentity, revalidate, tableOfId, userSelected } from "../core/identity.js";
+import { type IdentityBinding, type IdentityResolution, heldWhere, optionLabel, resolveIdentity, revalidate, tableOfId, userSelected } from "../core/identity.js";
 import { emptyRead, runtimeNoMatch } from "../core/no-match.js";
 import { shownRecords, summarize, type Shown } from "../core/summarize.js";
 import { type Carry, type InfraKind, planTurn, type TurnDeps } from "../planner/turn.js";
@@ -119,8 +119,9 @@ export class Conversation {
         // The resolver asked about one lookup of a compiled plan: store the question with the plan, to resume it.
         const { plan, stepId, resolution, replan } = outcome.paused;
         const step = plan.steps.find((s) => s.id === stepId);
+        const scope = step?.kind === "resolve" ? heldWhere(resolution, step.where) : undefined;
         const c = this.open({
-          source: replan ? "look" : "resolver", plan, turnId, stepId, resolution, request, said, ...(step?.kind === "resolve" && step.where ? { where: step.where } : {}),
+          source: replan ? "look" : "resolver", plan, turnId, stepId, resolution, request, said, ...(scope ? { where: scope } : {}),
           ...(replan ? { replan: { message, tier, ...(answering ? { answering } : {}), picks: picks ?? [] } } : {}),
         });
         return this.finish(message, outcome.status, outcome.text, emit, outcome.options, undefined, undefined, c);

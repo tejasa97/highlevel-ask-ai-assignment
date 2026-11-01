@@ -58,7 +58,9 @@ describe("NER hints", () => {
     const planner = scripted(reply({ steps: [step("M03.A03", { query: "Sarah Johnson" })], outcome: { effect: "read", actions: ["M03.A03"], destination: null } }));
     const { out } = await run("How many leads are named Sarah Johnson?", planner, (u) => [sarahs(u)]);
     assert.equal(out.kind, "plan", JSON.stringify(out));
-    assert.match(planner.requests[0]!.user, /Sarah Johnson: 2 contacts \(ct_31 Sarah Johnson, Brightside; .*\), ambiguous/);
+    assert.match(planner.requests[0]!.user, /Sarah Johnson: 2 contacts, ambiguous \(a \$lookup by this name; the app asks which\)/);
+    // Nothing to pick one by: no ids, no details the user didn't give.
+    assert.doesNotMatch(planner.requests[0]!.user, /<mentions>[^<]*ct_31/);
   });
 
   test("create a new contact named Sarah Johnson: a duplicate warning, never a which-one picker", async () => {
@@ -93,6 +95,24 @@ describe("NER hints", () => {
     assert.match(planner.requests[0]!.user, /Clear Finace: no exact company; did you mean co_1 Clear Finance\?/);
   });
 
+  test("a planner that writes NER's suggestion instead of the user's name still gets the question, not the record", async () => {
+    const u = "Link Ana Ruiz to Clear Finace";
+    const planner = scripted(reply({ steps: [step("M02.A06", { contactId: lookup("contact", "Ana Ruiz"), companyId: lookup("company", "Clear Finance") })], outcome: { effect: "change", actions: ["M02.A06"], destination: null } }));
+    const { out } = await run(u, planner, (u) => [{ text: "Clear Finace", label: "company", ...at(u, "Clear Finace"), status: "ambiguous", method: "edit", score: 0.5, candidates: [{ id: "co_1", name: "Clear Finance", entity: "company" }] }], (w) => {
+      w.store.insert("companies", "co", { name: "Clear Finance", domain: null, industry: null, size: null, phone: null, address: null, accountManagerId: null, status: "active", mergedInto: null });
+    });
+    assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
+    assert.match(out.text, /^Did you mean Clear Finance/);
+  });
+
+  test("a read that searches a name only near a record asks did you mean, rather than coming back empty", async () => {
+    const u = "What's Omar Lassen's email?";
+    const planner = scripted(reply({ steps: [step("M01.A03", { query: "Omar Lassen" })], outcome: { effect: "read", actions: ["M01.A03"], destination: null } }));
+    const { out } = await run(u, planner, (u) => [{ text: "Omar Lassen", label: "person", ...at(u, "Omar Lassen"), status: "ambiguous", method: "edit", score: 0.5, candidates: [{ id: "ct_7", name: "Omar Larsen", entity: "contact" }] }]);
+    assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
+    assert.match(out.text, /^I couldn't find a contact named Omar Lassen\. Did you mean Omar Larsen\?$/);
+  });
+
   test("a question about a later lookup keeps the earlier lookups' bindings in the paused plan", async () => {
     const u = "Link Ana Ruiz to Clear Finace";
     const planner = scripted(reply({ steps: [step("M02.A06", { contactId: lookup("contact", "Ana Ruiz"), companyId: lookup("company", "Clear Finace") })], outcome: { effect: "change", actions: ["M02.A06"], destination: null } }));
@@ -112,7 +132,7 @@ describe("NER hints", () => {
     const planner = scripted(reply({ steps: [step("M13.A01", { contactId: lookup("contact", "Ana Ruis"), subject: "Renewal", body: "About your renewal." })], outcome: { effect: "change", actions: ["M13.A01"], destination: null } }));
     const { out, events } = await run(u, planner, (u) => [{ text: "Ana Ruis", label: "person", ...at(u, "Ana Ruis"), status: "linked", linkedId: "ct_3", linkedEntity: "contact", method: "embed", score: 0.95 }]);
     assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
-    assert.match(out.text, /^Did you mean Ana Ruiz for .*contactId/);
+    assert.match(out.text, /^Did you mean Ana Ruiz\?$/);
     const d = events.find((e) => e.type === "identity.resolved");
     assert.ok(d && d.type === "identity.resolved" && d.data.kind === "suggest" && !d.data.binding, JSON.stringify(d));
   });
@@ -132,12 +152,44 @@ describe("NER hints", () => {
     assert.ok(out.kind === "plan" && out.plan.steps.every((s) => s.kind !== "resolve" || !s.bound));
   });
 
-  test("ambiguous Sarah Johnson as an email recipient still asks which one, for contactId", async () => {
+  test("ambiguous Sarah Johnson as an email recipient still asks which one", async () => {
     const planner = scripted(reply({ steps: [step("M13.A01", { contactId: lookup("contact", "Sarah Johnson"), subject: "Renewal", body: "About your renewal." })], outcome: { effect: "change", actions: ["M13.A01"], destination: null } }));
     const { out } = await run("Email Sarah Johnson about the renewal", planner, (u) => [sarahs(u)]);
     assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
-    assert.match(out.text, /2 contact records named Sarah Johnson\. Which one should I use for .*contactId/);
+    assert.match(out.text, /2 contact records named Sarah Johnson\. Which one should I use\?$/);
     // The picker shows the store's own detail for each record, not the sidecar's.
     assert.deepEqual(out.options, ["Sarah Johnson (sarah.johnson@brightside.example, +15550100001, Brightside)", "Sarah Johnson (sjohnson@gmail.example, +15550100001)"]);
+  });
+
+  const femi = (u: string): NerLinkedSpan => ({
+    text: "Femi Silva", label: "person", ...at(u, "Femi Silva"), status: "ambiguous", method: "exact", score: 1,
+    candidates: [{ id: "ct_10", name: "Femi Silva", entity: "contact" }, { id: "ld_43", name: "Femi Silva", entity: "lead" }],
+  });
+  const emailFemi = () => scripted(reply({ steps: [step("M13.A01", { contactId: lookup("contact", "Femi Silva"), subject: "Renewal", body: "About your renewal." })], outcome: { effect: "change", actions: ["M13.A01"], destination: null } }));
+
+  test("a write to a name that is both a contact and a lead asks which, before anything binds", async () => {
+    const planner = emailFemi();
+    const { out } = await run("Email Femi Silva about the renewal", planner, (u) => [femi(u)]);
+    assert.match(planner.requests[0]!.user, /Femi Silva: a contact and a lead, ambiguous/);
+    assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
+    assert.match(out.text, /Femi Silva is both a contact and a lead\. Which one did you mean\?/);
+    assert.equal(out.options?.length, 2);
+  });
+
+  test("the planner asking about a name that is both a contact and a lead gets the app's type question", async () => {
+    const ask = reply({ type: "clarify", clarification: "identity", question: "Which record?", lookup: null,
+      missing: { action: "M01.A07", argument: "contactId", argsJson: JSON.stringify({ contactId: lookup("contact", "Femi Silva"), ownerId: lookup("user", "Tom") }) } });
+    const { out } = await run("Assign Femi Silva to Tom", scripted(ask, ask), (u) => [femi(u)]);
+    assert.ok(out.kind === "reply" && out.status === "clarify", JSON.stringify(out));
+    assert.match(out.text, /Femi Silva is both a contact and a lead\. Which one did you mean\?/);
+    assert.equal(out.options?.length, 2);
+  });
+
+  test("naming the type, or answering a question, settles it: no type question", async () => {
+    const named = await run("Email the contact Femi Silva about the renewal", emailFemi(), (u) => [femi(u)]);
+    assert.equal(named.out.kind, "plan", JSON.stringify(named.out));
+    const w = world();
+    const answered = await planTurn({ message: "Email Femi Silva about the renewal", answering: "Femi Silva is both a contact and a lead. Which one did you mean?", tier: "fast" }, { registry, retriever, planner: emailFemi(), clock: w.clock, store: w.store, ner: async (u) => ({ requestId: "t", spans: [femi(u)] }) });
+    assert.equal(answered.kind, "plan", JSON.stringify(answered));
   });
 });

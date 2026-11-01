@@ -18,7 +18,7 @@ function compiled(action: string, args: object) {
 test("a requested change is not satisfied by its prerequisite read or an unrelated change", () => {
   const outcome = { effect: "change" as const, actions: ["M06.A05"], destination: null };
   assert.match(outcomeErrors(compiled("M06.A03", {}), outcome).join("\n"), /only reads/);
-  assert.match(outcomeErrors(compiled("M06.A01", { title: "Other task" }), outcome).join("\n"), /M06.A05 is missing/);
+  assert.match(outcomeErrors(compiled("M06.A01", { title: "Other task" }), outcome).join("\n"), /M06.A05 is not in the plan: add a step that calls M06.A05 with its arguments from the message; M06.A01 does not do it/);
   assert.deepEqual(outcomeErrors(compiled("M06.A05", { taskId: "tk_1", assigneeId: "us_5" }), outcome), []);
 });
 

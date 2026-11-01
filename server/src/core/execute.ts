@@ -7,7 +7,7 @@ import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
 import { ENTITIES } from "../store/entities.js";
 import { normalizeDateTimes } from "./datetimes.js";
-import { type ActionRisk, type IdentityBinding, type IdentityResolution, legacyResolution, narrowByRequest, resolveIdentity, resolverOff, revalidate } from "./identity.js";
+import { type ActionRisk, type IdentityBinding, type IdentityResolution, heldWhere, legacyResolution, narrowByRequest, resolveIdentity, resolverOff, revalidate } from "./identity.js";
 import { OTHER_THAN } from "./lookups.js";
 import { collectRefs, loopRead, parseRef, pathOf, RefError, type Ref, substitute, valueAt } from "./refs.js";
 
@@ -317,7 +317,13 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             const elsewhere = Object.keys(where).length ? [] : registry
               .resolverEntities()
               .filter((e) => e !== step.entity && !registry.resolver(e)!.parentQualifiers?.length && registry.resolver(e)!(ctx.store, step.name).some((c) => !c.inactive));
-            const hint = elsewhere.length ? ` (but a ${elsewhere.join(" and a ")} does)` : "";
+            // "How many contacts work at Stark?" when companies are only a contact's text field: say which records
+            // carry the name there, so the planner searches them instead.
+            const said = Object.keys(where).length ? [] : (Object.keys(ENTITIES) as (keyof typeof ENTITIES)[]).flatMap((table) => {
+              const n = ctx.store.all(table).filter((r) => typeof (r as Record<string, unknown>)[step.entity] === "string" && norm((r as Record<string, unknown>)[step.entity] as string) === norm(step.name)).length;
+              return n ? [`${n} ${table} have ${step.entity} "${step.name}"`] : [];
+            });
+            const hint = [elsewhere.length ? `but a ${elsewhere.join(" and a ")} does` : "", ...said].filter(Boolean).map((h) => ` (${h})`).join("");
             fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"${hint}` });
             nameMissing = `no ${step.entity} matches "${step.name}"`;
           };
@@ -367,7 +373,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             done({ id: r.binding.id, name: r.binding.name });
           } else if (r.kind === "ambiguous" || r.kind === "suggest") {
             const candidates = r.candidates.map(({ id, name, detail }) => ({ id, name, ...(detail ? { detail } : {}) }));
-            return ask(step, { stepId: step.id, entity: step.entity, name: step.name, candidates, kind: r.kind, resolution: r, ...(Object.keys(where).length ? { where } : {}) });
+            const scope = heldWhere(r, Object.keys(where).length ? where : undefined);
+            return ask(step, { stepId: step.id, entity: step.entity, name: step.name, candidates, kind: r.kind, resolution: r, ...(scope ? { where: scope } : {}) });
           } else if (r.unusable.length) {
             // Only unusable records match (a deactivated user, a closed deal): say so, rather than "no match".
             fail({ code: "CONFLICT", message: r.unusable.map((c) => `${c.name} is ${c.inactive}`).join("; ") });
@@ -452,7 +459,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           }
           if (step.call.action.risk !== "read") writesAttempted = true;
           const r = runItem(ctx, opts.executionId, step.id, "-", [{ call: step.call, args: args.value }]);
-          const existing = r.status === "failed" ? alreadyThere(step, r.error!, plan, ctx) : undefined;
+          const existing = r.status === "failed" ? alreadyThere(step, r.error!, plan, ctx, results) : undefined;
           if (existing) done(existing, { existing: r.error! });
           else if (r.status === "failed") fail(r.error!);
           else {
@@ -568,12 +575,15 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
  * later builds on still reports the duplicate, and an existing record of another type (a lead's email that
  * belongs to a contact) is never taken for it.
  */
-function alreadyThere(step: CStep & { kind: "action" }, error: StepError, plan: CompiledPlan, ctx: ActionContext): unknown {
+function alreadyThere(step: CStep & { kind: "action" }, error: StepError, plan: CompiledPlan, ctx: ActionContext, earlier: StepResult[]): unknown {
   const entity = step.call.action.entities?.produces;
   const id = error.details?.existingId;
   if (error.code !== "DUPLICATE" || !entity || typeof id !== "string") return undefined;
   if (error.details?.kind !== undefined && error.details.kind !== entity) return undefined;
-  if (!plan.steps.some((s) => s.deps.includes(step.id))) return undefined;
+  // A create nothing uses is still "make sure it exists" when an earlier step of this plan found that very record
+  // (search the tag, create it, tag with the search's): a get-or-create, not a failure.
+  const found = earlier.some((r) => r.status === "done" && JSON.stringify(r.output ?? null).includes(`"${id}"`));
+  if (!found && !plan.steps.some((s) => s.deps.includes(step.id))) return undefined;
   const table = Object.entries(ENTITIES).find(([, d]) => id.startsWith(`${d.prefix}_`))?.[0];
   return (table && ctx.store.get(table, id)) ?? { id };
 }

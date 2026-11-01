@@ -209,6 +209,8 @@ describe("an answer in the user's words", () => {
     assert.deepEqual(matchCandidates("not the google one", three), [], "a candidate named to rule it out is not picked");
     assert.deepEqual(matchCandidates("not the one at Brightside", sarahs, keys), []);
     assert.deepEqual(matchCandidates("the listing please", three), [], "filler picks nothing");
+    const mail: RankedCandidate[] = [{ id: "ct_31", name: "Sarah Johnson", detail: "sarah.j@acme.example", matchReason: "exact-name", score: 1 }, { id: "ct_32", name: "Sarah Johnson", detail: "sjohnson@gmail.example, +15550100001", matchReason: "exact-name", score: 1 }];
+    assert.deepEqual(matchCandidates("The one with the gmail address.", mail).map((c) => c.id), ["ct_32"], "an email's parts are words");
   });
 
   test("a clearly new request supersedes the question", () => {

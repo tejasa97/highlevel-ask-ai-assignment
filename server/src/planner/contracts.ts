@@ -8,11 +8,16 @@ import type { SubmitPlan } from "./submit-plan.js";
 export type Outcome = NonNullable<SubmitPlan["outcome"]>;
 
 /** Checks declared task coverage, not the truth of the model's interpretation of the request. */
-export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: { message: string; offered: RegisteredAction[] }): string[] {
+export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: { message: string; offered: RegisteredAction[] }, nameOf: (id: string) => string | undefined = () => undefined): string[] {
   if (!outcome) return []; // historical saved replies predate the contract
   const calls = plan.steps.flatMap((s) => s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []);
   const ids = new Set(calls.map((a) => a.id));
-  const errors = outcome.actions.filter((id) => !ids.has(id)).map((id) => `requested operation ${id} is missing; prerequisite reads do not complete it`);
+  // A small planner can act on "add a step that calls X", not on "X is missing": say which call, and what ran instead.
+  const ran = [...ids].join(", ");
+  const errors = outcome.actions.filter((id) => !ids.has(id)).map((id) => {
+    const name = nameOf(id);
+    return `requested operation ${id}${name ? ` (${name})` : ""} is not in the plan: add a step that calls ${id} with its arguments from the message${ran ? `; ${ran} ${ids.size > 1 ? "do" : "does"} not do it` : ""}`;
+  });
   if (outcome.effect === "change" && !calls.some((a) => a.risk !== "read")) errors.push("the requested outcome changes records, but this plan only reads; use look for prerequisites, then plan the final change");
   if (outcome.effect === "change" && !outcome.actions.length) errors.push("identify the final requested action(s), using search_tools if needed, before returning a plan");
   if (outcome.effect === "read" && calls.some((a) => a.risk !== "read" && !a.query)) errors.push("the requested outcome is read-only; do not introduce a change");

@@ -75,7 +75,8 @@ Rules:
   message body or subject stays plain text. Only an ID argument that needs an existing record takes a $lookup; when
   the mention is ambiguous or a near miss, still write the $lookup with the user's name and the app asks about that
   argument, so don't clarify it yourself. A mention linked to one id (company co_1) scopes the request to that record:
-  filter by that id (companyId, or that company's contacts), never by a looser text query.
+  filter by that id (companyId, or that company's contacts), never by a looser text query. A mention that is "also the
+  company of 5 contacts" is that text on those records: to count or list them, search them by it.
   A staff user named as owner, host, assignee or author goes in that ID argument (ownerId, hostId, assigneeId), never
   in query text: a text search for their name only finds records that mention them.
 - Cards' "named IDs" map argument paths to child entities and authoritative parent scope. Those declared nested/array
@@ -174,13 +175,24 @@ export function newStepIds(lookIds: string[]): string {
   return `${lookIds.map((id) => `$${id}`).join(", ")} are the looked steps; number this reply's steps from s${next} (s${next}, s${next + 1}, …)`;
 }
 
-type MentionHint = { name: string; entity: string; count: number; of?: string; linkedId?: string; ambiguous?: boolean; suggestion?: boolean; candidates?: { id: string; name: string; detail?: string }[] };
+type MentionHint = { name: string; entity: string; count: number; of?: string; linkedId?: string; inField?: { table: string; field: string; count: number }[]; ambiguous?: boolean; suggestion?: boolean; candidates?: { id: string; name: string; detail?: string; entity?: string }[] };
 const who = (c: { id: string; name: string; detail?: string }) => `${c.id} ${c.name}${c.detail ? `, ${c.detail}` : ""}`;
-const mention = (m: MentionHint) => {
+const plural = (entity: string, n: number) => (n === 1 ? entity : entity.endsWith("y") ? `${entity.slice(0, -1)}ies` : `${entity}s`);
+/** "2 contacts", or "a contact and a lead" when the same name is records of different types. */
+function counted(m: MentionHint): string {
+  const kinds = new Map<string, number>();
+  for (const c of m.candidates ?? []) kinds.set(c.entity ?? m.entity, (kinds.get(c.entity ?? m.entity) ?? 0) + 1);
+  if (kinds.size < 2) return `${m.count} ${plural(m.entity, m.count)}`;
+  return [...kinds].map(([e, n]) => (n === 1 ? `a ${e}` : `${n} ${plural(e, n)}`)).join(" and ");
+}
+const mention = (m: MentionHint) => `${mentionOf(m)}${(m.inField ?? []).map((f) => `; also the ${f.field} of ${f.count} ${f.table} (text: search ${f.table} by it)`).join("")}`;
+const mentionOf = (m: MentionHint) => {
   if (m.suggestion && m.candidates?.length) return `${m.name}: no exact ${m.entity}; did you mean ${m.candidates.map(who).join(" or ")}?`;
-  if (m.ambiguous && m.candidates?.length) return `${m.name}: ${m.count} ${m.entity}s (${m.candidates.map(who).join("; ")}), ambiguous`;
+  // No ids or details for an ambiguous name: they invite picking one, by a detail the user never gave. The $lookup
+  // keeps the user's words, and the app narrows by what they said or asks.
+  if (m.ambiguous && m.candidates?.length) return `${m.name}: ${counted(m)}, ambiguous (a $lookup by this name; the app asks which)`;
   if (m.linkedId) return `${m.name}: ${m.entity} ${m.linkedId}`;
-  return `${m.name}: ${m.count > 1 ? `${m.count} ${m.entity}s` : m.entity}${m.of ? ` (${m.of}'s own; resolve name ${JSON.stringify(m.name)} with whereJson {"contact":${JSON.stringify(m.of)}})` : ""}`;
+  return `${m.name}: ${m.count > 1 ? `${m.count} ${plural(m.entity, m.count)}` : m.entity}${m.of ? ` (${m.of}'s own; resolve name ${JSON.stringify(m.name)} with whereJson {"contact":${JSON.stringify(m.of)}})` : ""}`;
 };
 
 /** User text can't close our tags or open new ones ("</message><actions>…"). */

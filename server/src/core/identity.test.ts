@@ -7,7 +7,7 @@ import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile, type CompiledPlan } from "./compile.js";
 import { execute, type ExecEvent } from "./execute.js";
-import { identityConfig, type IdentityQuery, resolveIdentity, revalidate } from "./identity.js";
+import { heldWhere, identityConfig, type IdentityQuery, resolveIdentity, revalidate, userSelected } from "./identity.js";
 
 let registry: Registry;
 before(async () => {
@@ -46,15 +46,21 @@ describe("resolveIdentity", () => {
     assert.equal(resolve({ text: "co_1", actionRisk: "write" }).kind, "not_found");
   });
 
-  test("an exact name unique in scope binds a write", () => {
+  test("an exact name unique in scope binds a write, with or without its accents", () => {
     const r = resolve({ text: "ana ruiz", actionRisk: "write" });
     assert.ok(r.kind === "bound" && r.binding.provenance === "exact-unique" && r.binding.name === "Ana Ruiz");
+    const w = world();
+    w.f.contact({ firstName: "José", lastName: "Muñoz" });
+    const jose = resolve({ text: "Jose Munoz", actionRisk: "write" }, w);
+    assert.ok(jose.kind === "bound" && jose.binding.name === "José Muñoz", jose.decision);
   });
 
   test("two exact matches are ambiguous for a write, unless the request names a detail of one", () => {
     const r = resolve({ text: "Sarah Johnson", actionRisk: "write" });
     assert.equal(r.kind, "ambiguous");
     assert.deepEqual(r.candidates.map((c) => c.matchReason), ["exact-name", "exact-name"]);
+    assert.ok(resolve({ text: "Sarah Johnson", actionRisk: "write", qualifiers: "Text Sarah Johnson, the one with the gmail address" }).candidates.length === 1);
+    assert.equal(resolve({ text: "Sarah Johnson", actionRisk: "write", qualifiers: "Text Sarah Johnson" }).kind, "ambiguous", "her own name in an email is no detail");
     const narrowed = resolve({ text: "Sarah Johnson", actionRisk: "write", qualifiers: "email Sarah Johnson at Brightside" });
     assert.ok(narrowed.kind === "bound" && narrowed.binding.id === "ct_31" && narrowed.binding.provenance === "lookup");
   });
@@ -78,15 +84,37 @@ describe("resolveIdentity", () => {
   });
 
   test("a unique partial name asks before a write; RESOLVER_WRITE_BIND=unique binds it as a lookup", () => {
-    assert.equal(resolve({ text: "Raj", entity: "user", actionRisk: "write" }).kind, "suggest");
-    const loose = resolveIdentity({ entity: "user", text: "Raj", actionRisk: "write" }, { registry, store: world().store, config: { ...identityConfig({}), writeBind: "unique" } });
-    assert.ok(loose.kind === "bound" && loose.binding.provenance === "lookup" && loose.binding.name === "Raj Iyer");
+    assert.equal(resolve({ text: "Rosa", actionRisk: "write" }).kind, "suggest");
+    const loose = resolveIdentity({ entity: "contact", text: "Rosa", actionRisk: "write" }, { registry, store: world().store, config: { ...identityConfig({}), writeBind: "unique" } });
+    assert.ok(loose.kind === "bound" && loose.binding.provenance === "lookup" && loose.binding.name.startsWith("Rosa "));
   });
 
-  test("a read uses the unique match whatever its strength, and never offers a near miss", () => {
+  test("staff go by first name: a unique whole-word user match binds a write, a prefix still asks", () => {
+    const r = resolve({ text: "Raj", entity: "user", actionRisk: "write" });
+    assert.ok(r.kind === "bound" && r.binding.provenance === "lookup" && r.binding.name === "Raj Iyer", r.decision);
+    assert.equal(resolve({ text: "Ra", entity: "user", actionRisk: "write" }).kind, "suggest");
+  });
+
+  test("a read uses the unique match whatever its strength, and offers near misses back", () => {
     const r = resolve({ text: "Raj", entity: "user", actionRisk: "read" });
     assert.ok(r.kind === "bound" && r.binding.provenance === "lookup");
-    assert.equal(resolve({ text: "Ana Ruis", actionRisk: "read" }).kind, "not_found");
+    const near = resolve({ text: "Ana Ruis", actionRisk: "read" });
+    assert.ok(near.kind === "suggest" && near.candidates.some((c) => c.name === "Ana Ruiz"), near.decision);
+  });
+
+  test("a qualifier that matches none offers the records the name alone matches", () => {
+    const r = resolve({ text: "Sarah Johnson", actionRisk: "write", where: { company: "Nowhere Inc" } });
+    assert.equal(r.kind, "suggest", r.decision);
+    assert.deepEqual(r.candidates.map((c) => c.id).sort(), ["ct_31", "ct_32"]);
+    assert.equal(resolve({ text: "Nobody Here", actionRisk: "write", where: { company: "Nowhere Inc" } }).kind, "not_found");
+    const gmail = resolve({ text: "Sarah Johnson", actionRisk: "write", where: { email: "gmail.com" } });
+    assert.ok(gmail.kind === "bound" && gmail.binding.id === "ct_32", gmail.decision);
+    // A pick drops the qualifier that matched none, or revalidation would reject the very record offered.
+    assert.equal(gmail.kind === "bound" && gmail.binding.where, undefined);
+    assert.equal(heldWhere(r, { company: "Nowhere Inc" }), undefined);
+    const { store } = world();
+    assert.equal(revalidate(userSelected("contact", "Sarah Johnson", r.candidates[0]!, store, heldWhere(r, { company: "Nowhere Inc" })), { registry, store }), undefined);
+    assert.deepEqual(heldWhere({ kind: "ambiguous" }, { company: "Brightside" }), { company: "Brightside" });
   });
 
   test("a create never binds or asks: a same-named record is a duplicate warning", () => {

@@ -67,6 +67,12 @@ describe("grounded outcomes and clarifications", () => {
   const change = { effect: "change" as const, actions: ["M06.A01"], destination: null };
   const tasks = (type: "look" | "plan") => reply({ type, steps: [{ id: "read", kind: "action", action: "M06.A03", argsJson: "{}" }], outcome: change });
 
+  test("an answer to a question is planned with the message it answers in view", async () => {
+    const planner = scripted(createTask());
+    await run("The lead from Wayne.", planner, { answering: "Create a task to call Ana Ruiz about partnering" });
+    assert.match(planner.requests[0]!.user, /<message>Create a task to call Ana Ruiz about partnering\nThe lead from Wayne\.<\/message>/);
+  });
+
   test("a choice-labelled team question with no selector is grounded from its required argument", async () => {
     const planner = scripted(reply({ type: "clarify", clarification: "choice", question: "Which sales team?", missing: missing("M49.A05", "teamId", { userId: "us_6" }) }), reply({ steps: [{ id: "join", kind: "action", action: "M49.A05", argsJson: '{"teamId":"tm_1","userId":"us_6"}' }] }));
     const w = world();
@@ -86,6 +92,13 @@ describe("grounded outcomes and clarifications", () => {
       assert.equal(planner.requests.length, 2);
       assert.match(planner.requests[1]!.user, /<errors>/);
     }
+  });
+
+  test("a clarify with no question gets one repair: the message usually already gives the value", async () => {
+    const planner = scripted(reply({ type: "clarify", clarification: "content", missing: missing("M06.A01", "title", { dueDate: "2026-10-22" }) }), createTask());
+    const { out } = await run("Create a task to call Ana tomorrow", planner);
+    assert.ok(out.kind === "plan");
+    assert.match(planner.requests[1]!.user, /has none\. If the message already says what M06\.A01 title should be/);
   });
 
   test("nested field lookup IDs survive the look/replan loop", async () => {
@@ -417,6 +430,13 @@ describe("grounded outcomes and clarifications", () => {
     assert.match(planner.requests[1]!.user, /requested_outcome.*change/);
   });
 
+  test("an outcome id the catalog doesn't have is dropped, so the real one found later is what the plan must do", async () => {
+    const planner = scripted(reply({ type: "search_tools", query: "create task", outcome: { ...change, actions: ["M06.A??"] } }), { ...createTask(), outcome: change });
+    const { out } = await run("Remind me to call", planner);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+  });
+
   test("checks a unique identity before passing a speculative question to the user", async () => {
     const planner = scripted(reply({ type: "clarify", missing: missing("M08.A03", "tagId", { name: "referral-partner" }), clarification: "identity", question: "Which partner tag?", lookup: { entity: "tag", name: "partner", whereJson: null } }), reply({ steps: [{ id: "rename", kind: "action", action: "M08.A03", argsJson: JSON.stringify({ tagId: { $lookup: { entity: "tag", name: "partner" } }, name: "referral-partner" }) }] }));
     const w = world();
@@ -470,6 +490,27 @@ describe("grounded outcomes and clarifications", () => {
     assert.ok(out.kind === "reply" && out.status === "failed");
     assert.equal(planner.requests.length, 2);
     assert.equal(w.store.get<{ name: string }>("tags", "tg_4")!.name, "partner");
+  });
+
+  test("repeating an identity question about a name nothing is close to answers not found, without a question", async () => {
+    const ask = (name: string) => reply({ type: "clarify", missing: missing("M01.A07", "contactId", { ownerId: "us_5" }), clarification: "identity", question: `Who is ${name}?`, lookup: { entity: "contact", name, whereJson: null } });
+    const w = world();
+    const none = await planTurn({ message: "Assign Dana Whitfield to Aisha", tier: "fast" }, { registry, retriever, planner: scripted(ask("Dana Whitfield"), ask("Dana Whitfield")), clock: w.clock, store: w.store });
+    assert.ok(none.kind === "reply" && none.status === "failed", JSON.stringify(none));
+    assert.match(none.text, /couldn't find a contact named "Dana Whitfield", so nothing was changed/);
+    // A near miss is still offered.
+    const near = await planTurn({ message: "Assign Sarah Jonson to Aisha", tier: "fast" }, { registry, retriever, planner: scripted(ask("Sarah Jonson"), ask("Sarah Jonson")), clock: w.clock, store: w.store });
+    assert.ok(near.kind === "reply" && near.status === "clarify" && near.options?.some((o) => o.startsWith("Sarah Johnson")), JSON.stringify(near));
+  });
+
+  test("a question that repeats a name no record has answers not found once the planner has been told", async () => {
+    const ask = reply({ type: "clarify", missing: missing("M01.A07", "contactId", { ownerId: "us_5" }), clarification: "choice", question: "What should Dana Whitfield be assigned to?" });
+    const planner = scripted(ask, ask);
+    const w = world();
+    const out = await planTurn({ message: "Assign Dana Whitfield to Aisha", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "reply" && out.status === "failed", JSON.stringify(out));
+    assert.match(out.text, /couldn't find a contact named "Dana Whitfield", so nothing was changed/);
+    assert.equal(planner.requests.length, 2);
   });
 
   test("an identity question about a second record gets its own check", async () => {
@@ -558,6 +599,11 @@ describe("a write by id to one of several same-named records", () => {
   test("passes when the request picks one, or the plan writes to all of them", () => {
     assert.equal(oneOfSameNamed(owner(["ct_31"]), sarahs, registry, world().store, "make Aisha the owner of Sarah Johnson\nthe one at Brightside"), undefined);
     assert.equal(oneOfSameNamed(owner(["ct_31", "ct_32"]), sarahs, registry, world().store, "make Aisha the owner of both Sarah Johnsons"), undefined);
+  });
+
+  test("passes when the user picked that record when asked", () => {
+    const pick = { entity: "contact", id: "ct_31", name: "Sarah Johnson", text: "Sarah Johnson", provenance: "user-selected" as const, matchReason: "exact-name" as const, fingerprint: "" };
+    assert.equal(oneOfSameNamed(owner(["ct_31"]), sarahs, registry, world().store, "make Aisha the owner of Sarah Johnson", [pick]), undefined);
   });
 });
 
@@ -773,13 +819,15 @@ describe("planTurn", () => {
     });
   });
 
-  test("using an action that wasn't offered gets one repair round", async () => {
+  test("a real action the shortlist missed is offered once named, and its arguments are still checked", async () => {
     const planner = scripted(createTask("M48.A01"), createTask());
     const { out, events } = await run("create a task to call Ana", planner);
     assert.equal(out.kind, "plan");
-    const errs = events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : []));
-    assert.match(errs.join("\n"), /M48\.A01 was not in <actions>/);
-    assert.match(planner.requests[1]!.user, /M48\.A01 was not in <actions>/);
+    const errs = events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : [])).join("\n");
+    assert.doesNotMatch(errs, /was not in <actions>/);
+    assert.match(errs, /M48\.A01/, "the wrong action's arguments get the repair round");
+    const unknown = await run("create a task to call Ana", scripted(createTask("M99.A99"), createTask()));
+    assert.match(unknown.events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : [])).join("\n"), /M99\.A99/, "an id the registry doesn't have is still refused");
   });
 
   test("a plan that only finds records gets one repair round, so it never ends done with nothing said", async () => {
@@ -1032,6 +1080,21 @@ describe("creating a record the message names", () => {
     const sameName = (_: string, name: string) => fullNames.includes(name);
     assert.deepEqual(duplicateCreates(plan({ firstName: "Sarah" }), sarahs, "Create a contact named Sarah", sameName), []);
     assert.match(duplicateCreates(plan({ firstName: "Sarah", lastName: "Johnson" }), [{ name: "Sarah Johnson", entity: "contact", count: 2 }], "Add Sarah Johnson", sameName).join("\n"), /already exists/);
+  });
+
+  test("a name no mention covers still counts when the message says it, the store holds it, and the create feeds a later step", () => {
+    const tag = compile(reply({ steps: [
+      { id: "s1", kind: "action", action: "M08.A01", argsJson: JSON.stringify({ name: "vip" }) },
+      { id: "s2", kind: "action", action: "M08.A06", argsJson: JSON.stringify({ tagId: "$s1.id", recordType: "contact", recordId: "ct_2" }) },
+    ] }), registry);
+    assert.ok(tag.ok, tag.ok ? "" : tag.errors.join("\n"));
+    const marcus = compile(reply({ steps: [{ id: "s1", kind: "action", action: "M01.A01", argsJson: JSON.stringify({ firstName: "Marcus", lastName: "Lee" }) }] }), registry);
+    assert.ok(marcus.ok);
+    assert.deepEqual(duplicateCreates(marcus.plan, [], "Create a contact called Marcus Lee", () => true), [], "the record itself is what's asked for; the resolver warns instead");
+    const held = (entity: string, name: string) => entity === "tag" && name === "vip";
+    assert.match(duplicateCreates(tag.plan, [], 'Tag "Elena Costa" as vip', held).join("\n"), /vip already exists as a tag/);
+    assert.deepEqual(duplicateCreates(tag.plan, [], "Tag Elena with something", held), [], "a name the message doesn't say is the planner's own");
+    assert.deepEqual(duplicateCreates(tag.plan, [], "Tag Elena as vip", () => false), [], "nothing in the store by that name");
   });
 
   test("leaving out a field the message says comes with it is sent back to be set or asked for", () => {

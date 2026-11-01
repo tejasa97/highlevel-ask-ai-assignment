@@ -359,6 +359,11 @@ describe("ids carry their record type", () => {
     assert.match(errorsOf(tag("lead")), /M08\.A06 arg recordId takes a lead id, but \$s1\.items\[0\]\.id is a contact id/);
   });
 
+  test("a record-type arg left out is the type its id holds", () => {
+    assert.equal(errorsOf([{ id: "s1", kind: "resolve", entity: "lead", name: "Priya Haddad" }, action("s2", "M08.A06", { tagId: "tg_4", recordId: "$s1.id" })]), "");
+    assert.match(errorsOf([action("s1", "M08.A06", { tagId: "tg_4", recordId: "ct_1" })]), /recordType/);
+  });
+
   test("ids of unknown type, and args that don't name one, are not checked", () => {
     assert.equal(errorsOf([action("s1", "M21.A03", { status: "completed" }), action("s2", "M06.A01", { title: "Call", assigneeId: "$s1.items[0].hostId" })]), "");
     assert.equal(errorsOf([action("s1", "M21.A03", { status: "completed" }), action("s2", "M06.A01", { title: "$s1.items[0].id" })]), "");

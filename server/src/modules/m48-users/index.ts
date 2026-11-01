@@ -292,6 +292,7 @@ const auditActivity = defineAction({
 export default {
   actions: [inviteUser, getUser, listUsers, updateUser, assignRole, revokeRole, deactivateUser, reactivateUser, listPermissions, auditActivity],
   resolvers: {
-    user: (store, name) => candidates(store.all<User>("users"), name, (u) => u.name, (u) => u.roles.join(", "), (u) => (u.status === "deactivated" ? u.status : undefined)),
+    // Staff are "Tom" and "Aisha" in a request: a unique first-name match binds on writes too.
+    user: Object.assign((store: Store, name: string) => candidates(store.all<User>("users"), name, (u) => u.name, (u) => u.roles.join(", "), (u) => (u.status === "deactivated" ? u.status : undefined)), { partialNameBinds: true }),
   },
 } satisfies ModuleExports;

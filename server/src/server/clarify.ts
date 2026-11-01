@@ -299,7 +299,9 @@ export function matchCandidates(text: string, candidates: readonly RankedCandida
   // candidates leave it open: either way the question is asked again.
   const told = said.split(" ");
   if (told.length > ANSWER_WORDS) return [];
-  const all = candidates.map((c) => new Set(partsOf(c).flatMap((p) => p.split(" ")).filter((w) => w.length > 2 && !FILLER.has(w))));
+  // An email's parts are words too: "the gmail one" is sjohnson@gmail.example.
+  const wordsOf = (c: RankedCandidate) => [c.name, ...(c.detail ?? "").split(","), ...(keys[c.id] ?? [])].flatMap((p) => norm(p.replace(/[@._+-]/g, " ")).split(" "));
+  const all = candidates.map((c) => new Set(wordsOf(c).filter((w) => w.length > 2 && !FILLER.has(w))));
   const distinctive = told.filter((w) => !FILLER.has(w) && all.filter((ws) => ws.has(w)).length === 1);
   return candidates.filter((_, i) => distinctive.some((w) => all[i]!.has(w)));
 }

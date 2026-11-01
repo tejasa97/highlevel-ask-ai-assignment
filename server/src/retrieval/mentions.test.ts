@@ -3,7 +3,7 @@ import { before, describe, test } from "node:test";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { buildCards } from "./cards.js";
-import { mentions, nameRuns } from "./mentions.js";
+import { mentions, nameRuns, withTextFields } from "./mentions.js";
 import { Retriever } from "./retrieve.js";
 
 let registry: Registry;
@@ -14,6 +14,20 @@ before(async () => {
 const linked = (message: string, ctx = world()) => mentions(message, registry, ctx.store).map((m) => `${m.name}: ${m.entity}${m.count > 1 ? ` x${m.count}` : ""}`);
 
 describe("mentions", () => {
+  test("an exact email links to its record", () => {
+    assert.deepEqual(mentions("Text sjohnson@gmail.example that we got her message", registry, world().store).map((m) => [m.name, m.entity, m.linkedId]), [["sjohnson@gmail.example", "contact", "ct_32"]]);
+    assert.deepEqual(mentions("Email nobody@nowhere.example.", registry, world().store), []);
+  });
+
+  test("a name that is other records' text in a field named after a record type says so", () => {
+    const ctx = world();
+    ctx.f.contact({ firstName: "Ana", lastName: "One", company: "Umbrellaco" });
+    ctx.f.contact({ firstName: "Ben", lastName: "Two", company: "Umbrellaco" });
+    const named = withTextFields([{ name: "Umbrellaco", entity: "opportunity", count: 1 }, { name: "Ana One", entity: "contact", count: 1 }], registry, ctx.store);
+    assert.deepEqual(named[0]!.inField, [{ table: "contacts", field: "company", count: 2 }]);
+    assert.equal(named[1]!.inField, undefined);
+  });
+
   test("a full name links to the record type it belongs to", () => {
     const ctx = world();
     ctx.f.lead({ firstName: "Quinn", lastName: "Leadonly" });

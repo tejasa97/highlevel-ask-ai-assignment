@@ -4,6 +4,8 @@ import type { RunResult, StepResult } from "./execute.js";
 import { optionLabel } from "./identity.js";
 import { parseRef } from "./refs.js";
 
+const label = (entity: string) => entity.replaceAll("_", " ");
+
 // The reply the user reads. Written by code from the run result, not by the model:
 // no second LLM call, and nothing in it can be a hallucinated success.
 // Reads that feed a later step stay quiet; a read nothing else uses is the answer, so its result is shown.
@@ -22,7 +24,7 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
 
   for (const r of run.steps) {
     const step = byId.get(r.id)!;
-    const line = describe(step, r, registry, used) ?? (used.has(r.id) || r.status !== "done" ? null : found(step, r.output, nounOf(step, byId, registry)));
+    const line = emptyInput(step, r, byId, registry) ?? describe(step, r, registry, used) ?? (used.has(r.id) || r.status !== "done" ? null : found(step, r.output, nounOf(step, byId, registry)));
     if (line) lines.push(line);
   }
 
@@ -42,7 +44,10 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
   }
   if (run.clarification) {
     const c = run.clarification;
-    lines.push(`More than one ${c.entity} matches "${c.name}": ${c.candidates.map(optionLabel).join(", ")}. ${whichOne(plan, c.stepId)}`);
+    const options = c.candidates.map(optionLabel);
+    // Only near misses ("suggest") is a "did you mean", not a choice between matches.
+    if (c.kind === "suggest") lines.push(options.length === 1 ? `No ${label(c.entity)} is named exactly "${c.name}". Did you mean ${options[0]}?` : `No ${label(c.entity)} is named exactly "${c.name}". Did you mean one of these: ${options.join(", ")}?`);
+    else lines.push(`More than one ${label(c.entity)} matches "${c.name}": ${options.join(", ")}. ${whichOne(plan, c.stepId)}`);
   }
   return lines.join("\n");
 }
@@ -104,6 +109,16 @@ export function shownRecords(plan: CompiledPlan, run: RunResult, registry: Regis
   return out;
 }
 
+/** A step that failed on "$s1.items has 0 items, no [0]", or a loop over a search that found nobody: what the user
+ * reads is that the search found nobody, and what it searched for. */
+function emptyInput(step: CStep, r: StepResult, byId: Map<string, CStep>, registry: Registry): string | null {
+  const ref = r.status === "failed" && r.error ? /^(\$[A-Za-z_]\w*)\S* has 0 items/.exec(r.error.message)?.[1]
+    : step.kind === "forEach" && r.items?.length === 0 && typeof step.in === "string" ? step.in : undefined;
+  const source = ref ? byId.get(rootOf(ref)) : undefined;
+  if (!source || source.kind !== "action" || source.call.action.risk !== "read") return null;
+  return `Couldn't find any ${plural(nounOf(source, byId, registry), 0)}${criteria(source)}, so I didn't ${what(step, registry)}.`;
+}
+
 function describe(step: CStep, r: StepResult, registry: Registry, used: Set<string>): string | null {
   if (r.status === "awaiting_confirmation" || r.status === "needs_clarification") return null;
   if (r.status === "skipped") return `Skipped ${what(step, registry)}: ${r.error?.code === "NOT_RUN" ? r.error.message : "an earlier step didn't complete"}.`;
@@ -158,7 +173,7 @@ function found(step: CStep, output: unknown, noun: string): string | null {
   const items = Array.isArray(output) ? output : isList(output) ? output.items : null;
   if (items) {
     const total = isList(output) ? output.total : items.length;
-    if (total === 0) return `No ${plural(noun, 0)} found${criteria(step)}.`;
+    if (total === 0) return `Couldn't find any ${plural(noun, 0)}${criteria(step)}.`;
     if (items.length === 1 && total === 1) return `Found 1 ${noun}: ${record(items[0])}.`;
     const names = items.map((x) => brief(x));
     // Two records with the same name read as one; tell them apart by their first plain detail.
@@ -209,7 +224,8 @@ function criteria(step: CStep): string {
   const parts = Object.entries(args)
     // A record id names nothing a user knows, whether passed by $ref or written out ("contact id ct_35").
     .filter(([k, v]) => k !== "limit" && !/Ids?$/.test(k) && shown(v) && !(typeof v === "string" && parseRef(v)))
-    .map(([k, v]) => `${words(k)} ${typeof v === "object" ? JSON.stringify(v) : String(v)}`);
+    // A free-text search is the words the user gave: "matching "Marta Patel"", not "matching query Marta Patel".
+    .map(([k, v]) => (k === "query" && typeof v === "string" ? `"${v}"` : `${words(k)} ${typeof v === "object" ? JSON.stringify(v) : String(v)}`));
   return parts.length ? ` matching ${parts.join(", ")}` : "";
 }
 
