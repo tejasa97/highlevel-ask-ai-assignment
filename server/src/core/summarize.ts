@@ -173,7 +173,7 @@ function found(step: CStep, output: unknown, noun: string): string | null {
   const items = Array.isArray(output) ? output : isList(output) ? output.items : null;
   if (items) {
     const total = isList(output) ? output.total : items.length;
-    if (total === 0) return `Couldn't find any ${plural(noun, 0)}${criteria(step)}.`;
+    if (total === 0) return `No ${plural(noun, 0)} found${criteria(step)}.`;
     if (items.length === 1 && total === 1) return `Found 1 ${noun}: ${record(items[0])}.`;
     const names = items.map((x) => brief(x));
     // Two records with the same name read as one; tell them apart by their first plain detail.

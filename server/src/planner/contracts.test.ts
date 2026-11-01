@@ -22,6 +22,16 @@ test("a requested change is not satisfied by its prerequisite read or an unrelat
   assert.deepEqual(outcomeErrors(compiled("M06.A05", { taskId: "tk_1", assigneeId: "us_5" }), outcome), []);
 });
 
+test("a read declared next to a change is not required when it only finds the record the change takes", () => {
+  const outcome = { effect: "change" as const, actions: ["M03.A02", "M03.A04"], destination: null };
+  const actionOf = (id: string) => registry.get(id);
+  assert.deepEqual(outcomeErrors(compiled("M03.A04", { leadId: "ld_1", status: "contacted" }), outcome, undefined, actionOf), []);
+  // The change itself is still required.
+  assert.match(outcomeErrors(compiled("M03.A02", { leadId: "ld_1" }), outcome, undefined, actionOf).join("\n"), /only reads/);
+  // A read of something else the request names still has to run.
+  assert.match(outcomeErrors(compiled("M03.A04", { leadId: "ld_1", status: "contacted" }), { ...outcome, actions: ["M06.A03", "M03.A04"] }, undefined, actionOf).join("\n"), /M06.A03/);
+});
+
 test("read-only requests remain valid; a write cannot be smuggled into a read outcome", () => {
   const outcome = { effect: "read" as const, actions: ["M06.A03"], destination: null };
   assert.deepEqual(outcomeErrors(compiled("M06.A03", {}), outcome), []);

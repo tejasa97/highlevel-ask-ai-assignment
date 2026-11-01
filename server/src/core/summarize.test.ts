@@ -115,7 +115,7 @@ describe("summarize: a plan that only reads still answers", () => {
 
   test("an empty search says so, with what it searched for", async () => {
     const { text } = await reply([action("s1", "M03.A03", { query: "nobody-by-this-name" })]);
-    assert.equal(text, "Couldn't find any leads matching \"nobody-by-this-name\".");
+    assert.equal(text, "No leads found matching \"nobody-by-this-name\".");
   });
 
   test("a write fed the first of an empty search says the search found nobody, not the reference error", async () => {

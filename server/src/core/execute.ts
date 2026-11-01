@@ -201,7 +201,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     const search = ref && searched.get(ref.root);
     const items = (outputs.get(ref?.root ?? "") as { items?: unknown[] } | undefined)?.items;
     if (!search || !Array.isArray(items) || items.length < 2) return undefined;
-    const candidates = items.slice(0, 20).map((x, i) => ({ id: itemKey(x, i), name: labelOf(x) ?? itemKey(x, i), ...(detailOf(x) ? { detail: detailOf(x) } : {}) }));
+    const candidates = candidatesOf(items.slice(0, 20));
     return { stepId: ref!.root, entity: search.entity, name: search.query, candidates };
   };
   const pickedFirst = (step: CStep & { kind: "action" }) => {
@@ -235,7 +235,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
       if (values.length === 0) return { error: { code: "NOT_FOUND", message: `${raw} found nothing, so there is no ${at.at(-1)} to ${call.action.name.toLowerCase()} with` } };
       const ref = parseRef(raw)!;
       const items = asList(valueAt(outputs.get(ref.root), ref.path.slice(0, ref.path.findIndex((p) => "all" in p)), `$${ref.root}`), raw);
-      const candidates = items.slice(0, 20).map((x, i) => ({ id: itemKey(x, i), name: labelOf(x) ?? itemKey(x, i), ...(detailOf(x) ? { detail: detailOf(x) } : {}) }));
+      const candidates = candidatesOf(items.slice(0, 20));
       const search = searched.get(ref.root);
       return { ask: { stepId: ref.root, entity: search?.entity ?? call.action.entities?.consumes?.[0] ?? "record", name: search?.query ?? String(at.at(-1)), candidates } };
     }
@@ -822,11 +822,25 @@ function labelOf(item: unknown): string | undefined {
 }
 
 /** A couple of short descriptive fields, so same-named records can be told apart: "Austin, active". */
-function detailOf(item: unknown): string | undefined {
-  const o = (item ?? {}) as Record<string, unknown>;
+/**
+ * Options to choose between, each with the details that tell it apart from the others: two leads named Kai Morgan
+ * differ by company and email, not by firstName and lastName, which only repeat the name.
+ */
+function candidatesOf(items: unknown[]): { id: string; name: string; detail?: string }[] {
   const skip = /^(id|name|title|createdAt|updatedAt)$|Id$|At$/;
-  const parts = Object.entries(o).filter(([k, v]) => !skip.test(k) && typeof v === "string" && v && v.length <= 40).map(([, v]) => v as string);
-  return parts.slice(0, 2).join(", ") || undefined;
+  const fields = items.map((x, i) => {
+    const name = labelOf(x) ?? itemKey(x, i);
+    const words = new Set(norm(name).split(" "));
+    const own = Object.entries((x ?? {}) as Record<string, unknown>)
+      .filter(([k, v]) => !skip.test(k) && typeof v === "string" && v && v.length <= 40 && !norm(v).split(" ").every((w) => words.has(w)));
+    return { id: itemKey(x, i), name, own: own as [string, string][] };
+  });
+  const differs = (key: string) => new Set(fields.map((f) => f.own.find(([k]) => k === key)?.[1])).size > 1;
+  return fields.map(({ id, name, own }) => {
+    const telling = own.filter(([k]) => differs(k));
+    const detail = (telling.length ? telling : own).slice(0, 2).map(([, v]) => v).join(", ");
+    return { id, name, ...(detail ? { detail } : {}) };
+  });
 }
 
 function toError(e: unknown): StepError {

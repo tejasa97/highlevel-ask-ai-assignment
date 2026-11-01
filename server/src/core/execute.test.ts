@@ -472,6 +472,18 @@ describe("one value of a list in a single-ID argument", () => {
     assert.equal(none.status, "failed");
     assert.match(JSON.stringify(none.steps.at(-1)!.error), /NOT_FOUND.*found nothing/);
   });
+
+  test("two records with the same name are told apart by what differs, not by their name's parts", async () => {
+    const w = fresh();
+    const [a, b] = w.store.all<{ id: string; company: string }>("leads");
+    w.store.update("leads", a!.id, { firstName: "Kai", lastName: "Morgan", company: "Globex" });
+    w.store.update("leads", b!.id, { firstName: "Kai", lastName: "Morgan", company: "Initech" });
+    const r = await execute(assign({ lastName: "Morgan" }), registry, w, { executionId: "two-kais" });
+    assert.equal(r.status, "needs_clarification");
+    const details = r.clarification!.candidates.map((c) => c.detail ?? "");
+    assert.ok(details.every((d) => !/\bKai\b|\bMorgan\b/.test(d)), JSON.stringify(details));
+    assert.ok(details.some((d) => d.includes("Globex")) && details.some((d) => d.includes("Initech")), JSON.stringify(details));
+  });
 });
 
 describe("optional arguments from empty references", () => {

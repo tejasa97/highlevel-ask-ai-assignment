@@ -604,7 +604,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     // summary stays. A question that only reads ("is that the only one?") also keeps the planner's verdict on
     // top, unless it leaks raw ids.
     if (d.type === "answer" && (lookPlan || outcome?.effect === "change") && !emptyChecked) {
-      const errors = lookPlan ? [...outcomeErrors(lookPlan, outcome, undefined, (id) => registry.get(id)?.name), ...(outcome ? [] : readOnlyIntentError(input.message, lookPlan, offered, registry))] : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
+      const errors = lookPlan ? [...outcomeErrors(lookPlan, outcome, undefined, (id) => registry.get(id)), ...(outcome ? [] : readOnlyIntentError(input.message, lookPlan, offered, registry))] : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
       if (!errors.length && lookPlan) {
         const answer = outcome?.effect !== "change" ? d.text?.trim() : undefined;
         return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry), ...(answer && !RAW_ID.test(answer) ? { answer } : {}) };
@@ -653,7 +653,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         ? inventedIds(compiled.plan, user, exists)
         : compiled.plan.steps.some((s) => callsOf(s).length)
           ? [
-              ...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }, (id) => registry.get(id)?.name),
+              ...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }, (id) => registry.get(id)),
               // Without a stated outcome, the message's own verbs are the only sign a write was asked for. A read outcome
               // this reply states for a message that asks, then tells, may describe only the asking.
               ...(outcome && !(outcomeFrom === reply && outcome.effect === "read") ? [] : readOnlyIntentError(input.message, compiled.plan, offered, registry)),

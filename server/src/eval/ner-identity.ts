@@ -121,7 +121,7 @@ export const NOT_FOUND_NAMED_RE = new RegExp(
     `|\\b(?:couldn'?t|could not|can'?t|cannot|didn'?t|did not|unable to|wasn'?t able to) (?:find|locate) (?:a |an |any )?(?:\\w+ )?${NOUN} (?:named|called|matching|by (?:that|the) name|with (?:that|the) (?:name|email))`,
   "i",
 );
-export const NOT_FOUND_RE = /\b(?:couldn'?t|could not|can'?t|cannot|didn'?t|did not|unable to|wasn'?t able to) (?:find|locate)\b|\bnot found\b|\bdoes(?:n'?t| not) exist\b|\bno (?:matches|match|results?) for\b|\bisn'?t (?:a |an )?(?:contact|lead|user)\b|no hay|no existe|introuvable|n'existe pas|nicht gefunden/i;
+export const NOT_FOUND_RE = /\b(?:couldn'?t|could not|can'?t|cannot|didn'?t|did not|unable to|wasn'?t able to) (?:find|locate)\b|\bnot found\b|\bno (?:\w+ ){1,2}found\b|\bdoes(?:n'?t| not) exist\b|\bno (?:matches|match|results?) for\b|\bisn'?t (?:a |an )?(?:contact|lead|user)\b|no hay|no existe|introuvable|n'existe pas|nicht gefunden/i;
 export const WARN_NAMED_RE = new RegExp(
   `\\b${NOUN}\\b[^.?!;:,—\\n]{0,40}\\balready exists?\\b|\\balready (?:have|has|is|exists?) (?:a |an |another )?(?:contact|lead)\\b` +
     `|\\banother (?:contact|lead) (?:named|called|with (?:that|the same) name)|\\bwith the same name\\b|\\bduplicate (?:contact|lead)s?\\b`,

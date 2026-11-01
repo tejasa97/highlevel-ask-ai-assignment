@@ -87,7 +87,7 @@ test("not_found and create+warn cases must name the person, and the utterance mu
 });
 
 test("reply matching: not-found and duplicate warnings must be about the person", () => {
-  for (const r of ["I couldn't find a contact named Rose Itoh.", "Rose Itoh doesn't exist in your contacts.", "There's no lead called Rose Itoh.", "No encontré a Rose Itoh: no existe."])
+  for (const r of ["I couldn't find a contact named Rose Itoh.", "Rose Itoh doesn't exist in your contacts.", "There's no lead called Rose Itoh.", "No encontré a Rose Itoh: no existe.", "No contacts found matching \"Rose Itoh\"."])
     assert.ok(saysNotFound(r, "Rose Itoh"), r);
   for (const r of ["Done — no one else was changed.", "Tagged Rosa Ito; the vip tag doesn't exist yet so I created it.", "I couldn't find any open tasks.", "All set."])
     assert.ok(!saysNotFound(r, "Rose Itoh"), r);

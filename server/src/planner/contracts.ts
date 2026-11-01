@@ -8,14 +8,20 @@ import type { SubmitPlan } from "./submit-plan.js";
 export type Outcome = NonNullable<SubmitPlan["outcome"]>;
 
 /** Checks declared task coverage, not the truth of the model's interpretation of the request. */
-export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: { message: string; offered: RegisteredAction[] }, nameOf: (id: string) => string | undefined = () => undefined): string[] {
+export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: { message: string; offered: RegisteredAction[] }, actionOf: (id: string) => RegisteredAction | undefined = () => undefined): string[] {
   if (!outcome) return []; // historical saved replies predate the contract
   const calls = plan.steps.flatMap((s) => s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []);
   const ids = new Set(calls.map((a) => a.id));
+  // "Mark Kai Morgan as contacted" declared with Get lead details: that read only finds the lead the change already takes.
+  const changed = new Set(calls.filter((a) => a.risk !== "read").flatMap((a) => a.entities?.consumes ?? []));
+  const findsTarget = (id: string) => {
+    const a = actionOf(id);
+    return outcome.effect === "change" && a?.risk === "read" && !!a.entities?.consumes?.length && a.entities.consumes.every((e) => changed.has(e));
+  };
   // A small planner can act on "add a step that calls X", not on "X is missing": say which call, and what ran instead.
   const ran = [...ids].join(", ");
-  const errors = outcome.actions.filter((id) => !ids.has(id)).map((id) => {
-    const name = nameOf(id);
+  const errors = outcome.actions.filter((id) => !ids.has(id) && !findsTarget(id)).map((id) => {
+    const name = actionOf(id)?.name;
     return `requested operation ${id}${name ? ` (${name})` : ""} is not in the plan: add a step that calls ${id} with its arguments from the message${ran ? `; ${ran} ${ids.size > 1 ? "do" : "does"} not do it` : ""}`;
   });
   if (outcome.effect === "change" && !calls.some((a) => a.risk !== "read")) errors.push("the requested outcome changes records, but this plan only reads; use look for prerequisites, then plan the final change");
