@@ -5,6 +5,7 @@ import { before, describe, test } from "node:test";
 import type { SubmitPlan } from "../planner/submit-plan.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
+import { testWorld } from "../testkit.js";
 import { compile, type CompiledPlan } from "./compile.js";
 import { execute, type ExecEvent } from "./execute.js";
 import { heldWhere, identityConfig, type IdentityQuery, resolveIdentity, revalidate, userSelected } from "./identity.js";
@@ -103,6 +104,16 @@ describe("resolveIdentity", () => {
     assert.equal(resolve({ text: "Portal export", entity: "ticket", actionRisk: "write" }).kind, "bound", "part of the title is still every word said");
     assert.notEqual(resolve({ text: "Portal export broken", entity: "ticket", actionRisk: "write" }).kind, "bound", "a word no ticket holds asks");
     assert.equal(resolve({ text: "Rosa", actionRisk: "write" }).kind, "suggest", "a contact's first name still asks");
+  });
+
+  test("a record said in the plural binds its singular name: \"2 Ceramic Mugs\"", async () => {
+    const w = await testWorld();
+    const mug = w.f.product({ name: "Ceramic Mug" });
+    w.f.product({ name: "Ceramic Bowl" });
+    const r = resolveIdentity({ entity: "product", text: "Ceramic Mugs", actionRisk: "write" }, { registry, store: w.store });
+    assert.ok(r.kind === "bound" && r.binding.id === mug.id, r.decision);
+    w.f.product({ name: "Ceramic Mug Set" });
+    assert.notEqual(resolveIdentity({ entity: "product", text: "Ceramic Mugs", actionRisk: "write" }, { registry, store: w.store }).kind, "bound", "two records holding the words still ask");
   });
 
   test("a read uses the unique match whatever its strength, and offers near misses back", () => {

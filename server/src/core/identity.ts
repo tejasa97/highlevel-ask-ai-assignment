@@ -172,7 +172,11 @@ function levenshtein(a: string, b: string, max: number): number {
  * entity's own resolver returns for that scope: a hint for a record of another type, or outside the parent, is dropped.
  */
 /** Every word said is a whole word of the record's: "tom" in "Tom Becker", not "to" or "becke". */
-const wholeWords = (said: string[], name: string) => { const words = new Set(norm(name).split(" ")); return said.every((w) => words.has(w)); };
+// "2 Ceramic Mugs" says the product Ceramic Mug: a word said in the plural holds its singular.
+const wholeWords = (said: string[], name: string) => {
+  const words = new Set(norm(name).split(" "));
+  return said.every((w) => words.has(w) || (w.endsWith("s") && words.has(w.slice(0, -1))) || (w.endsWith("es") && words.has(w.slice(0, -2))));
+};
 
 export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; store: Store; config?: IdentityConfig }): IdentityResolution {
   const config = deps.config ?? identityConfig();
