@@ -1,6 +1,7 @@
 import type { Registry } from "../registry/registry.js";
-import type { CompiledPlan, CStep } from "./compile.js";
+import { argumentRole, type CompiledPlan, type CStep } from "./compile.js";
 import type { RunResult, StepResult } from "./execute.js";
+import { optionLabel } from "./identity.js";
 import { parseRef } from "./refs.js";
 
 // The reply the user reads. Written by code from the run result, not by the model:
@@ -41,21 +42,15 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
   }
   if (run.clarification) {
     const c = run.clarification;
-    lines.push(`More than one ${c.entity} matches "${c.name}": ${c.candidates.map((x) => (x.detail ? `${x.name} (${x.detail})` : x.name)).join(", ")}. ${whichOne(plan, c.stepId)}`);
+    lines.push(`More than one ${c.entity} matches "${c.name}": ${c.candidates.map(optionLabel).join(", ")}. ${whichOne(plan, c.stepId)}`);
   }
   return lines.join("\n");
 }
 
 /** "Which one is the contact that stays?" when the name fills an argument named for its role (a merge's keepId). */
 function whichOne(plan: CompiledPlan, stepId: string): string {
-  for (const s of plan.steps) {
-    for (const call of s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : []) {
-      const key = Object.keys(call.args).find((k) => call.args[k] === `$${stepId}.id` && call.action.idTypes?.[k]);
-      const role = key && ((call.action.inputSchema.properties ?? {}) as Record<string, { description?: string }>)[key]?.description;
-      if (role) return `Which one is ${role}?`;
-    }
-  }
-  return "Which one?";
+  const role = argumentRole(plan, stepId)?.description;
+  return role ? `Which one is ${role}?` : "Which one?";
 }
 
 /** Records the reply talks about, sent with it so the client can show them as cards rather than a sentence. */

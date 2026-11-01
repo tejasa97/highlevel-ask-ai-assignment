@@ -232,7 +232,7 @@ describe("touchedRecords", () => {
   }
 
   test("name each record a turn found or made, with its id and status, for the next turn to refer to", async () => {
-    const text = await records([{ id: "s1", kind: "resolve", entity: "user", name: "Raj" }, action("s2", "M06.A01", { title: "Call Ana", assigneeId: "$s1.id" })]);
+    const text = await records([{ id: "s1", kind: "resolve", entity: "user", name: "Raj Iyer" }, action("s2", "M06.A01", { title: "Call Ana", assigneeId: "$s1.id" })]);
     assert.match(text!, /^user us_\d+ "Raj[^"]*"/);
     assert.match(text!, /; task tk_\d+ "Call Ana" \(\w+\)$/);
   });

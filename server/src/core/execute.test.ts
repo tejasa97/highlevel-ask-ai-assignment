@@ -4,7 +4,7 @@ import type { SubmitPlan } from "../planner/submit-plan.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile, type CompiledPlan } from "./compile.js";
-import { execute, matches, narrowByRequest } from "./execute.js";
+import { execute, identityRisk, matches, narrowByRequest } from "./execute.js";
 import { summarize } from "./summarize.js";
 import { valueAt } from "./refs.js";
 
@@ -644,5 +644,21 @@ describe("writes over a search see every match", () => {
     ]));
     const first = await execute(p, registry, ctx, { executionId: "filter-widened" });
     assert.equal(first.pending?.count, 120);
+  });
+});
+
+describe("what a looked-up record is for", () => {
+  test("a record read, filtered, then written through a loop is a write target", () => {
+    // The Sales team is only read (s2), but its available members (s3) are who the leads are assigned to (s5).
+    assert.equal(identityRisk(compiled(facebookWorkflow), "s1"), "write");
+  });
+
+  test("a record only read from stays a read", () => {
+    const p = compiled(plan([
+      { id: "s1", kind: "resolve", entity: "team", name: "Sales" },
+      action("s2", "M49.A09", { teamId: "$s1.id" }),
+      op("s3", "filter", { in: "$s2.members", where: { available: true } }),
+    ]));
+    assert.equal(identityRisk(p, "s1"), "read");
   });
 });

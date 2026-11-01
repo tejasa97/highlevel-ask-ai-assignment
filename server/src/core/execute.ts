@@ -7,6 +7,7 @@ import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
 import { ENTITIES } from "../store/entities.js";
 import { normalizeDateTimes } from "./datetimes.js";
+import { type ActionRisk, type IdentityBinding, type IdentityResolution, legacyResolution, narrowByRequest, resolveIdentity, resolverOff, revalidate } from "./identity.js";
 import { OTHER_THAN } from "./lookups.js";
 import { collectRefs, loopRead, parseRef, pathOf, RefError, type Ref, substitute, valueAt } from "./refs.js";
 
@@ -42,6 +43,8 @@ export interface Pending extends Approval {
   blockedCount?: number;
   /** Every step this one approval decides, when it covers a run of steps (several sends checked together). */
   covers?: string[];
+  /** The named records this step acts on, and how each was bound (exact-unique, lookup, user-selected). */
+  identities?: IdentityBinding[];
 }
 
 type ConcreteCall = {
@@ -61,6 +64,14 @@ export interface Clarification {
   entity: string;
   name: string;
   candidates: Candidate[];
+  /** Set for a name lookup: several exact matches ("ambiguous") or only near misses ("did you mean": "suggest"). */
+  kind?: "ambiguous" | "suggest";
+  /** The identity resolver's full answer, ranked candidates with their match reasons. */
+  resolution?: IdentityResolution;
+  /** The resolve step's scope as it ran (refs filled in), so a pick binds and revalidates in the same place. */
+  where?: Record<string, string>;
+  /** How the resolve steps before this one were bound, so a resumed run revalidates them instead of resolving again. */
+  bindings?: Record<string, IdentityBinding>;
 }
 
 export interface StepError {
@@ -119,7 +130,9 @@ export type ExecEvent =
   | { type: "step.done"; stepId: string; status: StepStatus }
   | { type: "step.failed"; stepId: string; error: StepError }
   | { type: "confirm.required"; pending: Pending }
-  | { type: "clarify.required"; clarification: Clarification };
+  | { type: "clarify.required"; clarification: Clarification }
+  /** Every identity decision: a resolve step's answer, or a binding refused at execution. */
+  | { type: "identity.resolved"; stepId: string; kind: IdentityResolution["kind"] | "revalidated" | "refused"; entity: string; text: string; decision: string; binding?: IdentityBinding; candidates?: IdentityResolution["candidates"] };
 
 export interface ExecOptions {
   executionId: string;
@@ -152,6 +165,13 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   const emit = opts.onEvent ?? (() => {});
   let writesAttempted = false;
   let nameMissing: string | undefined;
+  // How each resolve step's record was bound, for the approval preview.
+  const bindings = new Map<string, IdentityBinding>();
+  const riskOf = (id: string): ActionRisk => identityRisk(plan, id);
+  const withIdentities = (gate: Pending, steps: CStep[]): Pending => {
+    const ids = [...new Set(steps.flatMap((s) => s.deps))].map((d) => bindings.get(d)).filter((b): b is IdentityBinding => !!b);
+    return ids.length ? { ...gate, identities: ids } : gate;
+  };
   const finish = (status: RunStatus, extra: Partial<RunResult> = {}): RunResult => ({
     writesAttempted,
     executionId: opts.executionId,
@@ -249,6 +269,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   };
   const ask = (step: CStep, clarification: Clarification) => {
     results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });
+    if (bindings.size) clarification = { ...clarification, bindings: Object.fromEntries(bindings) };
     emit({ type: "clarify.required", clarification });
     return finish("needs_clarification", { clarification });
   };
@@ -289,20 +310,9 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     try {
       switch (step.kind) {
         case "resolve": {
-          if (step.pinned) {
-            done({ ...step.pinned });
-            break;
-          }
-          const { [OTHER_THAN]: other, ...where } = substitute(step.where ?? {}, lookup()) as Record<string, string>;
-          // The same name in two arguments of one call (merge the two Sarah Johnsons) means two different records.
-          const all = registry.resolver(step.entity)!(ctx.store, step.name, where).filter((c) => c.id !== other);
-          const usable = all.filter((c) => !c.inactive);
-          const found = usable.length > 1 && opts.request ? narrowByRequest(usable, opts.request) : usable;
-          if (found.length === 0 && all.length > 0) {
-            // Only unusable records match (a deactivated user, a closed deal): say so, rather than "no match".
-            fail({ code: "CONFLICT", message: all.map((c) => `${c.name} is ${c.inactive}`).join("; ") });
-            nameMissing = `"${step.name}" can't be used`;
-          } else if (found.length === 0) {
+          const where = substitute(step.where ?? {}, lookup()) as Record<string, string>;
+          const actionRisk = riskOf(step.id);
+          const notFound = () => {
             // The planner sometimes guesses the wrong record type for a name; say where the name does exist.
             const elsewhere = Object.keys(where).length ? [] : registry
               .resolverEntities()
@@ -310,13 +320,60 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             const hint = elsewhere.length ? ` (but a ${elsewhere.join(" and a ")} does)` : "";
             fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"${hint}` });
             nameMissing = `no ${step.entity} matches "${step.name}"`;
-          } else if (found.length > 1) {
-            const clarification = { stepId: step.id, entity: step.entity, name: step.name, candidates: found };
-            results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });
-            emit({ type: "clarify.required", clarification });
-            return finish("needs_clarification", { clarification });
+          };
+          if (step.bound) {
+            // Bound before this run (a unique strong key, or the user's pick): the record must still be the one chosen.
+            const stale = revalidate(step.bound, { registry, store: ctx.store });
+            emit({ type: "identity.resolved", stepId: step.id, kind: stale ? "refused" : "revalidated", entity: step.entity, text: step.name, decision: stale?.message ?? `${step.bound.provenance} binding still holds`, binding: step.bound });
+            if (stale) {
+              fail({ code: "STALE_IDENTITY", message: `${stale.message}; ask the user which ${step.entity} they mean`, details: { reason: stale.code, binding: step.bound } });
+              nameMissing = `"${step.name}" must be chosen again`;
+              break;
+            }
+            bindings.set(step.id, step.bound);
+            done({ id: step.bound.id, name: step.bound.name });
+            break;
+          }
+          if (resolverOff()) {
+            // The lookup as it was before the resolver: NER's pin as is, else the store's matches narrowed by the request.
+            if (step.pinned) {
+              done({ ...step.pinned });
+              break;
+            }
+            const { [OTHER_THAN]: other, ...scope } = where;
+            const all = registry.resolver(step.entity)!(ctx.store, step.name, scope).filter((c) => c.id !== other);
+            const usable = all.filter((c) => !c.inactive);
+            const found = usable.length > 1 && opts.request ? narrowByRequest(usable, opts.request) : usable;
+            if (found.length === 1) {
+              done({ id: found[0]!.id, name: found[0]!.name });
+              break;
+            }
+            if (found.length > 1) {
+              const candidates = found.map(({ id, name, detail }) => ({ id, name, ...(detail ? { detail } : {}) }));
+              return ask(step, { stepId: step.id, entity: step.entity, name: step.name, candidates, kind: "ambiguous", resolution: legacyResolution(step.entity, step.name, actionRisk, candidates, "name"), ...(Object.keys(where).length ? { where } : {}) });
+            }
+            if (all.length) {
+              fail({ code: "CONFLICT", message: all.map((c) => `${c.name} is ${c.inactive}`).join("; ") });
+              nameMissing = `"${step.name}" can't be used`;
+            } else {
+              notFound();
+            }
+            break;
+          }
+          const r = resolveIdentity({ entity: step.entity, text: step.name, where, actionRisk, ...(opts.request ? { qualifiers: opts.request } : {}) }, { registry, store: ctx.store });
+          emit({ type: "identity.resolved", stepId: step.id, kind: r.kind, entity: step.entity, text: step.name, decision: r.decision, candidates: r.candidates, ...(r.kind === "bound" ? { binding: r.binding } : {}) });
+          if (r.kind === "bound") {
+            bindings.set(step.id, r.binding);
+            done({ id: r.binding.id, name: r.binding.name });
+          } else if (r.kind === "ambiguous" || r.kind === "suggest") {
+            const candidates = r.candidates.map(({ id, name, detail }) => ({ id, name, ...(detail ? { detail } : {}) }));
+            return ask(step, { stepId: step.id, entity: step.entity, name: step.name, candidates, kind: r.kind, resolution: r, ...(Object.keys(where).length ? { where } : {}) });
+          } else if (r.unusable.length) {
+            // Only unusable records match (a deactivated user, a closed deal): say so, rather than "no match".
+            fail({ code: "CONFLICT", message: r.unusable.map((c) => `${c.name} is ${c.inactive}`).join("; ") });
+            nameMissing = `"${step.name}" can't be used`;
           } else {
-            done({ id: found[0]!.id, name: found[0]!.name });
+            notFound();
           }
           break;
         }
@@ -385,8 +442,9 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           const gate = checked ? checked.gate : gateFor(step, [{ call: step.call, args: args.value }], plan.hash, opts.approvals, 1, [], [step.id], cut);
           if (gate) {
             results.push({ id: step.id, kind: step.kind, status: "awaiting_confirmation" });
-            emit({ type: "confirm.required", pending: gate });
-            return finish("awaiting_confirmation", { pending: gate });
+            const pending = withIdentities(gate, plan.steps.filter((s) => (gate.covers ?? [step.id]).includes(s.id)));
+            emit({ type: "confirm.required", pending });
+            return finish("awaiting_confirmation", { pending });
           }
           if (checked?.error) {
             fail(checked.error);
@@ -473,8 +531,9 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           );
           if (gate) {
             results.push({ id: step.id, kind: step.kind, status: "awaiting_confirmation" });
-            emit({ type: "confirm.required", pending: gate });
-            return finish("awaiting_confirmation", { pending: gate });
+            const pending = withIdentities(gate, plan.steps.filter((s) => (gate.covers ?? [step.id]).includes(s.id)));
+            emit({ type: "confirm.required", pending });
+            return finish("awaiting_confirmation", { pending });
           }
 
           if (prepared.some((p) => !p.error && p.calls.some((c) => c.call.action.risk !== "read"))) writesAttempted = true;
@@ -519,23 +578,34 @@ function alreadyThere(step: CStep & { kind: "action" }, error: StepError, plan: 
   return (table && ctx.store.get(table, id)) ?? { id };
 }
 
+/**
+ * What a resolve step's record is for: "write" when its output reaches any change or send, by any path through the
+ * plan (an action's args, a lookup scoped by it, a read, filter or exclude whose result a loop of writes runs over),
+ * else "read". A record a create only reads from (the contact a new deal is for) is still a write target.
+ */
+export function identityRisk(plan: CompiledPlan, id: string): ActionRisk {
+  const reached = new Set([id]);
+  // Refs only point back, but go round until nothing new is reached rather than rely on the steps' order.
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const s of plan.steps) {
+      if (reached.has(s.id) || !s.deps.some((d) => reached.has(d))) continue;
+      if (isWrite(s)) return "write";
+      reached.add(s.id);
+      grew = true;
+    }
+  }
+  return "read";
+}
+
 const isWrite = (s: CStep) =>
   (s.kind === "action" && s.call.action.risk !== "read") || (s.kind === "forEach" && s.calls.some((c) => c.action.risk !== "read"));
-
-/** norm drops line breaks outright, which would glue the lines of an answered question together. */
-const normText = (s: string) => norm(s.replace(/\s+/g, " "));
 
 /**
  * Same-named records ("Sarah Johnson" twice) told apart by the request: a detail of exactly one of them (a company,
  * an email) named in the user's words picks it. Details every candidate shares tell nothing apart, so they're ignored.
  */
-export function narrowByRequest(found: Candidate[], request: string): Candidate[] {
-  const words = ` ${normText(request)} `;
-  const partsOf = (c: Candidate) => (c.detail ?? "").split(",").map((p) => norm(p)).filter((p) => p.length > 1);
-  const shared = (p: string) => found.every((c) => partsOf(c).includes(p));
-  const hit = found.filter((c) => partsOf(c).some((p) => !shared(p) && words.includes(` ${p} `)));
-  return hit.length === 1 ? hit : found;
-}
+export { narrowByRequest };
 
 function concreteArgs(call: Call, lookup: (r: Ref) => unknown): { ok: true; value: Record<string, unknown> } | { ok: false; error: StepError } {
   try {
