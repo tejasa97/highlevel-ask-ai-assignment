@@ -259,6 +259,8 @@ export interface NerTrace {
   scope?: string;
   model?: string;
   versions?: NerVersions;
+  /** Whether the call asked for embedding matches (NER_EMBED); absent when the caller didn't say. */
+  embed?: boolean;
   /** Whether the spans reached retrieval and the planner (only in mode on, only on ok). */
   applied: boolean;
 }
@@ -276,6 +278,8 @@ export interface RunNerOpts {
    * its own budget and finishes in the background). Such a timeout doesn't count toward the breaker.
    */
   pending?: () => "scope_push" | undefined;
+  /** Whether the call asks for embedding matches, copied to the trace (the eval checks each setup got its NER_EMBED). */
+  embed?: boolean;
 }
 
 /** Rejects as soon as the signal aborts, even if `p` ignores it. */
@@ -295,7 +299,7 @@ function untilAborted<T>(p: Promise<T>, signal: AbortSignal): Promise<T> {
  */
 export async function runNer(call: (signal: AbortSignal) => Promise<NerSidecarResponse>, opts: RunNerOpts): Promise<{ response?: NerSidecarResponse; trace: NerTrace }> {
   const log = opts.log ?? nerLog();
-  const base = { requestId: opts.requestId, mode: opts.mode, timeoutMs: opts.timeoutMs, applied: false };
+  const base = { requestId: opts.requestId, mode: opts.mode, timeoutMs: opts.timeoutMs, ...(opts.embed !== undefined ? { embed: opts.embed } : {}), applied: false };
   const finish = (trace: NerTrace, response?: NerSidecarResponse) => {
     log({ evt: "ner", ...trace });
     return { response, trace };

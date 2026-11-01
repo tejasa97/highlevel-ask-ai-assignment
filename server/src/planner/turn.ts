@@ -12,6 +12,7 @@ import { bindNerLookups, fromNer, type IdentityDecision } from "./ner_bind.js";
 import {
   mergeMentions,
   nerBreaker,
+  nerEmbed,
   type NerMode,
   nerMode,
   nerSidecarUrl,
@@ -238,7 +239,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   if (mode !== "off" && ner && request.trim()) {
     const timeoutMs = Math.min(deps.nerTimeoutMs ?? nerTimeoutMs(), budget.left());
     const sidecar = deps.ner ? undefined : nerSidecarUrl();
-    const { response, trace } = await runNer((signal) => ner(request, signal), { requestId: nerRequestId, mode, timeoutMs, signal: deps.signal, breaker: sidecar ? nerBreaker(sidecar) : undefined, pending: sidecar ? () => (askScopePushPending(sidecar) ? "scope_push" : undefined) : undefined });
+    const { response, trace } = await runNer((signal) => ner(request, signal), { requestId: nerRequestId, mode, timeoutMs, signal: deps.signal, breaker: sidecar ? nerBreaker(sidecar) : undefined, pending: sidecar ? () => (askScopePushPending(sidecar) ? "scope_push" : undefined) : undefined, ...(sidecar ? { embed: nerEmbed() } : {}) });
     emit({ type: "ner", data: trace });
     if (trace.outcome === "cancelled") throw cancelled();
     if (response && trace.applied) {

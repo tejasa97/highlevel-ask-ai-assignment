@@ -256,6 +256,13 @@ describe("runNer", () => {
     assert.ok(lines.some((l) => l.evt === "ner" && l.requestId === "r1"));
   });
 
+  test("the trace carries the embed setting the call asked for, ok or not", async () => {
+    const call = async () => ({ requestId: "r1", spans: [] });
+    assert.equal((await runNer(call, { ...base, embed: false })).trace.embed, false);
+    assert.equal((await runNer(call, { ...base, timeoutMs: 0, embed: true })).trace.embed, true);
+    assert.equal("embed" in (await runNer(call, base)).trace, false);
+  });
+
   test("a call that ignores its signal still ends at the timeout", async () => {
     const started = performance.now();
     const { response, trace } = await runNer(() => new Promise(() => {}), { ...base, timeoutMs: 30 });
