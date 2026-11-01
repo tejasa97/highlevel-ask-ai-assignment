@@ -318,6 +318,8 @@ const acceptQuote = defineAction({
   example: (f) => ({ quoteId: f.quote({ status: "sent", sentAt: f.now() }).id }),
   handler: ({ quoteId }, { store, clock }) => {
     const q = mustGet<Quote>(store, "quotes", quoteId, "quote");
+    // Already accepted is what was asked ("her quote is accepted: invoice it"): nothing to record.
+    if (q.status === "accepted") return q;
     requireState(`Quote ${q.number}`, q.status, ["sent"], "record acceptance");
     if (q.expiresAt && Date.parse(q.expiresAt) < clock.now().getTime()) {
       throw new ActionError("CONFLICT", `Quote ${q.number} expired at ${q.expiresAt}; send a new quote instead`);

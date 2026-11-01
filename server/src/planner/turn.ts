@@ -570,7 +570,10 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       // Asked for a verdict, a model may want to look again: the reads it has are the answer, so they run as the plan.
       // A yes/no question is first asked once for its Yes or No, which the reads can't say on their own.
       // Not for a message that also tells: a second look's own read outcome describes that look, not the request.
-      if (looked !== undefined && lookPlan && outcome?.effect === "read" && !readOnlyIntentError(input.message, lookPlan, offered, registry).length) {
+      // A second look that calls an action the first didn't (the workflow found, now its runs) reads something new: it runs.
+      const had = new Set(lookPlan?.steps.flatMap((s) => callsOf(s).map((a) => a.id)));
+      const readsNew = (d.steps ?? []).some((s) => s.kind === "action" && !had.has(s.action));
+      if (looked !== undefined && lookPlan && !readsNew && outcome?.effect === "read" && !readOnlyIntentError(input.message, lookPlan, offered, registry).length) {
         if (verdictAsked || !isYesNo(input.message)) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
         verdictAsked = true;
         user = `${prompt()}\n${ANSWER_FROM_LOOKED}`;

@@ -359,6 +359,16 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(planner.requests.length, 3);
   });
 
+  test("a second look that reads something new runs, rather than ending on the first look's reads", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const contacts = reply({ type: "look", steps: [{ id: "c", kind: "action", action: "M01.A03", argsJson: "{}" }], outcome: read });
+    const planner = scripted(contacts, { ...tasks("look"), outcome: read }, { ...tasks("plan"), outcome: read });
+    let looks = 0;
+    const { out } = await run("Which tasks does Ana have?", planner, {}, async () => (looks++, []));
+    assert.equal(looks, 2);
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A03"), JSON.stringify(out));
+  });
+
   test("the next turn learns which record types this one made, not those it only changed", () => {
     const made = compile(createTask(), registry);
     assert.ok(made.ok);
