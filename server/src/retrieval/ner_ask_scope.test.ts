@@ -2,8 +2,9 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, test } from "node:test";
 import { world } from "../store/world.js";
-import { ASK_SCOPE, askEntities, askScopedExtract, keepAskIds, resetAskScopeCache } from "./ner_ask_scope.js";
+import { ASK_SCOPE, askEntities, askIndex, askScopedExtract, askScopePushPending, keepAskIds, resetAskScopeCache } from "./ner_ask_scope.js";
 import { NerSidecarError, nerSidecarUrl } from "./ner_client.js";
+import { liveSidecarSkip } from "./ner_live.js";
 import type { NerLinkedSpan } from "./ner_sidecar_contract.js";
 
 const BIG = ["ct_2984", "ct_4803", "ct_dupe_2_1", "ct_dupe_2_2", "co_1"];
@@ -17,7 +18,7 @@ function fakeSidecar(answer: (body: any, registered: any) => { status?: number; 
     const path = new URL(url).pathname;
     const body = JSON.parse(String(init.body));
     calls.push({ method: init.method ?? "GET", path, body });
-    if (init.method === "PUT") { registered = body; return new Response(JSON.stringify({ ok: true }), { status: 200 }); }
+    if (init.method === "PUT") { registered = body; return new Response(JSON.stringify({ scope: ASK_SCOPE, version: body.version, entities: body.entities.length }), { status: 200 }); }
     const r = answer(body, registered);
     return new Response(JSON.stringify(r.json ?? { detail: "x" }), { status: r.status ?? 200 });
   }) as unknown as typeof fetch;
@@ -57,6 +58,58 @@ describe("Ask-scoped NER", () => {
     assert.equal(side.registered().entities.filter((e: any) => e.name === "Sarah Johnson").length, 3);
   });
 
+  test("the Ask index is cached until the store is written to", () => {
+    const { store, f } = world();
+    const a = askIndex(store);
+    assert.equal(askIndex(store), a, "no write: the same cached index, no rescan");
+    store.get("contacts", "ct_31");
+    assert.equal(askIndex(store), a, "reads don't invalidate");
+    f.contact({ name: "Nadia Brook", email: "nadia@example.com" });
+    const b = askIndex(store);
+    assert.notEqual(b.version, a.version);
+    assert.ok(b.entities.some((e) => e.name === "Nadia Brook"));
+  });
+
+  test("a slow scope push has its own budget: the turn stops waiting, the push finishes, the next turn doesn't re-push", async () => {
+    const { store } = world();
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const calls: string[] = [];
+    const fetchImpl = (async (url: string, init: RequestInit) => {
+      calls.push(`${init.method} ${new URL(url).pathname}`);
+      const body = JSON.parse(String(init.body));
+      if (init.method === "PUT") { await gate; return new Response(JSON.stringify({ scope: ASK_SCOPE, version: body.version, entities: body.entities.length })); }
+      return new Response(JSON.stringify({ requestId: body.requestId, scope: ASK_SCOPE, spans: [] }));
+    }) as unknown as typeof fetch;
+    const opts = { fetchImpl, url: "http://ner", scopeTimeoutMs: 5000 };
+    await assert.rejects(askScopedExtract(store, { requestId: "a", utterance: "x" }, { ...opts, signal: AbortSignal.timeout(20) }));
+    assert.equal(askScopePushPending("http://ner"), true);
+    // A second turn while it runs joins the same push instead of starting another.
+    const second = askScopedExtract(store, { requestId: "b", utterance: "x" }, opts);
+    release();
+    await second;
+    assert.equal(askScopePushPending("http://ner"), false);
+    await askScopedExtract(store, { requestId: "c", utterance: "x" }, opts);
+    assert.deepEqual(calls, ["PUT /v1/scopes/ask", "POST /v1/extract", "POST /v1/extract"]);
+  });
+
+  test("NER_EMBED=off sends embed: false on the extract; unset sends nothing", async () => {
+    const { store } = world();
+    const side = fakeSidecar((body) => ({ json: { requestId: body.requestId, scope: body.scope, spans: [] } }));
+    const before = process.env.NER_EMBED;
+    try {
+      delete process.env.NER_EMBED;
+      await askScopedExtract(store, { requestId: "a", utterance: "x" }, { fetchImpl: side.fetchImpl, url: "http://ner" });
+      process.env.NER_EMBED = "off";
+      await askScopedExtract(store, { requestId: "b", utterance: "x" }, { fetchImpl: side.fetchImpl, url: "http://ner" });
+    } finally {
+      if (before === undefined) delete process.env.NER_EMBED;
+      else process.env.NER_EMBED = before;
+    }
+    const posts = side.calls.filter((c) => c.method === "POST").map((c) => c.body.embed);
+    assert.deepEqual(posts, [undefined, false]);
+  });
+
   test("ids that aren't Ask's never reach the planner, even if the sidecar returns them", async () => {
     const { store } = world();
     const side = fakeSidecar((body) => ({ json: { requestId: body.requestId, scope: "ask", spans: [
@@ -82,9 +135,9 @@ describe("Ask-scoped NER", () => {
   });
 });
 
-// Against a running sidecar with scope support (skipped when there isn't one).
-const live = await fetch(`${nerSidecarUrl()}/v1/scopes/${ASK_SCOPE}`).then((r) => r.status === 200 || r.status === 404, () => false);
-describe("Ask-scoped NER, live sidecar", { skip: !live && "no scope-capable NER sidecar running" }, () => {
+// Against a running sidecar from this checkout: NER_LIVE_TESTS=1, ready, matching code version (see ner_live.ts).
+const skipLive = await liveSidecarSkip();
+describe("Ask-scoped NER, live sidecar", { skip: skipLive ?? false }, () => {
   test("Sarah Johnson is only Ask's two contacts; Clear Finance has no link; the default caller keeps the big index", async () => {
     const { store } = world();
     const sarah = await askScopedExtract(store, { requestId: "live1", utterance: "Email Sarah Johnson about the renewal" });

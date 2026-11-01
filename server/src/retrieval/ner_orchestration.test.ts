@@ -1,6 +1,7 @@
 /**
  * Orchestration proof: NER sidecar (scope "ask": Ask's own records only) → mentions/retrieval → planner hints,
- * without calling a real LLM. Requires the sidecar on NER_SIDECAR_URL (8091).
+ * without calling a real LLM. Runs only with NER_LIVE_TESTS=1 against a ready sidecar from this checkout on
+ * NER_SIDECAR_URL (default 8091); see ner_live.ts.
  */
 import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
@@ -10,24 +11,15 @@ import { type PlanRequest, type Planner } from "../planner/types.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { buildCards } from "./cards.js";
 import { nerSidecarUrl } from "./ner_client.js";
+import { liveSidecarSkip } from "./ner_live.js";
 import { Retriever } from "./retrieve.js";
 import { world, type World } from "../store/world.js";
 import { createApp } from "../server/app.js";
 
 const SIDECAR = nerSidecarUrl();
 
-async function sidecarUp(): Promise<boolean> {
-  try {
-    const r = await fetch(`${SIDECAR}/health`, { signal: AbortSignal.timeout(2000) });
-    if (!r.ok) return false;
-    const j = (await r.json()) as { ok?: boolean };
-    return !!j.ok;
-  } catch {
-    return false;
-  }
-}
-
-const up = await sidecarUp();
+const skipLive = await liveSidecarSkip();
+const up = !skipLive;
 
 interface Sse {
   event: string;
@@ -81,7 +73,7 @@ function scripted(...replies: SubmitPlan[]): Planner & { requests: PlanRequest[]
   };
 }
 
-describe("NER orchestration (sidecar + /api/ask)", { skip: !up }, () => {
+describe("NER orchestration (sidecar + /api/ask)", { skip: skipLive ?? false }, () => {
   let registry: Registry;
   let retriever: Retriever;
   const saved: Record<string, string | undefined> = {};
@@ -177,8 +169,8 @@ describe("NER orchestration (sidecar + /api/ask)", { skip: !up }, () => {
 });
 
 describe("NER orchestration skip notice", { skip: up }, () => {
-  test("sidecar not reachable — start ner-sidecar on 8091 to run orchestration proofs", () => {
-    // Skipped when sidecar is up; when down this suite is the only reminder.
-    assert.ok(true, `sidecar not up at ${SIDECAR}`);
+  test(`live NER tests skipped: ${skipLive}`, () => {
+    // Skipped when the live suite runs; otherwise this names why it didn't.
+    assert.ok(true);
   });
 });

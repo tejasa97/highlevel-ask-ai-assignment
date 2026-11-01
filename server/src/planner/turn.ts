@@ -7,12 +7,17 @@ import { card } from "../registry/card.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
 import { type Mention, mentions } from "../retrieval/mentions.js";
 import type { NerSidecarResponse } from "../retrieval/ner_sidecar_contract.js";
-import { askScopedExtract } from "../retrieval/ner_ask_scope.js";
+import { askScopedExtract, askScopePushPending } from "../retrieval/ner_ask_scope.js";
 import { bindNerLookups, fromNer, type IdentityDecision } from "./ner_bind.js";
 import {
   mergeMentions,
-  nerSidecarEnabled,
-  NerSidecarError,
+  nerBreaker,
+  type NerMode,
+  nerMode,
+  nerSidecarUrl,
+  nerTimeoutMs,
+  type NerTrace,
+  runNer,
   spansToMentions,
 } from "../retrieval/ner_client.js";
 import type { Retrieval, Retriever } from "../retrieval/retrieve.js";
@@ -60,8 +65,12 @@ export interface TurnDeps {
   signal?: AbortSignal;
   /** Runs a read-only plan and gives back each step's output, for a look round. Without it, look isn't offered. */
   look?: (plan: CompiledPlan) => Promise<{ id: string; output?: unknown; error?: string }[]>;
-  /** NER extract+link; defaults to the sidecar when NER_SIDECAR=1. Tests inject a fake. */
+  /** NER extract+link; defaults to the sidecar when NER_MODE is on or shadow (or NER_SIDECAR=1). Tests inject a fake. */
   ner?: (utterance: string, signal?: AbortSignal) => Promise<NerSidecarResponse>;
+  /** Defaults to nerMode() from the environment; with an injected `ner` and no mode, on. */
+  nerMode?: NerMode;
+  /** Per NER call; defaults to NER_TIMEOUT_MS, and never more than what is left of the turn's deadline. */
+  nerTimeoutMs?: number;
 }
 
 export interface TurnInput {
@@ -95,7 +104,8 @@ export type TurnEvent =
   | { type: "planner.debug"; data: PlannerDebug }
   | { type: "compile.errors"; data: { errors: string[] } }
   /** An identity resolver decision made while binding the plan's lookups (see ner_bind.ts). */
-  | { type: "identity.resolved"; data: IdentityDecision };
+  | { type: "identity.resolved"; data: IdentityDecision }
+  | { type: "ner"; data: NerTrace };
 
 export type TurnOutcome =
   | {
@@ -218,14 +228,22 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let named: Mention[] = store ? mentions(request, registry, store) : [];
   // The Ask app only ever links against its own records (scope "ask"); with no store there is nothing to scope to,
   // so no NER at all rather than the sidecar's default fine-tuning index.
-  const ner = deps.ner ?? (nerSidecarEnabled() && store ? (utterance: string, signal?: AbortSignal) => askScopedExtract(store, { requestId: `turn_${Date.now().toString(36)}`, utterance, tier: input.tier }, { signal }) : undefined);
-  if (ner && request.trim()) {
-    try {
-      const fromSpans = spansToMentions((await ner(request, deps.signal)).spans);
+  // NER is optional: slow, down or wrong means no hints this turn, never a failed turn; a user cancel ends it.
+  // Shadow mode calls the sidecar and traces what it found, but nothing reaches retrieval or the planner.
+  const mode = deps.nerMode ?? (deps.ner ? "on" : nerMode());
+  const nerRequestId = `ner_${createHash("sha1").update(`${request}\0${performance.now()}\0${Math.random()}`).digest("hex").slice(0, 12)}`;
+  const ner = mode === "off" ? undefined : deps.ner ?? (store ? (utterance: string, signal?: AbortSignal) => askScopedExtract(store, { requestId: nerRequestId, utterance, tier: input.tier }, { signal }) : undefined);
+  // The turn's clock starts before NER: NER time is the turn's, and NER gets only what is left of it.
+  const budget = turnBudget(deps);
+  if (mode !== "off" && ner && request.trim()) {
+    const timeoutMs = Math.min(deps.nerTimeoutMs ?? nerTimeoutMs(), budget.left());
+    const sidecar = deps.ner ? undefined : nerSidecarUrl();
+    const { response, trace } = await runNer((signal) => ner(request, signal), { requestId: nerRequestId, mode, timeoutMs, signal: deps.signal, breaker: sidecar ? nerBreaker(sidecar) : undefined, pending: sidecar ? () => (askScopePushPending(sidecar) ? "scope_push" : undefined) : undefined });
+    emit({ type: "ner", data: trace });
+    if (trace.outcome === "cancelled") throw cancelled();
+    if (response && trace.applied) {
+      const fromSpans = spansToMentions(response.spans);
       named = store ? mergeMentions(fromSpans, named) : fromSpans;
-    } catch (err) {
-      // Sidecar down / bad response → keep Title-Case mentions; do not fail the turn.
-      if (!(err instanceof NerSidecarError)) throw err;
     }
   }
   linked.push(...named);
@@ -290,7 +308,6 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   const prompt = () =>
     userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: input.message, context: input.context, failed: input.failed, looked, lookIds: lookSteps.map((l) => l.id), deliverySurfaces, identityCheck, outcome });
   let resampled = false;
-  const budget = turnBudget(deps);
   let round = 0;
   const debug = (label: string, user: string, d: Pick<PlannerDebug, "raw" | "parsed" | "model" | "usage" | "latencyMs" | "error">) => {
     round++;
@@ -934,6 +951,8 @@ export function turnBudget(deps: Pick<TurnDeps, "plannerTimeoutMs" | "maxPlanner
   const ends = performance.now() + deadlineMs;
   let n = 0;
   return {
+    /** Milliseconds left of the turn's deadline (0 once spent). */
+    left: () => Math.max(0, Math.round(ends - performance.now())),
     next(): { n: number; ms: number } {
       if (deps.signal?.aborted) throw cancelled();
       if (n >= max) throw new TurnStopped(`The planner used all ${max} of its calls for this message without settling on a plan. Nothing was changed; please rephrase it or split it up.`);
