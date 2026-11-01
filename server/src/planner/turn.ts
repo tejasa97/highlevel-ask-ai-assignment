@@ -358,6 +358,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let searched = false;
   let searchedAgain = false;
   let repaired = false;
+  let plannedFromQuestion = false;
   // A plan that doesn't compile gets one repair, and a second when the first got closer (fewer errors): a weaker model
   // fixes a long plan a few mistakes at a time. Any other repair already spent counts as the first.
   let planRepairs = 0;
@@ -502,6 +503,14 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
           checkedIdentity.push(identityKey);
           user = prompt();
           reply = await call(user, "plan after identity check");
+          continue;
+        }
+        // Told whom the user chose, the planner asked again: its question already holds the call, so that is the plan.
+        // The pick binds the name, and a second lookup of it in the same call skips the pick ("the other Sarah").
+        if (pick && d.missing?.argsJson && !plannedFromQuestion) {
+          plannedFromQuestion = true;
+          const steps = [{ id: "s1", kind: "action", action: d.missing.action, argsJson: d.missing.argsJson }];
+          reply = { ...reply, json: { ...(reply.json as object), type: "plan", steps, question: null, options: null, clarification: null, missing: null, lookup: null } };
           continue;
         }
         if (check.count > 1) {

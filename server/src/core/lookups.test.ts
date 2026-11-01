@@ -6,6 +6,7 @@ import { world } from "../store/world.js";
 import { compile } from "./compile.js";
 import { execute } from "./execute.js";
 import { summarize } from "./summarize.js";
+import { bindNerLookups } from "../planner/ner_bind.js";
 
 let registry: Registry;
 before(async () => { registry = await loadRegistry(); });
@@ -192,6 +193,32 @@ describe("model-independent named arguments", () => {
     const gate = await execute(p, registry, ctx, { executionId: "merge-sarahs" });
     assert.equal(gate.status, "awaiting_confirmation");
     assert.deepEqual(gate.pending?.preview[0]?.args, { keepId: other.id, duplicateId: brightside.id });
+  });
+
+  test("a name looked up next to an id the call already holds is the other record", async () => {
+    const ctx = world();
+    const sarahs = ctx.store.find<{ id: string; name: string; company: string | null }>("contacts", (c) => c.name === "Sarah Johnson");
+    const brightside = sarahs.find((c) => c.company === "Brightside")!, other = sarahs.find((c) => c !== brightside)!;
+    const p = compiled(plan([action("merge", "M01.A06", { keepId: brightside.id, duplicateId: lookup("contact", "Sarah Johnson") })]));
+    const gate = await execute(p, registry, ctx, { executionId: "merge-sarahs-held" });
+    assert.equal(gate.status, "awaiting_confirmation");
+    assert.deepEqual(gate.pending?.preview[0]?.args, { keepId: brightside.id, duplicateId: other.id });
+  });
+
+  test("the user's pick for a name is not bound to a lookup told to skip that record", () => {
+    const ctx = world();
+    const brightside = ctx.store.find<{ id: string; name: string; company: string | null }>("contacts", (c) => c.name === "Sarah Johnson" && c.company === "Brightside")[0]!;
+    const p = compiled(plan([action("merge", "M01.A06", { keepId: brightside.id, duplicateId: lookup("contact", "Sarah Johnson") })]));
+    const pick = { entity: "contact", id: brightside.id, name: brightside.name, text: "Sarah Johnson", provenance: "user-selected" as const, matchReason: "exact-name" as const, fingerprint: "" };
+    const bound = bindNerLookups(p, [], registry, { store: ctx.store, picks: [pick] });
+    assert.equal(bound.kind, "plan");
+    assert.ok(bound.kind === "plan" && bound.plan.steps.every((s) => s.kind !== "resolve" || !s.bound));
+  });
+
+  test("a lookup whose name is an id is that id, even for a record type nothing resolves by name", () => {
+    const p = compiled(plan([action("s1", "M45.A09", { reviewId: lookup("review", "rv_2"), body: "Thank you." })]));
+    assert.deepEqual(p.steps.map((s) => s.kind), ["action"]);
+    assert.equal((p.steps[0] as unknown as { call: { args: { reviewId: string } } }).call.args.reviewId, "rv_2");
   });
 
   test("the same name twice with no qualifier asks which one fills the first argument, by its role", async () => {

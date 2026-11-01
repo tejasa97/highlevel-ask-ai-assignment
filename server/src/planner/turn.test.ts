@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { before, describe, test } from "node:test";
 import { compile } from "../core/compile.js";
+import { execute } from "../core/execute.js";
+import { resolveIdentity } from "../core/identity.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
 import { Retriever } from "../retrieval/retrieve.js";
@@ -453,6 +455,24 @@ describe("grounded outcomes and clarifications", () => {
     const out = await planTurn({ message: "Email Sarah Johnson", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
     assert.ok(out.kind === "reply" && out.status === "clarify");
     assert.equal(planner.requests.length, 1);
+  });
+
+  test("asked again after the user picked one, the question's own call is the plan: the pick and the other record", async () => {
+    const w = world();
+    const sarahs = w.store.find<{ id: string; name: string; company: string | null }>("contacts", (c) => c.name === "Sarah Johnson");
+    const brightside = sarahs.find((c) => c.company === "Brightside")!, other = sarahs.find((c) => c !== brightside)!;
+    const both = { keepId: { $lookup: { entity: "contact", name: "Sarah Johnson" } }, duplicateId: { $lookup: { entity: "contact", name: "Sarah Johnson" } } };
+    const ask = reply({ type: "clarify", missing: missing("M01.A06", "keepId", both), clarification: "choice", question: "Which Sarah Johnson stays?", outcome: { effect: "change", actions: ["M01.A06"], destination: null } });
+    const planner = scripted(ask, ask);
+    const chosen = resolveIdentity({ entity: "contact", text: "Sarah Johnson", qualifiers: "the Brightside one", actionRisk: "write" }, { registry, store: w.store });
+    assert.ok(chosen.kind === "bound");
+    const pick = { ...chosen.binding, provenance: "user-selected" as const };
+    const out = await planTurn({ message: "Merge the two Sarah Johnson contacts", tier: "fast", picks: [pick] }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+    const r = await execute(out.plan, registry, w, { executionId: "merge-picked" });
+    assert.equal(r.status, "awaiting_confirmation", JSON.stringify(r.steps.map((s) => s.error)));
+    assert.deepEqual(r.pending?.preview[0]?.args, { keepId: brightside.id, duplicateId: other.id });
   });
 
   test("asked again after seeing the records, a question about a name that fits two of them goes to the user", async () => {

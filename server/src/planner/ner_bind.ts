@@ -7,6 +7,7 @@
 import { argumentRole, type CompiledPlan, type CStep } from "../core/compile.js";
 import { identityRisk } from "../core/execute.js";
 import { type Hint, type IdentityBinding, type IdentityResolution, legacyResolution, narrowByRequest, optionLabel, resolveIdentity, resolverOff } from "../core/identity.js";
+import { OTHER_THAN } from "../core/lookups.js";
 import type { Registry } from "../registry/registry.js";
 import type { Mention } from "../retrieval/mentions.js";
 import type { Store } from "../store/db.js";
@@ -59,7 +60,9 @@ function roleOf(plan: CompiledPlan, stepId: string): string | undefined {
  */
 function bindPicks(plan: CompiledPlan, picks: IdentityBinding[] = []): CompiledPlan {
   if (!picks.length) return plan;
-  const pickFor = (s: CStep) => s.kind === "resolve" && !s.bound && !(s.where && JSON.stringify(s.where).includes("$")) ? picks.find((p) => p.entity === s.entity && norm(p.text) === norm(s.name)) : undefined;
+  // A lookup told to skip the picked record (the other Sarah of a merge) is not that pick.
+  const pickFor = (s: CStep) => s.kind === "resolve" && !s.bound && !(s.where && JSON.stringify(s.where).includes("$"))
+    ? picks.find((p) => p.entity === s.entity && norm(p.text) === norm(s.name) && p.id !== s.where?.[OTHER_THAN]) : undefined;
   return { ...plan, steps: plan.steps.map((s) => { const p = pickFor(s); return p ? { ...s, bound: p } : s; }) };
 }
 
