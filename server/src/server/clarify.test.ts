@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import type { CompiledPlan } from "../core/compile.js";
+import { type CompiledPlan, planDigest } from "../core/compile.js";
 import type { RankedCandidate } from "../core/identity.js";
 import { Clarifications, matchCandidates, type OpenInput, readsAsRequest } from "./clarify.js";
 
@@ -27,7 +27,7 @@ describe("opening a question", () => {
     const s = store();
     const c = s.open(input());
     assert.equal(c.status, "awaiting");
-    assert.equal(c.planHash, "plan_h1");
+    assert.equal(c.planHash, planDigest(plan));
     assert.equal(c.stepId, "s1");
     assert.equal(c.argument, "contactId");
     assert.equal(c.round, 1);
@@ -180,6 +180,35 @@ describe("an answer in the user's words", () => {
       assert.equal(s.reply(text)?.kind, "cancelled", text);
       assert.equal(s.get(c.id)!.status, "cancelled");
     }
+  });
+
+  test("a new request that mentions a candidate's detail supersedes the question, never picks", () => {
+    const acme: RankedCandidate[] = [{ ...sarahs[0]!, detail: "Acme" }, { ...sarahs[1]!, detail: "Brightside" }];
+    for (const text of ["Email Acme about the renewal", "Show me the deals at Brightside", "What does Brightside owe us?"]) {
+      const s = store();
+      const c = s.open(input({ ranked: acme, resolution: { entity: "contact", text: "Sarah", candidates: acme } }));
+      assert.equal(s.reply(text)?.kind, "superseded", text);
+      assert.equal(s.get(c.id)!.status, "superseded");
+    }
+    // Short, answer-shaped replies still pick, a question mark included.
+    for (const [text, id] of [["the one at Acme", "ct_31"], ["the Brightside one?", "ct_32"], ["Acme", "ct_31"]] as const) {
+      const s = store();
+      s.open(input({ ranked: acme, resolution: { entity: "contact", text: "Sarah", candidates: acme } }));
+      const a = s.reply(text);
+      assert.ok(a?.kind === "picked" && a.candidate.id === id, `${text} → ${JSON.stringify(a)}`);
+    }
+  });
+
+  test("the single-word fallback needs a distinctive word in a short answer", () => {
+    const listings = (names: string[]): RankedCandidate[] => names.map((name, i) => ({ id: `bl_${i + 1}`, name, matchReason: "exact-name", score: 1 }));
+    const three = listings(["Maple Dental google", "Maple Dental yelp", "Oak Dental yelp"]);
+    assert.deepEqual(matchCandidates("the yelp listing", three), [], "a word two of them share picks neither");
+    assert.deepEqual(matchCandidates("the oak listing", three).map((c) => c.id), ["bl_3"]);
+    assert.deepEqual(matchCandidates("google or oak", three).length, 2, "words pointing at two candidates leave it open");
+    assert.deepEqual(matchCandidates("I was thinking of the one that oak people use", three), [], "a long reply is not matched by one word in it");
+    assert.deepEqual(matchCandidates("not the google one", three), [], "a candidate named to rule it out is not picked");
+    assert.deepEqual(matchCandidates("not the one at Brightside", sarahs, keys), []);
+    assert.deepEqual(matchCandidates("the listing please", three), [], "filler picks nothing");
   });
 
   test("a clearly new request supersedes the question", () => {

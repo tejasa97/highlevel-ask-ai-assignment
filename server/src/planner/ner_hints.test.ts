@@ -93,6 +93,20 @@ describe("NER hints", () => {
     assert.match(planner.requests[0]!.user, /Clear Finace: no exact company; did you mean co_1 Clear Finance\?/);
   });
 
+  test("a question about a later lookup keeps the earlier lookups' bindings in the paused plan", async () => {
+    const u = "Link Ana Ruiz to Clear Finace";
+    const planner = scripted(reply({ steps: [step("M02.A06", { contactId: lookup("contact", "Ana Ruiz"), companyId: lookup("company", "Clear Finace") })], outcome: { effect: "change", actions: ["M02.A06"], destination: null } }));
+    const { out } = await run(u, planner, (u) => [
+      { text: "Ana Ruiz", label: "person", ...at(u, "Ana Ruiz"), status: "linked", linkedId: "ct_3", linkedEntity: "contact", method: "exact", score: 1 },
+      { text: "Clear Finace", label: "company", ...at(u, "Clear Finace"), status: "ambiguous", method: "edit", score: 0.5, candidates: [{ id: "co_1", name: "Clear Finance", entity: "company" }] },
+    ], (w) => void w.store.insert("companies", "co", { name: "Clear Finance", domain: null, industry: null, size: null, phone: null, address: null, accountManagerId: null, status: "active", mergedInto: null }));
+    assert.ok(out.kind === "reply" && out.paused, JSON.stringify(out));
+    const ana = out.paused.plan.steps.find((s) => s.kind === "resolve" && s.entity === "contact");
+    assert.ok(ana?.kind === "resolve" && ana.bound?.id === "ct_3", "Ana Ruiz stays bound for the resume");
+    const asked = out.paused.plan.steps.find((s) => s.id === out.paused!.stepId);
+    assert.ok(asked?.kind === "resolve" && asked.entity === "company" && !asked.bound);
+  });
+
   test("a near-miss recipient NER linked by embedding asks, and never binds", async () => {
     const u = "Email Ana Ruis about the renewal";
     const planner = scripted(reply({ steps: [step("M13.A01", { contactId: lookup("contact", "Ana Ruis"), subject: "Renewal", body: "About your renewal." })], outcome: { effect: "change", actions: ["M13.A01"], destination: null } }));

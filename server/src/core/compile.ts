@@ -25,7 +25,7 @@ export interface Call {
 
 export type CStep = { id: string; deps: string[]; type: JsonSchema } & (
   | { kind: "action"; call: Call }
-  | { kind: "resolve"; entity: string; name: string; where?: Record<string, string>; /** Bound before execution by the identity resolver (core/identity.ts); execution revalidates it against the store. */ bound?: IdentityBinding }
+  | { kind: "resolve"; entity: string; name: string; where?: Record<string, string>; /** Bound before execution by the identity resolver (core/identity.ts); execution revalidates it against the store. */ bound?: IdentityBinding; /** RESOLVER=off only: NER's link, used without a store lookup (the path before the resolver). */ pinned?: { id: string; name: string } }
   | { kind: "filter"; in: string; where: Record<string, unknown> }
   | { kind: "exclude"; in: string; by: string; set: string }
   | { kind: "forEach"; in: string | string[]; roundRobin: string | string[] | null; calls: Call[] }
@@ -35,6 +35,33 @@ export interface CompiledPlan {
   steps: CStep[];
   /** Hash of the plan as compiled; a confirmation is bound to it. */
   hash: string;
+}
+
+/**
+ * A digest of the compiled steps as they stand (actions by id), so a plan kept aside and resumed later can be checked
+ * to be the one that was kept. Unlike `hash`, it covers bindings added after compiling.
+ */
+export function planDigest(plan: CompiledPlan): string {
+  const json = JSON.stringify([plan.hash, plan.steps], (k, v) => (k === "action" && v && typeof v === "object" && "id" in v ? (v as { id: string }).id : k === "type" ? undefined : v));
+  return createHash("sha256").update(json).digest("hex").slice(0, 16);
+}
+
+/** The calls a step makes: an action's one call, a loop's calls per item, none for the rest. */
+export const callsOf = (s: CStep): Call[] => (s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : []);
+
+/** The first action argument a resolve step's record feeds ("contactId" for `$s1.id`), with its call. */
+export function fedArgument(plan: CompiledPlan, stepId: string): { call: Call; arg: string } | undefined {
+  const ref = new RegExp(`\\$${stepId}\\.id(?![A-Za-z0-9_])`);
+  for (const s of plan.steps) for (const call of callsOf(s)) for (const [arg, v] of Object.entries(call.args)) if (ref.test(JSON.stringify(v))) return { call, arg };
+  return undefined;
+}
+
+/** That argument and what its schema says it is for ("the contact that stays"), for a question about the record. */
+export function argumentRole(plan: CompiledPlan, stepId: string): { arg: string; description?: string } | undefined {
+  const fed = fedArgument(plan, stepId);
+  if (!fed) return undefined;
+  const description = ((fed.call.action.inputSchema.properties ?? {}) as Record<string, { description?: string }>)[fed.arg]?.description;
+  return { arg: fed.arg, ...(description ? { description } : {}) };
 }
 
 export type CompileResult = { ok: true; plan: CompiledPlan } | { ok: false; errors: string[] };

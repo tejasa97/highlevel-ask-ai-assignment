@@ -7,7 +7,8 @@ import type { Candidate, Registry } from "../registry/registry.js";
 import type { Call, CompiledPlan, CStep } from "./compile.js";
 import { ENTITIES } from "../store/entities.js";
 import { normalizeDateTimes } from "./datetimes.js";
-import { type ActionRisk, type IdentityBinding, type IdentityResolution, narrowByRequest, resolveIdentity, revalidate } from "./identity.js";
+import { type ActionRisk, type IdentityBinding, type IdentityResolution, legacyResolution, narrowByRequest, resolveIdentity, resolverOff, revalidate } from "./identity.js";
+import { OTHER_THAN } from "./lookups.js";
 import { collectRefs, loopRead, parseRef, pathOf, RefError, type Ref, substitute, valueAt } from "./refs.js";
 
 // Stage 2: run a compiled plan.
@@ -69,6 +70,8 @@ export interface Clarification {
   resolution?: IdentityResolution;
   /** The resolve step's scope as it ran (refs filled in), so a pick binds and revalidates in the same place. */
   where?: Record<string, string>;
+  /** How the resolve steps before this one were bound, so a resumed run revalidates them instead of resolving again. */
+  bindings?: Record<string, IdentityBinding>;
 }
 
 export interface StepError {
@@ -266,6 +269,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   };
   const ask = (step: CStep, clarification: Clarification) => {
     results.push({ id: step.id, kind: step.kind, status: "needs_clarification" });
+    if (bindings.size) clarification = { ...clarification, bindings: Object.fromEntries(bindings) };
     emit({ type: "clarify.required", clarification });
     return finish("needs_clarification", { clarification });
   };
@@ -308,6 +312,15 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         case "resolve": {
           const where = substitute(step.where ?? {}, lookup()) as Record<string, string>;
           const actionRisk = riskOf(step.id);
+          const notFound = () => {
+            // The planner sometimes guesses the wrong record type for a name; say where the name does exist.
+            const elsewhere = Object.keys(where).length ? [] : registry
+              .resolverEntities()
+              .filter((e) => e !== step.entity && !registry.resolver(e)!.parentQualifiers?.length && registry.resolver(e)!(ctx.store, step.name).some((c) => !c.inactive));
+            const hint = elsewhere.length ? ` (but a ${elsewhere.join(" and a ")} does)` : "";
+            fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"${hint}` });
+            nameMissing = `no ${step.entity} matches "${step.name}"`;
+          };
           if (step.bound) {
             // Bound before this run (a unique strong key, or the user's pick): the record must still be the one chosen.
             const stale = revalidate(step.bound, { registry, store: ctx.store });
@@ -319,6 +332,32 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             }
             bindings.set(step.id, step.bound);
             done({ id: step.bound.id, name: step.bound.name });
+            break;
+          }
+          if (resolverOff()) {
+            // The lookup as it was before the resolver: NER's pin as is, else the store's matches narrowed by the request.
+            if (step.pinned) {
+              done({ ...step.pinned });
+              break;
+            }
+            const { [OTHER_THAN]: other, ...scope } = where;
+            const all = registry.resolver(step.entity)!(ctx.store, step.name, scope).filter((c) => c.id !== other);
+            const usable = all.filter((c) => !c.inactive);
+            const found = usable.length > 1 && opts.request ? narrowByRequest(usable, opts.request) : usable;
+            if (found.length === 1) {
+              done({ id: found[0]!.id, name: found[0]!.name });
+              break;
+            }
+            if (found.length > 1) {
+              const candidates = found.map(({ id, name, detail }) => ({ id, name, ...(detail ? { detail } : {}) }));
+              return ask(step, { stepId: step.id, entity: step.entity, name: step.name, candidates, kind: "ambiguous", resolution: legacyResolution(step.entity, step.name, actionRisk, candidates, "name"), ...(Object.keys(where).length ? { where } : {}) });
+            }
+            if (all.length) {
+              fail({ code: "CONFLICT", message: all.map((c) => `${c.name} is ${c.inactive}`).join("; ") });
+              nameMissing = `"${step.name}" can't be used`;
+            } else {
+              notFound();
+            }
             break;
           }
           const r = resolveIdentity({ entity: step.entity, text: step.name, where, actionRisk, ...(opts.request ? { qualifiers: opts.request } : {}) }, { registry, store: ctx.store });
@@ -334,13 +373,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             fail({ code: "CONFLICT", message: r.unusable.map((c) => `${c.name} is ${c.inactive}`).join("; ") });
             nameMissing = `"${step.name}" can't be used`;
           } else {
-            // The planner sometimes guesses the wrong record type for a name; say where the name does exist.
-            const elsewhere = Object.keys(where).length ? [] : registry
-              .resolverEntities()
-              .filter((e) => e !== step.entity && !registry.resolver(e)!.parentQualifiers?.length && registry.resolver(e)!(ctx.store, step.name).some((c) => !c.inactive));
-            const hint = elsewhere.length ? ` (but a ${elsewhere.join(" and a ")} does)` : "";
-            fail({ code: "NOT_FOUND", message: `no ${step.entity} matches "${step.name}"${hint}` });
-            nameMissing = `no ${step.entity} matches "${step.name}"`;
+            notFound();
           }
           break;
         }

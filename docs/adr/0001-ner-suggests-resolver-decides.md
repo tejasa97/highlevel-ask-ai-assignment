@@ -42,6 +42,7 @@ Each option carries the measured trigger that would reopen it. Triggers are read
 - **Writes that ask now:** writes and sends whose name is only a first name, a partial name or a one-edit typo now ask "Did you mean …?" before running. They used to bind the unique partial match or fail `NOT_FOUND`.
 - **Option labels:** option labels in "which one" questions come from the store's detail, not the sidecar's.
 - **NER links:** NER links never bind on their own, including exact ones. Without a store, the planner turn can still ask from NER ambiguity or suggestions, but never binds.
+- **Switch for comparison:** `RESOLVER=off` (read on every call) restores the path before the resolver: a unique NER link is pinned and used without a store lookup, NER's own doubt asks even about reads, and execution takes the store's matches narrowed by the request. Questions it asks are stored and resumed the same way. It exists so evals can measure the resolver against the path it replaced.
 - **Clarification flow:** the flow that answers a `suggest` or `ambiguous` question builds on the exported `IdentityResolution`, the clarification's `resolution` field, and `userSelected()`.
 
 Tests: [identity](../../server/src/core/identity.test.ts), [NER hints](../../server/src/planner/ner_hints.test.ts).

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { compile, type CompiledPlan } from "../core/compile.js";
 import { narrowByRequest } from "../core/execute.js";
 import { lowerLookups } from "../core/lookups.js";
-import type { IdentityResolution } from "../core/identity.js";
+import { type IdentityBinding, type IdentityResolution, optionLabel } from "../core/identity.js";
 import { card } from "../registry/card.js";
 import type { RegisteredAction, Registry } from "../registry/registry.js";
 import { type Mention, mentions } from "../retrieval/mentions.js";
@@ -77,6 +77,8 @@ export interface TurnInput {
   records?: { entity: string; id: string; name: string; for?: string }[];
   /** Set on a retry: the plan that ran for this message and the errors it failed with, nothing changed. */
   failed?: string;
+  /** Records the user picked for names in this message, answering a question a look asked: they bind, never ask again. */
+  picks?: IdentityBinding[];
 }
 
 export interface Carry {
@@ -110,8 +112,11 @@ export type TurnOutcome =
       options?: string[];
       /** Set when the planner couldn't be reached or didn't answer: the turn failed for a reason outside the app. */
       infra?: InfraKind;
-      /** A record question the resolver asked about one step of a compiled plan: the plan waits on the answer. */
-      paused?: { plan: CompiledPlan; stepId: string; resolution: IdentityResolution };
+      /**
+       * A record question the resolver asked about one step of a compiled plan: the plan waits on the answer. `replan`
+       * when the plan was a look: the answer plans the message again with the pick bound (`TurnInput.picks`).
+       */
+      paused?: { plan: CompiledPlan; stepId: string; resolution: IdentityResolution; replan?: true };
     };
 
 export type InfraKind = Exclude<PlannerError["kind"], "bad_json">;
@@ -184,10 +189,11 @@ export async function planTurn(input: TurnInput, deps: TurnDeps, emit: (e: TurnE
       store: deps.store,
       request: input.answering ? `${input.answering}\n${input.message}` : input.message,
       duplicates: process.env.NER_DUPLICATE_POLICY === "off" ? "off" : "warn",
+      ...(input.picks ? { picks: input.picks } : {}),
     });
     for (const d of bound.decisions) emit({ type: "identity.resolved", data: d });
     if (bound.kind === "clarify") {
-      const paused = bound.resolution && bound.stepId ? { plan: out.plan, stepId: bound.stepId, resolution: bound.resolution } : undefined;
+      const paused = bound.resolution && bound.stepId ? { plan: bound.plan, stepId: bound.stepId, resolution: bound.resolution } : undefined;
       return { kind: "reply", status: "clarify", text: bound.text, options: bound.options, ...(paused ? { paused } : {}) };
     }
     const answer = [bound.notice, out.answer].filter(Boolean).join("\n");
@@ -354,9 +360,14 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   // A look's lookups bind against the NER hints too, so a look never asks the store about an ambiguous name.
   let nerClarify: TurnOutcome | undefined;
   const runLook = async (raw: CompiledPlan, steps: Step[]) => {
-    const bound = bindNerLookups(raw, named, registry, { store, request, duplicates: "off" });
+    const bound = bindNerLookups(raw, named, registry, { store, request, duplicates: "off", ...(input.picks ? { picks: input.picks } : {}) });
     for (const d of bound.decisions) emit({ type: "identity.resolved", data: d });
-    if (bound.kind === "clarify") { nerClarify = { kind: "reply", status: "clarify", text: bound.text, options: bound.options }; return; }
+    if (bound.kind === "clarify") {
+      // Stored like a plan's question; the answer plans the message again with the pick bound, since a look isn't the plan.
+      const paused = bound.resolution && bound.stepId ? { plan: bound.plan, stepId: bound.stepId, resolution: bound.resolution, replan: true as const } : undefined;
+      nerClarify = { kind: "reply", status: "clarify", text: bound.text, options: bound.options, ...(paused ? { paused } : {}) };
+      return;
+    }
     const plan = bound.plan;
     looks++;
     lookPlan = plan;
@@ -817,7 +828,7 @@ export function oneOfSameNamed(plan: CompiledPlan, named: Mention[], registry: R
     const found = (registry.resolver(m.entity)?.(store, m.name) ?? []).filter((c) => !c.inactive);
     const hit = found.filter((c) => ids.has(c.id));
     if (found.length < 2 || !hit.length || hit.length === found.length || narrowByRequest(found, request).length === 1) continue;
-    const options = found.map((c) => (c.detail ? `${c.name} (${c.detail})` : c.name));
+    const options = found.map(optionLabel);
     return { text: `More than one ${m.entity} matches "${m.name}": ${options.join(", ")}. Which one?`, options };
   }
   return undefined;

@@ -1,8 +1,8 @@
 // One chat over one database: plan a message, run it, hold it for approval, remember the last few turns.
 // The HTTP app streams its events to the web UI; the scenario evals drive it headless, so both take the same path.
-import type { CompiledPlan, CStep } from "../core/compile.js";
+import { type CompiledPlan, type CStep, fedArgument, planDigest } from "../core/compile.js";
 import { execute, type Approval, type Pending, type RunResult } from "../core/execute.js";
-import { type IdentityResolution, resolveIdentity, revalidate, tableOfId, userSelected } from "../core/identity.js";
+import { type IdentityBinding, type IdentityResolution, optionLabel, resolveIdentity, revalidate, tableOfId, userSelected } from "../core/identity.js";
 import { emptyRead, runtimeNoMatch } from "../core/no-match.js";
 import { shownRecords, summarize, type Shown } from "../core/summarize.js";
 import { type Carry, type InfraKind, planTurn, type TurnDeps } from "../planner/turn.js";
@@ -82,15 +82,21 @@ export class Conversation {
 
   /** `signal` aborts when the client stops listening: planning stops, and a plan already made doesn't run. */
   async ask(message: string, tier: Tier, actorId: string, emit: Emit, signal?: AbortSignal): Promise<void> {
-    const { registry, retriever, planner } = this.deps;
     const turnId = `t${this.turns.size + 1}_${Date.now().toString(36)}`;
     emit("turn", { turnId, message });
     // An open record question takes the message first, matched against its own candidates only. A message that
     // reads as a new request, or arrives after the question expired, is planned fresh.
     const answered = this.clarifications.reply(message);
     if (answered && answered.kind !== "superseded" && answered.kind !== "expired") return this.settle(answered, message, actorId, emit);
+    return this.plan(message, tier, actorId, emit, turnId, { answering: this.answering, signal });
+  }
+
+  /** Plans a message and runs it. `picks` are records the user chose for names in it, after a look asked which. */
+  private async plan(message: string, tier: Tier, actorId: string, emit: Emit, turnId: string, opts: { answering?: string; picks?: IdentityBinding[]; signal?: AbortSignal }): Promise<void> {
+    const { registry, retriever, planner } = this.deps;
+    const { answering, picks, signal } = opts;
     const context = this.history.length ? this.history.slice(-HISTORY_TURNS).map((h) => `user: ${h.user}\nassistant: ${h.assistant}`).join("\n") : undefined;
-    const request = this.answering ? `${this.answering}\n${message}` : message;
+    const request = answering ? `${answering}\n${message}` : message;
     const said = [...this.history.slice(-HISTORY_TURNS).map((h) => h.user), request].join("\n");
     // A look runs reads only (planTurn checks), as this user, before the real plan.
     const look = async (plan: CompiledPlan) => {
@@ -100,21 +106,23 @@ export class Conversation {
       const c = r.clarification;
       return c ? [...steps, { id: c.stepId, error: `more than one ${c.entity} matches "${c.name}": ${c.candidates.map((x) => x.name).join(", ")}` }] : steps;
     };
-    const answering = this.answering;
     // A plan that fails on something the planner can fix (a record not found, a bad argument) before changing
     // anything gets one more try, with what went wrong.
     let failed: string | undefined;
     for (let attempt = 0; attempt < 2; attempt++) {
       const outcome = await planTurn(
-        { message, tier, context, carry: this.carry, answering, records: this.records, failed },
+        { message, tier, context, carry: this.carry, answering, records: this.records, failed, ...(picks?.length ? { picks } : {}) },
         { registry, retriever, planner, clock: this.world.clock, store: this.world.store, look, signal, ...(this.deps.ner ? { ner: this.deps.ner } : {}) },
         (e) => emit(e.type, e.data),
       );
       if (outcome.kind === "reply" && outcome.paused) {
         // The resolver asked about one lookup of a compiled plan: store the question with the plan, to resume it.
-        const { plan, stepId, resolution } = outcome.paused;
+        const { plan, stepId, resolution, replan } = outcome.paused;
         const step = plan.steps.find((s) => s.id === stepId);
-        const c = this.open({ source: "resolver", plan, turnId, stepId, resolution, request, said, ...(step?.kind === "resolve" && step.where ? { where: step.where } : {}) });
+        const c = this.open({
+          source: replan ? "look" : "resolver", plan, turnId, stepId, resolution, request, said, ...(step?.kind === "resolve" && step.where ? { where: step.where } : {}),
+          ...(replan ? { replan: { message, tier, ...(answering ? { answering } : {}), picks: picks ?? [] } } : {}),
+        });
         return this.finish(message, outcome.status, outcome.text, emit, outcome.options, undefined, undefined, c);
       }
       if (outcome.kind === "reply") return this.finish(message, outcome.status, outcome.text, emit, outcome.options, outcome.infra);
@@ -174,7 +182,7 @@ export class Conversation {
     const { registry } = this.deps;
     const { store } = this.world;
     const what = c.entity.replaceAll("_", " ");
-    if (paused.plan.hash !== c.planHash) return this.finish(message, "failed", "The paused plan doesn't match the question it asked, so nothing was changed.", emit);
+    if (planDigest(paused.plan) !== c.planHash) return this.finish(message, "failed", "The paused plan doesn't match the question it asked, so nothing was changed.", emit);
     const binding = userSelected(c.entity, c.text, candidate, store, paused.where);
     // The record may have changed since the question was asked: never write to it silently.
     const stale = revalidate(binding, { registry, store });
@@ -186,13 +194,20 @@ export class Conversation {
       const next = this.open({ ...paused, turnId: c.turnId, stepId: c.stepId, ...(c.argument ? { argument: c.argument } : {}), resolution: { ...again, candidates: cands }, ranked: cands, round: c.round + 1 });
       return this.finish(message, "clarify", `${stale.message}, so nothing was changed. Which ${what} should I use for "${c.text}"?`, emit, next.candidates.map((o) => o.label), undefined, undefined, next);
     }
-    const plan = { ...paused.plan, steps: paused.plan.steps.map((s) => (s.id === c.stepId && s.kind === "resolve" ? { ...s, bound: binding } : s)) };
     const id = `${c.turnId}_${c.round}_${this.turns.size + 1}`;
-    const turn: Turn = { id, message, request: paused.request, said: paused.said, plan, executionId: `ex_${id}` };
+    if (paused.replan) {
+      // A look asked: plan the message again, the pick (and any before it) bound to its name.
+      emit("clarify.resolved", { clarificationId: c.id, stepId: c.stepId, binding });
+      const { message: asked, tier, answering, picks } = paused.replan;
+      return this.plan(asked, tier, actorId, emit, id, { ...(answering ? { answering } : {}), picks: [...picks, binding] });
+    }
+    const plan = bindSteps(paused.plan, { [c.stepId]: binding });
+    // The paused run's execution id: what it wrote before the pause comes back from the ledger instead of running again.
+    const turn: Turn = { id, message, request: paused.request, said: paused.said, plan, executionId: paused.executionId ?? `ex_${id}`, ...(paused.approvals ? { approvals: paused.approvals } : {}) };
     this.turns.set(id, turn);
     emit("clarify.resolved", { clarificationId: c.id, stepId: c.stepId, binding });
     emit("plan", { hash: plan.hash, steps: plan.steps.map(describeStep) });
-    await this.run(turn, actorId, emit);
+    await this.run(turn, actorId, emit, turn.approvals);
   }
 
   private clarifyRounds(): number {
@@ -207,7 +222,7 @@ export class Conversation {
       const row = t ? this.world.store.get<Doc>(t, c.id) : undefined;
       if (typeof row?.email === "string") keys[c.id] = [row.email];
     }
-    return this.clarifications.open({ ...input, ranked: input.ranked ?? input.resolution.candidates, keys, ...(input.argument ?? argumentOf(input.plan, input.stepId) ? { argument: input.argument ?? argumentOf(input.plan, input.stepId) } : {}) });
+    return this.clarifications.open({ ...input, ranked: input.ranked ?? input.resolution.candidates, keys, ...(input.argument ?? fedArgument(input.plan, input.stepId) ? { argument: input.argument ?? fedArgument(input.plan, input.stepId)!.arg } : {}) });
   }
 
   async confirm(turnId: string, approve: boolean, actorId: string, emit: Emit): Promise<void> {
@@ -261,9 +276,12 @@ export class Conversation {
     const asked = result.clarification;
     const step = asked && turn.plan.steps.find((s) => s.id === asked.stepId);
     const stored = asked?.resolution && step?.kind === "resolve"
-      ? this.open({ source: "lookup", plan: turn.plan, turnId: turn.id, stepId: asked.stepId, resolution: asked.resolution, request: turn.request, said: turn.said, ...(asked.where ? { where: asked.where } : {}) })
+      ? this.open({
+          source: "lookup", plan: bindSteps(turn.plan, asked.bindings ?? {}), turnId: turn.id, stepId: asked.stepId, resolution: asked.resolution, request: turn.request, said: turn.said,
+          executionId: turn.executionId, ...(approvals?.length ? { approvals } : {}), ...(asked.where ? { where: asked.where } : {}),
+        })
       : undefined;
-    this.finish(turn.message, result.status, text, emit, asked?.candidates.map((c) => (c.detail ? `${c.name} (${c.detail})` : c.name)), undefined, records, stored);
+    this.finish(turn.message, result.status, text, emit, asked?.candidates.map(optionLabel), undefined, records, stored);
   }
 
   private finish(message: string, status: string, text: string, emit: Emit, options?: string[], infra?: InfraKind, records?: Shown[], stored?: Parameters<Clarifications["view"]>[0]): void {
@@ -295,14 +313,10 @@ export function retryable(plan: CompiledPlan, result: RunResult): string | undef
   return noMatch ? attempt([]) : undefined;
 }
 
-/** The action argument a resolve step feeds ("contactId"), for the stored question. */
-function argumentOf(plan: CompiledPlan, stepId: string): string | undefined {
-  const ref = `$${stepId}.id`;
-  for (const s of plan.steps) {
-    const calls = s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : [];
-    for (const c of calls) for (const [arg, v] of Object.entries(c.args as Record<string, unknown>)) if (JSON.stringify(v).includes(ref)) return arg;
-  }
-  return undefined;
+/** The plan with these resolve steps bound: execution revalidates each binding instead of resolving the name again. */
+function bindSteps(plan: CompiledPlan, bound: Record<string, IdentityBinding>): CompiledPlan {
+  if (!Object.keys(bound).length) return plan;
+  return { ...plan, steps: plan.steps.map((s) => (s.kind === "resolve" && bound[s.id] ? { ...s, bound: bound[s.id] } : s)) };
 }
 
 function describeStep(s: CStep) {

@@ -119,6 +119,20 @@ const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/['’]s\b
 const ID = /^[a-z]{1,6}_\d+(_\d+)*$/i;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** How a candidate is offered in a question: "Sarah Johnson (sjohnson@gmail.example)". */
+/**
+ * RESOLVER=off restores the binding path from before this resolver (NER links pinned, the store's lookup as it was),
+ * for evals that compare the two. Read on every call, so a test or eval can switch it without reloading.
+ */
+export const resolverOff = () => process.env.RESOLVER === "off";
+
+/** A pre-resolver answer as a resolution, so the stored question and its resume work the same in both modes. */
+export function legacyResolution(entity: string, text: string, actionRisk: ActionRisk, cs: { id: string; name: string; detail?: string }[], matchReason: MatchReason): IdentityResolution {
+  return { kind: "ambiguous", entity, text, actionRisk, candidates: cs.map((c) => ({ id: c.id, name: c.name, ...(c.detail ? { detail: c.detail } : {}), matchReason, score: 1 })), decision: "resolver off: several matches" };
+}
+
+export const optionLabel = (c: { name: string; detail?: string }) => (c.detail ? `${c.name} (${c.detail})` : c.name);
+
 /** The store table an id lives in, from its prefix. */
 export function tableOfId(id: string): string | undefined {
   const prefix = id.split("_")[0];

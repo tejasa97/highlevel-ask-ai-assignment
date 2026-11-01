@@ -6,8 +6,10 @@
 // Status moves only through the methods here: awaiting → resolved | expired | cancelled | superseded. Nothing else
 // can change it, and a settled question never reopens: answering it again gives back what the first answer did.
 import { randomBytes } from "node:crypto";
-import type { CompiledPlan } from "../core/compile.js";
-import type { IdentityResolution, MatchReason, RankedCandidate } from "../core/identity.js";
+import { type CompiledPlan, planDigest } from "../core/compile.js";
+import type { Approval } from "../core/execute.js";
+import { type IdentityBinding, type IdentityResolution, type MatchReason, optionLabel, type RankedCandidate } from "../core/identity.js";
+import type { Tier } from "../planner/types.js";
 import { norm } from "../registry/helpers.js";
 import type { LookupWhere } from "../registry/registry.js";
 
@@ -46,7 +48,7 @@ export interface PendingClarification {
 }
 
 /** Where the question came from: the resolver binding NER-hinted lookups at plan time, or a lookup at execution. */
-export type ClarificationSource = "resolver" | "lookup";
+export type ClarificationSource = "resolver" | "lookup" | "look";
 
 /** Everything needed to resume; kept beside the record, never sent to the client. */
 export interface Paused {
@@ -60,6 +62,17 @@ export interface Paused {
   ranked: RankedCandidate[];
   /** Other keys the user may answer with (an email), by candidate id, from the store when the question was asked. */
   keys: Record<string, string[]>;
+  /**
+   * The paused run's execution id and approvals. The resumed run reuses them: a write that already ran before the
+   * pause is replayed from the ledger, never done again, and an approval already given still holds.
+   */
+  executionId?: string;
+  approvals?: Approval[];
+  /**
+   * Set for a question a look asked (source "look"): the message to plan again on the answer, with the pick and any
+   * earlier ones bound, since the look's plan isn't the one that does the request.
+   */
+  replan?: { message: string; tier: Tier; answering?: string; picks: IdentityBinding[] };
 }
 
 export interface OpenInput extends Paused {
@@ -94,8 +107,6 @@ export function clarifyConfig(env: NodeJS.ProcessEnv = process.env): ClarifyConf
   return { ttlMs: num(env.CLARIFY_TTL_MS, 15 * 60_000), maxRounds: num(env.CLARIFY_MAX_ROUNDS, 2) };
 }
 
-const label = (c: { name: string; detail?: string }) => (c.detail ? `${c.name} (${c.detail})` : c.name);
-
 interface Entry {
   record: PendingClarification;
   paused: Paused;
@@ -122,12 +133,12 @@ export class Clarifications {
     const record: PendingClarification = Object.freeze({
       id,
       turnId: input.turnId,
-      planHash: input.plan.hash,
+      planHash: planDigest(input.plan),
       stepId: input.stepId,
       ...(input.argument ? { argument: input.argument } : {}),
       entity: input.resolution.entity,
       text: input.resolution.text,
-      candidates: Object.freeze(input.resolution.candidates.map((c) => Object.freeze({ token: randomBytes(12).toString("base64url"), id: c.id, label: label(c), matchReason: c.matchReason }))),
+      candidates: Object.freeze(input.resolution.candidates.map((c) => Object.freeze({ token: randomBytes(12).toString("base64url"), id: c.id, label: optionLabel(c), matchReason: c.matchReason }))),
       round: input.round ?? 1,
       expiresAt: this.now() + this.config.ttlMs,
       status: "awaiting" as const,
@@ -182,9 +193,11 @@ export class Clarifications {
       return undefined;
     }
     if (NONE.test(text.trim())) return { kind: "cancelled", clarification: this.move(e.record.id, "cancelled") };
+    // A message with its own instruction is a new request, even when it names one of the candidates ("Email Acme about
+    // the renewal" while "which Sarah? Acme / Brightside" is open): only an answer-shaped reply is matched as a pick.
+    if (readsAsRequest(text)) return { kind: "superseded", clarification: this.move(e.record.id, "superseded") };
     const matches = matchCandidates(text, e.paused.ranked, e.paused.keys);
     if (matches.length === 1) return this.pick(e, matches[0]!);
-    if (!matches.length && readsAsRequest(text)) return { kind: "superseded", clarification: this.move(e.record.id, "superseded") };
     if (e.record.round >= this.config.maxRounds) return { kind: "gave_up", clarification: this.move(e.record.id, "cancelled") };
     const record = Object.freeze({ ...e.record, round: e.record.round + 1 });
     e.record = record;
@@ -245,11 +258,14 @@ const ORDINALS: Record<string, number> = { first: 1, "1st": 1, one: 1, second: 2
 /** Opening words of a fresh instruction, not of an answer. */
 const VERBS = /^(please |can you |could you |now |also |and |then |ok(ay)?,? )?(create|add|make|send|email|text|sms|message|show|list|find|search|get|delete|remove|archive|update|change|rename|move|assign|schedule|book|tag|untag|merge|cancel|refund|invoice|call|set|mark|close|open|how|what|who|which|when|where|why|is|are|do|does)\b/i;
 
+/** How an answer opens ("the one at Acme?", "her gmail one?"): a question that starts so is still an answer. */
+const ANSWER_OPENER = /^(the|that|this|her|his|him|them|it|option|number|no\.|#|\d)\b/i;
+
 /** The user's words as a new request rather than an answer: an instruction or a question of several words. */
 export function readsAsRequest(text: string): boolean {
   const t = text.trim();
   const words = t.split(/\s+/).length;
-  return words >= 3 && (VERBS.test(t) || t.endsWith("?"));
+  return words >= 3 && (VERBS.test(t) || (t.endsWith("?") && !ANSWER_OPENER.test(t)));
 }
 
 /**
@@ -267,8 +283,10 @@ export function matchCandidates(text: string, candidates: readonly RankedCandida
     return n >= 1 && n <= candidates.length ? [candidates[n - 1]!] : [];
   }
   // The exact label, name, id or another key: equal, never contained.
-  const exact = candidates.filter((c) => [label(c), c.name, c.id, ...(keys[c.id] ?? [])].some((k) => k.toLowerCase() === raw || (norm(k) !== "" && norm(k) === said)));
+  const exact = candidates.filter((c) => [optionLabel(c), c.name, c.id, ...(keys[c.id] ?? [])].some((k) => k.toLowerCase() === raw || (norm(k) !== "" && norm(k) === said)));
   if (exact.length) return exact;
+  // "Not the one at Brightside" names a candidate to rule it out: never a pick by what it mentions.
+  if (NEGATION.test(said)) return [];
   // A word or detail that only some candidates have, said as whole words.
   const padded = ` ${said} `;
   const partsOf = (c: RankedCandidate) => [c.name, ...(c.detail ?? "").split(","), ...(keys[c.id] ?? [])].map((p) => norm(p)).filter((p) => p.length > 1);
@@ -276,11 +294,21 @@ export function matchCandidates(text: string, candidates: readonly RankedCandida
   const emails = (c: RankedCandidate) => (keys[c.id] ?? []).filter((k) => k.includes("@")).map((k) => k.toLowerCase());
   const parts = candidates.filter((c) => emails(c).some((e) => raw.includes(e)) || partsOf(c).some((p) => !shared(p) && padded.includes(` ${p} `)));
   if (parts.length) return parts;
-  // Last, a single word only some of them have ("the Google listing" for Maple Dental google / yelp).
-  const wordsOf = (c: RankedCandidate) => new Set(partsOf(c).flatMap((p) => p.split(" ")).filter((w) => w.length > 2 && !FILLER.has(w)));
-  const all = candidates.map(wordsOf);
-  const told = said.split(" ").filter((w) => !all.every((ws) => ws.has(w)));
-  return candidates.filter((_, i) => told.some((w) => all[i]!.has(w)));
+  // Last, in a short answer, a distinctive word: one only a single candidate has, and not filler ("the Google listing"
+  // for Maple Dental google / yelp). A word two of them share tells nothing apart, and words pointing at different
+  // candidates leave it open: either way the question is asked again.
+  const told = said.split(" ");
+  if (told.length > ANSWER_WORDS) return [];
+  const all = candidates.map((c) => new Set(partsOf(c).flatMap((p) => p.split(" ")).filter((w) => w.length > 2 && !FILLER.has(w))));
+  const distinctive = told.filter((w) => !FILLER.has(w) && all.filter((ws) => ws.has(w)).length === 1);
+  return candidates.filter((_, i) => distinctive.some((w) => all[i]!.has(w)));
 }
 
-const FILLER = new Set(["the", "one", "and", "with", "from", "for", "that", "this", "who", "which", "please"]);
+/** Most words a reply can have and still be matched by a single word in it. */
+const ANSWER_WORDS = 6;
+const NEGATION = /\b(not|no|nor|neither|except|isnt|arent|dont|wasnt)\b/;
+const FILLER = new Set([
+  "the", "one", "ones", "and", "with", "from", "for", "that", "this", "these", "those", "who", "which", "please", "his", "her", "him", "she", "they",
+  "them", "its", "our", "your", "their", "was", "are", "use", "mean", "meant", "want", "guess", "think", "yes", "yeah", "okay", "sure", "just",
+  "other", "listing", "record", "contact", "person", "company", "account",
+]);
