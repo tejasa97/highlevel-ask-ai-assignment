@@ -162,7 +162,12 @@ export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; st
   const { [OTHER_THAN]: other, ...where } = q.where ?? {};
   const text = q.text.trim();
   const key = norm(text);
-  const lookup = (name: string) => resolver(deps.store, name, where).filter((c) => c.id !== other);
+  // One store lookup per name, however many keys point at it.
+  const looked = new Map<string, Candidate[]>();
+  const lookup = (name: string) => {
+    if (!looked.has(name)) looked.set(name, resolver(deps.store, name, where).filter((c) => c.id !== other));
+    return looked.get(name)!;
+  };
   const found = new Map<string, RankedCandidate>();
   const add = (c: Candidate, matchReason: MatchReason, score = SCORE[matchReason]) => {
     const was = found.get(c.id);
@@ -180,31 +185,32 @@ export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; st
     const c = label ? inScope(text, label) : undefined;
     if (c) add(c, "id");
   }
-  // 2. Exact email, for records that have one.
-  const table = tableOf(q.entity);
-  if (EMAIL.test(text) && table) {
-    for (const row of deps.store.all<Doc>(table)) {
-      if (typeof row.email !== "string" || row.email.toLowerCase() !== text.toLowerCase() || typeof row.name !== "string") continue;
-      const c = inScope(row.id as string, row.name);
-      if (c) add(c, "email");
-    }
-  }
-  // 3. Name: the store resolver's own match, split into exact normalized names and the looser tiers (word, prefix).
+  // 2. Name: the store resolver's own match, split into exact normalized names and the looser tiers (word, prefix).
   for (const c of lookup(text)) add(c, norm(c.name) === key ? "exact-name" : "name");
-  // 4. Aliases, where a record keeps them.
+  // 3. Exact email, aliases, and one-edit near misses, in one pass over the table. Near misses count only when
+  //    nothing else matched at all.
+  const table = tableOf(q.entity);
+  const byEmail = EMAIL.test(text) ? text.toLowerCase() : undefined;
+  const edits = !!table && config.editMaxDistance > 0 && key.length > 3;
+  const near: Doc[] = [];
   if (table) {
     for (const row of deps.store.all<Doc>(table)) {
-      const aliases = Array.isArray(row.aliases) ? row.aliases : [];
-      if (!aliases.some((a) => typeof a === "string" && norm(a) === key) || typeof row.name !== "string") continue;
-      const c = inScope(row.id as string, row.name);
-      if (c) add(c, "alias");
+      if (typeof row.name !== "string") continue;
+      const id = row.id as string;
+      if (byEmail && typeof row.email === "string" && row.email.toLowerCase() === byEmail) {
+        const c = inScope(id, row.name);
+        if (c) add(c, "email");
+      }
+      if (Array.isArray(row.aliases) && row.aliases.some((a) => typeof a === "string" && norm(a) === key)) {
+        const c = inScope(id, row.name);
+        if (c) add(c, "alias");
+      }
+      if (edits && levenshtein(norm(row.name), key, config.editMaxDistance) <= config.editMaxDistance) near.push(row);
     }
   }
-  // 5. One-edit near misses, only when the name matched nothing at all.
-  if (!found.size && table && config.editMaxDistance > 0 && key.length > 3) {
-    for (const row of deps.store.all<Doc>(table)) {
-      if (typeof row.name !== "string" || levenshtein(norm(row.name), key, config.editMaxDistance) > config.editMaxDistance) continue;
-      const c = inScope(row.id as string, row.name);
+  if (!found.size) {
+    for (const row of near) {
+      const c = inScope(row.id as string, row.name as string);
       if (c) add(c, "edit");
     }
   }
