@@ -383,6 +383,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let lookPlan: CompiledPlan | undefined;
   let looks = 0;
   let lookClosed = false;
+  let verdictAsked = false;
   // A look's lookups bind against the NER hints too, so a look never asks the store about an ambiguous name.
   let nerClarify: TurnOutcome | undefined;
   const runLook = async (raw: CompiledPlan, steps: Step[]) => {
@@ -567,8 +568,15 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     if (d.type === "look") {
       // Reads only, run now; a write waits for the real plan (and its approval). A bad look is repaired like a plan.
       // Asked for a verdict, a model may want to look again: the reads it has are the answer, so they run as the plan.
+      // A yes/no question is first asked once for its Yes or No, which the reads can't say on their own.
       // Not for a message that also tells: a second look's own read outcome describes that look, not the request.
-      if (looked !== undefined && lookPlan && outcome?.effect === "read" && !readOnlyIntentError(input.message, lookPlan, offered, registry).length) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
+      if (looked !== undefined && lookPlan && outcome?.effect === "read" && !readOnlyIntentError(input.message, lookPlan, offered, registry).length) {
+        if (verdictAsked || !isYesNo(input.message)) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
+        verdictAsked = true;
+        user = `${prompt()}\n${ANSWER_FROM_LOOKED}`;
+        reply = await call(user, "answer after second look");
+        continue;
+      }
       if (deps.look && looks >= LOOKS_MAX && !lookClosed) {
         // One plain nudge, so asking for a third look doesn't spend the one repair.
         lookClosed = true;
@@ -709,6 +717,15 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       emit({ type: "compile.errors", data: { errors } });
       user = prompt();
       reply = await call(repairBlock(user, reply.json, errors), "repair empty target");
+      continue;
+    }
+    // A change planned as only the reads it needs first is the look those errors ask for: run it, then plan again with
+    // what it found, rather than spend the repair on a reply labelled plan instead of look. Once looked, it is repaired.
+    if (compiled.ok && outcome?.effect === "change" && outcome.actions.length && readsOnly(compiled.plan) && deps.look && looked === undefined && errors.every((e) => PREREQUISITES_ONLY.test(e))) {
+      await runLook(compiled.plan, withLookSteps(d, lookSteps).steps ?? []);
+      restate = true;
+      user = prompt();
+      reply = await call(user, "plan after reads");
       continue;
     }
     emit({ type: "compile.errors", data: { errors } });
@@ -925,6 +942,12 @@ export const isQuestion = (message: string) => {
   if (/^(please\s+)?((can|could|would|will) you|show|list|find|get|give|pull|display|open)\b/i.test(m)) return false;
   return /^(is|isn't|are|aren't|was|wasn't|were|does|doesn't|do|don't|did|didn't|has|hasn't|have|haven't|had|can|could|will|would|should|how many|how much|which|who|whose|any)\b/i.test(m);
 };
+
+/** "Is that the only one?", "has Ana got any tasks?": answered Yes or No, which a list of records doesn't say. */
+const isYesNo = (message: string) => isQuestion(message) && /^(is|isn't|are|aren't|was|wasn't|were|does|doesn't|do|don't|did|didn't|has|hasn't|have|haven't|had)\b/i.test(message.trim());
+
+/** The outcome errors a plan of prerequisite reads gets, and no others. */
+const PREREQUISITES_ONLY = /^(requested operation \S+ (is missing; prerequisite reads|.*is not in the plan: add a step that calls)|the requested outcome changes records, but this plan only reads)/;
 
 const readsOnly = (plan: CompiledPlan) => plan.steps.every((s) => callsOf(s).every((a) => a.risk === "read"));
 

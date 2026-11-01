@@ -10,6 +10,13 @@ test("slug is unique across posts, and a deactivated author is refused", async (
   assert.equal(failure(() => w.call("M38.A01", { title: "Other", slug: "other-notes", body: "Hello", authorId: gone.id })).code, "CONFLICT");
 });
 
+test("a post given no slug gets one from its title, still unique", async () => {
+  const w = await testWorld();
+  const post = w.call("M38.A01", { title: "Our new pricing!", body: "Hello" }) as { slug: string };
+  assert.equal(post.slug, "our-new-pricing");
+  assert.equal(failure(() => w.call("M38.A01", { title: "Our New Pricing", body: "Again" })).code, "DUPLICATE");
+});
+
 test("published posts keep their text, and an unchanged draft is a no-op", async () => {
   const w = await testWorld();
   const live = w.f.blogPost({ status: "published", publishedAt: w.f.now(), title: "Live" });

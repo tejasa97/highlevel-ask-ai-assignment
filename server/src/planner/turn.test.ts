@@ -122,6 +122,16 @@ describe("grounded outcomes and clarifications", () => {
     assert.match(planner.requests[1]!.user, /only reads/);
   });
 
+  test("a change planned as only its prerequisite reads runs them as a look, then plans with what they found", async () => {
+    const planner = scripted(tasks("plan"), { ...createTask(), outcome: change });
+    let looks = 0;
+    const { out } = await run("Create a task like my other tasks", planner, {}, async () => (looks++, [{ id: "read", output: { items: [], total: 0 } }]));
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A01"), JSON.stringify(out));
+    assert.equal(looks, 1);
+    assert.match(planner.requests[1]!.user, /<looked>/);
+    assert.doesNotMatch(planner.requests[1]!.user, /only reads/);
+  });
+
   test("look then answer cannot drop the requested change, even if the next reply declares a read", async () => {
     const planner = scripted(tasks("look"), reply({ type: "answer", text: "Found tasks", outcome: { effect: "read", actions: ["M06.A03"], destination: null } }), createTask());
     const { out } = await run("Create a task like my other tasks", planner, {}, async () => []);
@@ -331,12 +341,22 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(planner.requests.length, 1);
   });
 
-  test("a question whose model wants a second look gets the first look's reads, not a failure", async () => {
+  test("a question whose model wants a second look is asked once for its verdict", async () => {
     const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
-    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("look"), outcome: read });
+    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("look"), outcome: read }, reply({ type: "answer", text: "Yes, Ana has 2 tasks.", outcome: read }));
+    let looks = 0;
+    const { out } = await run("Has Ana got any tasks?", planner, {}, async () => (looks++, []));
+    assert.ok(out.kind === "plan" && out.answer === "Yes, Ana has 2 tasks.", JSON.stringify(out));
+    assert.equal(looks, 1);
+    assert.match(planner.requests[2]!.user, /start with the verdict/);
+  });
+
+  test("a question whose model still wants to look after that gets the first look's reads, not a failure", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("look"), outcome: read }, { ...tasks("look"), outcome: read });
     const { out } = await run("Has Ana got any tasks?", planner, {}, async () => []);
     assert.ok(out.kind === "plan" && out.answer === undefined, JSON.stringify(out));
-    assert.equal(planner.requests.length, 2);
+    assert.equal(planner.requests.length, 3);
   });
 
   test("the next turn learns which record types this one made, not those it only changed", () => {

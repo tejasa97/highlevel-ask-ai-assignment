@@ -2,7 +2,7 @@ import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, blankToNull, contains, Limit, listOf, noChange, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { atLeastOne, blankToNull, contains, Limit, listOf, noChange, page, requirePermission, requireState, slugOf } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { Form } from "../m18-forms/schema.js";
@@ -44,13 +44,13 @@ const createPage = defineAction({
   description:
     "Create a draft landing page with a title and a slug unique across landing pages. Add sections with M37.A05 and publish with M37.A09. This does not upload a file (that is M39, whose delete is M39.A10).",
   risk: "write",
-  input: z.strictObject({ title: Text, slug: Text }),
+  input: z.strictObject({ title: Text, slug: Text.optional().describe("URL path segment; leave it out to derive it from the title") }),
   output: LandingPage,
   siblings: ["M39.A10"],
   entities: { produces: "landing_page" },
   example: () => ({ title: "Spring offer", slug: "spring-offer" }),
   handler: ({ title, slug }, { store, clock }) => {
-    const nextSlug = slug.trim();
+    const nextSlug = slug?.trim() || slugOf(title);
     if (slugTaken(store, nextSlug)) throw new ActionError("DUPLICATE", `A landing page with slug "${nextSlug}" already exists`);
     const at = clock.now().toISOString();
     return store.insert("landing_pages", "lp", {

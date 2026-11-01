@@ -1,7 +1,7 @@
 import { tableResolver } from "../../registry/lookup.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, contains, Limit, listOf, page, requireState } from "../../registry/helpers.js";
+import { atLeastOne, contains, Limit, listOf, page, requireState, slugOf } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import type { Calendar } from "../m20-calendars/schema.js";
@@ -47,14 +47,14 @@ const createPage = defineAction({
   risk: "write",
   input: z.strictObject({
     title: z.string().min(1),
-    slug: z.string().min(1).describe("URL path segment, unique across booking pages"),
+    slug: z.string().min(1).optional().describe("URL path segment, unique across booking pages; leave it out to derive it from the title"),
     description: z.string().nullable().optional(),
   }),
   output: BookingPage,
   entities: { produces: "booking_page" },
   example: () => ({ title: "Intro calls", slug: "intro-calls" }),
   handler: (a, { store, clock }) => {
-    const slug = a.slug.trim();
+    const slug = a.slug?.trim() || slugOf(a.title);
     if (!slug) throw new ActionError("INVALID", "slug is empty");
     uniqueSlug(store, slug);
     const now = clock.now().toISOString();
