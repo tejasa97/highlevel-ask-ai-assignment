@@ -45,6 +45,8 @@ export interface SearchCard {
   consumes: string[];
   optionalConsumes?: string[];
   siblings: string[];
+  /** Actions that must run on the same record first (from the registry). */
+  requires: string[];
   /** Has a handler in this build. Unavailable actions are still retrieved, so the agent can say so. */
   available: boolean;
 }
@@ -82,6 +84,7 @@ export function buildCards(registry: Registry, meta = loadCardMeta()): SearchCar
         consumes: (impl?.entities?.consumes ?? g?.consumes ?? []).filter((e) => !impl?.entities?.optionalConsumes?.includes(e)),
         optionalConsumes: impl?.entities?.optionalConsumes ?? [],
         siblings: [...new Set([...(impl?.siblings ?? []), ...(g?.siblings ?? [])])],
+        requires: impl?.requires ?? [],
         available: impl !== undefined,
       };
     }),

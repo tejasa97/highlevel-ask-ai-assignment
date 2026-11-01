@@ -26,7 +26,13 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: {
   });
   if (outcome.effect === "change" && !calls.some((a) => a.risk !== "read")) errors.push("the requested outcome changes records, but this plan only reads; use look for prerequisites, then plan the final change");
   if (outcome.effect === "change" && !outcome.actions.length) errors.push("identify the final requested action(s), using search_tools if needed, before returning a plan");
-  if (outcome.effect === "read" && calls.some((a) => a.risk !== "read" && !a.query)) errors.push("the requested outcome is read-only; do not introduce a change");
+  // "Compare the report for the last 30 days" planned as set the report's range, then compare: say which call changes
+  // records, so the repair drops that one instead of resending the same plan.
+  const writes = [...new Map(calls.filter((a) => a.risk !== "read" && !a.query).map((a) => [a.id, a])).values()];
+  if (outcome.effect === "read" && writes.length) {
+    const reads = calls.filter((a) => a.risk === "read" || a.query).map((a) => a.id);
+    errors.push(`the requested outcome is read-only, but ${writes.map((a) => `${a.id} (${a.name})`).join(", ")} ${writes.length > 1 ? "change" : "changes"} records: leave ${writes.length > 1 ? "them" : "it"} out${reads.length ? ` and answer with ${[...new Set(reads)].join(", ")} alone` : " and use read actions only"}`);
+  }
   if (outcome.destination) for (const a of calls) {
     if (a.destination && a.destination.id !== outcome.destination) errors.push(`${a.id} delivers to ${a.destination.label}, not the requested destination ${outcome.destination}`);
   }

@@ -839,6 +839,17 @@ describe("planTurn", () => {
     assert.ok(again.out.kind === "reply" && again.out.status === "failed");
   });
 
+  test("an answer after a look that only found the record is sent back once to read it", async () => {
+    const read = { effect: "read" as const, actions: [], destination: null };
+    const found = reply({ type: "look", steps: [{ id: "s1", kind: "resolve", entity: "campaign", name: "Holiday Offer", whereJson: null }], outcome: read });
+    const guess = reply({ type: "answer", text: "Yes, it is live.", outcome: read });
+    const look: TurnDeps["look"] = async () => [{ id: "s1", output: { id: "cmp_1", name: "Holiday Offer" } }];
+    const planner = scripted(found, guess, guess);
+    const { out } = await run("Is the Holiday Offer campaign live yet?", planner, {}, look);
+    assert.match(planner.requests[2]!.user, /only found which record it is/);
+    assert.equal(out.kind, "plan", "a second answer stands");
+  });
+
   test("a listed write verb repairs an all-read plan, but a pure question uses it directly", async () => {
     const reads = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A03", argsJson: "{}" }] });
     const planner = scripted(reads, createTask());

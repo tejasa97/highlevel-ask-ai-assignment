@@ -56,6 +56,8 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   destination?: { id: string; label: string };
   /** Look-alike actions in other modules, always retrieved together. */
   siblings?: string[];
+  /** Actions that must run on the same record first (approve before execute): retrieved whenever this one is. */
+  requires?: string[];
   /** Optional side-effect-free eligibility check. Throw an ActionError for a known blocker;
    * return recipient/target details that must be bound to approval. Never deliver, audit or consume faults.
    * The handler must still repeat its checks at execution time. */

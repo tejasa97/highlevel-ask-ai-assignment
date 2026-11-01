@@ -62,6 +62,7 @@ describe("cards", () => {
       if (c.produces) assert.ok(types.has(c.produces), `${c.id} produces ${c.produces}`);
       for (const t of c.consumes) assert.ok(types.has(t), `${c.id} consumes ${t}`);
       for (const s of c.siblings) assert.ok(CATALOG_ACTIONS.has(s) && s !== c.id, `${c.id} sibling ${s}`);
+      for (const s of c.requires) assert.ok(registry.get(s) && s !== c.id, `${c.id} requires ${s}`);
     }
   });
 
@@ -100,6 +101,11 @@ describe("retrieve", () => {
     assert.equal(good.retrieve(await good.prepare({message:"create support ticket"})).mode,"hybrid");
     const broken = new Retriever(cards,{}, {rank:async()=>{throw Error("test inference failure");}});
     assert.equal(broken.retrieve(await broken.prepare({message:"create support ticket"})).mode,"bm25");
+  });
+  test("an action brings what must run before it, whatever its rank", () => {
+    const retriever = new Retriever(cards, { k: 0, siblings: 0 });
+    const result = retriever.retrieve({ message: "refund", context: { prev: ["M33.A09"] } });
+    assert.ok(result.picks.some((p) => p.id === "M33.A07" && p.why === "prerequisite" && p.via === "M33.A09"));
   });
   test("finds the obvious action first", () => {
     assert.equal(r.retrieve({ message: "create a contact for Ana Ruiz" }).picks[0]!.id, "M01.A01");

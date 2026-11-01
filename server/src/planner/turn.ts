@@ -357,6 +357,10 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let reply = await call(user, "plan");
   let searched = false;
   let searchedAgain = false;
+  // What the planner searched for, and the unsupported reply it gave before a search: if what it plans after the search
+  // still doesn't hold up, the turn ends on that verdict, not on the plan's errors.
+  let searchedFor: string | undefined;
+  let verdict: TurnOutcome | undefined;
   let repaired = false;
   // A plan that doesn't compile gets one repair, and a second when the first got closer (fewer errors): a weaker model
   // fixes a long plan a few mistakes at a time. Any other repair already spent counts as the first.
@@ -552,8 +556,9 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         continue;
       }
       searched = true;
+      searchedFor = d.query || input.message;
       // Retrieve again on the planner's own description of what's missing; the new cards join the old ones.
-      await shortlist("search_tools", d.query || input.message);
+      await shortlist("search_tools", searchedFor);
       user = prompt();
       reply = await call(user, "plan after search_tools");
       continue;
@@ -604,7 +609,12 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     // summary stays. A question that only reads ("is that the only one?") also keeps the planner's verdict on
     // top, unless it leaks raw ids.
     if (d.type === "answer" && (lookPlan || outcome?.effect === "change") && !emptyChecked) {
-      const errors = lookPlan ? [...outcomeErrors(lookPlan, outcome, undefined, (id) => registry.get(id)), ...(outcome ? [] : readOnlyIntentError(input.message, lookPlan, offered, registry))] : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
+      // A look that only found the record ("resolve campaign Holiday Offer") shows its id and name, not whether it is
+      // live: an answer from that is a guess. One nudge to read it; a second answer stands.
+      const onlyFound = lookPlan && !repaired && !lookPlan.steps.some((s) => callsOf(s).length) && offered.some((a) => a.risk === "read")
+        ? ["<looked> only found which record it is (its id and name), not what was asked about it; plan the listed action that reads it (its result is the answer)"]
+        : [];
+      const errors = lookPlan ? [...outcomeErrors(lookPlan, outcome, undefined, (id) => registry.get(id)), ...(outcome ? [] : readOnlyIntentError(input.message, lookPlan, offered, registry)), ...onlyFound] : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
       if (!errors.length && lookPlan) {
         const answer = outcome?.effect !== "change" ? d.text?.trim() : undefined;
         return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry), ...(answer && !RAW_ID.test(answer) ? { answer } : {}) };
@@ -632,17 +642,19 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       const text = [d.question ?? d.reason ?? d.text ?? "", d.alternatives?.length ? `Alternatives: ${d.alternatives.join("; ")}` : ""].filter(Boolean).join("\n");
       // "Unsupported" only means nothing on the shortlist fits, and the shortlist came from the user's loose wording.
       // Before believing it, retrieve once more on the planner's own description; re-plan only if that finds new cards.
+      const said = { kind: "reply" as const, status: d.type, text, options: d.options ?? (d.alternatives?.length ? d.alternatives : undefined) };
       if (d.type === "unsupported" && !searched) {
         searched = true;
         const before = offered.length;
         await shortlist("search_tools", `${text}\n${input.message}`);
         if (offered.length > before) {
+          verdict = said;
           user = prompt();
           reply = await call(user, "plan after search_tools");
           continue;
         }
       }
-      return { kind: "reply", status: d.type, text, options: d.options ?? (d.alternatives?.length ? d.alternatives : undefined) };
+      return said;
     }
 
     const compiled = compile(withLookSteps(d, lookSteps), registry, new Set(offered.map((a) => a.id)));
@@ -700,7 +712,12 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       continue;
     }
     emit({ type: "compile.errors", data: { errors } });
-    if (!mayRepair(errors)) return failedAfterCheck(`The plan was still invalid after repair:\n${errors.join("\n")}`);
+    if (!mayRepair(errors)) {
+      if (verdict) return verdict;
+      // Searched, and still naming no action that makes the change: no action does it.
+      if (searchedFor && outcome?.effect === "change" && !outcome.actions.length) return { kind: "reply", status: "unsupported", text: `I couldn't find an action for that (${searchedFor}).` };
+      return failedAfterCheck(`The plan was still invalid after repair:\n${errors.join("\n")}`);
+    }
     unfreezeRejected();
     if (compiled.ok && remakes(compiled.plan, input).length) remadeChecked = true;
     reply = await call(repairBlock(user, reply.json, errors), "repair");
