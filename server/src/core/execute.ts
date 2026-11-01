@@ -546,18 +546,21 @@ function alreadyThere(step: CStep & { kind: "action" }, error: StepError, plan: 
 }
 
 /**
- * What a resolve step's record is for: "write" when any change or send takes it (directly, or through a lookup scoped
- * by it), else "read". A record a create only reads from (the contact a new deal is for) is still a write target.
+ * What a resolve step's record is for: "write" when its output reaches any change or send, by any path through the
+ * plan (an action's args, a lookup scoped by it, a read, filter or exclude whose result a loop of writes runs over),
+ * else "read". A record a create only reads from (the contact a new deal is for) is still a write target.
  */
-export function identityRisk(plan: CompiledPlan, id: string, seen = new Set<string>()): ActionRisk {
-  if (seen.has(id)) return "read";
-  seen.add(id);
-  const ref = new RegExp(`\\$${id}(?![A-Za-z0-9_])`);
-  for (const s of plan.steps) {
-    if (s.id === id) continue;
-    const calls = s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : [];
-    if (calls.some((c) => c.action.risk !== "read" && ref.test(JSON.stringify(c.args)))) return "write";
-    if (s.kind === "resolve" && s.where && ref.test(JSON.stringify(s.where)) && identityRisk(plan, s.id, seen) === "write") return "write";
+export function identityRisk(plan: CompiledPlan, id: string): ActionRisk {
+  const reached = new Set([id]);
+  // Refs only point back, but go round until nothing new is reached rather than rely on the steps' order.
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const s of plan.steps) {
+      if (reached.has(s.id) || !s.deps.some((d) => reached.has(d))) continue;
+      if (isWrite(s)) return "write";
+      reached.add(s.id);
+      grew = true;
+    }
   }
   return "read";
 }
