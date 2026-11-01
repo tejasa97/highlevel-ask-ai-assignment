@@ -137,6 +137,7 @@ const setSchedule = defineAction({
   description: "Set when a draft campaign should start (status becomes scheduled), or clear it (back to draft).",
   risk: "write",
   input: z.strictObject({ campaignId: CampaignId, startAt: z.iso.datetime({ offset: true }).nullable() }),
+  timeOfDay: ["startAt"],
   output: Campaign,
   siblings: ["M13.A04"],
   entities: { consumes: ["campaign"] },

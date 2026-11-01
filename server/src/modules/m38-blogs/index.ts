@@ -223,6 +223,7 @@ const schedulePost = defineAction({
     "Schedule a draft post, moving it to scheduled with a publishAt in the future. A past or current time is rejected. Publishing immediately is M38.A09, which accepts scheduled or unpublished posts, not drafts.",
   risk: "write",
   input: z.strictObject({ postId: PostId, publishAt: z.iso.datetime() }),
+  timeOfDay: ["publishAt"],
   output: BlogPost,
   entities: { consumes: ["blog_post"] },
   destination: { id: "blog", label: "Blog" },

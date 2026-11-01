@@ -29,7 +29,7 @@ import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
 import { emptyTargets, outcomeErrors, type Outcome, selectionReadback } from "./contracts.js";
-import { assessClarification, namesField } from "./clarification.js";
+import { assessClarification, namesField, SAYS_WHEN } from "./clarification.js";
 import { appendPlannerDebug, debugReason, type PlannerDebug, plannerDebugEnabled } from "./debug.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
@@ -683,6 +683,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
               ...duplicateCreates(compiled.plan, named.filter((m) => !fromNer(m)), input.message, (entity, name) => !!store && (registry.resolver(entity)?.(store, name) ?? []).some((c) => !c.inactive && squash(c.name) === name)),
               ...staffInQuery(compiled.plan, named),
               ...unfilledNamedFields(compiled.plan, input.message),
+              ...inventedTimes(compiled.plan, [input.message, input.answering, input.context].filter(Boolean).join("\n")),
               // Asked once, a remake stands, unless the reply since said it would change those records instead.
               ...remakes(compiled.plan, input, remadeChecked ? remakeAnswer ?? null : undefined),
               ...repeatsEmpty(compiled.plan, input.failed, registry),
@@ -1009,6 +1010,23 @@ export function unfilledNamedFields(plan: CompiledPlan, message: string): string
     for (const [key, schema] of Object.entries(properties)) {
       if (required.has(key) || args[key] !== undefined && args[key] !== "" || !["string", "number", "integer"].includes(schema.type as string)) continue;
       if (namesField(message, key)) errors.push(`${s.id}: ${action.id} leaves out ${key}, which the message says comes with it; set it from the message, or if the message doesn't give it, reply clarify asking for ${key}; never invent it`);
+    }
+  }
+  return errors;
+}
+
+/**
+ * "Schedule the post for November 2" gives a day, not an hour: a publish or send time the conversation doesn't name is
+ * asked for, not picked. A time taken from an earlier step's result is the record's own, so only typed values count.
+ */
+export function inventedTimes(plan: CompiledPlan, said: string): string[] {
+  if (SAYS_WHEN.test(said)) return [];
+  const errors: string[] = [];
+  for (const s of plan.steps) {
+    const calls = s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : [];
+    for (const { action, args } of calls) for (const key of action.timeOfDay ?? []) {
+      const v = args[key];
+      if (typeof v === "string" && !v.startsWith("$") && !v.includes("{{$")) errors.push(`${s.id}: ${action.id} sets ${key} to ${v}, but the user gave no time of day; reply clarify asking what time (missing ${action.id} ${key}), never pick one`);
     }
   }
   return errors;

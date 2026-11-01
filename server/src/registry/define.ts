@@ -50,6 +50,9 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   typedIds?: Record<string, string>;
   /** ID arguments named for their role, not their record type: { keepId: ["contact"] }. A name there is looked up as that type. */
   idTypes?: Record<string, string[]>;
+  /** Date-time inputs whose time of day is the user's to say ("publish at 9am"): a plan that sets one when the
+   *  conversation names no time is sent back to ask, rather than pick an hour. */
+  timeOfDay?: string[];
   /** Alternative input groups for actions whose required inputs are conditional. */
   inputAlternatives?: string[][];
   /** Explicit delivery surface, not an inferred match on words like "post". */

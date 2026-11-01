@@ -7,7 +7,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { carryOf, duplicateCreates, inventedIds, isQuestion, oneOfSameNamed, planTurn, staffInQuery, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
+import { carryOf, duplicateCreates, inventedIds, inventedTimes, isQuestion, oneOfSameNamed, planTurn, staffInQuery, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -1147,6 +1147,20 @@ describe("creating a record the message names", () => {
     assert.deepEqual(unfilledNamedFields(sarah, "Email Sarah and create her as a contact"), []);
     assert.deepEqual(unfilledNamedFields(sarah, "Create Sarah and send her an email"), []);
   });
+});
+
+test("a publish time the conversation gives no time of day for is asked, not picked", () => {
+  const schedule = (publishAt: string) => {
+    const read = { id: "s1", kind: "action" as const, action: "M38.A02", argsJson: '{"postId":"blg_2"}' };
+    const r = compile(reply({ steps: [read, { id: "s2", kind: "action", action: "M38.A08", argsJson: JSON.stringify({ postId: "blg_1", publishAt }) }] }), registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    return r.plan;
+  };
+  const at9 = schedule("2026-11-02T14:00:00.000Z");
+  assert.match(inventedTimes(at9, "Schedule the Fall product update post to go live on November 2").join("\n"), /no time of day; reply clarify/);
+  for (const said of ["Schedule it for November 2 at 9am", "Schedule the post for November 2\n10am", "Publish it tomorrow morning", "Publish it now"]) assert.deepEqual(inventedTimes(at9, said), [], said);
+  // A time read from a record, not typed, is the record's own.
+  assert.deepEqual(inventedTimes(schedule("$s1.publishAt"), "Schedule it like the other one"), []);
 });
 
 test("a retry that runs the search the failed attempt found nothing with, unchanged, is sent back with the look-alike search", async () => {

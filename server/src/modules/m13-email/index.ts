@@ -159,6 +159,7 @@ const scheduleEmail = defineAction({
   description: "Schedule an email to go out later: a saved draft (emailId) or a new email to a contact or lead. The same consent rules as sending apply.",
   risk: "external",
   input: z.strictObject({ ...SendArgs, sendAt: z.iso.datetime({ offset: true }).describe("when to send, ISO date-time") }),
+  timeOfDay: ["sendAt"],
   output: Email,
   siblings: ["M12.A04", "M15.A06"],
   entities: { produces: "email", consumes: ["contact", "lead", "email"] },
