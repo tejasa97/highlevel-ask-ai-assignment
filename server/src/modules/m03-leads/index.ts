@@ -344,6 +344,7 @@ export default {
       records: (store) => store.all<Lead>("leads"), name: (l) => l.name,
       detail: (l) => [l.email, l.status].filter(Boolean).join(", "),
       qualifiers: { email: (l) => l.email, company: (l) => l.company },
+      strictNames: true,
     }),
   },
 } satisfies ModuleExports;

@@ -336,6 +336,7 @@ export default {
       detail: (c) => [c.email, c.phone, c.company].filter(Boolean).join(", "),
       inactive: (c) => c.status === "active" ? undefined : c.status,
       qualifiers: { company: (c) => c.company, companyId: (c) => c.companyId, email: (c) => c.email, phone: (c) => c.phone },
+      strictNames: true,
     }),
   },
 } satisfies ModuleExports;

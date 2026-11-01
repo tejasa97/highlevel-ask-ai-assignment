@@ -95,6 +95,16 @@ describe("resolveIdentity", () => {
     assert.equal(resolve({ text: "Ra", entity: "user", actionRisk: "write" }).kind, "suggest");
   });
 
+  test("a record described rather than named binds a write when it alone holds every word said; people never do", () => {
+    for (const [entity, text] of [["ticket", "Portal export fails"], ["ticket", "Elodie Mercer's Portal export fails"]]) {
+      const r = resolve({ text: text!, entity, actionRisk: "write" });
+      assert.ok(r.kind === "bound" && r.binding.id === "tic_1" && r.binding.provenance === "lookup", `${text}: ${r.decision}`);
+    }
+    assert.equal(resolve({ text: "Portal export", entity: "ticket", actionRisk: "write" }).kind, "bound", "part of the title is still every word said");
+    assert.notEqual(resolve({ text: "Portal export broken", entity: "ticket", actionRisk: "write" }).kind, "bound", "a word no ticket holds asks");
+    assert.equal(resolve({ text: "Rosa", actionRisk: "write" }).kind, "suggest", "a contact's first name still asks");
+  });
+
   test("a read uses the unique match whatever its strength, and offers near misses back", () => {
     const r = resolve({ text: "Raj", entity: "user", actionRisk: "read" });
     assert.ok(r.kind === "bound" && r.binding.provenance === "lookup");

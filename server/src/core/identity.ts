@@ -171,8 +171,8 @@ function levenshtein(a: string, b: string, max: number): number {
  * Resolves a name to a record of one entity type within one scope. Every candidate, whatever produced it, is one the
  * entity's own resolver returns for that scope: a hint for a record of another type, or outside the parent, is dropped.
  */
-/** Every word of the request's name is a whole word of the record's: "tom" in "Tom Becker", not "to" or "becke". */
-const wholeWords = (key: string, name: string) => { const words = new Set(norm(name).split(" ")); return key.split(" ").every((w) => words.has(w)); };
+/** Every word said is a whole word of the record's: "tom" in "Tom Becker", not "to" or "becke". */
+const wholeWords = (said: string[], name: string) => { const words = new Set(norm(name).split(" ")); return said.every((w) => words.has(w)); };
 
 export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; store: Store; config?: IdentityConfig }): IdentityResolution {
   const config = deps.config ?? identityConfig();
@@ -292,8 +292,15 @@ export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; st
     return { ...base, kind: "ambiguous", candidates: top(strong), decision: `write: ${strong.length} strong matches` };
   }
   if (config.writeBind === "unique" && matched.length === 1) return bind(matched[0]!, "lookup", "write: unique partial match (RESOLVER_WRITE_BIND=unique)");
-  // A record people call by part of its name ("Tom" for Tom Becker) binds when it is the only whole-word match.
-  if (resolver.partialNameBinds && matched.length === 1 && wholeWords(key, matched[0]!.name)) return bind(matched[0]!, "lookup", "write: unique whole-word match (partialNameBinds)");
+  // A record people describe rather than name ("Elena Costa's quote", "the Workspace login ticket", "Tom" for Tom
+  // Becker) binds when it is the only one whose name and detail hold every word said, the entity's own noun aside.
+  // People are strict: "Sarah" is never the one Sarah on file.
+  if (!resolver.strictNames) {
+    const noun = new Set(q.entity.split("_"));
+    const said = key.split(" ").filter((w) => w && !noun.has(w));
+    const holds = said.length ? usable.filter((c) => wholeWords(said, `${c.name} ${c.detail ?? ""}`)) : [];
+    if (holds.length === 1) return bind(holds[0]!, "lookup", "write: the one record holding every word said");
+  }
   return { ...base, kind: "suggest", candidates: top(usable), decision: "write: no strong key, asking" };
 }
 
