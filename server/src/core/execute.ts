@@ -692,7 +692,8 @@ function runItem(ctx: ActionContext, executionId: string, stepId: string, key: s
           replayed++;
           return [...done, prior];
         }
-        const value = invoke(call.action, late ? late(done[i - 1]) : args, ctx);
+        const concrete = late ? late(done[i - 1]) : args;
+        const value = writes && ctx.revise ? (ctx.revise(call.action.id, concrete, ctx) ?? { value: invoke(call.action, concrete, ctx) }).value : invoke(call.action, concrete, ctx.asOf ? { ...ctx, store: ctx.asOf } : ctx);
         if (writes) ctx.store.recordWrite(ledgerKey, call.action.id, value, ctx.clock.now());
         return [...done, value];
       }, []),

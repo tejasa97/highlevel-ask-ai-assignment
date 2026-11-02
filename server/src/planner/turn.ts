@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { compile, type CompiledPlan } from "../core/compile.js";
 import { narrowByRequest } from "../core/execute.js";
+import { type Made, revisable } from "../core/revise.js";
 import { lowerLookups } from "../core/lookups.js";
 import { type IdentityBinding, type IdentityResolution, optionLabel, resolveIdentity } from "../core/identity.js";
 import { card } from "../registry/card.js";
@@ -89,6 +90,8 @@ export interface TurnInput {
   failed?: string;
   /** Records the user picked for names in this message, answering a question a look asked: they bind, never ask again. */
   picks?: IdentityBinding[];
+  /** The records the last turn made with revisable creates: a plan that makes them again revises them (core/revise.ts). */
+  made?: Made[];
 }
 
 export interface Carry {
@@ -115,6 +118,8 @@ export type TurnOutcome =
       carry: Carry;
       /** The planner's verdict on a question about records ("Yes, that's her only review"), read from a look the plan repeats. */
       answer?: string;
+      /** The plan remakes the last turn's request: run it against `made`, keeping, editing and undoing those records. */
+      revises?: boolean;
     }
   | {
       kind: "reply";
@@ -302,6 +307,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let lookStated = false;
   // Whether a plan that makes again what the last turn made was sent back once: the reply after that stands.
   let remadeChecked = false;
+  let editsChecked = false;
   // What the reply right after a remake was flagged said it would do: still make them, or change the ones there.
   let remakeAnswer: string[] | null | undefined;
   // Identity checks already run, by "entity:name": one more is allowed for a different record ("Sales" then "Noah").
@@ -311,7 +317,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   // An answer to a question is planned with the message it answers in view: a bare "The lead from Wayne." loses what
   // was asked for ("as partner") however much <context> says.
   const prompt = () =>
-    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, mentions: named, message: request, context: input.context, failed: input.failed, looked, lookIds: lookSteps.map((l) => l.id), deliverySurfaces, identityCheck, outcome });
+    userBlock({ clock, actions: offered, notAvailable, resolvable, lookupQualifiers: registry.resolverQualifiers(), records: input.records, ...(input.made?.length ? { lastMade: lastMade(input.made) } : {}), mentions: named, message: request, context: input.context, failed: input.failed, looked, lookIds: lookSteps.map((l) => l.id), deliverySurfaces, identityCheck, outcome });
   let resampled = false;
   let round = 0;
   const debug = (label: string, user: string, d: Pick<PlannerDebug, "raw" | "parsed" | "model" | "usage" | "latencyMs" | "error">) => {
@@ -676,7 +682,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         ? inventedIds(compiled.plan, user, exists)
         : compiled.plan.steps.some((s) => callsOf(s).length)
           ? [
-              ...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }, (id) => registry.get(id)),
+              // A revision runs the edits and undoes its creates stand for (core/revise.ts).
+              ...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }, (id) => registry.get(id)).filter((e) => !revisedBy(compiled.plan, input.made, registry).some((id) => e.startsWith(`requested operation ${id} `))),
               // Without a stated outcome, the message's own verbs are the only sign a write was asked for. A read outcome
               // this reply states for a message that asks, then tells, may describe only the asking.
               ...(outcome && !(outcomeFrom === reply && outcome.effect === "read") ? [] : readOnlyIntentError(input.message, compiled.plan, offered, registry)),
@@ -686,6 +693,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
               // Asked once, a remake stands, unless the reply since said it would change those records instead.
               ...remakes(compiled.plan, input, remadeChecked ? remakeAnswer ?? null : undefined),
               ...repeatsEmpty(compiled.plan, input.failed, registry),
+              ...(editsChecked ? [] : editsMade(compiled.plan, input)),
             ]
           : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
     if (compiled.ok && !errors.length) {
@@ -712,7 +720,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       if (!empty.length) {
         const which = store && oneOfSameNamed(compiled.plan, named, registry, store, request, input.picks);
         if (which) return { kind: "reply", status: "clarify", ...which };
-        return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
+        const revises = !!input.made?.length && revisable(compiled.plan, input.made);
+        return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry), ...(revises ? { revises } : {}) };
       }
       if (emptyChecked) return { kind: "reply", status: "answer", text: "Nothing matched, so nothing was changed." };
       emptyChecked = true;
@@ -740,6 +749,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     }
     unfreezeRejected();
     if (compiled.ok && remakes(compiled.plan, input).length) remadeChecked = true;
+    if (compiled.ok && editsMade(compiled.plan, input).length) editsChecked = true;
     reply = await call(repairBlock(user, reply.json, errors), "repair");
   }
 }
@@ -750,7 +760,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
  * kind of record the last turn made, and changes none of those, is sent back once to say which it means; asked for
  * more ("one for Tom too"), it isn't.
  */
-export function remakes(plan: CompiledPlan, input: Pick<TurnInput, "carry" | "records" | "message">, stated?: string[] | null): string[] {
+export function remakes(plan: CompiledPlan, input: Pick<TurnInput, "carry" | "records" | "message" | "made">, stated?: string[] | null): string[] {
   return remadeBy(plan.steps.flatMap(callsOf), input, stated);
 }
 
@@ -760,12 +770,12 @@ export function remakes(plan: CompiledPlan, input: Pick<TurnInput, "carry" | "re
  * records again. Stated, making them again beside changing them is still the remake: which stay is only known once
  * they are read.
  */
-export function remakesStated(outcome: Outcome | null | undefined, input: Pick<TurnInput, "carry" | "records" | "message">, registry: Registry): string[] {
+export function remakesStated(outcome: Outcome | null | undefined, input: Pick<TurnInput, "carry" | "records" | "message" | "made">, registry: Registry): string[] {
   if (outcome?.effect !== "change") return [];
   return remadeBy(outcome.actions.flatMap((id) => registry.get(id) ?? []), input, undefined, true);
 }
 
-function remadeBy(actions: RegisteredAction[], input: Pick<TurnInput, "carry" | "records" | "message">, stated?: string[] | null, evenIfChanged = false): string[] {
+function remadeBy(actions: RegisteredAction[], input: Pick<TurnInput, "carry" | "records" | "message" | "made">, stated?: string[] | null, evenIfChanged = false): string[] {
   if (stated === null || stated?.length === 0) return [];
   if (/\b(also|too|another|more|as well|again|new)\b/i.test(input.message)) return [];
   const calls = actions.filter((a) => a.risk !== "read");
@@ -774,8 +784,27 @@ function remadeBy(actions: RegisteredAction[], input: Pick<TurnInput, "carry" | 
     const makes = calls.find((a) => a.entities?.produces === entity && !(a.entities?.consumes ?? []).includes(entity));
     const changes = calls.some((a) => (a.entities?.consumes ?? []).includes(entity));
     if (!mine.length || !makes || (changes && !evenIfChanged) || stated?.includes(makes.id)) return [];
+    // Made again, these are revised to match (core/revise.ts): the planner need not work out which stay.
+    if (makes.revise && input.made?.some((m) => m.entity === entity)) return [];
     const names = mine.slice(-8).map((r) => `${r.name} (${r.id}${r.for ? `, for ${r.for}` : ""})`).join(", ");
     return [`the last turn already made ${mine.length} ${entity} record${mine.length > 1 ? "s" : ""} (${names}); if this message narrows or changes what it did, update those that stay and cancel or undo those now left out instead of ${makes.id} again (look first to read which still fit, when that takes their fields). If it asks for new ones as well, plan the same again`];
+  });
+}
+
+/**
+ * The other way a weaker model plans a narrowing follow-up: edits to the records the last turn made, which leaves the
+ * ones now left out as they were. Revisable records are better planned as the whole request again (core/revise.ts), so
+ * such a plan is sent back once; resubmitted, it runs as written ("move Ben's task to Friday").
+ */
+export function editsMade(plan: CompiledPlan, input: Pick<TurnInput, "made" | "message">): string[] {
+  if (!input.made?.length || /\b(also|too|another|more|as well|again|new)\b/i.test(input.message)) return [];
+  const calls = plan.steps.flatMap(callsOf).filter((a) => a.risk !== "read");
+  return [...new Set(input.made.map((m) => m.entity))].flatMap((entity) => {
+    const of = input.made!.filter((m) => m.entity === entity);
+    const makes = calls.some((a) => a.entities?.produces === entity && !(a.entities?.consumes ?? []).includes(entity));
+    const edits = calls.filter((a) => (a.entities?.consumes ?? []).includes(entity)).map((a) => a.id);
+    if (makes || !edits.length) return [];
+    return [`the last turn made ${of.length} ${entity.replace(/_/g, " ")} records with ${of[0]!.action}, and this plan changes them with ${[...new Set(edits)].join(", ")}. If this message narrows or changes the last turn's request, plan that whole request again with the new terms and no steps that change or cancel those records: running it edits each one that still fits and cancels the rest. If it only changes those records, submit this plan again`];
   });
 }
 
@@ -1114,4 +1143,15 @@ function roleQuestion(registry: Registry, missing: SubmitPlan["missing"]): strin
   const action = missing && registry.get(missing.action);
   const role = action?.idTypes?.[missing!.argument] && ((action.inputSchema.properties ?? {}) as Record<string, { description?: string }>)[missing!.argument]?.description;
   return role ? `Which one is ${role}?` : "Which one do you mean?";
+}
+
+/** "5 task (M06.A01)": the last turn's revisable records, for <last_made>. */
+function lastMade(made: Made[]): string {
+  return [...new Set(made.map((m) => m.action))].map((a) => { const of = made.filter((m) => m.action === a); return `${of.length} ${of[0]!.entity.replace(/_/g, " ")} (${a})`; }).join(", ");
+}
+
+/** The edit and undo actions a plan's creates stand for when it revises what the last turn made. */
+function revisedBy(plan: CompiledPlan, made: Made[] | undefined, registry: Registry): string[] {
+  if (!made?.length || !revisable(plan, made)) return [];
+  return [...new Set(made.map((m) => m.action))].flatMap((a) => { const r = registry.get(a)!.revise!; return [...Object.values(r.edits), r.undo]; });
 }

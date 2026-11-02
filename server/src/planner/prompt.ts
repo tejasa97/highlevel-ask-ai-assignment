@@ -96,6 +96,8 @@ Rules:
   to Friday") amends the records it made: update the ones that stay, cancel or undo the ones now left out, and don't
   make them again. Account for every one it made: each either still fits (update it) or is now left out (cancel or
   undo it). Find them with a read (the records it made today) when <recent_records> doesn't list them.
+  When <last_made> is present, instead plan the last turn's whole request again with the new terms, as if asked fresh,
+  with no steps that update or cancel those records: running it edits each record that still fits and undoes the rest.
 - Don't invent factual values (addresses, amounts, dates, offers, attachments, commitments). You MAY compose ordinary
   wording when the user gave its purpose, e.g. a thank-you for renewing. Don't ask for exact prose unless explicitly
   requested or essential factual content is missing. Draft/send using the user's intent; normal app approvals still apply.
@@ -131,6 +133,8 @@ export interface UserBlockOptions {
   resolvable: string[];
   lookupQualifiers?: Record<string, readonly string[]>;
   records?: { entity: string; id: string; name: string }[];
+  /** What the last turn made with revisable creates: "5 task (M06.A01)". */
+  lastMade?: string;
   /** Names in the message that matched records: "Hiro Reyes" → lead. */
   mentions?: MentionHint[];
   deliverySurfaces?: { id: string; label: string; actions: string[] }[];
@@ -156,6 +160,7 @@ export function userBlock(opts: UserBlockOptions): string {
     ...(opts.identityCheck ? [`<identity_check>${escape(opts.identityCheck)}</identity_check>`] : []),
     ...(opts.lookupQualifiers && Object.keys(opts.lookupQualifiers).length ? [`<lookup_qualifiers>${escape(JSON.stringify(opts.lookupQualifiers))}</lookup_qualifiers>`] : []),
     ...(opts.records?.length ? [`<recent_records>${escape(JSON.stringify(opts.records))}</recent_records>`] : []),
+    ...(opts.lastMade ? [`<last_made>${escape(opts.lastMade)}</last_made>`] : []),
     ...(opts.mentions?.length ? [`<mentions>${escape(opts.mentions.map(mention).join("; "))}</mentions>`] : []),
     `<actions>\n${opts.actions.map(card).join("\n")}\n</actions>`,
     ...(opts.notAvailable?.length ? [`<not_available>\n${opts.notAvailable.join("\n")}\n</not_available>`] : []),

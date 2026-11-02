@@ -4,6 +4,7 @@ import { type CompiledPlan, type CStep, fedArgument, planDigest } from "../core/
 import { execute, type Approval, type Pending, type RunResult } from "../core/execute.js";
 import { type IdentityBinding, type IdentityResolution, heldWhere, optionLabel, resolveIdentity, revalidate, tableOfId, userSelected } from "../core/identity.js";
 import { emptyRead, runtimeNoMatch } from "../core/no-match.js";
+import { leftOut, type Made, madeBy, revisable, reviser, undoPlan } from "../core/revise.js";
 import { shownRecords, summarize, type Shown } from "../core/summarize.js";
 import { type Carry, type InfraKind, planTurn, type TurnDeps } from "../planner/turn.js";
 import type { Planner, Tier } from "../planner/types.js";
@@ -11,7 +12,7 @@ import type { CallTrace } from "../registry/define.js";
 import type { Registry } from "../registry/registry.js";
 import type { Retriever } from "../retrieval/retrieve.js";
 import type { Clock } from "../store/clock.js";
-import type { Doc, Store } from "../store/db.js";
+import { type Doc, Store } from "../store/db.js";
 import { type Answer, type ClarificationView, Clarifications, type ClarifyConfig, clarifyConfig, type OpenInput, type Paused } from "./clarify.js";
 import { diff, snapshot } from "./diff.js";
 import { rememberRecords, type WorkingRecord } from "./records.js";
@@ -43,6 +44,12 @@ interface Turn {
   answer?: string;
   pending?: Pending;
   approvals?: Approval[];
+  /** A revision of the last turn's records (core/revise.ts): its creates edit those; the ones left out are undone after. */
+  revise?: Made[];
+  /** The store before this turn first ran, kept when it makes records a follow-up may revise. */
+  from?: Uint8Array;
+  /** What already ran before this plan, when it is a revision's undo: said above its own summary. */
+  prior?: string;
 }
 
 export class Conversation {
@@ -56,6 +63,10 @@ export class Conversation {
    */
   private answering: string | undefined;
   private records: WorkingRecord[] = [];
+  /** The records the last turn that made any made with revisable creates, for a follow-up that narrows them. */
+  private made: Made[] = [];
+  /** The store before the turn that made `made`: what a revision of it reads. */
+  private madeFrom?: Uint8Array;
   private clarifications: Clarifications;
 
   constructor(
@@ -77,6 +88,8 @@ export class Conversation {
     this.turns.clear();
     this.history.length = 0;
     this.records = [];
+    this.made = [];
+    this.madeFrom = undefined;
     this.clarifications = this.newClarifications();
   }
 
@@ -111,7 +124,7 @@ export class Conversation {
     let failed: string | undefined;
     for (let attempt = 0; attempt < 2; attempt++) {
       const outcome = await planTurn(
-        { message, tier, context, carry: this.carry, answering, records: this.records, failed, ...(picks?.length ? { picks } : {}) },
+        { message, tier, context, carry: this.carry, answering, records: this.records, made: this.made, failed, ...(picks?.length ? { picks } : {}) },
         { registry, retriever, planner, clock: this.world.clock, store: this.world.store, look, signal, ...(this.deps.ner ? { ner: this.deps.ner } : {}) },
         (e) => emit(e.type, e.data),
       );
@@ -130,7 +143,7 @@ export class Conversation {
       if (signal?.aborted) return this.finish(message, "failed", "The request was cancelled. Nothing was changed.", emit);
       this.carry = outcome.carry;
       const id = attempt ? `${turnId}_retry` : turnId;
-      const turn: Turn = { id, message, request, said, plan: outcome.plan, executionId: `ex_${id}`, answer: outcome.answer };
+      const turn: Turn = { id, message, request, said, plan: outcome.plan, executionId: `ex_${id}`, answer: outcome.answer, ...(this.made.length && revisable(outcome.plan, this.made) ? { revise: this.made } : {}) };
       this.turns.set(id, turn);
       emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
       failed = await this.run(turn, actorId, emit, undefined, attempt === 0);
@@ -245,17 +258,21 @@ export class Conversation {
   private async run(turn: Turn, actorId: string, emit: Emit, approvals?: Approval[], mayRetry = false): Promise<string | undefined> {
     const { store } = this.world;
     const before = snapshot(store);
+    if (turn.prior === undefined && !turn.revise) turn.from ??= store.snapshot();
     const auditBefore = store.audit().length;
     const t = performance.now();
     const onCall = (c: CallTrace) => emit("call", { ...c, ms: Math.round(c.ms * 10) / 10 });
     const result: RunResult = await execute(
       turn.plan,
       this.deps.registry,
-      { ...this.world, actorId, onCall },
+      { ...this.world, actorId, onCall, ...(turn.revise ? { revise: reviser(turn.revise, this.deps.registry), ...(this.madeFrom ? { asOf: Store.fromSnapshot(this.madeFrom) } : {}) } : {}) },
       { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e), request: turn.request, said: turn.said },
     );
     emit("run", { status: result.status, ms: Math.round(performance.now() - t), steps: result.steps });
     this.records = rememberRecords(this.records, turn.plan, result);
+    const made = turn.prior === undefined ? madeBy(turn.plan, result, this.deps.registry) : [];
+    if (made.length || turn.revise) this.made = made;
+    if (made.length) this.madeFrom = turn.from;
     const audit = store.audit();
     emit("diff", { changes: diff(before, store), audit: audit.slice(0, audit.length - auditBefore) });
 
@@ -264,7 +281,14 @@ export class Conversation {
       const failed = retryable(turn.plan, result);
       if (failed) return failed;
     }
-    const summary = summarize(turn.plan, result, this.deps.registry);
+    const summary = [turn.prior, summarize(turn.plan, result, this.deps.registry)].filter(Boolean).join("\n");
+    // A revision ran: undo the last turn's records it no longer makes, as a plan of its own (a cancel asks first).
+    const undo = turn.revise && result.status === "done" ? undoPlan(leftOut(turn.revise, turn.plan, result, this.deps.registry), this.deps.registry) : undefined;
+    if (undo) {
+      Object.assign(turn, { plan: undo, executionId: `${turn.executionId}_undo`, revise: undefined, prior: summary, approvals: undefined, pending: undefined });
+      emit("plan", { hash: undo.hash, steps: undo.steps.map(describeStep) });
+      return this.run(turn, actorId, emit);
+    }
     // The verdict was read from the look; if the same reads didn't finish this time, it may no longer hold.
     const text = turn.answer && result.status === "done" ? `${turn.answer}\n${summary}` : summary;
     const records = shownRecords(turn.plan, result, this.deps.registry);

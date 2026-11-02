@@ -18,6 +18,10 @@ export interface ActionContext {
   actorId?: string;
   /** Told about every handler run, for tracing (the debug view). */
   onCall?: (c: CallTrace) => void;
+  /** A follow-up's revision (core/revise.ts): may run a create as edits to a record the last turn made, and return that. */
+  revise?: (actionId: string, args: Record<string, unknown>, ctx: ActionContext) => { value: unknown } | undefined;
+  /** In a revision, the store as it was before the turn it revises: reads see what that turn's request saw. */
+  asOf?: ActionContext["store"];
 }
 
 export interface CallTrace {
