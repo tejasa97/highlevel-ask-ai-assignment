@@ -953,21 +953,37 @@ export function oneOfSameNamed(plan: CompiledPlan, named: Mention[], registry: R
     else if (Array.isArray(v)) v.forEach(visit);
     else if (v && typeof v === "object") Object.values(v).forEach(visit);
   };
-  for (const s of plan.steps) {
+  const writes = plan.steps.flatMap((s) => {
     const calls = s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : [];
-    if (calls.some((c) => c.action.risk !== "read")) {
-      calls.forEach((c) => visit(c.args));
-      if (s.kind === "forEach" && Array.isArray(s.in)) visit(s.in);
-    }
-  }
+    if (!calls.some((c) => c.action.risk !== "read")) return [];
+    calls.forEach((c) => visit(c.args));
+    if (s.kind === "forEach" && Array.isArray(s.in)) visit(s.in);
+    return calls.filter((c) => c.action.risk !== "read");
+  });
   for (const m of named.filter((n) => n.count > 1)) {
     const found = (registry.resolver(m.entity)?.(store, m.name) ?? []).filter((c) => !c.inactive);
     const hit = found.filter((c) => ids.has(c.id));
     // The one the user picked when asked: the question was answered.
     if (hit.every((c) => picks.some((p) => p.id === c.id))) continue;
-    if (found.length < 2 || !hit.length || hit.length === found.length || narrowByRequest(found, request).length === 1) continue;
+    if (found.length < 2 || !hit.length || narrowByRequest(found, request).length === 1) continue;
+    // Every one of them taken is "email both Sarahs", unless one call gives them different roles ("merge the two
+    // Sarahs": which one stays is still the user's call).
+    const role = hit.length === found.length ? splitRole(writes, new Set(found.map((c) => c.id))) : "";
+    if (role === undefined) continue;
     const options = found.map(optionLabel);
-    return { text: `More than one ${m.entity} matches "${m.name}": ${options.join(", ")}. Which one?`, options };
+    return { text: `More than one ${m.entity} matches "${m.name}": ${options.join(", ")}. ${role ? `Which one is ${role}?` : "Which one?"}`, options };
+  }
+  return undefined;
+}
+
+/** The role of the first of two arguments one call fills with different records of the set (a merge's "the contact
+ * that stays"), "" when that argument says no role, undefined when no call splits them. */
+function splitRole(calls: { action: RegisteredAction; args: unknown }[], set: Set<string>): string | undefined {
+  for (const c of calls) {
+    const args = Object.entries((c.args ?? {}) as Record<string, unknown>).filter(([, v]) => typeof v === "string" && set.has(v));
+    if (new Set(args.map(([, v]) => v)).size < 2) continue;
+    const props = (c.action.inputSchema.properties ?? {}) as Record<string, { description?: string }>;
+    return props[args[0]![0]]?.description ?? "";
   }
   return undefined;
 }
