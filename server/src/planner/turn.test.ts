@@ -631,6 +631,14 @@ describe("a write by id to one of several same-named records", () => {
     assert.equal(oneOfSameNamed(owner(["ct_31", "ct_32"]), sarahs, registry, world().store, "make Aisha the owner of both Sarah Johnsons"), undefined);
   });
 
+  test("a merge of both still asks which one stays, unless the request says", () => {
+    const r = compile(reply({ steps: [{ id: "s1", kind: "action", action: "M01.A06", argsJson: JSON.stringify({ keepId: "ct_31", duplicateId: "ct_32" }) }] }), registry);
+    assert.ok(r.ok, JSON.stringify(r));
+    const q = oneOfSameNamed(r.plan, sarahs, registry, world().store, "Merge the two Sarah Johnson contacts");
+    assert.match(q?.text ?? "", /Which one is the contact that stays\?/);
+    assert.equal(oneOfSameNamed(r.plan, sarahs, registry, world().store, "Merge the two Sarah Johnson contacts\nKeep the Brightside one"), undefined);
+  });
+
   test("passes when the user picked that record when asked", () => {
     const pick = { entity: "contact", id: "ct_31", name: "Sarah Johnson", text: "Sarah Johnson", provenance: "user-selected" as const, matchReason: "exact-name" as const, fingerprint: "" };
     assert.equal(oneOfSameNamed(owner(["ct_31"]), sarahs, registry, world().store, "make Aisha the owner of Sarah Johnson", [pick]), undefined);
