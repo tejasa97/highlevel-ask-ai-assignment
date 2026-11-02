@@ -569,6 +569,14 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   return finish("partial");
 }
 
+/** Whether a step's output has the record itself (an object whose id it is), not just a field that mentions the id. */
+function holdsRecord(v: unknown, id: string): boolean {
+  if (Array.isArray(v)) return v.some((x) => holdsRecord(x, id));
+  if (!v || typeof v !== "object") return false;
+  const o = v as Record<string, unknown>;
+  return o.id === id || Object.values(o).some((x) => holdsRecord(x, id));
+}
+
 /**
  * "Tag Omar as a partner" planned as create the tag, then apply it, when a "partner" tag already exists: the
  * create was only a way to get a tag to apply, so the steps after it use the one that's there. A create nothing
@@ -582,7 +590,7 @@ function alreadyThere(step: CStep & { kind: "action" }, error: StepError, plan: 
   if (error.details?.kind !== undefined && error.details.kind !== entity) return undefined;
   // A create nothing uses is still "make sure it exists" when an earlier step of this plan found that very record
   // (search the tag, create it, tag with the search's): a get-or-create, not a failure.
-  const found = earlier.some((r) => r.status === "done" && JSON.stringify(r.output ?? null).includes(`"${id}"`));
+  const found = earlier.some((r) => r.status === "done" && holdsRecord(r.output, id));
   if (!found && !plan.steps.some((s) => s.deps.includes(step.id))) return undefined;
   const table = Object.entries(ENTITIES).find(([, d]) => id.startsWith(`${d.prefix}_`))?.[0];
   return (table && ctx.store.get(table, id)) ?? { id };
