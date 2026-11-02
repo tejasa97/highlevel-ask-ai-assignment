@@ -9,7 +9,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { carryOf, duplicateCreates, inventedIds, isQuestion, oneOfSameNamed, planTurn, staffInQuery, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
+import { carryOf, duplicateCreates, inventedIds, inventedTimes, isQuestion, oneOfSameNamed, planTurn, staffInQuery, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -122,6 +122,16 @@ describe("grounded outcomes and clarifications", () => {
     assert.ok(out.kind === "plan");
     assert.equal(planner.requests.length, 2);
     assert.match(planner.requests[1]!.user, /only reads/);
+  });
+
+  test("a change planned as only its prerequisite reads runs them as a look, then plans with what they found", async () => {
+    const planner = scripted(tasks("plan"), { ...createTask(), outcome: change });
+    let looks = 0;
+    const { out } = await run("Create a task like my other tasks", planner, {}, async () => (looks++, [{ id: "read", output: { items: [], total: 0 } }]));
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A01"), JSON.stringify(out));
+    assert.equal(looks, 1);
+    assert.match(planner.requests[1]!.user, /<looked>/);
+    assert.doesNotMatch(planner.requests[1]!.user, /only reads/);
   });
 
   test("look then answer cannot drop the requested change, even if the next reply declares a read", async () => {
@@ -333,12 +343,32 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(planner.requests.length, 1);
   });
 
-  test("a question whose model wants a second look gets the first look's reads, not a failure", async () => {
+  test("a question whose model wants a second look is asked once for its verdict", async () => {
     const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
-    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("look"), outcome: read });
+    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("look"), outcome: read }, reply({ type: "answer", text: "Yes, Ana has 2 tasks.", outcome: read }));
+    let looks = 0;
+    const { out } = await run("Has Ana got any tasks?", planner, {}, async () => (looks++, []));
+    assert.ok(out.kind === "plan" && out.answer === "Yes, Ana has 2 tasks.", JSON.stringify(out));
+    assert.equal(looks, 1);
+    assert.match(planner.requests[2]!.user, /start with the verdict/);
+  });
+
+  test("a question whose model still wants to look after that gets the first look's reads, not a failure", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("look"), outcome: read }, { ...tasks("look"), outcome: read });
     const { out } = await run("Has Ana got any tasks?", planner, {}, async () => []);
     assert.ok(out.kind === "plan" && out.answer === undefined, JSON.stringify(out));
-    assert.equal(planner.requests.length, 2);
+    assert.equal(planner.requests.length, 3);
+  });
+
+  test("a second look that reads something new runs, rather than ending on the first look's reads", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const contacts = reply({ type: "look", steps: [{ id: "c", kind: "action", action: "M01.A03", argsJson: "{}" }], outcome: read });
+    const planner = scripted(contacts, { ...tasks("look"), outcome: read }, { ...tasks("plan"), outcome: read });
+    let looks = 0;
+    const { out } = await run("Which tasks does Ana have?", planner, {}, async () => (looks++, []));
+    assert.equal(looks, 2);
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A03"), JSON.stringify(out));
   });
 
   test("the next turn learns which record types this one made, not those it only changed", () => {
@@ -859,6 +889,17 @@ describe("planTurn", () => {
     assert.ok(again.out.kind === "reply" && again.out.status === "failed");
   });
 
+  test("an answer after a look that only found the record is sent back once to read it", async () => {
+    const read = { effect: "read" as const, actions: [], destination: null };
+    const found = reply({ type: "look", steps: [{ id: "s1", kind: "resolve", entity: "campaign", name: "Holiday Offer", whereJson: null }], outcome: read });
+    const guess = reply({ type: "answer", text: "Yes, it is live.", outcome: read });
+    const look: TurnDeps["look"] = async () => [{ id: "s1", output: { id: "cmp_1", name: "Holiday Offer" } }];
+    const planner = scripted(found, guess, guess);
+    const { out } = await run("Is the Holiday Offer campaign live yet?", planner, {}, look);
+    assert.match(planner.requests[2]!.user, /only found which record it is/);
+    assert.equal(out.kind, "plan", "a second answer stands");
+  });
+
   test("a listed write verb repairs an all-read plan, but a pure question uses it directly", async () => {
     const reads = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A03", argsJson: "{}" }] });
     const planner = scripted(reads, createTask());
@@ -1126,6 +1167,20 @@ describe("creating a record the message names", () => {
     assert.deepEqual(unfilledNamedFields(sarah, "Email Sarah and create her as a contact"), []);
     assert.deepEqual(unfilledNamedFields(sarah, "Create Sarah and send her an email"), []);
   });
+});
+
+test("a publish time the conversation gives no time of day for is asked, not picked", () => {
+  const schedule = (publishAt: string) => {
+    const read = { id: "s1", kind: "action" as const, action: "M38.A02", argsJson: '{"postId":"blg_2"}' };
+    const r = compile(reply({ steps: [read, { id: "s2", kind: "action", action: "M38.A08", argsJson: JSON.stringify({ postId: "blg_1", publishAt }) }] }), registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    return r.plan;
+  };
+  const at9 = schedule("2026-11-02T14:00:00.000Z");
+  assert.match(inventedTimes(at9, "Schedule the Fall product update post to go live on November 2").join("\n"), /no time of day; reply clarify/);
+  for (const said of ["Schedule it for November 2 at 9am", "Schedule the post for November 2\n10am", "Publish it tomorrow morning", "Publish it now"]) assert.deepEqual(inventedTimes(at9, said), [], said);
+  // A time read from a record, not typed, is the record's own.
+  assert.deepEqual(inventedTimes(schedule("$s1.publishAt"), "Schedule it like the other one"), []);
 });
 
 test("a retry that runs the search the failed attempt found nothing with, unchanged, is sent back with the look-alike search", async () => {

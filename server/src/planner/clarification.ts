@@ -3,6 +3,7 @@ import type { Registry } from "../registry/registry.js";
 import type { Store } from "../store/db.js";
 import { checkIdentity } from "./contracts.js";
 import type { SubmitPlan } from "./submit-plan.js";
+import { TIMEZONE } from "../store/clock.js";
 import { isDeepStrictEqual } from "node:util";
 
 type Lookup = NonNullable<SubmitPlan["lookup"]>;
@@ -12,7 +13,8 @@ export type ClarificationCheck =
   | { kind: "identity"; lookup: Lookup; check: Check }
   | { kind: "facts"; digest: string; ambiguous: boolean; /** Set when the only names found match no record. */ none?: { entity: string; name: string } };
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
-const present = (v: unknown) => v !== undefined && v !== "";
+// A null stands for "not given" ("email": null beside a question about the email), the same as a missing key.
+const present = (v: unknown) => v !== undefined && v !== null && v !== "";
 
 function selector(value: unknown): Lookup | undefined {
   if (!object(value) || !Object.hasOwn(value, "$lookup")) return;
@@ -35,6 +37,13 @@ export function namesField(message: string, path: string): boolean {
   return new RegExp(`${brought}|${pointed}`, "i").test(message);
 }
 
+/** "at 9am", "3:30 pm", "14:00", "noon": the message says what time of day it means. */
+export const TIME_OF_DAY = /\b\d{1,2}(:\d{2})?\s*([ap]\.?m\.?)(?![a-z])|\b\d{1,2}:\d{2}\b|\b(noon|midday|midnight)\b/i;
+/** A time of day, or words that settle one without an hour: "now", "tonight", "tomorrow morning", "in 2 hours". */
+export const SAYS_WHEN = new RegExp(`${TIME_OF_DAY.source}|\\b(now|immediately|right away|asap|tonight|morning|afternoon|evening|noon|midnight|end of (the )?day|eod)\\b|\\bin \\d+ (minutes?|mins?|hours?|hrs?)\\b`, "i");
+const isDateTime = (schema: { format?: unknown; anyOf?: unknown }): boolean =>
+  schema.format === "date-time" || (Array.isArray(schema.anyOf) && schema.anyOf.some((s) => isDateTime(s as { format?: unknown })));
+
 class ParentChoice extends Error {
   constructor(readonly lookup: Lookup, readonly check: Check) { super("Parent must be resolved first"); }
 }
@@ -43,6 +52,8 @@ class ParentChoice extends Error {
 export function assessClarification(d: SubmitPlan, registry: Registry, offered: ReadonlySet<string>, message: string, store?: Store): ClarificationCheck {
   if (!d.missing) throw new Error("clarify requires missing {action, argument, argsJson}; bind the question to a required input, or plan/search instead");
   const { action: id, argument: path, argsJson } = d.missing;
+  // <now> settles the zone and the year, so a question about either is never needed, unless the zone is the input itself.
+  if (/time\s?zone|\b(which|what) year\b/i.test(d.question ?? "") && !/zone|year/i.test(path)) throw new Error(`<now> gives today's date and the workspace time zone, ${TIMEZONE}: a date without a year is its next one from today, and a time is in that zone. Don't ask either; plan with the date and time the user gave`);
   const action = registry.get(id);
   if (!action || !offered.has(id)) throw new Error(`Clarification action ${id} must be in <actions>`);
   const args: unknown = JSON.parse(argsJson);
@@ -53,7 +64,11 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
   const inline = selector(field.value);
   if (inline && d.lookup && (inline.entity !== d.lookup.entity || inline.name !== d.lookup.name || !isDeepStrictEqual(JSON.parse(inline.whereJson ?? "{}"), JSON.parse(d.lookup.whereJson ?? "{}")))) throw new Error("Conflicting argument and clarification lookup selectors");
   let lookup = inline ?? d.lookup ?? undefined;
-  if (present(field.value) && !inline) throw new Error(`${path} is already supplied; use plan/look to validate or inspect it, not clarify`);
+  // "2026-11-02" in a date-time input is the day without the time the question asks for, so it isn't supplied yet.
+  const dayOnly = isDateTime(field.schema) && typeof field.value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(field.value.trim());
+  if (present(field.value) && !inline && !dayOnly) throw new Error(`${path} is already supplied; use plan/look to validate or inspect it, not clarify`);
+  const time = isDateTime(field.schema) && message.match(TIME_OF_DAY)?.[0];
+  if (time) throw new Error(`The message gives the time (${time}); set ${path} to it in the workspace time zone, ${TIMEZONE}, written as the input's ISO date-time, rather than asking`);
   const entities = argumentEntities(action, path, args).filter((e) => registry.resolver(e));
   // A question about a plain value ("what time?") can't select a record, so a lookup sent with it is noise; the record it
   // names stays in argsJson.

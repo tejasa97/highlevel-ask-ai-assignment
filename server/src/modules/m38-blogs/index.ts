@@ -2,7 +2,7 @@ import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { activeUser, atLeastOne, blankToNull, contains, inDateRange, Limit, listOf, noChange, page, requireFuture, requirePermission, requireState } from "../../registry/helpers.js";
+import { activeUser, atLeastOne, blankToNull, contains, inDateRange, Limit, listOf, noChange, page, requireFuture, requirePermission, requireState, slugOf } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { BlogPost, POST_STATUSES } from "./schema.js";
@@ -43,7 +43,7 @@ const createPost = defineAction({
   risk: "write",
   input: z.strictObject({
     title: Text,
-    slug: Text,
+    slug: Text.optional().describe("URL path segment; leave it out to derive it from the title"),
     body: z.string().min(1),
     authorId: z.string().optional().describe("user id (us_…); defaults to the acting user"),
   }),
@@ -52,7 +52,7 @@ const createPost = defineAction({
   entities: { produces: "blog_post", consumes: ["user"] },
   example: () => ({ title: "Spring notes", slug: "spring-notes", body: "What changed this spring." }),
   handler: (a, { store, clock, actorId }) => {
-    const slug = a.slug.trim();
+    const slug = a.slug?.trim() || slugOf(a.title);
     if (slugTaken(store, slug)) throw new ActionError("DUPLICATE", `A blog post with slug "${slug}" already exists`);
     const author = activeUser(store, a.authorId ?? actorId ?? "us_1", "author posts");
     const at = clock.now().toISOString();
@@ -223,6 +223,7 @@ const schedulePost = defineAction({
     "Schedule a draft post, moving it to scheduled with a publishAt in the future. A past or current time is rejected. Publishing immediately is M38.A09, which accepts scheduled or unpublished posts, not drafts.",
   risk: "write",
   input: z.strictObject({ postId: PostId, publishAt: z.iso.datetime() }),
+  timeOfDay: ["publishAt"],
   output: BlogPost,
   entities: { consumes: ["blog_post"] },
   destination: { id: "blog", label: "Blog" },

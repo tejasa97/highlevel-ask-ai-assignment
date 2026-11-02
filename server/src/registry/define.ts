@@ -50,12 +50,24 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   typedIds?: Record<string, string>;
   /** ID arguments named for their role, not their record type: { keepId: ["contact"] }. A name there is looked up as that type. */
   idTypes?: Record<string, string[]>;
+  /** Date-time inputs whose time of day is the user's to say ("publish at 9am"): a plan that sets one when the
+   *  conversation names no time is sent back to ask, rather than pick an hour. */
+  timeOfDay?: string[];
   /** Alternative input groups for actions whose required inputs are conditional. */
   inputAlternatives?: string[][];
   /** Explicit delivery surface, not an inferred match on words like "post". */
   destination?: { id: string; label: string };
   /** Look-alike actions in other modules, always retrieved together. */
   siblings?: string[];
+  /** Actions that must run on the same record first (approve before execute): retrieved whenever this one is. */
+  requires?: string[];
+  /**
+   * For a create a follow-up may narrow ("only the Facebook ones, due tomorrow"): `key` is the argument that says which
+   * record it is for ("relatedTo.id"), the same path on the record it makes; `edits` maps each other argument to the
+   * action that changes it on a made record; `undo` cancels one. A follow-up then remakes the request whole, and the code
+   * keeps, edits, makes or undoes the last turn's records to match.
+   */
+  revise?: { key: string; edits: Record<string, string>; undo: string };
   /** Optional side-effect-free eligibility check. Throw an ActionError for a known blocker;
    * return recipient/target details that must be bound to approval. Never deliver, audit or consume faults.
    * The handler must still repeat its checks at execution time. */

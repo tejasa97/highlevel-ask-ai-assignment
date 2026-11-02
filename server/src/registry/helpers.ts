@@ -83,6 +83,11 @@ export function singular(s: string): string {
     : w).join(" ");
 }
 
+/** A URL slug from a title: "Our new pricing!" → "our-new-pricing". */
+export function slugOf(title: string): string {
+  return title.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "page";
+}
+
 /** Search output: `items` is capped at `limit`, `total` counts every match. */
 export function listOf<T extends z.ZodType>(item: T) {
   return z.object({ items: z.array(item), total: z.number().describe("all matches, even past the limit") });

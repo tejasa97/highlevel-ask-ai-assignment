@@ -1,0 +1,1372 @@
+{
+ "summary": {
+  "label": "luna-time-asks-port",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/param-scenarios,eval/module-scenarios/wave1",
+  "set": "3b45268dd641",
+  "tier": "strong",
+  "scenarios": 3,
+  "repeat": 2,
+  "runs": 6,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 3,
+  "measured": 3,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 6519,
+   "p95": 21713
+  },
+  "firstReplyMs": {
+   "p50": 5351,
+   "p95": 7181
+  },
+  "plannerRoundsPerRun": 2,
+  "callsPerRun": 1.5,
+  "clarified": {
+   "runs": 0,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 28399
+ },
+ "runs": [
+  {
+   "id": "param-schedule-post",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Schedule the Fall product update post to go live on November 2",
+     "status": "clarify",
+     "reply": "What time on November 2 should the Fall product update post go live?",
+     "offered": [
+      "M38.A08",
+      "M38.A09",
+      "M25.A04",
+      "M25.A07",
+      "M25.A08",
+      "M32.A04",
+      "M24.A04",
+      "M41.A04",
+      "M15.A06",
+      "M32.A06",
+      "M28.A01",
+      "M35.A09",
+      "M38.A04",
+      "M45.A09",
+      "M28.A07",
+      "M15.A02",
+      "M15.A03",
+      "M37.A09",
+      "M40.A09",
+      "M26.A04",
+      "M45.A06"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "What time on November 2 should the Fall product update post go live?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M38.A08"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M38.A08",
+         "argument": "publishAt",
+         "argsJson": "{\"postId\":{\"$lookup\":{\"entity\":\"blog_post\",\"name\":\"Fall product update\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4589,
+     "ms": 4589,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "fde3f0dfee73",
+       "latencyMs": 4524,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 25155,
+        "cachedRead": 18432,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "10am",
+     "status": "done",
+     "reply": "Done: Schedule post publication (Fall product update).",
+     "offered": [
+      "M38.A08",
+      "M38.A09",
+      "M25.A04",
+      "M25.A07",
+      "M25.A08",
+      "M15.A07",
+      "M32.A04",
+      "M26.A09",
+      "M13.A04",
+      "M24.A04",
+      "M15.A06",
+      "M46.A07",
+      "M32.A06",
+      "M28.A01",
+      "M35.A09",
+      "M15.A02",
+      "M15.A03",
+      "M37.A09",
+      "M40.A09",
+      "M26.A04",
+      "M13.A07",
+      "M38.A02"
+     ],
+     "planned": [
+      "M38.A08"
+     ],
+     "calls": [
+      {
+       "action": "M38.A08",
+       "args": {
+        "postId": "blg_1",
+        "publishAt": "2026-11-02T15:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "look",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M38.A02",
+          "argsJson": "{\"query\":\"Fall product update\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M38.A08"
+         ],
+         "destination": "blog"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "blog_post",
+          "name": "Fall product update post",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M38.A08",
+          "argsJson": "{\"postId\":\"$s1.id\",\"publishAt\":\"2026-11-02T10:00:00-05:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M38.A08"
+         ],
+         "destination": "blog"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s1: M38.A02 arg postId: Invalid input: expected string, received undefined",
+      "step s1: M38.A02 arg (args): Unrecognized key: \"query\"; arguments: postId"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7418,
+     "ms": 7419,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "853f325f0aa9",
+       "latencyMs": 3390,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13099,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 105,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "f0f70679134e",
+       "latencyMs": 3658,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 13262,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 153,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 12008,
+    "firstReplyMs": 4589,
+    "plannerMs": 11572,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 51516,
+     "cachedRead": 30720,
+     "cacheWrite": 0,
+     "output": 399,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-schedule-post",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Schedule the Fall product update post to go live on November 2",
+     "status": "clarify",
+     "reply": "What time on November 2 should the Fall product update post go live?",
+     "offered": [
+      "M38.A08",
+      "M38.A09",
+      "M25.A04",
+      "M25.A07",
+      "M25.A08",
+      "M32.A04",
+      "M24.A04",
+      "M41.A04",
+      "M15.A06",
+      "M32.A06",
+      "M28.A01",
+      "M35.A09",
+      "M38.A04",
+      "M45.A09",
+      "M28.A07",
+      "M15.A02",
+      "M15.A03",
+      "M37.A09",
+      "M40.A09",
+      "M26.A04",
+      "M45.A06"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "blog_post",
+          "name": "Fall product update post",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M38.A08",
+          "argsJson": "{\"postId\":\"$s1.id\",\"publishAt\":\"2026-11-02T00:00:00-05:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M38.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "What time on November 2 should the Fall product update post go live?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M38.A08"
+         ],
+         "destination": null
+        },
+        "clarification": "content",
+        "lookup": null,
+        "missing": {
+         "action": "M38.A08",
+         "argument": "publishAt",
+         "argsJson": "{\"postId\":\"$lookup\"}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [
+      "s2: M38.A08 sets publishAt to 2026-11-02T05:00:00.000Z, but the user gave no time of day; reply clarify asking what time (missing M38.A08 publishAt), never pick one"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7181,
+     "ms": 7181,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "fde3f0dfee73",
+       "latencyMs": 3387,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12480,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 152,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "7c9cd7606d41",
+       "latencyMs": 3720,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 12700,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 113,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "10am",
+     "status": "done",
+     "reply": "Schedule post publication for 1 of 1: Fall product update.",
+     "offered": [
+      "M38.A08",
+      "M38.A09",
+      "M25.A04",
+      "M25.A07",
+      "M25.A08",
+      "M15.A07",
+      "M32.A04",
+      "M26.A09",
+      "M13.A04",
+      "M24.A04",
+      "M15.A06",
+      "M46.A07",
+      "M32.A06",
+      "M28.A01",
+      "M35.A09",
+      "M15.A02",
+      "M15.A03",
+      "M37.A09",
+      "M40.A09",
+      "M26.A04",
+      "M13.A07",
+      "M22.A09",
+      "M38.A01",
+      "M38.A03",
+      "M38.A02",
+      "M22.A10",
+      "M38.A07",
+      "M38.A06",
+      "M24.A03",
+      "M38.A04",
+      "M21.A03",
+      "M06.A01",
+      "M46.A03",
+      "M20.A01",
+      "M43.A07",
+      "M37.A03",
+      "M21.A01",
+      "M39.A10",
+      "M37.A01",
+      "M35.A05",
+      "M46.A04",
+      "M38.A05",
+      "M38.A10",
+      "M25.A03",
+      "M20.A04",
+      "M35.A04",
+      "M43.A08",
+      "M05.A04",
+      "M05.A07",
+      "M10.A04",
+      "M40.A04",
+      "M48.A04",
+      "M45.A06",
+      "M25.A01",
+      "M47.A03",
+      "M40.A07",
+      "M37.A10",
+      "M35.A10",
+      "M48.A03"
+     ],
+     "planned": [
+      "M38.A03",
+      "M38.A08"
+     ],
+     "calls": [
+      {
+       "action": "M38.A03",
+       "args": {
+        "query": "Fall product update",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M38.A08",
+       "args": {
+        "postId": "blg_1",
+        "publishAt": "2026-11-02T15:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Find and schedule the existing blog post titled or associated with “Fall product update” to publish on November 2, 2026 at 10:00 AM America/New_York. Need a read/list/search blog posts action to identify the post, then schedule it.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": "blog"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search existing blog posts by title/name so the named Fall product update post can be identified before scheduling it for November 2 at 10am.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": "blog"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M38.A03",
+          "argsJson": "{\"query\":\"Fall product update\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M38.A08",
+            "argsJson": "{\"postId\":\"$item.id\",\"publishAt\":\"2026-11-02T10:00:00-05:00\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M38.A08"
+         ],
+         "destination": "blog"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Search existing blog posts by title/name so the named Fall product update post can be identified before scheduling it for November 2 at 10am.\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 14532,
+     "ms": 14532,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "853f325f0aa9",
+       "latencyMs": 5506,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13097,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 125,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "a3b17c657867",
+       "latencyMs": 3916,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 16766,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 100,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "d841ce58d2ce",
+       "latencyMs": 4424,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 20150,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 188,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 21713,
+    "firstReplyMs": 7181,
+    "plannerMs": 20953,
+    "plannerRounds": 5,
+    "modelCalls": 5,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 75193,
+     "cachedRead": 30720,
+     "cacheWrite": 0,
+     "output": 678,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-schedule-sms",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Schedule a text to Ben Brown for tomorrow at 9am: \"Your demo is confirmed for Thursday at 2pm\"",
+     "status": "done",
+     "reply": "Done: Schedule SMS.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M12.A03",
+      "M12.A01",
+      "M38.A08",
+      "M23.A07",
+      "M22.A01",
+      "M15.A06",
+      "M22.A08",
+      "M22.A07",
+      "M46.A07",
+      "M15.A07",
+      "M12.A06",
+      "M21.A04",
+      "M12.A07",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05",
+      "M13.A03",
+      "M47.A08",
+      "M03.A03",
+      "M13.A07"
+     ],
+     "planned": [
+      "M12.A04"
+     ],
+     "calls": [
+      {
+       "action": "M12.A04",
+       "args": {
+        "contactId": "ct_6",
+        "body": "Your demo is confirmed for Thursday at 2pm",
+        "sendAt": "2026-10-22T13:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M12.A04",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Ben Brown\"}},\"body\":\"Your demo is confirmed for Thursday at 2pm\",\"sendAt\":\"2026-10-22T09:00:00-04:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M12.A04"
+         ],
+         "destination": "sms"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4903,
+     "ms": 4910,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6ef24398e4fb",
+       "latencyMs": 4834,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14226,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 149,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "faed81238267a264",
+       "targetsHash": "976c00bfbae88348",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M12.A04",
+         "name": "Schedule SMS",
+         "args": {
+          "contactId": "ct_6",
+          "body": "Your demo is confirmed for Thursday at 2pm",
+          "sendAt": "2026-10-22T13:00:00.000Z"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_6",
+         "name": "Ben Brown",
+         "text": "Ben Brown",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-09-17T14:00:00.000Z",
+         "fingerprint": "9bffb21f5e20ce6f"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4910,
+    "firstReplyMs": 4903,
+    "plannerMs": 4834,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 14226,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 149,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-schedule-sms",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Schedule a text to Ben Brown for tomorrow at 9am: \"Your demo is confirmed for Thursday at 2pm\"",
+     "status": "done",
+     "reply": "Done: Schedule SMS.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M12.A03",
+      "M12.A01",
+      "M38.A08",
+      "M23.A07",
+      "M22.A01",
+      "M15.A06",
+      "M22.A08",
+      "M22.A07",
+      "M46.A07",
+      "M15.A07",
+      "M12.A06",
+      "M21.A04",
+      "M12.A07",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05",
+      "M13.A03",
+      "M47.A08",
+      "M03.A03",
+      "M13.A07"
+     ],
+     "planned": [
+      "M12.A04"
+     ],
+     "calls": [
+      {
+       "action": "M12.A04",
+       "args": {
+        "contactId": "ct_6",
+        "body": "Your demo is confirmed for Thursday at 2pm",
+        "sendAt": "2026-10-22T13:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M12.A04",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Ben Brown\"}},\"body\":\"Your demo is confirmed for Thursday at 2pm\",\"sendAt\":\"2026-10-22T09:00:00-04:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M12.A04"
+         ],
+         "destination": "sms"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6517,
+     "ms": 6519,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6ef24398e4fb",
+       "latencyMs": 6473,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 28651,
+        "cachedRead": 20224,
+        "cacheWrite": 0,
+        "output": 165,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "faed81238267a264",
+       "targetsHash": "976c00bfbae88348",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M12.A04",
+         "name": "Schedule SMS",
+         "args": {
+          "contactId": "ct_6",
+          "body": "Your demo is confirmed for Thursday at 2pm",
+          "sendAt": "2026-10-22T13:00:00.000Z"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_6",
+         "name": "Ben Brown",
+         "text": "Ben Brown",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-09-17T14:00:00.000Z",
+         "fingerprint": "9bffb21f5e20ce6f"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6519,
+    "firstReplyMs": 6517,
+    "plannerMs": 6473,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 28651,
+     "cachedRead": 20224,
+     "cacheWrite": 0,
+     "output": 165,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-blog-schedule",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Write a draft blog post called Our new pricing with the text \"We are simplifying our plans from November.\" and schedule it to go live on 28 October at 9am",
+     "status": "done",
+     "reply": "Done: Create blog post (Our new pricing).\nDone: Schedule post publication (Our new pricing).",
+     "offered": [
+      "M38.A01",
+      "M38.A08",
+      "M38.A10",
+      "M38.A09",
+      "M23.A09",
+      "M23.A01",
+      "M28.A01",
+      "M13.A01",
+      "M22.A08",
+      "M32.A04",
+      "M22.A07",
+      "M32.A01",
+      "M27.A05",
+      "M35.A09",
+      "M27.A01",
+      "M39.A10",
+      "M37.A01",
+      "M35.A05",
+      "M43.A07",
+      "M37.A10",
+      "M35.A10"
+     ],
+     "planned": [
+      "M38.A01",
+      "M38.A08"
+     ],
+     "calls": [
+      {
+       "action": "M38.A01",
+       "args": {
+        "title": "Our new pricing",
+        "body": "We are simplifying our plans from November."
+       }
+      },
+      {
+       "action": "M38.A08",
+       "args": {
+        "postId": "blg_1",
+        "publishAt": "2026-10-28T13:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M38.A01",
+          "argsJson": "{\"title\":\"Our new pricing\",\"body\":\"We are simplifying our plans from November.\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M38.A08",
+          "argsJson": "{\"postId\":\"$s1.id\",\"publishAt\":\"2026-10-28T09:00:00-04:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M38.A01",
+          "M38.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5351,
+     "ms": 5351,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b6bc6ec283f5",
+       "latencyMs": 5219,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12977,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 169,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5351,
+    "firstReplyMs": 5351,
+    "plannerMs": 5219,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12977,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 169,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-blog-schedule",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Write a draft blog post called Our new pricing with the text \"We are simplifying our plans from November.\" and schedule it to go live on 28 October at 9am",
+     "status": "done",
+     "reply": "Done: Create blog post (Our new pricing).\nDone: Schedule post publication (Our new pricing).",
+     "offered": [
+      "M38.A01",
+      "M38.A08",
+      "M38.A10",
+      "M38.A09",
+      "M23.A09",
+      "M23.A01",
+      "M28.A01",
+      "M13.A01",
+      "M22.A08",
+      "M32.A04",
+      "M22.A07",
+      "M32.A01",
+      "M27.A05",
+      "M35.A09",
+      "M27.A01",
+      "M39.A10",
+      "M37.A01",
+      "M35.A05",
+      "M43.A07",
+      "M37.A10",
+      "M35.A10"
+     ],
+     "planned": [
+      "M38.A01",
+      "M38.A08"
+     ],
+     "calls": [
+      {
+       "action": "M38.A01",
+       "args": {
+        "title": "Our new pricing",
+        "body": "We are simplifying our plans from November."
+       }
+      },
+      {
+       "action": "M38.A08",
+       "args": {
+        "postId": "blg_1",
+        "publishAt": "2026-10-28T13:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M38.A01",
+          "argsJson": "{\"title\":\"Our new pricing\",\"body\":\"We are simplifying our plans from November.\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M38.A08",
+          "argsJson": "{\"postId\":\"$s1.id\",\"publishAt\":\"2026-10-28T09:00:00-04:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M38.A01",
+          "M38.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4416,
+     "ms": 4416,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b6bc6ec283f5",
+       "latencyMs": 4190,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12979,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 169,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4416,
+    "firstReplyMs": 4416,
+    "plannerMs": 4190,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12979,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 169,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

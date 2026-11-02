@@ -35,6 +35,7 @@ const createTask = defineAction({
   output: Task,
   entities: { produces: "task", optionalConsumes: ["user", "contact", "lead", "opportunity"] },
   typedIds: { "relatedTo.id": "relatedTo.type" },
+  revise: { key: "relatedTo.id", edits: { dueDate: "M06.A06", assigneeId: "M06.A05", priority: "M06.A07", title: "M06.A04", description: "M06.A04" }, undo: "M06.A10" },
   example: () => ({ title: "Call back about pricing", assigneeId: "us_4", dueDate: "2026-10-23", relatedTo: { type: "contact", id: "ct_1" } }),
   handler: (a, { store, clock, actorId }) => {
     if (a.assigneeId) activeUser(store, a.assigneeId, "be assigned tasks");

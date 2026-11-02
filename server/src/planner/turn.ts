@@ -29,7 +29,7 @@ import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
 import { emptyTargets, outcomeErrors, type Outcome, selectionReadback } from "./contracts.js";
-import { assessClarification, namesField } from "./clarification.js";
+import { assessClarification, namesField, SAYS_WHEN } from "./clarification.js";
 import { appendPlannerDebug, debugReason, type PlannerDebug, plannerDebugEnabled } from "./debug.js";
 
 // The planning half of a turn, shared by the dev server and the CLI:
@@ -357,6 +357,10 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let reply = await call(user, "plan");
   let searched = false;
   let searchedAgain = false;
+  // What the planner searched for, and the unsupported reply it gave before a search: if what it plans after the search
+  // still doesn't hold up, the turn ends on that verdict, not on the plan's errors.
+  let searchedFor: string | undefined;
+  let verdict: TurnOutcome | undefined;
   let repaired = false;
   let plannedFromQuestion = false;
   // A plan that doesn't compile gets one repair, and a second when the first got closer (fewer errors): a weaker model
@@ -380,6 +384,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let lookPlan: CompiledPlan | undefined;
   let looks = 0;
   let lookClosed = false;
+  let verdictAsked = false;
   // A look's lookups bind against the NER hints too, so a look never asks the store about an ambiguous name.
   let nerClarify: TurnOutcome | undefined;
   const runLook = async (raw: CompiledPlan, steps: Step[]) => {
@@ -561,8 +566,9 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         continue;
       }
       searched = true;
+      searchedFor = d.query || input.message;
       // Retrieve again on the planner's own description of what's missing; the new cards join the old ones.
-      await shortlist("search_tools", d.query || input.message);
+      await shortlist("search_tools", searchedFor);
       user = prompt();
       reply = await call(user, "plan after search_tools");
       continue;
@@ -571,8 +577,18 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     if (d.type === "look") {
       // Reads only, run now; a write waits for the real plan (and its approval). A bad look is repaired like a plan.
       // Asked for a verdict, a model may want to look again: the reads it has are the answer, so they run as the plan.
+      // A yes/no question is first asked once for its Yes or No, which the reads can't say on their own.
       // Not for a message that also tells: a second look's own read outcome describes that look, not the request.
-      if (looked !== undefined && lookPlan && outcome?.effect === "read" && !readOnlyIntentError(input.message, lookPlan, offered, registry).length) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
+      // A second look that calls an action the first didn't (the workflow found, now its runs) reads something new: it runs.
+      const had = new Set(lookPlan?.steps.flatMap((s) => callsOf(s).map((a) => a.id)));
+      const readsNew = (d.steps ?? []).some((s) => s.kind === "action" && !had.has(s.action));
+      if (looked !== undefined && lookPlan && !readsNew && outcome?.effect === "read" && !readOnlyIntentError(input.message, lookPlan, offered, registry).length) {
+        if (verdictAsked || !isYesNo(input.message)) return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry) };
+        verdictAsked = true;
+        user = `${prompt()}\n${ANSWER_FROM_LOOKED}`;
+        reply = await call(user, "answer after second look");
+        continue;
+      }
       if (deps.look && looks >= LOOKS_MAX && !lookClosed) {
         // One plain nudge, so asking for a third look doesn't spend the one repair.
         lookClosed = true;
@@ -613,7 +629,12 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     // summary stays. A question that only reads ("is that the only one?") also keeps the planner's verdict on
     // top, unless it leaks raw ids.
     if (d.type === "answer" && (lookPlan || outcome?.effect === "change") && !emptyChecked) {
-      const errors = lookPlan ? [...outcomeErrors(lookPlan, outcome, undefined, (id) => registry.get(id)), ...(outcome ? [] : readOnlyIntentError(input.message, lookPlan, offered, registry))] : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
+      // A look that only found the record ("resolve campaign Holiday Offer") shows its id and name, not whether it is
+      // live: an answer from that is a guess. One nudge to read it; a second answer stands.
+      const onlyFound = lookPlan && !repaired && !lookPlan.steps.some((s) => callsOf(s).length) && offered.some((a) => a.risk === "read")
+        ? ["<looked> only found which record it is (its id and name), not what was asked about it; plan the listed action that reads it (its result is the answer)"]
+        : [];
+      const errors = lookPlan ? [...outcomeErrors(lookPlan, outcome, undefined, (id) => registry.get(id)), ...(outcome ? [] : readOnlyIntentError(input.message, lookPlan, offered, registry)), ...onlyFound] : ["a prose answer does not complete the requested change; plan the final operations or report a blocker"];
       if (!errors.length && lookPlan) {
         const answer = outcome?.effect !== "change" ? d.text?.trim() : undefined;
         return { kind: "plan", plan: lookPlan, carry: carryOf(lookPlan, registry), ...(answer && !RAW_ID.test(answer) ? { answer } : {}) };
@@ -641,17 +662,19 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       const text = [d.question ?? d.reason ?? d.text ?? "", d.alternatives?.length ? `Alternatives: ${d.alternatives.join("; ")}` : ""].filter(Boolean).join("\n");
       // "Unsupported" only means nothing on the shortlist fits, and the shortlist came from the user's loose wording.
       // Before believing it, retrieve once more on the planner's own description; re-plan only if that finds new cards.
+      const said = { kind: "reply" as const, status: d.type, text, options: d.options ?? (d.alternatives?.length ? d.alternatives : undefined) };
       if (d.type === "unsupported" && !searched) {
         searched = true;
         const before = offered.length;
         await shortlist("search_tools", `${text}\n${input.message}`);
         if (offered.length > before) {
+          verdict = said;
           user = prompt();
           reply = await call(user, "plan after search_tools");
           continue;
         }
       }
-      return { kind: "reply", status: d.type, text, options: d.options ?? (d.alternatives?.length ? d.alternatives : undefined) };
+      return said;
     }
 
     const compiled = compile(withLookSteps(d, lookSteps), registry, new Set(offered.map((a) => a.id)));
@@ -669,6 +692,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
               ...duplicateCreates(compiled.plan, named.filter((m) => !fromNer(m)), input.message, (entity, name) => !!store && (registry.resolver(entity)?.(store, name) ?? []).some((c) => !c.inactive && squash(c.name) === name)),
               ...staffInQuery(compiled.plan, named),
               ...unfilledNamedFields(compiled.plan, input.message),
+              ...inventedTimes(compiled.plan, [input.message, input.answering, input.context].filter(Boolean).join("\n")),
               // Asked once, a remake stands, unless the reply since said it would change those records instead.
               ...remakes(compiled.plan, input, remadeChecked ? remakeAnswer ?? null : undefined),
               ...repeatsEmpty(compiled.plan, input.failed, registry),
@@ -708,8 +732,22 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       reply = await call(repairBlock(user, reply.json, errors), "repair empty target");
       continue;
     }
+    // A change planned as only the reads it needs first is the look those errors ask for: run it, then plan again with
+    // what it found, rather than spend the repair on a reply labelled plan instead of look. Once looked, it is repaired.
+    if (compiled.ok && outcome?.effect === "change" && outcome.actions.length && readsOnly(compiled.plan) && deps.look && looked === undefined && errors.every((e) => PREREQUISITES_ONLY.test(e))) {
+      await runLook(compiled.plan, withLookSteps(d, lookSteps).steps ?? []);
+      restate = true;
+      user = prompt();
+      reply = await call(user, "plan after reads");
+      continue;
+    }
     emit({ type: "compile.errors", data: { errors } });
-    if (!mayRepair(errors)) return failedAfterCheck(`The plan was still invalid after repair:\n${errors.join("\n")}`);
+    if (!mayRepair(errors)) {
+      if (verdict) return verdict;
+      // Searched, and still naming no action that makes the change: no action does it.
+      if (searchedFor && outcome?.effect === "change" && !outcome.actions.length) return { kind: "reply", status: "unsupported", text: `I couldn't find an action for that (${searchedFor}).` };
+      return failedAfterCheck(`The plan was still invalid after repair:\n${errors.join("\n")}`);
+    }
     unfreezeRejected();
     if (compiled.ok && remakes(compiled.plan, input).length) remadeChecked = true;
     reply = await call(repairBlock(user, reply.json, errors), "repair");
@@ -918,6 +956,12 @@ export const isQuestion = (message: string) => {
   return /^(is|isn't|are|aren't|was|wasn't|were|does|doesn't|do|don't|did|didn't|has|hasn't|have|haven't|had|can|could|will|would|should|how many|how much|which|who|whose|any)\b/i.test(m);
 };
 
+/** "Is that the only one?", "has Ana got any tasks?": answered Yes or No, which a list of records doesn't say. */
+const isYesNo = (message: string) => isQuestion(message) && /^(is|isn't|are|aren't|was|wasn't|were|does|doesn't|do|don't|did|didn't|has|hasn't|have|haven't|had)\b/i.test(message.trim());
+
+/** The outcome errors a plan of prerequisite reads gets, and no others. */
+const PREREQUISITES_ONLY = /^(requested operation \S+ (is missing; prerequisite reads|.*is not in the plan: add a step that calls)|the requested outcome changes records, but this plan only reads)/;
+
 const readsOnly = (plan: CompiledPlan) => plan.steps.every((s) => callsOf(s).every((a) => a.risk === "read"));
 
 const ANSWER_FROM_LOOKED = "The reads in <looked> ran. Reply type answer to the question in <message>: start with the verdict (Yes, No, or the number), one or two sentences, records by name, never ids. Keep outcome.";
@@ -975,6 +1019,23 @@ export function unfilledNamedFields(plan: CompiledPlan, message: string): string
     for (const [key, schema] of Object.entries(properties)) {
       if (required.has(key) || args[key] !== undefined && args[key] !== "" || !["string", "number", "integer"].includes(schema.type as string)) continue;
       if (namesField(message, key)) errors.push(`${s.id}: ${action.id} leaves out ${key}, which the message says comes with it; set it from the message, or if the message doesn't give it, reply clarify asking for ${key}; never invent it`);
+    }
+  }
+  return errors;
+}
+
+/**
+ * "Schedule the post for November 2" gives a day, not an hour: a publish or send time the conversation doesn't name is
+ * asked for, not picked. A time taken from an earlier step's result is the record's own, so only typed values count.
+ */
+export function inventedTimes(plan: CompiledPlan, said: string): string[] {
+  if (SAYS_WHEN.test(said)) return [];
+  const errors: string[] = [];
+  for (const s of plan.steps) {
+    const calls = s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : [];
+    for (const { action, args } of calls) for (const key of action.timeOfDay ?? []) {
+      const v = args[key];
+      if (typeof v === "string" && !v.startsWith("$") && !v.includes("{{$")) errors.push(`${s.id}: ${action.id} sets ${key} to ${v}, but the user gave no time of day; reply clarify asking what time (missing ${action.id} ${key}), never pick one`);
     }
   }
   return errors;

@@ -121,6 +121,7 @@ const scheduleSms = defineAction({
   description: "Schedule a text message to go out later: a saved draft (smsId) or a new message to a contact or lead. The same consent rules as sending apply.",
   risk: "external",
   input: z.strictObject({ ...SendArgs, sendAt: z.iso.datetime({ offset: true }).describe("when to send, ISO date-time") }),
+  timeOfDay: ["sendAt"],
   output: Sms,
   siblings: ["M13.A04"],
   entities: { produces: "sms", consumes: ["contact", "lead", "sms"] },
