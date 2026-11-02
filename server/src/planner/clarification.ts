@@ -65,7 +65,9 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
   // "2026-11-02" in a date-time input is the day without the time the question asks for, so it isn't supplied yet.
   const dayOnly = isDateTime(field.schema) && typeof field.value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(field.value.trim());
   if (present(field.value) && !inline && !dayOnly) throw new Error(`${path} is already supplied; use plan/look to validate or inspect it, not clarify`);
-  const time = isDateTime(field.schema) && message.match(TIME_OF_DAY)?.[0];
+  // Only when the message's time can belong to this input alone: with two date-times (a start and an end) it may be the other's.
+  const dateTimes = Object.values(properties).filter((p) => isDateTime(p as { format?: unknown; anyOf?: unknown })).length;
+  const time = isDateTime(field.schema) && dateTimes < 2 && message.match(TIME_OF_DAY)?.[0];
   if (time) throw new Error(`The message gives the time (${time}); set ${path} to it in the workspace time zone, ${TIMEZONE}, written as the input's ISO date-time, rather than asking`);
   const entities = argumentEntities(action, path, args).filter((e) => registry.resolver(e));
   // A question about a plain value ("what time?") can't select a record, so a lookup sent with it is noise; the record it
