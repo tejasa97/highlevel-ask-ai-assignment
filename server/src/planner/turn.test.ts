@@ -7,7 +7,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { carryOf, duplicateCreates, inventedIds, isQuestion, oneOfSameNamed, planTurn, staffInQuery, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
+import { carryOf, duplicateCreates, inventedIds, inventedTime, isQuestion, oneOfSameNamed, planTurn, staffInQuery, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -483,6 +483,22 @@ describe("grounded outcomes and clarifications", () => {
     const out = await planTurn({ message: "Email Sarah Johnson", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
     assert.ok(out.kind === "reply" && out.status === "clarify");
     assert.equal(planner.requests.length, 1);
+  });
+
+  test("a create sent back because the record exists no longer has to be in the plan", async () => {
+    const create = reply({ type: "plan", outcome: { effect: "change", actions: ["M08.A01", "M08.A06"], destination: null }, steps: [
+      { id: "s1", kind: "resolve", entity: "contact", name: "Omar Larsen", whereJson: null },
+      { id: "s2", kind: "action", action: "M08.A01", argsJson: '{"name":"partner"}' },
+      { id: "s3", kind: "action", action: "M08.A06", argsJson: '{"tagId":"$s2.id","recordType":"contact","recordId":"$s1.id"}' },
+    ] });
+    const reuse = reply({ type: "plan", outcome: { effect: "change", actions: ["M08.A06"], destination: null }, steps: [
+      { id: "s1", kind: "resolve", entity: "contact", name: "Omar Larsen", whereJson: null },
+      { id: "s2", kind: "resolve", entity: "tag", name: "partner", whereJson: null },
+      { id: "s3", kind: "action", action: "M08.A06", argsJson: '{"tagId":"$s2.id","recordType":"contact","recordId":"$s1.id"}' },
+    ] });
+    const w = world();
+    const out = await planTurn({ message: "Tag Omar Larsen as a partner", tier: "fast" }, { registry, retriever, planner: scripted(create, reuse), clock: w.clock, store: w.store });
+    assert.equal(out.kind, "plan", JSON.stringify(out));
   });
 
   test("asked again after seeing the records, a question about a name that fits two of them goes to the user", async () => {
@@ -1146,6 +1162,23 @@ describe("creating a record the message names", () => {
     assert.deepEqual(unfilledNamedFields(sarah, "Create a contact named Sarah"), []);
     assert.deepEqual(unfilledNamedFields(sarah, "Email Sarah and create her as a contact"), []);
     assert.deepEqual(unfilledNamedFields(sarah, "Create Sarah and send her an email"), []);
+  });
+
+  test("a scheduled moment with no time of day said is asked about, not picked", () => {
+    const post = (publishAt: string) => {
+      const c = compile(reply({ steps: [{ id: "s1", kind: "action", action: "M38.A08", argsJson: JSON.stringify({ postId: "blg_1", publishAt }) }] }), registry);
+      assert.ok(c.ok, c.ok ? "" : c.errors.join("\n"));
+      return c.plan;
+    };
+    const at2 = post("2026-11-02T14:00:00.000Z");
+    assert.match(inventedTime(at2, "Schedule the Fall product update post to go live on November 2") ?? "", /What time of day should it go live\?/);
+    assert.equal(inventedTime(at2, "10am"), undefined);
+    assert.equal(inventedTime(at2, "Post it at 9:30 on November 2"), undefined);
+    assert.equal(inventedTime(at2, "Schedule it for noon tomorrow"), undefined);
+    assert.equal(inventedTime(at2, "Schedule it to go out in 2 hours"), undefined);
+    assert.equal(inventedTime(at2, "Schedule it for tonight"), undefined);
+    assert.equal(inventedTime(at2, "Push it to Monday, same time"), undefined);
+    assert.equal(inventedTime(at2, "Schedule the post for November 2\nWhat time?\n10am"), undefined, "a time given earlier in the conversation counts");
   });
 });
 

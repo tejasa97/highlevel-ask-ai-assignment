@@ -718,6 +718,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         continue;
       }
       if (!empty.length) {
+        const when = inventedTime(compiled.plan, `${input.context ?? ""}\n${input.message}`);
+        if (when) return { kind: "reply", status: "clarify", text: when, options: [] };
         const which = store && oneOfSameNamed(compiled.plan, named, registry, store, request, input.picks);
         if (which) return { kind: "reply", status: "clarify", ...which };
         const revises = !!input.made?.length && revisable(compiled.plan, input.made);
@@ -750,6 +752,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     unfreezeRejected();
     if (compiled.ok && remakes(compiled.plan, input).length) remadeChecked = true;
     if (compiled.ok && editsMade(compiled.plan, input).length) editsChecked = true;
+    // Told to use a record that exists instead of creating it, the planner's next outcome no longer includes the create.
+    if (errors.some((e) => e.includes(ALREADY_EXISTS))) restate = true;
     reply = await call(repairBlock(user, reply.json, errors), "repair");
   }
 }
@@ -996,6 +1000,8 @@ export const namedActions = (d: SubmitPlan): string[] => [
 
 const squash = (s: unknown) => (typeof s === "string" ? s.toLowerCase().replace(/\s+/g, " ").trim() : "");
 
+const ALREADY_EXISTS = " already exists as a ";
+
 /**
  * "Add Elodie Mercer, then post as her" when Elodie Mercer is already a contact: creating her again makes a
  * duplicate that later steps can't tell apart. Unless the message asks for a new or second one, the existing
@@ -1017,7 +1023,7 @@ export function duplicateCreates(plan: CompiledPlan, named: Mention[], message: 
     const feeds = plan.steps.some((t) => t.deps.includes(s.id));
     const existing = named.find((m) => !m.of && m.entity === made && squash(m.name) === name) ??
       (sameName && feeds && ` ${squash(message.replace(/["'“”.,!?]/g, " "))} `.includes(` ${name} `) ? { name: String(args.name ?? name), count: 1 } : undefined);
-    if (existing && (!sameName || sameName(made, name))) errors.push(`${s.id}: ${existing.name} already exists as a ${made}${existing.count > 1 ? ` (${existing.count} of them)` : ""}; resolve and use it instead of creating a duplicate with ${action.id}`);
+    if (existing && (!sameName || sameName(made, name))) errors.push(`${s.id}: ${existing.name}${ALREADY_EXISTS}${made}${existing.count > 1 ? ` (${existing.count} of them)` : ""}; resolve and use it instead of creating a duplicate with ${action.id}`);
   }
   return errors;
 }
@@ -1041,6 +1047,28 @@ export function unfilledNamedFields(plan: CompiledPlan, message: string): string
     }
   }
   return errors;
+}
+
+/** Arguments that say the moment something happens, which a date alone doesn't give. */
+const MOMENT_ARGS: Record<string, string> = { sendAt: "be sent", publishAt: "go live", startAt: "start", startsAt: "start" };
+const TIME_HINT = /\d\s*(?:am|pm|a\.m|p\.m)\b|\b\d{1,2}:\d\d|\b(?:noon|midnight|morning|afternoon|evening|night|tonight|o'clock|asap|now|right away|same time|end of (?:the )?day|eod)\b|\bat \d|\bin \d+\s*\w+|\bhours?\b|\bminutes?\b/i;
+
+/**
+ * "Schedule the post for November 2" gives a date, not a time. A scheduled send, post, appointment or event whose
+ * moment is written out while nothing said so far (the message or the recent conversation) names a time of day would
+ * pick one for the user: the user is asked for it instead, as a model's own clarify would, without asking the model.
+ */
+export function inventedTime(plan: CompiledPlan, said: string): string | undefined {
+  if (TIME_HINT.test(said)) return undefined;
+  for (const s of plan.steps) {
+    for (const { action, args } of s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : []) {
+      if (action.risk === "read") continue;
+      for (const [key, v] of Object.entries(args)) {
+        if (key in MOMENT_ARGS && typeof v === "string" && /^\d{4}-\d\d-\d\dT/.test(v)) return `What time of day should it ${MOMENT_ARGS[key]}? You gave the date but not the time.`;
+      }
+    }
+  }
+  return undefined;
 }
 
 const STAFF_ARGS = ["ownerId", "hostId", "assigneeId", "authorId", "memberId", "userId"];
