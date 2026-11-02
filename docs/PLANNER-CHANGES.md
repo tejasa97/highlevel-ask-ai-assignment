@@ -139,6 +139,20 @@ Code: [shared prompt](../server/src/planner/prompt.ts).
 
 Code: [action metadata](../server/src/registry/define.ts), [registry surfaces](../server/src/registry/registry.ts), [prompt](../server/src/planner/prompt.ts), [turn checks](../server/src/planner/turn.ts). Tests: [contracts](../server/src/planner/contracts.test.ts), [turns](../server/src/planner/turn.test.ts).
 
+## 8. Identity, times and verdicts found by the Luna runs
+
+Each item came from a scenario family that Luna (low reasoning) failed, and each is a shared rule in code, not a prompt exception for one model.
+
+- **A merge's other record.** A second lookup in the same call skips the record the first one picked (`OTHER_THAN` in `lookups.ts`), and a user's pick is never bound to that other slot. A question's own call is the plan once the user has picked, so the pick isn't asked about again.
+- **Ids as lookup names.** A record id written as a lookup name (`ct_12`) resolves to that record.
+- **Times are asked, never invented.** Actions that schedule something declare `timeOfDay` on the argument. A plan whose time the user never gave is sent back, and the clarify check rejects a question about a time zone or year (`<now>` settles both) and about a time the message already states, unless the action has two date-times and the time may belong to the other one.
+- **Slugs.** Booking pages, websites, landing pages and blogs take an optional slug, derived from the name when it is omitted.
+- **Yes/no questions and prerequisite-only changes.** A yes/no question over a look is answered from what the look found. A change planned as only its reads runs as a look, so the real final step is planned next.
+- **Reports.** M50.A03 only discovers reports; M50.A07 runs one.
+- **Reply direction.** M11.A10's `waitingOn` says who owes the next reply: `team` (they wrote last) or `contact` (we wrote last).
+
+Code: [lookups](../server/src/core/lookups.ts), [identity](../server/src/core/identity.ts), [clarification checks](../server/src/planner/clarification.ts), [turn](../server/src/planner/turn.ts). Tests sit beside each file.
+
 ## Two corrections found during validation
 
 **Bookkeeping is not the same as a user-facing change.** Report execution updates its last-run timestamp; trigger testing records a test firing without starting a workflow. The first read-outcome guard wrongly rejected them. They now declare `query: true`, so that check recognizes them without lowering execution risk or permissions. Registry validation forbids the flag on external/destructive actions. Other simulated business submissions are not queries. A `look` round still accepts only actions whose execution risk is `read`.
