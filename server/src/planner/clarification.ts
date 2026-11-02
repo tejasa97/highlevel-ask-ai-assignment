@@ -122,7 +122,10 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
 const norm = (s: string) => s.normalize("NFKD").toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").replace(/\s+/g, " ").trim();
 const STOP = new Set("a an the it me my we our i you your who which what to for of in on and or is are please".split(" "));
 
-/** Runs of two or more words the message and the question both say, as the message writes them, longest first. */
+/**
+ * Runs of two or more capitalized words (a person's or company's name) the message and the question both say, as the
+ * message writes them, longest first. "the welcome email" is shared too, but it is not a name nobody has.
+ */
 function sharedNames(message: string, question: string): string[] {
   const tokens = message.split(/[^\p{L}\p{M}\p{N}'’-]+/u).filter(Boolean).slice(0, 64);
   const asked = ` ${norm(question)} `;
@@ -130,7 +133,7 @@ function sharedNames(message: string, question: string): string[] {
   for (let size = Math.min(4, tokens.length); size > 1; size--) for (let n = 0; n <= tokens.length - size; n++) {
     const span = tokens.slice(n, n + size);
     const name = span.join(" ");
-    if (span.some((w) => STOP.has(norm(w))) || !asked.includes(` ${norm(name)} `) || out.some((o) => norm(o).includes(norm(name)))) continue;
+    if (span.some((w) => STOP.has(norm(w)) || !/^\p{Lu}/u.test(w)) || !asked.includes(` ${norm(name)} `) || out.some((o) => norm(o).includes(norm(name)))) continue;
     out.push(name);
   }
   return out;
