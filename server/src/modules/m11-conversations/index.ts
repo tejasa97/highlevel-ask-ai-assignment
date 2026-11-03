@@ -221,7 +221,7 @@ const unanswered = defineAction({
     'List open conversations waiting for a reply, longest wait first. waitingOn "team" = the customer wrote last and we haven\'t answered. waitingOn "contact" = we wrote last and they haven\'t replied (e.g. leads who never answered our follow-up). People we never messaged have no conversation, so they don\'t appear.',
   risk: "read",
   input: z.strictObject({
-    waitingOn: z.enum(["team", "contact"]).describe('"team": they wrote last; "contact": we wrote last, no reply yet'),
+    waitingOn: z.enum(["team", "contact"]).describe('who owes the next reply. "team": they wrote last, so they are waiting on us ("who is waiting on a reply from us"); "contact": we wrote last and are waiting on them ("who hasn\'t replied to us")'),
     personType: z.enum(["contact", "lead"]).optional(),
     ownerId: z.string().optional(),
     minHours: z.number().min(0).optional().describe("only those waiting at least this long"),
