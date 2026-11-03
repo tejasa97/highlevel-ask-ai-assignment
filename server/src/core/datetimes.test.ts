@@ -16,6 +16,11 @@ test("a wall time without a zone is the app's local time; an offset becomes the 
   assert.deepEqual(normalizeDateTimes({ when: "2026-10-28 09:00" }, at), { when: "2026-10-28T13:00:00.000Z" });
   assert.deepEqual(normalizeDateTimes({ when: "2026-11-02T09:00:00" }, at), { when: "2026-11-02T14:00:00.000Z" }, "after the clocks go back");
   assert.deepEqual(normalizeDateTimes({ when: "2026-10-28T09:00:00-04:00" }, at), { when: "2026-10-28T13:00:00.000Z" });
+  // The model writes the local offset it remembers: after the clocks go back, "-04:00" is still the workspace's 10am.
+  assert.deepEqual(normalizeDateTimes({ when: "2026-11-02T10:00:00-04:00" }, at), { when: "2026-11-02T15:00:00.000Z" });
+  assert.deepEqual(normalizeDateTimes({ when: "2026-11-02T10:00:00-05:00" }, at), { when: "2026-11-02T15:00:00.000Z" });
+  assert.deepEqual(normalizeDateTimes({ when: "2026-07-01T10:00:00-05:00" }, at), { when: "2026-07-01T14:00:00.000Z" });
+  assert.deepEqual(normalizeDateTimes({ when: "2026-11-02T10:00:00+01:00" }, at), { when: "2026-11-02T09:00:00.000Z" }, "another zone's offset is kept");
   assert.deepEqual(normalizeDateTimes({ when: "2026-10-28T13:00Z" }, at), { when: "2026-10-28T13:00:00.000Z" });
 });
 
