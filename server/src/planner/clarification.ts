@@ -50,8 +50,8 @@ class ParentChoice extends Error {
 export function assessClarification(d: SubmitPlan, registry: Registry, offered: ReadonlySet<string>, message: string, store?: Store): ClarificationCheck {
   if (!d.missing) throw new Error("clarify requires missing {action, argument, argsJson}; bind the question to a required input, or plan/search instead");
   const { action: id, argument: path, argsJson } = d.missing;
-  // The workspace time zone is in <now>, so a question about it is never needed, unless the zone is the input itself.
-  if (/time\s?zone/i.test(d.question ?? "") && !/zone/i.test(path)) throw new Error(`Times are in the workspace time zone, ${TIMEZONE}, given in <now>; don't ask for a time zone`);
+  // <now> settles the zone and the year, so a question about either is never needed, unless the zone is the input itself.
+  if (/time\s?zone|\b(which|what) year\b/i.test(d.question ?? "") && !/zone|year/i.test(path)) throw new Error(`<now> gives today's date and the workspace time zone, ${TIMEZONE}: a date without a year is its next one from today, and a time is in that zone. Don't ask either; plan with the date and time the user gave`);
   const action = registry.get(id);
   if (!action || !offered.has(id)) throw new Error(`Clarification action ${id} must be in <actions>`);
   const args: unknown = JSON.parse(argsJson);
@@ -62,7 +62,9 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
   const inline = selector(field.value);
   if (inline && d.lookup && (inline.entity !== d.lookup.entity || inline.name !== d.lookup.name || !isDeepStrictEqual(JSON.parse(inline.whereJson ?? "{}"), JSON.parse(d.lookup.whereJson ?? "{}")))) throw new Error("Conflicting argument and clarification lookup selectors");
   let lookup = inline ?? d.lookup ?? undefined;
-  if (present(field.value) && !inline) throw new Error(`${path} is already supplied; use plan/look to validate or inspect it, not clarify`);
+  // "2026-11-02" in a date-time input is the day without the time the question asks for, so it isn't supplied yet.
+  const dayOnly = isDateTime(field.schema) && typeof field.value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(field.value.trim());
+  if (present(field.value) && !inline && !dayOnly) throw new Error(`${path} is already supplied; use plan/look to validate or inspect it, not clarify`);
   const time = isDateTime(field.schema) && message.match(TIME_OF_DAY)?.[0];
   if (time) throw new Error(`The message gives the time (${time}); set ${path} to it in the workspace time zone, ${TIMEZONE}, written as the input's ISO date-time, rather than asking`);
   const entities = argumentEntities(action, path, args).filter((e) => registry.resolver(e));
