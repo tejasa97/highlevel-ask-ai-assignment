@@ -346,6 +346,16 @@ describe("runNer", () => {
     assert.deepEqual([plain.trace.outcome, breaker.state], ["timeout", "open"]);
   });
 
+  test("a bug rethrown from the call releases a half-open probe instead of leaving the breaker stuck", async () => {
+    let now = 0;
+    const breaker = new CircuitBreaker(1, 1000, undefined, () => now);
+    breaker.failure();
+    assert.equal(breaker.state, "open");
+    now = 1000;
+    await assert.rejects(runNer(() => Promise.reject(new RangeError("bug")), { ...base, breaker }), RangeError);
+    assert.equal(breaker.allow(), true, "the next call may probe");
+  });
+
   test("NER_EMBED is on unless set off", () => {
     assert.equal(nerEmbed({}), true);
     assert.equal(nerEmbed({ NER_EMBED: "on" }), true);

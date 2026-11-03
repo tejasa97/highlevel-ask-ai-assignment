@@ -1,0 +1,7678 @@
+{
+ "summary": {
+  "label": "amend-reconcile-4x-g",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/brief-scenarios",
+  "set": "e4d743b19633",
+  "tier": "strong",
+  "scenarios": 2,
+  "repeat": 4,
+  "runs": 8,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 50,
+  "allPass": 0,
+  "measured": 2,
+  "flaky": 2,
+  "e2eMs": {
+   "p50": 28500,
+   "p95": 43677
+  },
+  "firstReplyMs": {
+   "p50": 17022,
+   "p95": 31643
+  },
+  "plannerRoundsPerRun": 5,
+  "callsPerRun": 31.5,
+  "clarified": {
+   "runs": 0,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 70321
+ },
+ "runs": [
+  {
+   "id": "brief-complex-then-facebook-only",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Find leads created last week who have not replied, exclude anyone with a booked appointment, assign the remaining leads to available sales reps, and create follow-up tasks.",
+     "status": "done",
+     "reply": "Assign lead owner + Create task for 5 of 5: Ben Nguyen, Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A03",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A09",
+      "M21.A05",
+      "M04.A06",
+      "M11.A10",
+      "M03.A01",
+      "M21.A01",
+      "M21.A03",
+      "M22.A09",
+      "M21.A09",
+      "M21.A06",
+      "M21.A07",
+      "M01.A03",
+      "M02.A03",
+      "M04.A03",
+      "M24.A03",
+      "M47.A03",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M06.A05",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M11.A02",
+      "M49.A08",
+      "M01.A01",
+      "M03.A10",
+      "M04.A01",
+      "M03.A04",
+      "M06.A03",
+      "M49.A07",
+      "M03.A02",
+      "M22.A07",
+      "M09.A01",
+      "M03.A07",
+      "M13.A04",
+      "M03.A06",
+      "M03.A08",
+      "M20.A06",
+      "M02.A01",
+      "M48.A01",
+      "M27.A10",
+      "M13.A07"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M21.A03",
+      "M48.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "from": "2026-10-21",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "from": "2026-10-21",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_3",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Nguyen",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_3"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads created within date range and assignable to available sales reps; identify leads who have not replied (conversation waitingOn contact); exclude leads with booked appointments; then assign leads round-robin to available sales users and create a follow-up task per lead.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\":\"booked\",\"from\":\"2026-10-21\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s5",
+          "whereJson": null,
+          "by": "leadId",
+          "set": "$s3.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s6",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 14239,
+     "ms": 14245,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "48fb2e60d6b3",
+       "latencyMs": 5469,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 15465,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 126,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "44fde77bd5d7",
+       "latencyMs": 8570,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 40467,
+        "cachedRead": 26240,
+        "cacheWrite": 0,
+        "output": 470,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s7",
+       "planHash": "0e44806e81051273",
+       "targetsHash": "1dbe0bbd77a3bb63",
+       "reason": "changes 5 records at once",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_3",
+          "ownerId": "us_2"
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Nguyen",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_3"
+          }
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_4"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_5"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "assigneeId": "us_5",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_2"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_4"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "user": "Only include leads from the Facebook campaign, and make those tasks due tomorrow.",
+     "status": "done",
+     "reply": "Updated the 4 existing records from the last turn rather than assign lead owner + create task again: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.\nCancelled 1 earlier task record this request no longer includes: Follow up with Ben Nguyen.",
+     "offered": [
+      "M03.A06",
+      "M06.A06",
+      "M15.A02",
+      "M06.A03",
+      "M06.A01",
+      "M01.A10",
+      "M03.A03",
+      "M07.A01",
+      "M15.A04",
+      "M15.A07",
+      "M15.A05",
+      "M03.A01",
+      "M06.A02",
+      "M06.A09",
+      "M21.A07",
+      "M11.A10",
+      "M21.A03",
+      "M48.A03",
+      "M03.A05",
+      "M06.A07",
+      "M06.A04",
+      "M06.A08",
+      "M06.A10",
+      "M28.A06",
+      "M04.A07",
+      "M16.A02"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M21.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_21",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_21",
+        "assigneeId": "us_2"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_22",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_22",
+        "assigneeId": "us_4"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_23",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_23",
+        "assigneeId": "us_5"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_24",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_24",
+        "assigneeId": "us_2"
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M06.A10",
+       "args": {
+        "taskId": "tk_20",
+        "reason": "Left out when the request changed"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"source\":\"facebook_ads\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"available\":true}"
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s4",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s3.items",
+          "do": [
+           {
+            "action": "M21.A03",
+            "argsJson": "{\"leadId\":\"$item.id\"}"
+           },
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"dueDate\":\"2026-10-22\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 3,
+     "firstReplyMs": 6614,
+     "ms": 6626,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "1275545c7d23",
+       "latencyMs": 6574,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14405,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 396,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "de2f06668686448f",
+       "targetsHash": "e080ca9e624260df",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_21",
+          "dueDate": "2026-10-22",
+          "assigneeId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_22",
+          "dueDate": "2026-10-22",
+          "assigneeId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_23",
+          "dueDate": "2026-10-22",
+          "assigneeId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_24",
+          "dueDate": "2026-10-22",
+          "assigneeId": "us_2"
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      },
+      {
+       "stepId": "revise",
+       "planHash": "de2f06668686448f",
+       "targetsHash": "de3184e25ad8bfba",
+       "reason": "cancels 1 earlier task record this request no longer includes",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M06.A10",
+         "name": "Cancel task",
+         "args": {
+          "taskId": "tk_20"
+         },
+         "label": "Follow up with Ben Nguyen"
+        }
+       ]
+      },
+      {
+       "stepId": "s5",
+       "planHash": "de2f06668686448f",
+       "targetsHash": "86073081a709a382",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_21"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_22"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_23"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_24"
+         },
+         "label": "Dev Kim"
+        }
+       ],
+       "changed": true
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 20871,
+    "firstReplyMs": 14239,
+    "plannerMs": 20613,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 51,
+    "clarifications": 0,
+    "usage": {
+     "input": 70337,
+     "cachedRead": 38784,
+     "cacheWrite": 0,
+     "output": 992,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-complex-then-facebook-only",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Find leads created last week who have not replied, exclude anyone with a booked appointment, assign the remaining leads to available sales reps, and create follow-up tasks.",
+     "status": "done",
+     "reply": "Assign lead owner + Create task for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A03",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A09",
+      "M21.A05",
+      "M04.A06",
+      "M11.A10",
+      "M03.A01",
+      "M21.A01",
+      "M21.A03",
+      "M22.A09",
+      "M21.A09",
+      "M21.A06",
+      "M21.A07",
+      "M01.A03",
+      "M02.A03",
+      "M04.A03",
+      "M24.A03",
+      "M47.A03",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M06.A05",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M11.A02",
+      "M01.A01",
+      "M03.A04",
+      "M03.A10",
+      "M21.A08",
+      "M22.A07",
+      "M04.A01",
+      "M13.A07",
+      "M49.A08",
+      "M49.A07",
+      "M21.A04",
+      "M03.A08",
+      "M01.A10",
+      "M24.A01",
+      "M03.A02",
+      "M13.A03",
+      "M02.A01",
+      "M48.A01",
+      "M01.A04",
+      "M02.A04",
+      "M10.A09",
+      "M35.A04",
+      "M27.A10",
+      "M20.A03",
+      "M28.A03",
+      "M15.A03",
+      "M49.A03",
+      "M48.A09",
+      "M06.A03",
+      "M03.A06",
+      "M12.A07",
+      "M27.A03",
+      "M09.A01",
+      "M03.A07",
+      "M08.A08",
+      "M23.A03",
+      "M50.A04",
+      "M07.A01",
+      "M21.A02",
+      "M49.A09",
+      "M08.A06",
+      "M22.A10",
+      "M44.A10",
+      "M07.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M21.A03",
+      "M48.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "description": "Follow up with this lead, who has not replied.",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "description": "Follow up with this lead, who has not replied.",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "description": "Follow up with this lead, who has not replied.",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "description": "Follow up with this lead, who has not replied.",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads created last week who have not replied (identify conversations waiting on the contact), exclude leads who have a booked appointment, and assign the remaining leads to available sales reps in round-robin before creating follow-up tasks for each.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads by created date and find leads with conversations waiting on their reply, list booked appointments for leads, filter out leads with booked appointments, list available sales users, assign leads and create follow-up tasks per lead",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"status\":\"new\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\":\"booked\"}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s3",
+          "whereJson": null,
+          "by": "leadId",
+          "set": "$s4.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s5",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s6.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"description\":\"Follow up with this lead, who has not replied.\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Search leads by created date and find leads with conversations waiting on their reply, list booked appointments for leads, filter out leads with booked appointments, list available sales users, assign leads and create follow-up tasks per lead\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 17264,
+     "ms": 17268,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "48fb2e60d6b3",
+       "latencyMs": 4944,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 15465,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 121,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "8f86db3fb8e8",
+       "latencyMs": 5329,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 21186,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 118,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "b9b8ea230432",
+       "latencyMs": 6779,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 24751,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 460,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s7",
+       "planHash": "f95999442d8f89b8",
+       "targetsHash": "b875824ca991963c",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "description": "Follow up with this lead, who has not replied.",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "description": "Follow up with this lead, who has not replied.",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "description": "Follow up with this lead, who has not replied.",
+          "assigneeId": "us_5",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "description": "Follow up with this lead, who has not replied.",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "user": "Only include leads from the Facebook campaign, and make those tasks due tomorrow.",
+     "status": "done",
+     "reply": "Updated the 4 existing records from the last turn rather than assign lead owner + create task again: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A06",
+      "M06.A06",
+      "M15.A02",
+      "M06.A03",
+      "M06.A01",
+      "M01.A10",
+      "M03.A03",
+      "M07.A01",
+      "M15.A04",
+      "M15.A07",
+      "M15.A05",
+      "M03.A01",
+      "M06.A02",
+      "M06.A09",
+      "M21.A07",
+      "M11.A10",
+      "M21.A03",
+      "M48.A03",
+      "M03.A05",
+      "M06.A07",
+      "M06.A04",
+      "M06.A08",
+      "M06.A10",
+      "M28.A06",
+      "M04.A07",
+      "M16.A02"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_20",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_21",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_22",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_23",
+        "dueDate": "2026-10-22"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"source\":\"facebook_ads\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"available\":true}"
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s4",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s3.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"dueDate\":\"2026-10-22\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6718,
+     "ms": 6721,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "adec0e0ae2d3",
+       "latencyMs": 6686,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14396,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 376,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "7202889253e014a9",
+       "targetsHash": "403e5cda5071f80b",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_20",
+          "dueDate": "2026-10-22"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_21",
+          "dueDate": "2026-10-22"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_22",
+          "dueDate": "2026-10-22"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_23",
+          "dueDate": "2026-10-22"
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 23989,
+    "firstReplyMs": 17264,
+    "plannerMs": 23738,
+    "plannerRounds": 4,
+    "modelCalls": 4,
+    "calls": 30,
+    "clarifications": 0,
+    "usage": {
+     "input": 75798,
+     "cachedRead": 18816,
+     "cacheWrite": 0,
+     "output": 1075,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-complex-then-facebook-only",
+   "category": "followup",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND json_extract(data,'$.relatedTo.id') IN ('ld_41','ld_42','ld_43','ld_44') → 8, wanted 4"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "Find leads created last week who have not replied, exclude anyone with a booked appointment, assign the remaining leads to available sales reps, and create follow-up tasks.",
+     "status": "done",
+     "reply": "Assign lead owner + Create task for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A03",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A09",
+      "M21.A05",
+      "M04.A06",
+      "M11.A10",
+      "M03.A01",
+      "M21.A01",
+      "M21.A03",
+      "M22.A09",
+      "M21.A09",
+      "M21.A06",
+      "M21.A07",
+      "M01.A03",
+      "M02.A03",
+      "M04.A03",
+      "M24.A03",
+      "M47.A03",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M06.A05",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M11.A02",
+      "M06.A03",
+      "M03.A04",
+      "M03.A10",
+      "M03.A02",
+      "M22.A07",
+      "M04.A01",
+      "M21.A08",
+      "M07.A01",
+      "M13.A07",
+      "M24.A01",
+      "M12.A07",
+      "M27.A03",
+      "M03.A08",
+      "M49.A07",
+      "M01.A01",
+      "M07.A03",
+      "M01.A04",
+      "M02.A04",
+      "M10.A09",
+      "M35.A04",
+      "M27.A10",
+      "M20.A03",
+      "M28.A03",
+      "M15.A03",
+      "M49.A03",
+      "M48.A05",
+      "M49.A08",
+      "M13.A04",
+      "M01.A10",
+      "M03.A06",
+      "M49.A09",
+      "M09.A01",
+      "M08.A08",
+      "M08.A06",
+      "M03.A07",
+      "M10.A01",
+      "M01.A06",
+      "M20.A06",
+      "M13.A10",
+      "M08.A07",
+      "M12.A04",
+      "M15.A06"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M21.A03",
+      "M48.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "from": "2026-10-21",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "from": "2026-10-21",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "description": "Follow up with this lead who has not replied.",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "description": "Follow up with this lead who has not replied.",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "description": "Follow up with this lead who has not replied.",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "description": "Follow up with this lead who has not replied.",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads created last week with no reply (identify leads who haven't replied), and find booked appointments for those leads so they can be excluded. Then assign remaining leads across available sales reps and create a follow-up task for each.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads created during a date range joined with conversations where the contact owes the next reply, plus booked appointments by lead, and list available sales users with the sales role; then assign leads and create follow-up tasks for the remaining leads.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"status\":\"new\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\":\"booked\",\"from\":\"2026-10-21\"}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s3",
+          "whereJson": null,
+          "by": "id",
+          "set": "$s4.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s5",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s6.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"description\":\"Follow up with this lead who has not replied.\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Search leads created during a date range joined with conversations where the contact owes the next reply, plus booked appointments by lead, and list available sales users with the sales role; then assign leads and create follow-up tasks for the remaining leads.\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 15332,
+     "ms": 15338,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "48fb2e60d6b3",
+       "latencyMs": 5196,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 15463,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 120,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "24e5544ee893",
+       "latencyMs": 4025,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 21286,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 122,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "23f92517f2b0",
+       "latencyMs": 5825,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 24580,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 467,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s7",
+       "planHash": "7cccd0f3bcbabe0d",
+       "targetsHash": "8e26a486b4e78f89",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "description": "Follow up with this lead who has not replied.",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "description": "Follow up with this lead who has not replied.",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "description": "Follow up with this lead who has not replied.",
+          "assigneeId": "us_5",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "description": "Follow up with this lead who has not replied.",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "user": "Only include leads from the Facebook campaign, and make those tasks due tomorrow.",
+     "status": "done",
+     "reply": "Assign lead owner + Create task for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A06",
+      "M06.A06",
+      "M15.A02",
+      "M06.A03",
+      "M06.A01",
+      "M01.A10",
+      "M03.A03",
+      "M07.A01",
+      "M15.A04",
+      "M15.A07",
+      "M15.A05",
+      "M03.A01",
+      "M06.A02",
+      "M06.A09",
+      "M21.A07",
+      "M11.A10",
+      "M21.A03",
+      "M48.A03",
+      "M03.A05",
+      "M06.A07",
+      "M06.A04",
+      "M06.A08",
+      "M06.A10",
+      "M28.A06",
+      "M04.A07",
+      "M16.A02",
+      "M15.A01"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M21.A03",
+      "M03.A05",
+      "M06.A01",
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M21.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "assigneeId": "us_4",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "assigneeId": "us_5",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"source\":\"facebook_ads\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"available\":true}"
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"campaignId\":{\"exists\":true}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s4",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"leadId\":\"$s5.items[*].id\",\"status\":\"booked\"}"
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s5",
+          "whereJson": null,
+          "by": "leadId",
+          "set": "$s6.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s8",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s7",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s3.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"dueDate\":\"2026-10-22\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"source\":\"facebook_ads\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"available\":true}"
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"leadId\":\"$s4.items[*].id\",\"status\":\"booked\"}"
+         },
+         {
+          "id": "s6",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s4.items",
+          "whereJson": null,
+          "by": "id",
+          "set": "$s5.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s6",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s3.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"dueDate\":\"2026-10-22\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 13155,
+     "ms": 13162,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "adec0e0ae2d3",
+       "latencyMs": 6451,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14394,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 511,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "d85fafb9e737",
+       "latencyMs": 6615,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14942,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 463,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s7",
+       "planHash": "83fbd2f0ad6645f3",
+       "targetsHash": "d40349af21f05445",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "assigneeId": "us_2",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "assigneeId": "us_4",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "assigneeId": "us_5",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "assigneeId": "us_2",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 28500,
+    "firstReplyMs": 15332,
+    "plannerMs": 28112,
+    "plannerRounds": 5,
+    "modelCalls": 5,
+    "calls": 41,
+    "clarifications": 0,
+    "usage": {
+     "input": 90665,
+     "cachedRead": 31360,
+     "cacheWrite": 0,
+     "output": 1683,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-complex-then-facebook-only",
+   "category": "followup",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND json_extract(data,'$.relatedTo.id') IN ('ld_41','ld_42','ld_43','ld_44') → 8, wanted 4"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "Find leads created last week who have not replied, exclude anyone with a booked appointment, assign the remaining leads to available sales reps, and create follow-up tasks.",
+     "status": "done",
+     "reply": "Assign lead owner + Create task for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A03",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A09",
+      "M21.A05",
+      "M04.A06",
+      "M11.A10",
+      "M03.A01",
+      "M21.A01",
+      "M21.A03",
+      "M22.A09",
+      "M21.A09",
+      "M21.A06",
+      "M21.A07",
+      "M01.A03",
+      "M02.A03",
+      "M04.A03",
+      "M24.A03",
+      "M47.A03",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M06.A05",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M11.A02",
+      "M34.A03",
+      "M49.A08",
+      "M03.A04",
+      "M01.A01",
+      "M06.A03",
+      "M03.A10",
+      "M09.A01",
+      "M22.A07",
+      "M03.A08",
+      "M08.A08",
+      "M13.A07",
+      "M50.A04",
+      "M04.A01",
+      "M03.A02",
+      "M01.A10",
+      "M01.A04",
+      "M02.A04",
+      "M10.A09",
+      "M35.A04",
+      "M49.A07",
+      "M21.A08",
+      "M07.A01",
+      "M03.A07",
+      "M24.A01",
+      "M49.A09",
+      "M03.A06",
+      "M22.A10",
+      "M08.A06",
+      "M21.A04",
+      "M20.A08",
+      "M23.A03",
+      "M07.A06",
+      "M20.A06",
+      "M20.A03",
+      "M48.A05",
+      "M24.A07",
+      "M11.A08",
+      "M21.A10",
+      "M47.A07",
+      "M49.A03",
+      "M28.A03",
+      "M08.A02",
+      "M07.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search unanswered conversations waiting on the contact for leads created last week; list booked appointments for leads; filter available sales reps; assign leads round-robin; create a follow-up task per lead.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Find leads created last week who have not replied, exclude those with a booked appointment, and assign remaining leads to available sales reps before creating follow-up tasks for them. Need a way to join unanswered conversations to lead records, search booked appointments for a list of leads, filter available sales reps and assign leads using round robin or another distribution, and create a task for each assigned lead.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"status\":\"new\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"available\":true,\"status\":\"active\"}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Find leads created last week who have not replied, exclude those with a booked appointment, and assign remaining leads to available sales reps before creating follow-up tasks for them. Need a way to join unanswered conversations to lead records, search booked appointments for a list of leads, filter available sales reps and assign leads using round robin or another distribution, and create a task for each assigned lead.\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 16972,
+     "ms": 16976,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "48fb2e60d6b3",
+       "latencyMs": 4865,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 15467,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 113,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "a17320b5da19",
+       "latencyMs": 5347,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 19651,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 151,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "fc9b7a6410ef",
+       "latencyMs": 6434,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 24155,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 370,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "5d3e59d98069a6bf",
+       "targetsHash": "b00fcf69b7a134a3",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "assigneeId": "us_5",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "user": "Only include leads from the Facebook campaign, and make those tasks due tomorrow.",
+     "status": "done",
+     "reply": "Assign lead owner + Create task for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A06",
+      "M06.A06",
+      "M15.A02",
+      "M06.A03",
+      "M06.A01",
+      "M03.A03",
+      "M01.A10",
+      "M07.A01",
+      "M15.A04",
+      "M15.A07",
+      "M15.A05",
+      "M03.A01",
+      "M15.A01",
+      "M15.A09",
+      "M06.A02",
+      "M11.A10",
+      "M48.A03",
+      "M03.A05",
+      "M06.A09",
+      "M06.A07",
+      "M06.A04",
+      "M06.A08",
+      "M06.A10",
+      "M28.A06",
+      "M04.A07",
+      "M16.A02",
+      "M21.A03",
+      "M21.A01",
+      "M21.A07",
+      "M21.A08",
+      "M21.A04",
+      "M21.A06",
+      "M20.A08",
+      "M22.A07",
+      "M22.A09",
+      "M24.A06",
+      "M23.A05",
+      "M20.A10",
+      "M01.A03",
+      "M23.A01",
+      "M22.A10",
+      "M24.A03",
+      "M24.A01",
+      "M20.A01"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M21.A03",
+      "M03.A05",
+      "M06.A01",
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M21.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 4,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"available\":true}"
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"source\":\"facebook_ads\"}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s4",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{}"
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s5",
+          "whereJson": null,
+          "by": "leadId",
+          "set": "$s8.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s8",
+          "kind": "action",
+          "action": "M_NO_APPOINTMENT_SEARCH",
+          "argsJson": "{}"
+         },
+         {
+          "id": "s9",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s7",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s3.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"dueDate\":\"2026-10-22\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads with booked appointments / list appointments linked to leads, so leads with any booked appointment can be excluded",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"campaignId\":{\"$lookup\":{\"entity\":\"campaign\",\"name\":\"Facebook\"}}}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s5",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"leadId\":\"$s3.items[*].id\",\"status\":\"booked\"}"
+         },
+         {
+          "id": "s6",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s3.items",
+          "whereJson": null,
+          "by": "leadId",
+          "set": "$s5.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s6",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"dueDate\":\"2026-10-22\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"source\":\"facebook_ads\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s5",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"leadId\":\"$s3.items[*].id\",\"status\":\"booked\"}"
+         },
+         {
+          "id": "s6",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s3.items",
+          "whereJson": null,
+          "by": "id",
+          "set": "$s5.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s6",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"dueDate\":\"2026-10-22\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s8: unknown action M_NO_APPOINTMENT_SEARCH"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 26692,
+     "ms": 26701,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "15372d6faa64",
+       "latencyMs": 6157,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14197,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 511,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "294e05c3ee36",
+       "latencyMs": 5374,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 14738,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 107,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "ebdcd526bdd7",
+       "latencyMs": 7748,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 35096,
+        "cachedRead": 23680,
+        "cacheWrite": 0,
+        "output": 498,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "6dd52d286b5a",
+       "latencyMs": 7277,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14864,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 459,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s7",
+       "planHash": "eb05af90e23a180a",
+       "targetsHash": "7d3e4e4508e563e0",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 43677,
+    "firstReplyMs": 16972,
+    "plannerMs": 43202,
+    "plannerRounds": 7,
+    "modelCalls": 7,
+    "calls": 38,
+    "clarifications": 0,
+    "usage": {
+     "input": 138168,
+     "cachedRead": 61312,
+     "cacheWrite": 0,
+     "output": 2209,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-then-facebook",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Which leads that came in last week never got back to us? Leave out anyone who already has an appointment booked, split the rest between the sales reps who are available, and give each of them a follow-up task.",
+     "status": "done",
+     "reply": "Create task for 5 of 5: #0, #1, #2, #3, #4.",
+     "offered": [
+      "M03.A06",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A03",
+      "M21.A05",
+      "M04.A06",
+      "M06.A05",
+      "M21.A03",
+      "M21.A07",
+      "M21.A09",
+      "M21.A01",
+      "M21.A04",
+      "M11.A10",
+      "M24.A09",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M04.A03",
+      "M06.A03",
+      "M01.A03",
+      "M24.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M11.A10",
+      "M03.A03",
+      "M21.A03",
+      "M48.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "minHours": 0,
+        "limit": 500
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "minHours": 0,
+        "limit": 500
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "description": "Follow up with this lead, who has not replied.",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "description": "Follow up with this lead, who has not replied.",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "description": "Follow up with this lead, who has not replied.",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "description": "Follow up with this lead, who has not replied.",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Nguyen",
+        "description": "Follow up with this lead, who has not replied.",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_3"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\",\"minHours\":0}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"leadId\":{\"in\":\"$s2.items[*].id\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\":\"booked\"}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s3",
+          "whereJson": null,
+          "by": "leadId",
+          "set": "$s4.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"available\":true}"
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s5",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s6.items",
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.personName}}\",\"description\":\"Follow up with this lead, who has not replied.\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.leadId\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": "I’ll find last week’s leads who never replied, remove anyone with a booked appointment, and assign follow-up tasks evenly among available sales reps.",
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 9551,
+     "ms": 9554,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "e8d88844e3c5",
+       "latencyMs": 9488,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 29715,
+        "cachedRead": 20864,
+        "cacheWrite": 0,
+        "output": 497,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s7",
+       "planHash": "63b7574018282fd2",
+       "targetsHash": "7bfbe4e3f9bd43ac",
+       "reason": "changes 5 records at once",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "description": "Follow up with this lead, who has not replied.",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         }
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "description": "Follow up with this lead, who has not replied.",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         }
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "description": "Follow up with this lead, who has not replied.",
+          "assigneeId": "us_5",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         }
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "description": "Follow up with this lead, who has not replied.",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         }
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Nguyen",
+          "description": "Follow up with this lead, who has not replied.",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_3"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "user": "Actually, just the ones that came from Facebook ads, and have their tasks due tomorrow.",
+     "status": "done",
+     "reply": "Updated the 4 existing records from the last turn rather than create task again: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.\nCancelled 1 earlier task record this request no longer includes: Follow up with Ben Nguyen.",
+     "offered": [
+      "M03.A06",
+      "M06.A06",
+      "M49.A07",
+      "M06.A03",
+      "M06.A01",
+      "M01.A10",
+      "M06.A02",
+      "M06.A09",
+      "M07.A01",
+      "M06.A05",
+      "M21.A03",
+      "M49.A09",
+      "M03.A03",
+      "M28.A06",
+      "M03.A02",
+      "M11.A10",
+      "M48.A03",
+      "M06.A07",
+      "M06.A10",
+      "M06.A04",
+      "M06.A08",
+      "M04.A07",
+      "M02.A08",
+      "M48.A05"
+     ],
+     "planned": [
+      "M03.A03",
+      "M21.A03",
+      "M48.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_23",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_22",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_22",
+        "assigneeId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_21",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M06.A05",
+       "args": {
+        "taskId": "tk_21",
+        "assigneeId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_20",
+        "dueDate": "2026-10-22"
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M06.A10",
+       "args": {
+        "taskId": "tk_24",
+        "reason": "Left out when the request changed"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"source\":\"facebook_ads\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"leadId\":\"$s1.items[*].id\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"available\":true}"
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": "leadId",
+          "set": "$s2.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s4",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s3.items",
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"dueDate\":\"2026-10-22\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 3,
+     "firstReplyMs": 7119,
+     "ms": 7133,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "7363853edc0f",
+       "latencyMs": 7070,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13748,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 339,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "5c9ae0fe6a6b4c80",
+       "targetsHash": "ce825d460366c5b2",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_23",
+          "dueDate": "2026-10-22"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_22",
+          "dueDate": "2026-10-22",
+          "assigneeId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_21",
+          "dueDate": "2026-10-22",
+          "assigneeId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_20",
+          "dueDate": "2026-10-22"
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      },
+      {
+       "stepId": "revise",
+       "planHash": "5c9ae0fe6a6b4c80",
+       "targetsHash": "6e7c84df7c3d1867",
+       "reason": "cancels 1 earlier task record this request no longer includes",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M06.A10",
+         "name": "Cancel task",
+         "args": {
+          "taskId": "tk_24"
+         },
+         "label": "Follow up with Ben Nguyen"
+        }
+       ]
+      },
+      {
+       "stepId": "s5",
+       "planHash": "5c9ae0fe6a6b4c80",
+       "targetsHash": "bf08766319055eb6",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_23"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_22"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_21"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Update the existing task",
+         "args": {
+          "taskId": "tk_20"
+         },
+         "label": "Dev Kim"
+        }
+       ],
+       "changed": true
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 16687,
+    "firstReplyMs": 9551,
+    "plannerMs": 16558,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 44,
+    "clarifications": 0,
+    "usage": {
+     "input": 43463,
+     "cachedRead": 27136,
+     "cacheWrite": 0,
+     "output": 836,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-then-facebook",
+   "category": "followup",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(DISTINCT json_extract(data,'$.relatedTo.id')) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND json_extract(data,'$.dueDate')='2026-10-22' AND json_extract(data,'$.relatedTo.id') IN ('ld_41','ld_42','ld_43','ld_44') → 0, wanted 4"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND (json_extract(data,'$.relatedTo.id') IS NULL OR json_extract(data,'$.relatedTo.id') NOT IN ('ld_41','ld_42','ld_43','ld_44')) → 2, wanted 0"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "Which leads that came in last week never got back to us? Leave out anyone who already has an appointment booked, split the rest between the sales reps who are available, and give each of them a follow-up task.",
+     "status": "done",
+     "reply": "Create task for 6 of 6: Hiro Reyes, Ben Nguyen, Victor Larsen, Marco Brown, Femi Silva and 1 more.",
+     "offered": [
+      "M03.A06",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A03",
+      "M21.A05",
+      "M04.A06",
+      "M06.A05",
+      "M21.A03",
+      "M21.A07",
+      "M21.A09",
+      "M21.A01",
+      "M21.A04",
+      "M11.A10",
+      "M24.A09",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M04.A03",
+      "M06.A03",
+      "M01.A03",
+      "M24.A03",
+      "M11.A02",
+      "M05.A03",
+      "M34.A03",
+      "M40.A01",
+      "M06.A02",
+      "M03.A01",
+      "M22.A09",
+      "M49.A09",
+      "M13.A07",
+      "M49.A07",
+      "M22.A07",
+      "M07.A01",
+      "M03.A02",
+      "M03.A04",
+      "M12.A07",
+      "M49.A03",
+      "M36.A03",
+      "M41.A01",
+      "M49.A08",
+      "M03.A10",
+      "M03.A09",
+      "M03.A08",
+      "M03.A07",
+      "M21.A06",
+      "M01.A01",
+      "M04.A01",
+      "M24.A01",
+      "M49.A01",
+      "M21.A08",
+      "M08.A06",
+      "M49.A05",
+      "M22.A08",
+      "M20.A06",
+      "M27.A10",
+      "M04.A09",
+      "M08.A02",
+      "M20.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Hiro Reyes",
+        "description": "Follow up with this lead.",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_1"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Nguyen",
+        "description": "Follow up with this lead.",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_3"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "description": "Follow up with this lead.",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "description": "Follow up with this lead.",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "description": "Follow up with this lead.",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "description": "Follow up with this lead.",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Find leads created last week who haven't replied (leads with an open conversation where the team last sent a message), find their booked appointments, list available sales reps, and create and assign one follow-up task per remaining lead.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Find leads created last week who haven't replied to our outreach, exclude leads with a booked appointment, distribute remaining leads among available sales reps (including team membership/assignment strategy if needed), and create a follow-up task for each assigned lead.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"available\":true}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4.items",
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"description\":\"Follow up with this lead.\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Find leads created last week who haven't replied to our outreach, exclude leads with a booked appointment, distribute remaining leads among available sales reps (including team membership/assignment strategy if needed), and create a follow-up task for each assigned lead.\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 17980,
+     "ms": 17985,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "e8d88844e3c5",
+       "latencyMs": 6363,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 29715,
+        "cachedRead": 20864,
+        "cacheWrite": 0,
+        "output": 159,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "e20acf8fcdb3",
+       "latencyMs": 4798,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 18211,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 122,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "9823279adf93",
+       "latencyMs": 6647,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 44451,
+        "cachedRead": 28288,
+        "cacheWrite": 0,
+        "output": 368,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "d758eea86e3be565",
+       "targetsHash": "515186e30ced3b6a",
+       "reason": "changes 6 records at once",
+       "count": 6,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Hiro Reyes",
+          "description": "Follow up with this lead.",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_1"
+          }
+         },
+         "label": "Hiro Reyes"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Nguyen",
+          "description": "Follow up with this lead.",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_3"
+          }
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "description": "Follow up with this lead.",
+          "assigneeId": "us_5",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "description": "Follow up with this lead.",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "description": "Follow up with this lead.",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "description": "Follow up with this lead.",
+          "assigneeId": "us_5",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "user": "Actually, just the ones that came from Facebook ads, and have their tasks due tomorrow.",
+     "status": "failed",
+     "reply": "The plan was still invalid after repair:\nrequested operation M06.A04 (Update task description) is not in the plan: add a step that calls M06.A04 with its arguments from the message; M06.A03, M06.A06 do not do it\noutcome.amends is true, but the plan only edits the task records the last turn made: it does not say which of them the request still includes. the last turn already made 6 task records (Follow up with Hiro Reyes (tk_20, for ld_1), Follow up with Ben Nguyen (tk_21, for ld_3), Follow up with Victor Larsen (tk_22, for ld_41), Follow up with Marco Brown (tk_23, for ld_42), Follow up with Femi Silva (tk_24, for ld_43), Follow up with Dev Kim (tk_25, for ld_44)). If this message narrows or changes what it did, plan the request whole again with outcome.amends true and the actions that make them (M06.A01): the app updates those task records that still fit and cancels those now left out, so plan no edits or cancels of them yourself. If it asks for new ones as well, plan the same again with amends false. If this changes only the ones you name, plan that with outcome.amends false",
+     "offered": [
+      "M03.A06",
+      "M06.A06",
+      "M49.A07",
+      "M06.A03",
+      "M06.A02",
+      "M06.A01",
+      "M01.A10",
+      "M06.A07",
+      "M06.A09",
+      "M07.A01",
+      "M03.A03",
+      "M49.A09",
+      "M28.A06",
+      "M49.A08",
+      "M03.A02",
+      "M11.A10",
+      "M48.A03",
+      "M06.A10",
+      "M06.A04",
+      "M06.A08",
+      "M04.A07",
+      "M02.A08",
+      "M48.A05"
+     ],
+     "planned": [],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads"
+       }
+      },
+      {
+       "action": "M06.A03",
+       "args": {
+        "status": "open",
+        "dueFrom": "2026-10-22",
+        "dueTo": "2026-10-22"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"source\":\"facebook_ads\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M06.A03",
+          "argsJson": "{\"status\":\"open\",\"dueFrom\":\"2026-10-22\",\"dueTo\":\"2026-10-22\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A03"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after reads",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M06.A03",
+          "argsJson": "{\"relatedType\":\"lead\",\"relatedId\":\"ld_42\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M06.A03",
+          "argsJson": "{\"relatedType\":\"lead\",\"relatedId\":\"ld_43\"}"
+         },
+         {
+          "id": "s5",
+          "kind": "action",
+          "action": "M06.A04",
+          "argsJson": "{\"taskId\":\"tk_23\",\"title\":\"Follow up with Marco Brown\",\"dueDate\":\"2026-10-22\"}"
+         },
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M06.A04",
+          "argsJson": "{\"taskId\":\"tk_24\",\"title\":\"Follow up with Femi Silva\",\"dueDate\":\"2026-10-22\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A04"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M06.A03",
+          "argsJson": "{\"relatedType\":\"lead\",\"relatedId\":\"ld_42\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M06.A03",
+          "argsJson": "{\"relatedType\":\"lead\",\"relatedId\":\"ld_43\"}"
+         },
+         {
+          "id": "s5",
+          "kind": "action",
+          "action": "M06.A06",
+          "argsJson": "{\"taskId\":\"tk_23\",\"dueDate\":\"2026-10-22\"}"
+         },
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M06.A06",
+          "argsJson": "{\"taskId\":\"tk_24\",\"dueDate\":\"2026-10-22\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A06"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s5: M06.A04 arg (args): Unrecognized key: \"dueDate\"; arguments: taskId, title, description",
+      "step s6: M06.A04 arg (args): Unrecognized key: \"dueDate\"; arguments: taskId, title, description",
+      "requested operation M06.A04 (Update task description) is not in the plan: add a step that calls M06.A04 with its arguments from the message; M06.A03, M06.A06 do not do it",
+      "outcome.amends is true, but the plan only edits the task records the last turn made: it does not say which of them the request still includes. the last turn already made 6 task records (Follow up with Hiro Reyes (tk_20, for ld_1), Follow up with Ben Nguyen (tk_21, for ld_3), Follow up with Victor Larsen (tk_22, for ld_41), Follow up with Marco Brown (tk_23, for ld_42), Follow up with Femi Silva (tk_24, for ld_43), Follow up with Dev Kim (tk_25, for ld_44)). If this message narrows or changes what it did, plan the request whole again with outcome.amends true and the actions that make them (M06.A01): the app updates those task records that still fit and cancels those now left out, so plan no edits or cancels of them yourself. If it asks for new ones as well, plan the same again with amends false. If this changes only the ones you name, plan that with outcome.amends false"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 15895,
+     "ms": 15895,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "35db66383437",
+       "latencyMs": 4858,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13430,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 174,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after reads",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "25a900fcbaf8",
+       "latencyMs": 6356,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 28713,
+        "cachedRead": 20352,
+        "cacheWrite": 0,
+        "output": 272,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "acf5a06d5633",
+       "latencyMs": 4637,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 14627,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 227,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 33880,
+    "firstReplyMs": 17980,
+    "plannerMs": 33659,
+    "plannerRounds": 6,
+    "modelCalls": 6,
+    "calls": 14,
+    "clarifications": 0,
+    "usage": {
+     "input": 149147,
+     "cachedRead": 88320,
+     "cacheWrite": 0,
+     "output": 1322,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-then-facebook",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Which leads that came in last week never got back to us? Leave out anyone who already has an appointment booked, split the rest between the sales reps who are available, and give each of them a follow-up task.",
+     "status": "done",
+     "reply": "Create task: nothing matched, so nothing was changed.",
+     "offered": [
+      "M03.A06",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A03",
+      "M21.A05",
+      "M04.A06",
+      "M06.A05",
+      "M21.A03",
+      "M21.A07",
+      "M21.A09",
+      "M21.A01",
+      "M21.A04",
+      "M11.A10",
+      "M24.A09",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M04.A03",
+      "M06.A03",
+      "M01.A03",
+      "M24.A03",
+      "M11.A02",
+      "M05.A03",
+      "M03.A09",
+      "M34.A03",
+      "M03.A01",
+      "M03.A04",
+      "M22.A09",
+      "M03.A10",
+      "M22.A07",
+      "M03.A07",
+      "M03.A02",
+      "M49.A08",
+      "M01.A01",
+      "M04.A01",
+      "M24.A01",
+      "M07.A01",
+      "M36.A03",
+      "M04.A09",
+      "M20.A03",
+      "M49.A03",
+      "M28.A03",
+      "M13.A07",
+      "M27.A03",
+      "M22.A08",
+      "M01.A10",
+      "M11.A05",
+      "M09.A01",
+      "M50.A01",
+      "M07.A03",
+      "M50.A05",
+      "M21.A08",
+      "M05.A01",
+      "M49.A01",
+      "M36.A01",
+      "M13.A04",
+      "M38.A03",
+      "M12.A07",
+      "M32.A03",
+      "M15.A03",
+      "M02.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M21.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18"
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead"
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_1"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_3"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_1"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_3"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      }
+     ],
+     "plannerRounds": 6,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Find leads created last week who have not replied to our outreach; identify those with a booked appointment; list available sales reps; split eligible leads evenly among them and create a follow-up task assigned to each rep for their lead.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads created during a date range and identify which have never replied to us (including leads without any conversation), find their booked appointments, and create follow-up tasks distributed among available sales reps.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M21.A03",
+            "argsJson": "{\"leadId\":\"$item.id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after reads",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s6",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s3",
+          "whereJson": "{\"id\":{\"nin\":\"$s5[*].item.id\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s6",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4.items",
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "check selection",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s6",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s3",
+          "whereJson": "{\"id\":{\"in\":\"$s5[*].item.id\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s3",
+          "whereJson": null,
+          "by": "id",
+          "set": "$s6[*].item.id",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s8",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s7",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4.items",
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s6",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s3",
+          "whereJson": "{\"id\":{\"in\":\"$s5[*].item.id\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s3",
+          "whereJson": null,
+          "by": "id",
+          "set": "$s6[*].id",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s8",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s7",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4.items",
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Search leads created during a date range and identify which have never replied to us (including leads without any conversation), find their booked appointments, and create follow-up tasks distributed among available sales reps.\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability",
+      "check which records this changes before it runs: s3 keeps 6 of the 12 (Hiro Reyes, Ben Nguyen, Victor Larsen, Marco Brown, Femi Silva, Dev Kim) items of $s1.items where id is among $s2.items[*].leadId (what s2, M11.A10 List unanswered conversations {\"waitingOn\":\"contact\",\"personType\":\"lead\"}, found); s6 keeps 0 of the 6 items of $s3 where id is NOT among $s5[*].item.id; s7 runs M06.A01 on each. If those are exactly the records the request means, plan the same again. If a step keeps what the request leaves out or drops what it keeps, turn it round: exclude drops the items whose field is among the set, and filter {\"<field>\":{\"in\":\"$sN.items[*].<field>\"}} keeps only those",
+      "step s7: $s6[*] has no field \"item\"; fields: id, firstName, lastName, name, email, phone, company, source, campaignId, status, score, ownerId, tags, qualification, disqualifyReason, disqualifyNote, convertedTo, createdAt, updatedAt \"[*]\" walks a list, and only a forEach step has \"results\": $s6 is a filter step, so a field of each of its items is \"$s6[*].<field>\"."
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 31643,
+     "ms": 31643,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "e8d88844e3c5",
+       "latencyMs": 5524,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14826,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 120,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "f72e8848a8ab",
+       "latencyMs": 5030,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 19076,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 113,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "db361d195078",
+       "latencyMs": 5523,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 23371,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 306,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after reads",
+       "call": 4,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "304f7f9e1beb",
+       "latencyMs": 5049,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 28289,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 224,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "check selection",
+       "call": 5,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "88c33e4fa44a",
+       "latencyMs": 5503,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 28717,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 271,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 6,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "806cdec13786",
+       "latencyMs": 4822,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 28685,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 270,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "Actually, just the ones that came from Facebook ads, and have their tasks due tomorrow.",
+     "status": "done",
+     "reply": "Create task for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A06",
+      "M06.A06",
+      "M49.A07",
+      "M06.A03",
+      "M06.A01",
+      "M01.A10",
+      "M06.A02",
+      "M06.A09",
+      "M07.A01",
+      "M28.A07",
+      "M06.A05",
+      "M21.A03",
+      "M49.A09",
+      "M28.A06",
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M06.A07",
+      "M06.A10",
+      "M06.A04",
+      "M06.A08",
+      "M04.A07",
+      "M02.A08",
+      "M48.A05",
+      "M49.A03",
+      "M03.A05",
+      "M49.A01",
+      "M49.A02",
+      "M49.A08",
+      "M01.A03",
+      "M22.A09",
+      "M49.A05",
+      "M21.A01",
+      "M21.A07",
+      "M03.A01",
+      "M49.A06",
+      "M48.A02",
+      "M05.A03",
+      "M02.A03",
+      "M01.A07",
+      "M04.A06",
+      "M11.A03",
+      "M47.A04",
+      "M11.A02"
+     ],
+     "planned": [
+      "M03.A03",
+      "M21.A03",
+      "M48.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "description": "Follow up with this lead.",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "description": "Follow up with this lead.",
+        "assigneeId": "us_4",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "description": "Follow up with this lead.",
+        "assigneeId": "us_5",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "description": "Follow up with this lead.",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search active sales teams, get team workload/available members, search appointments for leads in a cohort, and create tasks for leads assigned across available sales reps",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"source\":\"facebook_ads\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"leadId\":\"$s1.items[*].id\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": "leadId",
+          "set": "$s2.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4.items",
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"description\":\"Follow up with this lead.\",\"assigneeId\":\"$rr.id\",\"dueDate\":\"2026-10-22\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 10782,
+     "ms": 10786,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "6085ab85aae7",
+       "latencyMs": 3878,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13611,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 111,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "194cabacdc7f",
+       "latencyMs": 6805,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 35175,
+        "cachedRead": 23552,
+        "cacheWrite": 0,
+        "output": 369,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "80ea7201af34365d",
+       "targetsHash": "412b4415e32dbaa2",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "description": "Follow up with this lead.",
+          "assigneeId": "us_2",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "description": "Follow up with this lead.",
+          "assigneeId": "us_4",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "description": "Follow up with this lead.",
+          "assigneeId": "us_5",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "description": "Follow up with this lead.",
+          "assigneeId": "us_2",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 42429,
+    "firstReplyMs": 31643,
+    "plannerMs": 42134,
+    "plannerRounds": 8,
+    "modelCalls": 8,
+    "calls": 34,
+    "clarifications": 0,
+    "usage": {
+     "input": 191750,
+     "cachedRead": 67456,
+     "cacheWrite": 0,
+     "output": 1784,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-then-facebook",
+   "category": "followup",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "turn 1: unsupported, wanted done"
+    },
+    {
+     "kind": "status",
+     "detail": "unsupported, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(DISTINCT json_extract(data,'$.relatedTo.id')) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND json_extract(data,'$.dueDate')='2026-10-22' AND json_extract(data,'$.relatedTo.id') IN ('ld_41','ld_42','ld_43','ld_44') → 0, wanted 4"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND json_extract(data,'$.status')='open' AND json_extract(data,'$.relatedTo.id') IN ('ld_41','ld_42','ld_43','ld_44') → 0, wanted 4"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "Which leads that came in last week never got back to us? Leave out anyone who already has an appointment booked, split the rest between the sales reps who are available, and give each of them a follow-up task.",
+     "status": "unsupported",
+     "reply": "The available actions can find last week's leads that have not replied and list available sales reps, but they cannot find booked appointments across a list of leads or map tasks to only the leads without appointments. That missing capability prevents reliably excluding those leads before creating follow-up tasks.\nAlternatives: List last week's leads who haven't replied.; Create follow-up tasks for all last week's leads who haven't replied, without excluding those with booked appointments.",
+     "offered": [
+      "M03.A06",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A03",
+      "M21.A05",
+      "M04.A06",
+      "M06.A05",
+      "M21.A03",
+      "M21.A07",
+      "M21.A09",
+      "M21.A01",
+      "M21.A04",
+      "M11.A10",
+      "M24.A09",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M04.A03",
+      "M06.A03",
+      "M01.A03",
+      "M24.A03",
+      "M11.A02",
+      "M22.A09",
+      "M46.A05",
+      "M43.A08",
+      "M06.A06",
+      "M22.A10",
+      "M22.A07",
+      "M21.A08",
+      "M21.A06",
+      "M03.A01",
+      "M03.A02",
+      "M07.A01",
+      "M28.A10",
+      "M13.A10",
+      "M03.A09",
+      "M24.A06",
+      "M32.A06",
+      "M47.A08",
+      "M11.A08",
+      "M20.A03",
+      "M46.A03",
+      "M28.A03",
+      "M01.A01",
+      "M03.A10",
+      "M03.A04",
+      "M04.A01",
+      "M01.A10",
+      "M13.A07",
+      "M01.A09",
+      "M27.A03",
+      "M01.A06",
+      "M05.A01",
+      "M08.A08",
+      "M08.A06",
+      "M13.A04",
+      "M49.A08",
+      "M21.A02",
+      "M02.A01",
+      "M48.A01",
+      "M27.A10",
+      "M01.A04",
+      "M02.A04",
+      "M10.A09",
+      "M35.A04"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "unsupported",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": "I can find last week’s leads and identify which ones never replied, but the available actions can’t check appointments for each lead in a list. Without that, I can’t safely exclude people who already have a booking before assigning follow-up tasks.",
+        "alternatives": [
+         "I can list leads created last week who never replied and create follow-up tasks for all of them, without checking for booked appointments."
+        ],
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads created last week and get lead IDs, contacts/leads with booked appointments, unanswered conversations waiting on contacts, available sales reps, and create follow-up tasks assigned round-robin to available sales reps.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "unsupported",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": "The available actions can find last week's leads that have not replied and list available sales reps, but they cannot find booked appointments across a list of leads or map tasks to only the leads without appointments. That missing capability prevents reliably excluding those leads before creating follow-up tasks.",
+        "alternatives": [
+         "List last week's leads who haven't replied.",
+         "Create follow-up tasks for all last week's leads who haven't replied, without excluding those with booked appointments."
+        ],
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Search leads created last week and get lead IDs, contacts/leads with booked appointments, unanswered conversations waiting on contacts, available sales reps, and create follow-up tasks assigned round-robin to available sales reps.\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 17022,
+     "ms": 17022,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "e8d88844e3c5",
+       "latencyMs": 5427,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14826,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 148,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "29f15b3a7508",
+       "latencyMs": 4516,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 19136,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 116,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "f027526a4adf",
+       "latencyMs": 6845,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 48683,
+        "cachedRead": 30336,
+        "cacheWrite": 0,
+        "output": 170,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "Actually, just the ones that came from Facebook ads, and have their tasks due tomorrow.",
+     "status": "unsupported",
+     "reply": "This request narrows the prior batch, but the earlier plan did not create any tasks because it could not determine which leads already had appointments. There are no created tasks to amend. The available actions also cannot reliably exclude leads with booked appointments before creating tasks.\nAlternatives: List last week's Facebook-ad leads who haven't replied.; Create follow-up tasks for all last week's Facebook-ad leads who haven't replied, due tomorrow, without excluding those with booked appointments.",
+     "offered": [
+      "M03.A06",
+      "M06.A06",
+      "M06.A03",
+      "M06.A02",
+      "M01.A10",
+      "M06.A09",
+      "M06.A01",
+      "M06.A07",
+      "M28.A07",
+      "M07.A01",
+      "M15.A02",
+      "M28.A06",
+      "M15.A10",
+      "M15.A04",
+      "M15.A03",
+      "M04.A07",
+      "M07.A03",
+      "M47.A03",
+      "M21.A03",
+      "M01.A03",
+      "M03.A03",
+      "M04.A03",
+      "M21.A09",
+      "M03.A05",
+      "M11.A10",
+      "M21.A01",
+      "M04.A06",
+      "M03.A01",
+      "M21.A07",
+      "M22.A07",
+      "M21.A04",
+      "M22.A09",
+      "M05.A01",
+      "M04.A01",
+      "M03.A10",
+      "M21.A08",
+      "M23.A01",
+      "M21.A10",
+      "M24.A10",
+      "M01.A07",
+      "M02.A08",
+      "M06.A05",
+      "M11.A03",
+      "M47.A04",
+      "M11.A02",
+      "M48.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Filter last week's leads with no replies and no booked appointments to Facebook ads leads, split them among available sales reps, and create follow-up tasks due tomorrow.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "unsupported",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": "This request narrows the prior batch, but the earlier plan did not create any tasks because it could not determine which leads already had appointments. There are no created tasks to amend. The available actions also cannot reliably exclude leads with booked appointments before creating tasks.",
+        "alternatives": [
+         "List last week's Facebook-ad leads who haven't replied.",
+         "Create follow-up tasks for all last week's Facebook-ad leads who haven't replied, due tomorrow, without excluding those with booked appointments."
+        ],
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": true
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9524,
+     "ms": 9525,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "fa4869bd9971",
+       "latencyMs": 4771,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13601,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 106,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "9e338ce42caf",
+       "latencyMs": 4656,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 18577,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 159,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 26547,
+    "firstReplyMs": 17022,
+    "plannerMs": 26215,
+    "plannerRounds": 5,
+    "modelCalls": 5,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 114823,
+     "cachedRead": 55424,
+     "cacheWrite": 0,
+     "output": 699,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

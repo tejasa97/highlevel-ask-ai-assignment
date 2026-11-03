@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { compile, type CompiledPlan } from "../core/compile.js";
 import { narrowByRequest } from "../core/execute.js";
+import { asksForMore } from "../core/revise.js";
 import { lowerLookups } from "../core/lookups.js";
 import { type IdentityBinding, type IdentityResolution, optionLabel, resolveIdentity } from "../core/identity.js";
 import { card } from "../registry/card.js";
@@ -113,6 +114,8 @@ export type TurnOutcome =
       kind: "plan";
       plan: CompiledPlan;
       carry: Carry;
+      /** The planner said this message amends what the last turn made: the executor updates and cancels those records. */
+      amends?: boolean;
       /** The planner's verdict on a question about records ("Yes, that's her only review"), read from a look the plan repeats. */
       answer?: string;
     }
@@ -466,6 +469,9 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     else if (restate && outcome?.effect === "read" && lookStated && d.outcome?.effect === "change" && d.outcome.actions.length && toldPart(input.message)) { outcome = d.outcome; outcomeFrom = reply; }
     else if (outcome && !outcome.actions.length && d.outcome?.actions.length) outcome = { ...outcome, actions: d.outcome.actions };
     restate = false;
+    // That a message amends the last turn is a fact about the message, not an action the first reply must name: a reply
+    // sent back for making the records again may state it, and it holds from then on.
+    if (outcome && !outcome.amends && d.outcome?.amends) outcome = { ...outcome, amends: true };
     if (outcome?.destination && !deliverySurfaces.some((s) => s.id === outcome!.destination)) {
       return { kind: "reply", status: "unsupported", text: `Delivery to ${outcome.destination} isn't supported. Nothing was sent or published. Supported surfaces: ${deliverySurfaces.map((s) => s.label).join(", ")}.` };
     }
@@ -694,7 +700,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
               ...unfilledNamedFields(compiled.plan, input.message),
               ...inventedTimes(compiled.plan, [input.message, input.answering, input.context].filter(Boolean).join("\n")),
               // Asked once, a remake stands, unless the reply since said it would change those records instead.
-              ...remakes(compiled.plan, input, remadeChecked ? remakeAnswer ?? null : undefined),
+              ...(outcome?.amends ? editsOnly(compiled.plan.steps.flatMap((st) => callsOf(st).map((a) => a.id)), input, registry) : remakes(compiled.plan, input, remadeChecked ? remakeAnswer ?? null : undefined)),
               ...repeatsEmpty(compiled.plan, input.failed, registry),
             ]
           : ["the plan only finds records and calls no action; add the actions that do what was asked, or look to read what you need first"];
@@ -722,7 +728,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       if (!empty.length) {
         const which = store && oneOfSameNamed(compiled.plan, named, registry, store, request, input.picks);
         if (which) return { kind: "reply", status: "clarify", ...which };
-        return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry) };
+        return { kind: "plan", plan: compiled.plan, carry: carryOf(compiled.plan, registry), ...(outcome?.amends ? { amends: true } : {}) };
       }
       if (emptyChecked) return { kind: "reply", status: "answer", text: "Nothing matched, so nothing was changed." };
       emptyChecked = true;
@@ -772,20 +778,58 @@ export function remakes(plan: CompiledPlan, input: Pick<TurnInput, "carry" | "re
  */
 export function remakesStated(outcome: Outcome | null | undefined, input: Pick<TurnInput, "carry" | "records" | "message">, registry: Registry): string[] {
   if (outcome?.effect !== "change") return [];
-  return remadeBy(outcome.actions.flatMap((id) => registry.get(id) ?? []), input, undefined, true);
+  if (outcome.amends) return editsOnly(outcome.actions, input, registry);
+  return [...remadeBy(outcome.actions.flatMap((id) => registry.get(id) ?? []), input, undefined, true), ...handAmends(outcome, input, registry)];
+}
+
+/**
+ * An amend planned by hand: the outcome both edits and cancels records of a kind the last turn made. A weaker model
+ * picks the wrong ones or invents their names, so it is asked once to plan the request whole and let the app do it.
+ */
+function handAmends(outcome: Outcome, input: Pick<TurnInput, "carry" | "records" | "message">, registry: Registry): string[] {
+  if (asksForMore(input.message)) return [];
+  const named = new Set(outcome.actions);
+  return [...new Set(input.carry?.made ?? [])].flatMap((entity) => {
+    const mine = (input.records ?? []).filter((r) => r.entity === entity);
+    const makes = registry.list().find((a) => a.revise && a.entities?.produces === entity && named.has(a.revise.undo) && Object.values(a.revise.edits).some((e) => named.has(e)));
+    return mine.length && makes ? [amendAsk(mine, entity, makes)] : [];
+  });
+}
+
+/**
+ * A reply that flags an amend but plans only edits of the records the last turn made: the flag does nothing without the
+ * action that makes them, and the records left out of the narrowed request stay. It plans the request whole, or says
+ * it is not an amend.
+ */
+export function editsOnly(actions: string[], input: Pick<TurnInput, "carry" | "records" | "message">, registry: Registry): string[] {
+  const used = new Set(actions);
+  return [...new Set(input.carry?.made ?? [])].flatMap((entity) => {
+    const mine = (input.records ?? []).filter((r) => r.entity === entity);
+    const makes = registry.list().find((a) => a.revise && a.entities?.produces === entity);
+    if (!mine.length || !makes?.revise || used.has(makes.id) || !Object.values(makes.revise.edits).some((e) => used.has(e))) return [];
+    return [`outcome.amends is true, but the plan only edits the ${entity} records the last turn made: it does not say which of them the request still includes. ${amendAsk(mine, entity, makes)}. If this changes only the ones you name, plan that with outcome.amends false`];
+  });
+}
+
+/** What a follow-up that may amend is told about the records the last turn made. */
+function amendAsk(mine: NonNullable<TurnInput["records"]>, entity: string, makes: RegisteredAction): string {
+  const names = mine.slice(-8).map((r) => `${r.name} (${r.id}${r.for ? `, for ${r.for}` : ""})`).join(", ");
+  const had = `the last turn already made ${mine.length} ${entity} record${mine.length > 1 ? "s" : ""} (${names})`;
+  // A create that can revise: the app updates the records that still fit and cancels the rest, so the plan is the request whole.
+  if (makes.revise) return `${had}. If this message narrows or changes what it did, plan the request whole again with outcome.amends true and the actions that make them (${makes.id}): the app updates those ${entity} records that still fit and cancels those now left out, so plan no edits or cancels of them yourself. If it asks for new ones as well, plan the same again with amends false`;
+  return `${had}; if this message narrows or changes what it did, update those that stay and cancel or undo those now left out instead of ${makes.id} again (look first to read which still fit, when that takes their fields). If it asks for new ones as well, plan the same again`;
 }
 
 function remadeBy(actions: RegisteredAction[], input: Pick<TurnInput, "carry" | "records" | "message">, stated?: string[] | null, evenIfChanged = false): string[] {
   if (stated === null || stated?.length === 0) return [];
-  if (/\b(also|too|another|more|as well|again|new)\b/i.test(input.message)) return [];
+  if (asksForMore(input.message)) return [];
   const calls = actions.filter((a) => a.risk !== "read");
   return [...new Set(input.carry?.made ?? [])].flatMap((entity) => {
     const mine = (input.records ?? []).filter((r) => r.entity === entity);
     const makes = calls.find((a) => a.entities?.produces === entity && !(a.entities?.consumes ?? []).includes(entity));
     const changes = calls.some((a) => (a.entities?.consumes ?? []).includes(entity));
     if (!mine.length || !makes || (changes && !evenIfChanged) || stated?.includes(makes.id)) return [];
-    const names = mine.slice(-8).map((r) => `${r.name} (${r.id}${r.for ? `, for ${r.for}` : ""})`).join(", ");
-    return [`the last turn already made ${mine.length} ${entity} record${mine.length > 1 ? "s" : ""} (${names}); if this message narrows or changes what it did, update those that stay and cancel or undo those now left out instead of ${makes.id} again (look first to read which still fit, when that takes their fields). If it asks for new ones as well, plan the same again`];
+    return [amendAsk(mine, entity, makes)];
   });
 }
 

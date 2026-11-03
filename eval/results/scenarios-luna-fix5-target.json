@@ -1,0 +1,8073 @@
+{
+ "summary": {
+  "label": "luna-fix5-target",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/module-scenarios/role-ids,eval/module-scenarios/coverage,eval/module-scenarios/m45-m47/development,eval/module-scenarios/m45-m47/trails",
+  "set": "9525359fc201",
+  "tier": "strong",
+  "scenarios": 18,
+  "repeat": 3,
+  "runs": 54,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 94.4,
+  "allPass": 17,
+  "measured": 18,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 4066,
+   "p95": 14198
+  },
+  "firstReplyMs": {
+   "p50": 4066,
+   "p95": 6765
+  },
+  "plannerRoundsPerRun": 1.17,
+  "callsPerRun": 1.1,
+  "clarified": {
+   "runs": 1,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 71718
+ },
+ "runs": [
+  {
+   "id": "cov-report-compare-periods",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Compare the New Contacts report for the last 30 days against the 30 days before that",
+     "status": "done",
+     "reply": "Found 1 report: New Contacts: metric new_contacts.\nReport.",
+     "offered": [
+      "M50.A08",
+      "M50.A05",
+      "M50.A07",
+      "M50.A04",
+      "M50.A01",
+      "M30.A01",
+      "M01.A03",
+      "M01.A10",
+      "M01.A09",
+      "M28.A07",
+      "M21.A03",
+      "M50.A02",
+      "M50.A06",
+      "M26.A08",
+      "M01.A01",
+      "M15.A10",
+      "M50.A03",
+      "M09.A06",
+      "M36.A10"
+     ],
+     "planned": [
+      "M50.A03",
+      "M50.A08"
+     ],
+     "calls": [
+      {
+       "action": "M50.A03",
+       "args": {
+        "metric": "new_contacts"
+       }
+      },
+      {
+       "action": "M50.A08",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A03",
+          "argsJson": "{\"metric\":\"new_contacts\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M50.A08",
+          "argsJson": "{\"reportId\":{\"$lookup\":{\"entity\":\"report\",\"name\":\"New Contacts\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3448,
+     "ms": 3448,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b246b68d59cd",
+       "latencyMs": 3408,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12531,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3448,
+    "firstReplyMs": 3448,
+    "plannerMs": 3408,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12531,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 141,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-compare-periods",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Compare the New Contacts report for the last 30 days against the 30 days before that",
+     "status": "done",
+     "reply": "Found 1 report: New Contacts: metric new_contacts.\nReport.",
+     "offered": [
+      "M50.A08",
+      "M50.A05",
+      "M50.A07",
+      "M50.A04",
+      "M50.A01",
+      "M30.A01",
+      "M01.A03",
+      "M01.A10",
+      "M01.A09",
+      "M28.A07",
+      "M21.A03",
+      "M50.A02",
+      "M50.A06",
+      "M26.A08",
+      "M01.A01",
+      "M15.A10",
+      "M50.A03",
+      "M09.A06",
+      "M36.A10"
+     ],
+     "planned": [
+      "M50.A03",
+      "M50.A08"
+     ],
+     "calls": [
+      {
+       "action": "M50.A03",
+       "args": {
+        "metric": "new_contacts"
+       }
+      },
+      {
+       "action": "M50.A08",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A03",
+          "argsJson": "{\"metric\":\"new_contacts\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M50.A08",
+          "argsJson": "{\"reportId\":{\"$lookup\":{\"entity\":\"report\",\"name\":\"New Contacts\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3854,
+     "ms": 3854,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b246b68d59cd",
+       "latencyMs": 3783,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12529,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3854,
+    "firstReplyMs": 3854,
+    "plannerMs": 3783,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12529,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 141,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-compare-periods",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Compare the New Contacts report for the last 30 days against the 30 days before that",
+     "status": "done",
+     "reply": "Report.",
+     "offered": [
+      "M50.A08",
+      "M50.A05",
+      "M50.A07",
+      "M50.A04",
+      "M50.A01",
+      "M30.A01",
+      "M01.A03",
+      "M01.A10",
+      "M01.A09",
+      "M28.A07",
+      "M21.A03",
+      "M50.A02",
+      "M50.A06",
+      "M26.A08",
+      "M01.A01",
+      "M15.A10",
+      "M50.A03",
+      "M09.A06",
+      "M36.A10"
+     ],
+     "planned": [
+      "M50.A03",
+      "M50.A08"
+     ],
+     "calls": [
+      {
+       "action": "M50.A03",
+       "args": {
+        "metric": "new_contacts",
+        "query": "New Contacts"
+       }
+      },
+      {
+       "action": "M50.A08",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A03",
+          "argsJson": "{\"metric\":\"new_contacts\",\"query\":\"New Contacts\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M50.A08",
+          "argsJson": "{\"reportId\":\"$s1.items[0].id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6566,
+     "ms": 6566,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b246b68d59cd",
+       "latencyMs": 6536,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 25253,
+        "cachedRead": 18560,
+        "cacheWrite": 0,
+        "output": 158,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6566,
+    "firstReplyMs": 6566,
+    "plannerMs": 6536,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 25253,
+     "cachedRead": 18560,
+     "cacheWrite": 0,
+     "output": 158,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a saved report called Weekly New Leads that counts new leads over the last 7 days, grouped by source",
+     "status": "done",
+     "reply": "Done: Create saved report (Weekly New Leads).",
+     "offered": [
+      "M50.A01",
+      "M50.A06",
+      "M03.A01",
+      "M03.A06",
+      "M03.A03",
+      "M50.A02",
+      "M50.A07",
+      "M50.A04",
+      "M50.A10",
+      "M03.A04",
+      "M09.A01",
+      "M24.A01",
+      "M07.A01",
+      "M10.A01",
+      "M06.A01",
+      "M01.A01",
+      "M02.A01",
+      "M04.A01",
+      "M47.A01"
+     ],
+     "planned": [
+      "M50.A01"
+     ],
+     "calls": [
+      {
+       "action": "M50.A01",
+       "args": {
+        "name": "Weekly New Leads",
+        "metric": "new_leads",
+        "dateRange": {
+         "from": "2026-10-15",
+         "to": "2026-10-21"
+        },
+        "groupBy": "source"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A01",
+          "argsJson": "{\"name\":\"Weekly New Leads\",\"metric\":\"new_leads\",\"dateRange\":{\"from\":\"2026-10-15\",\"to\":\"2026-10-21\"},\"groupBy\":\"source\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M50.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6765,
+     "ms": 6765,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6aa0b6f312cf",
+       "latencyMs": 6532,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 26531,
+        "cachedRead": 19200,
+        "cacheWrite": 0,
+        "output": 154,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6765,
+    "firstReplyMs": 6765,
+    "plannerMs": 6532,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 26531,
+     "cachedRead": 19200,
+     "cacheWrite": 0,
+     "output": 154,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a saved report called Weekly New Leads that counts new leads over the last 7 days, grouped by source",
+     "status": "done",
+     "reply": "Done: Create saved report (Weekly New Leads).",
+     "offered": [
+      "M50.A01",
+      "M50.A06",
+      "M03.A01",
+      "M03.A06",
+      "M03.A03",
+      "M50.A02",
+      "M50.A07",
+      "M50.A04",
+      "M50.A10",
+      "M03.A04",
+      "M09.A01",
+      "M24.A01",
+      "M07.A01",
+      "M10.A01",
+      "M06.A01",
+      "M01.A01",
+      "M02.A01",
+      "M04.A01",
+      "M47.A01"
+     ],
+     "planned": [
+      "M50.A01"
+     ],
+     "calls": [
+      {
+       "action": "M50.A01",
+       "args": {
+        "name": "Weekly New Leads",
+        "metric": "new_leads",
+        "dateRange": {
+         "from": "2026-10-15",
+         "to": "2026-10-21"
+        },
+        "groupBy": "source"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A01",
+          "argsJson": "{\"name\":\"Weekly New Leads\",\"metric\":\"new_leads\",\"dateRange\":{\"from\":\"2026-10-15\",\"to\":\"2026-10-21\"},\"groupBy\":\"source\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M50.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3907,
+     "ms": 3907,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6aa0b6f312cf",
+       "latencyMs": 3859,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13166,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 138,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3907,
+    "firstReplyMs": 3907,
+    "plannerMs": 3859,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13166,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 138,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a saved report called Weekly New Leads that counts new leads over the last 7 days, grouped by source",
+     "status": "done",
+     "reply": "Done: Create saved report (Weekly New Leads).",
+     "offered": [
+      "M50.A01",
+      "M50.A06",
+      "M03.A01",
+      "M03.A06",
+      "M03.A03",
+      "M50.A02",
+      "M50.A07",
+      "M50.A04",
+      "M50.A10",
+      "M03.A04",
+      "M09.A01",
+      "M24.A01",
+      "M07.A01",
+      "M10.A01",
+      "M06.A01",
+      "M01.A01",
+      "M02.A01",
+      "M04.A01",
+      "M47.A01"
+     ],
+     "planned": [
+      "M50.A01"
+     ],
+     "calls": [
+      {
+       "action": "M50.A01",
+       "args": {
+        "name": "Weekly New Leads",
+        "metric": "new_leads",
+        "dateRange": {
+         "from": "2026-10-15",
+         "to": "2026-10-21"
+        },
+        "groupBy": "source"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A01",
+          "argsJson": "{\"name\":\"Weekly New Leads\",\"metric\":\"new_leads\",\"dateRange\":{\"from\":\"2026-10-15\",\"to\":\"2026-10-21\"},\"groupBy\":\"source\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M50.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3692,
+     "ms": 3692,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6aa0b6f312cf",
+       "latencyMs": 3587,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13170,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 138,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3692,
+    "firstReplyMs": 3692,
+    "plannerMs": 3587,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13170,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 138,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-run",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Run the Monthly Revenue report",
+     "status": "done",
+     "reply": "Done: Run report.",
+     "offered": [
+      "M50.A07",
+      "M50.A10",
+      "M50.A09",
+      "M50.A08",
+      "M50.A03",
+      "M50.A05",
+      "M50.A01",
+      "M50.A06",
+      "M50.A02",
+      "M50.A04",
+      "M26.A07",
+      "M30.A01",
+      "M43.A10",
+      "M16.A10",
+      "M17.A09",
+      "M15.A10",
+      "M09.A06",
+      "M36.A10",
+      "M09.A08"
+     ],
+     "planned": [
+      "M50.A07"
+     ],
+     "calls": [
+      {
+       "action": "M50.A07",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A07",
+          "argsJson": "{\"reportId\":{\"$lookup\":{\"entity\":\"report\",\"name\":\"Monthly Revenue\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3583,
+     "ms": 3583,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "88e98a380aa4",
+       "latencyMs": 3545,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12238,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 114,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3583,
+    "firstReplyMs": 3583,
+    "plannerMs": 3545,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12238,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 114,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-run",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Run the Monthly Revenue report",
+     "status": "done",
+     "reply": "Done: Run report.",
+     "offered": [
+      "M50.A07",
+      "M50.A10",
+      "M50.A09",
+      "M50.A08",
+      "M50.A03",
+      "M50.A05",
+      "M50.A01",
+      "M50.A06",
+      "M50.A02",
+      "M50.A04",
+      "M26.A07",
+      "M30.A01",
+      "M43.A10",
+      "M16.A10",
+      "M17.A09",
+      "M15.A10",
+      "M09.A06",
+      "M36.A10",
+      "M09.A08"
+     ],
+     "planned": [
+      "M50.A07"
+     ],
+     "calls": [
+      {
+       "action": "M50.A07",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A07",
+          "argsJson": "{\"reportId\":{\"$lookup\":{\"entity\":\"report\",\"name\":\"Monthly Revenue\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3499,
+     "ms": 3499,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "88e98a380aa4",
+       "latencyMs": 3476,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12236,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 114,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3499,
+    "firstReplyMs": 3499,
+    "plannerMs": 3476,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12236,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 114,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-run",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Run the Monthly Revenue report",
+     "status": "done",
+     "reply": "Done: Run report.",
+     "offered": [
+      "M50.A07",
+      "M50.A10",
+      "M50.A09",
+      "M50.A08",
+      "M50.A03",
+      "M50.A05",
+      "M50.A01",
+      "M50.A06",
+      "M50.A02",
+      "M50.A04",
+      "M26.A07",
+      "M30.A01",
+      "M43.A10",
+      "M16.A10",
+      "M17.A09",
+      "M15.A10",
+      "M09.A06",
+      "M36.A10",
+      "M09.A08"
+     ],
+     "planned": [
+      "M50.A07"
+     ],
+     "calls": [
+      {
+       "action": "M50.A07",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A07",
+          "argsJson": "{\"reportId\":{\"$lookup\":{\"entity\":\"report\",\"name\":\"Monthly Revenue\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4727,
+     "ms": 4727,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "88e98a380aa4",
+       "latencyMs": 4693,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 24523,
+        "cachedRead": 18176,
+        "cacheWrite": 0,
+        "output": 133,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4727,
+    "firstReplyMs": 4727,
+    "plannerMs": 4693,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 24523,
+     "cachedRead": 18176,
+     "cacheWrite": 0,
+     "output": 133,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-schedule",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send the Monthly Revenue report every week to maya@example.com",
+     "status": "done",
+     "reply": "Done: Schedule report delivery (Monthly Revenue).",
+     "offered": [
+      "M50.A10",
+      "M50.A06",
+      "M50.A07",
+      "M50.A09",
+      "M26.A07",
+      "M27.A08",
+      "M50.A01",
+      "M50.A05",
+      "M50.A08",
+      "M28.A08",
+      "M14.A09",
+      "M45.A02",
+      "M30.A01",
+      "M50.A03",
+      "M50.A02",
+      "M15.A10",
+      "M09.A06",
+      "M36.A10",
+      "M26.A03",
+      "M27.A03",
+      "M28.A03",
+      "M14.A03",
+      "M45.A04",
+      "M01.A03",
+      "M15.A03"
+     ],
+     "planned": [
+      "M50.A10"
+     ],
+     "calls": [
+      {
+       "action": "M50.A10",
+       "args": {
+        "reportId": "rpt_1",
+        "frequency": "weekly",
+        "recipients": [
+         "maya@example.com"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A10",
+          "argsJson": "{\"reportId\":{\"$lookup\":{\"entity\":\"report\",\"name\":\"Monthly Revenue\"}},\"frequency\":\"weekly\",\"recipients\":[\"maya@example.com\"]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M50.A10"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3385,
+     "ms": 3389,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "731e0255ab05",
+       "latencyMs": 3343,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13728,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 129,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "58d1f8a56e706c37",
+       "targetsHash": "c11dcdf64eba3958",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M50.A10",
+         "name": "Schedule report delivery",
+         "args": {
+          "reportId": "rpt_1",
+          "frequency": "weekly",
+          "recipients": [
+           "maya@example.com"
+          ]
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "report",
+         "id": "rpt_1",
+         "name": "Monthly Revenue",
+         "text": "Monthly Revenue",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-10-21T14:00:00.000Z",
+         "fingerprint": "f721fdc2a8cf6229"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3389,
+    "firstReplyMs": 3385,
+    "plannerMs": 3343,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13728,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 129,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-schedule",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send the Monthly Revenue report every week to maya@example.com",
+     "status": "done",
+     "reply": "Done: Schedule report delivery (Monthly Revenue).",
+     "offered": [
+      "M50.A10",
+      "M50.A06",
+      "M50.A07",
+      "M50.A09",
+      "M26.A07",
+      "M27.A08",
+      "M50.A01",
+      "M50.A05",
+      "M50.A08",
+      "M28.A08",
+      "M14.A09",
+      "M45.A02",
+      "M30.A01",
+      "M50.A03",
+      "M50.A02",
+      "M15.A10",
+      "M09.A06",
+      "M36.A10",
+      "M26.A03",
+      "M27.A03",
+      "M28.A03",
+      "M14.A03",
+      "M45.A04",
+      "M01.A03",
+      "M15.A03"
+     ],
+     "planned": [
+      "M50.A10"
+     ],
+     "calls": [
+      {
+       "action": "M50.A10",
+       "args": {
+        "reportId": "rpt_1",
+        "frequency": "weekly",
+        "recipients": [
+         "maya@example.com"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A10",
+          "argsJson": "{\"reportId\":{\"$lookup\":{\"entity\":\"report\",\"name\":\"Monthly Revenue\"}},\"frequency\":\"weekly\",\"recipients\":[\"maya@example.com\"]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M50.A10"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3751,
+     "ms": 3754,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "731e0255ab05",
+       "latencyMs": 3706,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13730,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 129,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "58d1f8a56e706c37",
+       "targetsHash": "c11dcdf64eba3958",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M50.A10",
+         "name": "Schedule report delivery",
+         "args": {
+          "reportId": "rpt_1",
+          "frequency": "weekly",
+          "recipients": [
+           "maya@example.com"
+          ]
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "report",
+         "id": "rpt_1",
+         "name": "Monthly Revenue",
+         "text": "Monthly Revenue",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-10-21T14:00:00.000Z",
+         "fingerprint": "f721fdc2a8cf6229"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3754,
+    "firstReplyMs": 3751,
+    "plannerMs": 3706,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13730,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 129,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-schedule",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send the Monthly Revenue report every week to maya@example.com",
+     "status": "done",
+     "reply": "Done: Schedule report delivery (Monthly Revenue).",
+     "offered": [
+      "M50.A10",
+      "M50.A06",
+      "M50.A07",
+      "M50.A09",
+      "M26.A07",
+      "M27.A08",
+      "M50.A01",
+      "M50.A05",
+      "M50.A08",
+      "M28.A08",
+      "M14.A09",
+      "M45.A02",
+      "M30.A01",
+      "M50.A03",
+      "M50.A02",
+      "M15.A10",
+      "M09.A06",
+      "M36.A10",
+      "M26.A03",
+      "M27.A03",
+      "M28.A03",
+      "M14.A03",
+      "M45.A04",
+      "M01.A03",
+      "M15.A03"
+     ],
+     "planned": [
+      "M50.A10"
+     ],
+     "calls": [
+      {
+       "action": "M50.A10",
+       "args": {
+        "reportId": "rpt_1",
+        "frequency": "weekly",
+        "recipients": [
+         "maya@example.com"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A10",
+          "argsJson": "{\"reportId\":{\"$lookup\":{\"entity\":\"report\",\"name\":\"Monthly Revenue\"}},\"frequency\":\"weekly\",\"recipients\":[\"maya@example.com\"]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M50.A10"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4236,
+     "ms": 4238,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "731e0255ab05",
+       "latencyMs": 4111,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13730,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 129,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "58d1f8a56e706c37",
+       "targetsHash": "c11dcdf64eba3958",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M50.A10",
+         "name": "Schedule report delivery",
+         "args": {
+          "reportId": "rpt_1",
+          "frequency": "weekly",
+          "recipients": [
+           "maya@example.com"
+          ]
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "report",
+         "id": "rpt_1",
+         "name": "Monthly Revenue",
+         "text": "Monthly Revenue",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-10-21T14:00:00.000Z",
+         "fingerprint": "f721fdc2a8cf6229"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4238,
+    "firstReplyMs": 4236,
+    "plannerMs": 4111,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13730,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 129,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-top-rep",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show me the Won Deals by Rep report",
+     "status": "done",
+     "reply": "Done: Run report.",
+     "offered": [
+      "M50.A03",
+      "M04.A08",
+      "M50.A07",
+      "M04.A02",
+      "M50.A02",
+      "M50.A09",
+      "M04.A03",
+      "M05.A02",
+      "M25.A02",
+      "M31.A02",
+      "M04.A06",
+      "M50.A08",
+      "M04.A10",
+      "M29.A09",
+      "M04.A05",
+      "M09.A03",
+      "M27.A09",
+      "M09.A06",
+      "M36.A10",
+      "M29.A06"
+     ],
+     "planned": [
+      "M50.A07"
+     ],
+     "calls": [
+      {
+       "action": "M50.A07",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "report",
+          "name": "Won Deals by Rep",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M50.A07",
+          "argsJson": "{\"reportId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3585,
+     "ms": 3585,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "737233567e47",
+       "latencyMs": 3557,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12012,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 131,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3585,
+    "firstReplyMs": 3585,
+    "plannerMs": 3557,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12012,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 131,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-top-rep",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show me the Won Deals by Rep report",
+     "status": "done",
+     "reply": "Found 1 report: Won Deals by Rep: metric won_deals, group by owner.\nDone: Run report.",
+     "offered": [
+      "M50.A03",
+      "M04.A08",
+      "M50.A07",
+      "M04.A02",
+      "M50.A02",
+      "M50.A09",
+      "M04.A03",
+      "M05.A02",
+      "M25.A02",
+      "M31.A02",
+      "M04.A06",
+      "M50.A08",
+      "M04.A10",
+      "M29.A09",
+      "M04.A05",
+      "M09.A03",
+      "M27.A09",
+      "M09.A06",
+      "M36.A10",
+      "M29.A06"
+     ],
+     "planned": [
+      "M50.A03",
+      "M50.A07"
+     ],
+     "calls": [
+      {
+       "action": "M50.A03",
+       "args": {
+        "metric": "won_deals",
+        "query": "Won Deals by Rep"
+       }
+      },
+      {
+       "action": "M50.A07",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A03",
+          "argsJson": "{\"metric\":\"won_deals\",\"query\":\"Won Deals by Rep\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A03",
+          "argsJson": "{\"metric\":\"won_deals\",\"query\":\"Won Deals by Rep\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M50.A07",
+          "argsJson": "{\"reportId\":{\"$lookup\":{\"entity\":\"report\",\"name\":\"Won Deals by Rep\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "requested operation M50.A07 (Run report) is not in the plan: add a step that calls M50.A07 with its arguments from the message; M50.A03 does not do it"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8000,
+     "ms": 8000,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "737233567e47",
+       "latencyMs": 3918,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12012,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 111,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "989986882a9d",
+       "latencyMs": 4044,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 12181,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 151,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8000,
+    "firstReplyMs": 8000,
+    "plannerMs": 7962,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 24193,
+     "cachedRead": 12288,
+     "cacheWrite": 0,
+     "output": 262,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-report-top-rep",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show me the Won Deals by Rep report",
+     "status": "done",
+     "reply": "Done: Run report.",
+     "offered": [
+      "M50.A03",
+      "M04.A08",
+      "M50.A07",
+      "M04.A02",
+      "M50.A02",
+      "M50.A09",
+      "M04.A03",
+      "M05.A02",
+      "M25.A02",
+      "M31.A02",
+      "M04.A06",
+      "M50.A08",
+      "M04.A10",
+      "M29.A09",
+      "M04.A05",
+      "M09.A03",
+      "M27.A09",
+      "M09.A06",
+      "M36.A10",
+      "M29.A06"
+     ],
+     "planned": [
+      "M50.A07"
+     ],
+     "calls": [
+      {
+       "action": "M50.A07",
+       "args": {
+        "reportId": "rpt_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A03",
+          "argsJson": "{\"query\":\"Won Deals by Rep\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M50.A07",
+          "argsJson": "{\"reportId\":{\"$lookup\":{\"entity\":\"report\",\"name\":\"Won Deals by Rep\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M50.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "requested operation M50.A07 (Run report) is not in the plan: add a step that calls M50.A07 with its arguments from the message; M50.A03 does not do it"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7540,
+     "ms": 7540,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "737233567e47",
+       "latencyMs": 3658,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12010,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 105,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "28e0e5c7c84a",
+       "latencyMs": 3768,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 12173,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 116,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 7540,
+    "firstReplyMs": 7540,
+    "plannerMs": 7426,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 24183,
+     "cachedRead": 12288,
+     "cacheWrite": 0,
+     "output": 221,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a review request for Elodie Mercer with subject 'Visit feedback' and body 'How was your visit?'",
+     "status": "done",
+     "reply": "Done: Create review request.",
+     "offered": [
+      "M45.A01",
+      "M14.A04",
+      "M45.A02",
+      "M45.A07",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M21.A01",
+      "M19.A01",
+      "M19.A04",
+      "M19.A05",
+      "M19.A09",
+      "M33.A01",
+      "M29.A01",
+      "M21.A02",
+      "M01.A02",
+      "M01.A03",
+      "M45.A06",
+      "M29.A06"
+     ],
+     "planned": [
+      "M45.A01"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "How was your visit?"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Elodie Mercer\"}},\"subject\":\"Visit feedback\",\"body\":\"How was your visit?\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4391,
+     "ms": 4391,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "4034d3e16e06",
+       "latencyMs": 4324,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12078,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 129,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4391,
+    "firstReplyMs": 4391,
+    "plannerMs": 4324,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12078,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 129,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a review request for Elodie Mercer with subject 'Visit feedback' and body 'How was your visit?'",
+     "status": "done",
+     "reply": "Done: Create review request.",
+     "offered": [
+      "M45.A01",
+      "M14.A04",
+      "M45.A02",
+      "M45.A07",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M21.A01",
+      "M19.A01",
+      "M19.A04",
+      "M19.A05",
+      "M19.A09",
+      "M33.A01",
+      "M29.A01",
+      "M21.A02",
+      "M01.A02",
+      "M01.A03",
+      "M45.A06",
+      "M29.A06"
+     ],
+     "planned": [
+      "M45.A01"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "How was your visit?"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Elodie Mercer\"}},\"subject\":\"Visit feedback\",\"body\":\"How was your visit?\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4201,
+     "ms": 4201,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "4034d3e16e06",
+       "latencyMs": 4077,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12080,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 129,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4201,
+    "firstReplyMs": 4201,
+    "plannerMs": 4077,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12080,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 129,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-01",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a review request for Elodie Mercer with subject 'Visit feedback' and body 'How was your visit?'",
+     "status": "done",
+     "reply": "Done: Create review request.",
+     "offered": [
+      "M45.A01",
+      "M14.A04",
+      "M45.A02",
+      "M45.A07",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M21.A01",
+      "M19.A01",
+      "M19.A04",
+      "M19.A05",
+      "M19.A09",
+      "M33.A01",
+      "M29.A01",
+      "M21.A02",
+      "M01.A02",
+      "M01.A03",
+      "M45.A06",
+      "M29.A06"
+     ],
+     "planned": [
+      "M45.A01"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "How was your visit?"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Elodie Mercer\"}},\"subject\":\"Visit feedback\",\"body\":\"How was your visit?\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3815,
+     "ms": 3815,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "4034d3e16e06",
+       "latencyMs": 3606,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12076,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 129,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3815,
+    "firstReplyMs": 3815,
+    "plannerMs": 3606,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12076,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 129,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M14.A04",
+      "M43.A07",
+      "M24.A10",
+      "M21.A02",
+      "M21.A03",
+      "M45.A08",
+      "M01.A02",
+      "M01.A03",
+      "M45.A06",
+      "M13.A07"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Your feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Dorian Vale\"}},\"subject\":\"Your feedback\",\"body\":\"Please review your visit.\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A02",
+          "argsJson": "{\"requestId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A01",
+          "M45.A02"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4230,
+     "ms": 4236,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "5d8668345224",
+       "latencyMs": 4065,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12388,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 164,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "6c589cfafa2a39b3",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4236,
+    "firstReplyMs": 4230,
+    "plannerMs": 4065,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12388,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 164,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M14.A04",
+      "M43.A07",
+      "M24.A10",
+      "M21.A02",
+      "M21.A03",
+      "M45.A08",
+      "M01.A02",
+      "M01.A03",
+      "M45.A06",
+      "M13.A07"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Your feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Dorian Vale\"}},\"subject\":\"Your feedback\",\"body\":\"Please review your visit.\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A02",
+          "argsJson": "{\"requestId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A01",
+          "M45.A02"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3964,
+     "ms": 3968,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "5d8668345224",
+       "latencyMs": 3810,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12388,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 164,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "6c589cfafa2a39b3",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3968,
+    "firstReplyMs": 3964,
+    "plannerMs": 3810,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12388,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 164,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-02",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send Dorian Vale a review request with subject 'Your feedback' and body 'Please review your visit.'",
+     "status": "done",
+     "reply": "Done: Create review request, already done earlier.\nDone: Send review request.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M45.A02",
+      "M45.A05",
+      "M45.A04",
+      "M45.A09",
+      "M47.A08",
+      "M13.A02",
+      "M47.A07",
+      "M14.A04",
+      "M43.A07",
+      "M24.A10",
+      "M21.A02",
+      "M21.A03",
+      "M45.A08",
+      "M01.A02",
+      "M01.A03",
+      "M45.A06",
+      "M13.A07"
+     ],
+     "planned": [
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Your feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A01",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Dorian Vale\"}},\"subject\":\"Your feedback\",\"body\":\"Please review your visit.\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A02",
+          "argsJson": "{\"requestId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A01",
+          "M45.A02"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4388,
+     "ms": 4391,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "5d8668345224",
+       "latencyMs": 4244,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12392,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 164,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "6c589cfafa2a39b3",
+       "targetsHash": "c0542bc197941deb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4391,
+    "firstReplyMs": 4388,
+    "plannerMs": 4244,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12392,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 164,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Cancel Elodie Mercer's unsent review request rrq_1",
+     "status": "done",
+     "reply": "Done: Cancel unsent review request.",
+     "offered": [
+      "M45.A03",
+      "M45.A02",
+      "M29.A03",
+      "M45.A05",
+      "M30.A09",
+      "M24.A07",
+      "M32.A09",
+      "M13.A05",
+      "M12.A05",
+      "M30.A07",
+      "M45.A04",
+      "M45.A01",
+      "M19.A08",
+      "M29.A02",
+      "M01.A02",
+      "M01.A03",
+      "M28.A09",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [
+      {
+       "action": "M45.A03",
+       "args": {
+        "requestId": "rrq_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A03",
+          "argsJson": "{\"requestId\":\"rrq_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A03"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3983,
+     "ms": 3986,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "34e436d3c74f",
+       "latencyMs": 3928,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12337,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 106,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "3e416562c4a8d83f",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3986,
+    "firstReplyMs": 3983,
+    "plannerMs": 3928,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12337,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 106,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Cancel Elodie Mercer's unsent review request rrq_1",
+     "status": "done",
+     "reply": "Done: Cancel unsent review request.",
+     "offered": [
+      "M45.A03",
+      "M45.A02",
+      "M29.A03",
+      "M45.A05",
+      "M30.A09",
+      "M24.A07",
+      "M32.A09",
+      "M13.A05",
+      "M12.A05",
+      "M30.A07",
+      "M45.A04",
+      "M45.A01",
+      "M19.A08",
+      "M29.A02",
+      "M01.A02",
+      "M01.A03",
+      "M28.A09",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [
+      {
+       "action": "M45.A03",
+       "args": {
+        "requestId": "rrq_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A03",
+          "argsJson": "{\"requestId\":\"rrq_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A03"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3587,
+     "ms": 3591,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "34e436d3c74f",
+       "latencyMs": 3462,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12333,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 106,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "3e416562c4a8d83f",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3591,
+    "firstReplyMs": 3587,
+    "plannerMs": 3462,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12333,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 106,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-03",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Cancel Elodie Mercer's unsent review request rrq_1",
+     "status": "done",
+     "reply": "Done: Cancel unsent review request.",
+     "offered": [
+      "M45.A03",
+      "M45.A02",
+      "M29.A03",
+      "M45.A05",
+      "M30.A09",
+      "M24.A07",
+      "M32.A09",
+      "M13.A05",
+      "M12.A05",
+      "M30.A07",
+      "M45.A04",
+      "M45.A01",
+      "M19.A08",
+      "M29.A02",
+      "M01.A02",
+      "M01.A03",
+      "M28.A09",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [
+      {
+       "action": "M45.A03",
+       "args": {
+        "requestId": "rrq_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A03",
+          "argsJson": "{\"requestId\":\"rrq_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A03"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3802,
+     "ms": 3805,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "34e436d3c74f",
+       "latencyMs": 3771,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12337,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 106,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "3e416562c4a8d83f",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3805,
+    "firstReplyMs": 3802,
+    "plannerMs": 3771,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12337,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 106,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "List the draft review requests",
+     "status": "done",
+     "reply": "Found 1 review_request: Elodie Mercer: status draft, subject How was your visit?, body Please tell us about your experience..",
+     "offered": [
+      "M45.A04",
+      "M45.A02",
+      "M45.A01",
+      "M45.A03",
+      "M45.A08",
+      "M45.A07",
+      "M13.A02",
+      "M19.A03",
+      "M28.A05",
+      "M28.A01",
+      "M33.A03",
+      "M46.A09",
+      "M46.A01",
+      "M09.A10",
+      "M15.A03",
+      "M45.A06",
+      "M13.A07"
+     ],
+     "planned": [
+      "M45.A04"
+     ],
+     "calls": [
+      {
+       "action": "M45.A04",
+       "args": {
+        "status": "draft"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A04",
+          "argsJson": "{\"status\":\"draft\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4821,
+     "ms": 4821,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "9236ad9f781d",
+       "latencyMs": 4794,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12120,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 102,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4821,
+    "firstReplyMs": 4821,
+    "plannerMs": 4794,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12120,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 102,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "List the draft review requests",
+     "status": "done",
+     "reply": "Found 1 review_request: Elodie Mercer: status draft, subject How was your visit?, body Please tell us about your experience..",
+     "offered": [
+      "M45.A04",
+      "M45.A02",
+      "M45.A01",
+      "M45.A03",
+      "M45.A08",
+      "M45.A07",
+      "M13.A02",
+      "M19.A03",
+      "M28.A05",
+      "M28.A01",
+      "M33.A03",
+      "M46.A09",
+      "M46.A01",
+      "M09.A10",
+      "M15.A03",
+      "M45.A06",
+      "M13.A07"
+     ],
+     "planned": [
+      "M45.A04"
+     ],
+     "calls": [
+      {
+       "action": "M45.A04",
+       "args": {
+        "status": "draft"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A04",
+          "argsJson": "{\"status\":\"draft\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4559,
+     "ms": 4559,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "9236ad9f781d",
+       "latencyMs": 4522,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12120,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 102,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4559,
+    "firstReplyMs": 4559,
+    "plannerMs": 4522,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12120,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 102,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-04",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "List the draft review requests",
+     "status": "done",
+     "reply": "Found 1 review_request: Elodie Mercer: status draft, subject How was your visit?, body Please tell us about your experience..",
+     "offered": [
+      "M45.A04",
+      "M45.A02",
+      "M45.A01",
+      "M45.A03",
+      "M45.A08",
+      "M45.A07",
+      "M13.A02",
+      "M19.A03",
+      "M28.A05",
+      "M28.A01",
+      "M33.A03",
+      "M46.A09",
+      "M46.A01",
+      "M09.A10",
+      "M15.A03",
+      "M45.A06",
+      "M13.A07"
+     ],
+     "planned": [
+      "M45.A04"
+     ],
+     "calls": [
+      {
+       "action": "M45.A04",
+       "args": {
+        "status": "draft"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A04",
+          "argsJson": "{\"status\":\"draft\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4085,
+     "ms": 4085,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "9236ad9f781d",
+       "latencyMs": 3967,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12120,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 102,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4085,
+    "firstReplyMs": 4085,
+    "plannerMs": 3967,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12120,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 102,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Record a 4-star customer review from Dorian Vale for request rrq_2: 'Friendly service.'",
+     "status": "done",
+     "reply": "Done: Record simulated customer review.",
+     "offered": [
+      "M45.A05",
+      "M45.A06",
+      "M45.A01",
+      "M27.A09",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M27.A08",
+      "M47.A07",
+      "M47.A08",
+      "M33.A01",
+      "M23.A07",
+      "M47.A06",
+      "M27.A03",
+      "M47.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A06"
+     ],
+     "planned": [
+      "M45.A05"
+     ],
+     "calls": [
+      {
+       "action": "M45.A05",
+       "args": {
+        "requestId": "rrq_2",
+        "rating": 4,
+        "body": "Friendly service."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A05",
+          "argsJson": "{\"requestId\":\"rrq_2\",\"rating\":4,\"body\":\"Friendly service.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3644,
+     "ms": 3644,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b625d872ee1d",
+       "latencyMs": 3592,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12557,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 115,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3644,
+    "firstReplyMs": 3644,
+    "plannerMs": 3592,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12557,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 115,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Record a 4-star customer review from Dorian Vale for request rrq_2: 'Friendly service.'",
+     "status": "done",
+     "reply": "Done: Record simulated customer review.",
+     "offered": [
+      "M45.A05",
+      "M45.A06",
+      "M45.A01",
+      "M27.A09",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M27.A08",
+      "M47.A07",
+      "M47.A08",
+      "M33.A01",
+      "M23.A07",
+      "M47.A06",
+      "M27.A03",
+      "M47.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A06"
+     ],
+     "planned": [
+      "M45.A05"
+     ],
+     "calls": [
+      {
+       "action": "M45.A05",
+       "args": {
+        "requestId": "rrq_2",
+        "rating": 4,
+        "body": "Friendly service."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A05",
+          "argsJson": "{\"requestId\":\"rrq_2\",\"rating\":4,\"body\":\"Friendly service.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3267,
+     "ms": 3267,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b625d872ee1d",
+       "latencyMs": 3225,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12557,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 115,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3267,
+    "firstReplyMs": 3267,
+    "plannerMs": 3225,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12557,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 115,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-05",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Record a 4-star customer review from Dorian Vale for request rrq_2: 'Friendly service.'",
+     "status": "done",
+     "reply": "Done: Record simulated customer review.",
+     "offered": [
+      "M45.A05",
+      "M45.A06",
+      "M45.A01",
+      "M27.A09",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M27.A08",
+      "M47.A07",
+      "M47.A08",
+      "M33.A01",
+      "M23.A07",
+      "M47.A06",
+      "M27.A03",
+      "M47.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A06"
+     ],
+     "planned": [
+      "M45.A05"
+     ],
+     "calls": [
+      {
+       "action": "M45.A05",
+       "args": {
+        "requestId": "rrq_2",
+        "rating": 4,
+        "body": "Friendly service."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A05",
+          "argsJson": "{\"requestId\":\"rrq_2\",\"rating\":4,\"body\":\"Friendly service.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4066,
+     "ms": 4066,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b625d872ee1d",
+       "latencyMs": 4019,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12559,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 115,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4066,
+    "firstReplyMs": 4066,
+    "plannerMs": 4019,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12559,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 115,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Find customer reviews rated two stars",
+     "status": "done",
+     "reply": "Found 1 review: Elodie Mercer: rating 2, body The wait was too long..",
+     "offered": [
+      "M45.A06",
+      "M45.A05",
+      "M45.A10",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M30.A03",
+      "M27.A03",
+      "M31.A03",
+      "M45.A02",
+      "M45.A09",
+      "M45.A03",
+      "M45.A08",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A06"
+     ],
+     "calls": [
+      {
+       "action": "M45.A06",
+       "args": {
+        "minRating": 2,
+        "maxRating": 2
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A06",
+          "argsJson": "{\"minRating\":2,\"maxRating\":2}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3921,
+     "ms": 3921,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "3c5093bcf1c3",
+       "latencyMs": 3882,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11033,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 107,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3921,
+    "firstReplyMs": 3921,
+    "plannerMs": 3882,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11033,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 107,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Find customer reviews rated two stars",
+     "status": "done",
+     "reply": "Found 1 review: Elodie Mercer: rating 2, body The wait was too long..",
+     "offered": [
+      "M45.A06",
+      "M45.A05",
+      "M45.A10",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M30.A03",
+      "M27.A03",
+      "M31.A03",
+      "M45.A02",
+      "M45.A09",
+      "M45.A03",
+      "M45.A08",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A06"
+     ],
+     "calls": [
+      {
+       "action": "M45.A06",
+       "args": {
+        "minRating": 2,
+        "maxRating": 2
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A06",
+          "argsJson": "{\"minRating\":2,\"maxRating\":2}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4398,
+     "ms": 4398,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "3c5093bcf1c3",
+       "latencyMs": 4373,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11035,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 107,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4398,
+    "firstReplyMs": 4398,
+    "plannerMs": 4373,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11035,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 107,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-06",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Find customer reviews rated two stars",
+     "status": "done",
+     "reply": "Found 1 review: Elodie Mercer: rating 2, body The wait was too long..",
+     "offered": [
+      "M45.A06",
+      "M45.A05",
+      "M45.A10",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M30.A03",
+      "M27.A03",
+      "M31.A03",
+      "M45.A02",
+      "M45.A09",
+      "M45.A03",
+      "M45.A08",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A06"
+     ],
+     "calls": [
+      {
+       "action": "M45.A06",
+       "args": {
+        "minRating": 2,
+        "maxRating": 2
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A06",
+          "argsJson": "{\"minRating\":2,\"maxRating\":2}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3358,
+     "ms": 3358,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "3c5093bcf1c3",
+       "latencyMs": 3330,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11033,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 107,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3358,
+    "firstReplyMs": 3358,
+    "plannerMs": 3330,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11033,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 107,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show review rv_1 in full",
+     "status": "done",
+     "reply": "Nisha Khatri (review_request): rating 5, body Helpful staff and a smooth appointment..",
+     "offered": [
+      "M45.A07",
+      "M45.A04",
+      "M45.A05",
+      "M45.A08",
+      "M45.A10",
+      "M45.A06",
+      "M09.A06",
+      "M50.A07",
+      "M16.A02",
+      "M19.A02",
+      "M50.A03",
+      "M03.A02",
+      "M31.A02",
+      "M31.A03",
+      "M11.A01",
+      "M01.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M45.A07"
+     ],
+     "calls": [
+      {
+       "action": "M45.A07",
+       "args": {
+        "reviewId": "rv_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A07",
+          "argsJson": "{\"reviewId\":\"rv_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4249,
+     "ms": 4249,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "ba266d78d0a5",
+       "latencyMs": 4228,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11726,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 105,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4249,
+    "firstReplyMs": 4249,
+    "plannerMs": 4228,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11726,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 105,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show review rv_1 in full",
+     "status": "done",
+     "reply": "Nisha Khatri (review_request): rating 5, body Helpful staff and a smooth appointment..",
+     "offered": [
+      "M45.A07",
+      "M45.A04",
+      "M45.A05",
+      "M45.A08",
+      "M45.A10",
+      "M45.A06",
+      "M09.A06",
+      "M50.A07",
+      "M16.A02",
+      "M19.A02",
+      "M50.A03",
+      "M03.A02",
+      "M31.A02",
+      "M31.A03",
+      "M11.A01",
+      "M01.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M45.A07"
+     ],
+     "calls": [
+      {
+       "action": "M45.A07",
+       "args": {
+        "reviewId": "rv_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A07",
+          "argsJson": "{\"reviewId\":\"rv_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4277,
+     "ms": 4277,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "ba266d78d0a5",
+       "latencyMs": 4131,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11726,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 105,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4277,
+    "firstReplyMs": 4277,
+    "plannerMs": 4131,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11726,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 105,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-07",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show review rv_1 in full",
+     "status": "done",
+     "reply": "Nisha Khatri (review_request): rating 5, body Helpful staff and a smooth appointment..",
+     "offered": [
+      "M45.A07",
+      "M45.A04",
+      "M45.A05",
+      "M45.A08",
+      "M45.A10",
+      "M45.A06",
+      "M09.A06",
+      "M50.A07",
+      "M16.A02",
+      "M19.A02",
+      "M50.A03",
+      "M03.A02",
+      "M31.A02",
+      "M31.A03",
+      "M11.A01",
+      "M01.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M45.A07"
+     ],
+     "calls": [
+      {
+       "action": "M45.A07",
+       "args": {
+        "reviewId": "rv_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A07",
+          "argsJson": "{\"reviewId\":\"rv_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4140,
+     "ms": 4140,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "ba266d78d0a5",
+       "latencyMs": 4098,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11726,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 105,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4140,
+    "firstReplyMs": 4140,
+    "plannerMs": 4098,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11726,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 105,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Draft this response to review rv_2: 'Thank you. We will improve our waiting times.'",
+     "status": "done",
+     "reply": "Done: Draft review response.",
+     "offered": [
+      "M45.A08",
+      "M22.A06",
+      "M45.A09",
+      "M22.A05",
+      "M11.A10",
+      "M45.A01",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M47.A05",
+      "M32.A05",
+      "M47.A10",
+      "M24.A08",
+      "M24.A09",
+      "M28.A06",
+      "M45.A06"
+     ],
+     "planned": [
+      "M45.A08"
+     ],
+     "calls": [
+      {
+       "action": "M45.A08",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you. We will improve our waiting times."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A08",
+          "argsJson": "{\"reviewId\":\"rv_2\",\"body\":\"Thank you. We will improve our waiting times.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3739,
+     "ms": 3739,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "104eee92d0c4",
+       "latencyMs": 3663,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11358,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 117,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3739,
+    "firstReplyMs": 3739,
+    "plannerMs": 3663,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11358,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 117,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Draft this response to review rv_2: 'Thank you. We will improve our waiting times.'",
+     "status": "done",
+     "reply": "Done: Draft review response.",
+     "offered": [
+      "M45.A08",
+      "M22.A06",
+      "M45.A09",
+      "M22.A05",
+      "M11.A10",
+      "M45.A01",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M47.A05",
+      "M32.A05",
+      "M47.A10",
+      "M24.A08",
+      "M24.A09",
+      "M28.A06",
+      "M45.A06"
+     ],
+     "planned": [
+      "M45.A08"
+     ],
+     "calls": [
+      {
+       "action": "M45.A08",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you. We will improve our waiting times."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A08",
+          "argsJson": "{\"reviewId\":\"rv_2\",\"body\":\"Thank you. We will improve our waiting times.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4467,
+     "ms": 4467,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "104eee92d0c4",
+       "latencyMs": 4377,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11358,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 117,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4467,
+    "firstReplyMs": 4467,
+    "plannerMs": 4377,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11358,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 117,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Draft this response to review rv_2: 'Thank you. We will improve our waiting times.'",
+     "status": "done",
+     "reply": "Done: Draft review response.",
+     "offered": [
+      "M45.A08",
+      "M22.A06",
+      "M45.A09",
+      "M22.A05",
+      "M11.A10",
+      "M45.A01",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M47.A05",
+      "M32.A05",
+      "M47.A10",
+      "M24.A08",
+      "M24.A09",
+      "M28.A06",
+      "M45.A06"
+     ],
+     "planned": [
+      "M45.A08"
+     ],
+     "calls": [
+      {
+       "action": "M45.A08",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you. We will improve our waiting times."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A08",
+          "argsJson": "{\"reviewId\":\"rv_2\",\"body\":\"Thank you. We will improve our waiting times.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3772,
+     "ms": 3772,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "104eee92d0c4",
+       "latencyMs": 3694,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11360,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 117,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3772,
+    "firstReplyMs": 3772,
+    "plannerMs": 3694,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11360,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 117,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Publish this response to review rv_2: 'We appreciate your feedback.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M19.A01",
+      "M45.A08",
+      "M19.A10",
+      "M45.A02",
+      "M45.A01",
+      "M45.A07",
+      "M45.A05",
+      "M19.A09",
+      "M19.A07",
+      "M18.A10",
+      "M47.A08",
+      "M19.A08",
+      "M43.A08",
+      "M18.A09",
+      "M18.A01",
+      "M45.A06",
+      "M45.A04"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "We appreciate your feedback."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A09",
+          "argsJson": "{\"reviewId\":\"rv_2\",\"body\":\"We appreciate your feedback.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A09"
+         ],
+         "destination": "review"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4772,
+     "ms": 4777,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "0bf10b3ec344",
+       "latencyMs": 4693,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11524,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 113,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "0515e4b5608edd4c",
+       "targetsHash": "a96afee2e72f516c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "We appreciate your feedback."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4777,
+    "firstReplyMs": 4772,
+    "plannerMs": 4693,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11524,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 113,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Publish this response to review rv_2: 'We appreciate your feedback.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M19.A01",
+      "M45.A08",
+      "M19.A10",
+      "M45.A02",
+      "M45.A01",
+      "M45.A07",
+      "M45.A05",
+      "M19.A09",
+      "M19.A07",
+      "M18.A10",
+      "M47.A08",
+      "M19.A08",
+      "M43.A08",
+      "M18.A09",
+      "M18.A01",
+      "M45.A06",
+      "M45.A04"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "We appreciate your feedback."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A09",
+          "argsJson": "{\"reviewId\":\"rv_2\",\"body\":\"We appreciate your feedback.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A09"
+         ],
+         "destination": "review"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4728,
+     "ms": 4730,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "0bf10b3ec344",
+       "latencyMs": 4655,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11524,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 113,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "0515e4b5608edd4c",
+       "targetsHash": "a96afee2e72f516c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "We appreciate your feedback."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4730,
+    "firstReplyMs": 4728,
+    "plannerMs": 4655,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11524,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 113,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-09",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Publish this response to review rv_2: 'We appreciate your feedback.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M19.A01",
+      "M45.A08",
+      "M19.A10",
+      "M45.A02",
+      "M45.A01",
+      "M45.A07",
+      "M45.A05",
+      "M19.A09",
+      "M19.A07",
+      "M18.A10",
+      "M47.A08",
+      "M19.A08",
+      "M43.A08",
+      "M18.A09",
+      "M18.A01",
+      "M45.A06",
+      "M45.A04"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "We appreciate your feedback."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A09",
+          "argsJson": "{\"reviewId\":\"rv_2\",\"body\":\"We appreciate your feedback.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A09"
+         ],
+         "destination": "review"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3928,
+     "ms": 3930,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "0bf10b3ec344",
+       "latencyMs": 3880,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11522,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 113,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "0515e4b5608edd4c",
+       "targetsHash": "a96afee2e72f516c",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "We appreciate your feedback."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3930,
+    "firstReplyMs": 3928,
+    "plannerMs": 3880,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11522,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 113,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "What is our average customer review rating and how many reviews do we have?",
+     "status": "done",
+     "reply": "Review_request: count 2, average rating 3.5.",
+     "offered": [
+      "M45.A10",
+      "M45.A06",
+      "M45.A05",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M09.A07",
+      "M08.A10",
+      "M30.A10",
+      "M19.A10",
+      "M19.A03",
+      "M45.A02",
+      "M45.A08",
+      "M45.A09",
+      "M45.A03",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A10"
+     ],
+     "calls": [
+      {
+       "action": "M45.A10",
+       "args": {}
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A10",
+          "argsJson": "{}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A10"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5832,
+     "ms": 5832,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "00ea24224589",
+       "latencyMs": 5765,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 22167,
+        "cachedRead": 16896,
+        "cacheWrite": 0,
+        "output": 119,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5832,
+    "firstReplyMs": 5832,
+    "plannerMs": 5765,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 22167,
+     "cachedRead": 16896,
+     "cacheWrite": 0,
+     "output": 119,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "What is our average customer review rating and how many reviews do we have?",
+     "status": "done",
+     "reply": "Review_request: count 2, average rating 3.5.",
+     "offered": [
+      "M45.A10",
+      "M45.A06",
+      "M45.A05",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M09.A07",
+      "M08.A10",
+      "M30.A10",
+      "M19.A10",
+      "M19.A03",
+      "M45.A02",
+      "M45.A08",
+      "M45.A09",
+      "M45.A03",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A10"
+     ],
+     "calls": [
+      {
+       "action": "M45.A10",
+       "args": {}
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A10",
+          "argsJson": "{}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A10"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3509,
+     "ms": 3509,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "00ea24224589",
+       "latencyMs": 3472,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 10981,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 97,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3509,
+    "firstReplyMs": 3509,
+    "plannerMs": 3472,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 10981,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 97,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "What is our average customer review rating and how many reviews do we have?",
+     "status": "done",
+     "reply": "Review_request: count 2, average rating 3.5.",
+     "offered": [
+      "M45.A10",
+      "M45.A06",
+      "M45.A05",
+      "M45.A07",
+      "M45.A01",
+      "M45.A04",
+      "M09.A07",
+      "M08.A10",
+      "M30.A10",
+      "M19.A10",
+      "M19.A03",
+      "M45.A02",
+      "M45.A08",
+      "M45.A09",
+      "M45.A03",
+      "M01.A03"
+     ],
+     "planned": [
+      "M45.A10"
+     ],
+     "calls": [
+      {
+       "action": "M45.A10",
+       "args": {}
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A10",
+          "argsJson": "{}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M45.A10"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4380,
+     "ms": 4380,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "00ea24224589",
+       "latencyMs": 4305,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 22004,
+        "cachedRead": 16896,
+        "cacheWrite": 0,
+        "output": 111,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4380,
+    "firstReplyMs": 4380,
+    "plannerMs": 4305,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 22004,
+     "cachedRead": 16896,
+     "cacheWrite": 0,
+     "output": 111,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "merge-two-sarahs",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM contacts WHERE id='ct_32' → \"active\", wanted \"merged\""
+    }
+   ],
+   "failureClass": "ambiguity-fanout",
+   "turns": [
+    {
+     "user": "Merge the two Sarah Johnson contacts",
+     "status": "clarify",
+     "reply": "I found 2 contact records named Sarah Johnson. Which one is the contact that stays?",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "There are two contacts named Sarah Johnson. Which one should be kept, and which should be merged into it?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5452,
+     "ms": 5452,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6fc1ca2efc79",
+       "latencyMs": 5290,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12371,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 147,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "Keep the Brightside one",
+     "status": "failed",
+     "reply": "Couldn't merge duplicate contacts: keepId and duplicateId are the same contact.",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [
+      "M01.A06"
+     ],
+     "calls": [
+      {
+       "action": "M01.A06",
+       "args": {
+        "keepId": "ct_31",
+        "duplicateId": "ct_31"
+       },
+       "error": "INVALID: keepId and duplicateId are the same contact"
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should stay?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after identity check",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M01.A06",
+          "argsJson": "{\"keepId\":\"ct_31\",\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 8740,
+     "ms": 8746,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "dff51cc03cf0",
+       "latencyMs": 3882,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12400,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 132,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after identity check",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b2e99f2df6b2",
+       "latencyMs": 4826,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 25149,
+        "cachedRead": 18432,
+        "cacheWrite": 0,
+        "output": 137,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "f3608964bf2d544c",
+       "targetsHash": "d19bc54f669ccc13",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M01.A06",
+         "name": "Merge duplicate contacts",
+         "args": {
+          "keepId": "ct_31",
+          "duplicateId": "ct_31"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_31",
+         "name": "Sarah Johnson",
+         "text": "Sarah Johnson",
+         "provenance": "user-selected",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-08-22T11:00:00.000Z",
+         "fingerprint": "1e9c57b15d41d66d"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 14198,
+    "firstReplyMs": 5452,
+    "plannerMs": 13998,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 49920,
+     "cachedRead": 30720,
+     "cacheWrite": 0,
+     "output": 416,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "merge-two-sarahs",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "clarify, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM contacts WHERE id='ct_32' → \"active\", wanted \"merged\""
+    }
+   ],
+   "failureClass": "clarification",
+   "turns": [
+    {
+     "user": "Merge the two Sarah Johnson contacts",
+     "status": "clarify",
+     "reply": "I found 2 contact records named Sarah Johnson. Which one is the contact that stays?",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should be kept?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6259,
+     "ms": 6259,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6fc1ca2efc79",
+       "latencyMs": 6105,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 24941,
+        "cachedRead": 18304,
+        "cacheWrite": 0,
+        "output": 149,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "Keep the Brightside one",
+     "status": "clarify",
+     "reply": "I couldn't match \"That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say.\" to one of them. Which contact did you mean by \"Sarah Johnson\"? Pick one, or say \"none of these\".",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should stay?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after identity check",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should stay?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "identity",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8752,
+     "ms": 8753,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "dff51cc03cf0",
+       "latencyMs": 3408,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12402,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 132,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after identity check",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b2e99f2df6b2",
+       "latencyMs": 5283,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 25145,
+        "cachedRead": 18432,
+        "cacheWrite": 0,
+        "output": 152,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "clarified": {
+      "question": "I found 2 contact records named Sarah Johnson. Which one is the contact that stays?",
+      "answer": "That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say."
+     }
+    }
+   ],
+   "metrics": {
+    "ms": 15012,
+    "firstReplyMs": 6259,
+    "plannerMs": 14796,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 0,
+    "clarifications": 1,
+    "usage": {
+     "input": 62488,
+     "cachedRead": 42880,
+     "cacheWrite": 0,
+     "output": 433,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "merge-two-sarahs",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM contacts WHERE id='ct_32' → \"active\", wanted \"merged\""
+    }
+   ],
+   "failureClass": "ambiguity-fanout",
+   "turns": [
+    {
+     "user": "Merge the two Sarah Johnson contacts",
+     "status": "clarify",
+     "reply": "I found 2 contact records named Sarah Johnson. Which one is the contact that stays?",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should be kept, and which should be merged into it?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5308,
+     "ms": 5308,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6fc1ca2efc79",
+       "latencyMs": 5139,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12373,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "Keep the Brightside one",
+     "status": "failed",
+     "reply": "Couldn't merge duplicate contacts: keepId and duplicateId are the same contact.",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [
+      "M01.A06"
+     ],
+     "calls": [
+      {
+       "action": "M01.A06",
+       "args": {
+        "keepId": "ct_31",
+        "duplicateId": "ct_31"
+       },
+       "error": "INVALID: keepId and duplicateId are the same contact"
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should stay?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair clarification binding",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should stay?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after identity check",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M01.A06",
+          "argsJson": "{\"keepId\":\"ct_31\",\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "Expected ',' or '}' after property value in JSON at position 135 (line 1 column 136)"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 12093,
+     "ms": 12096,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "dff51cc03cf0",
+       "latencyMs": 3464,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12398,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 131,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair clarification binding",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "d737709ef16f",
+       "latencyMs": 4455,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 25387,
+        "cachedRead": 18560,
+        "cacheWrite": 0,
+        "output": 154,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after identity check",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b2e99f2df6b2",
+       "latencyMs": 4064,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12475,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 121,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "f3608964bf2d544c",
+       "targetsHash": "d19bc54f669ccc13",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M01.A06",
+         "name": "Merge duplicate contacts",
+         "args": {
+          "keepId": "ct_31",
+          "duplicateId": "ct_31"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_31",
+         "name": "Sarah Johnson",
+         "text": "Sarah Johnson",
+         "provenance": "user-selected",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-08-22T11:00:00.000Z",
+         "fingerprint": "1e9c57b15d41d66d"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 17404,
+    "firstReplyMs": 5308,
+    "plannerMs": 17122,
+    "plannerRounds": 4,
+    "modelCalls": 4,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 62633,
+     "cachedRead": 36992,
+     "cacheWrite": 0,
+     "output": 547,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "review-cancel-declined",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Cancel review request rrq_1",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M45.A03",
+      "M45.A02",
+      "M29.A03",
+      "M45.A04",
+      "M45.A01",
+      "M45.A05",
+      "M33.A08",
+      "M30.A09",
+      "M32.A09",
+      "M33.A07",
+      "M33.A01",
+      "M24.A07",
+      "M21.A05",
+      "M30.A07",
+      "M32.A10",
+      "M28.A09",
+      "M33.A03",
+      "M29.A06"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A03",
+          "argsJson": "{\"requestId\":\"rrq_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A03"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3512,
+     "ms": 3512,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "96057f4da8a5",
+       "latencyMs": 3491,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11882,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 106,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "3e416562c4a8d83f",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3512,
+    "firstReplyMs": 3512,
+    "plannerMs": 3491,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 11882,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 106,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "review-cancel-declined",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Cancel review request rrq_1",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M45.A03",
+      "M45.A02",
+      "M29.A03",
+      "M45.A04",
+      "M45.A01",
+      "M45.A05",
+      "M33.A08",
+      "M30.A09",
+      "M32.A09",
+      "M33.A07",
+      "M33.A01",
+      "M24.A07",
+      "M21.A05",
+      "M30.A07",
+      "M32.A10",
+      "M28.A09",
+      "M33.A03",
+      "M29.A06"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A03",
+          "argsJson": "{\"requestId\":\"rrq_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A03"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3322,
+     "ms": 3322,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "96057f4da8a5",
+       "latencyMs": 3302,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11882,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 106,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "3e416562c4a8d83f",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3322,
+    "firstReplyMs": 3322,
+    "plannerMs": 3302,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 11882,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 106,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "review-cancel-declined",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Cancel review request rrq_1",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M45.A03",
+      "M45.A02",
+      "M29.A03",
+      "M45.A04",
+      "M45.A01",
+      "M45.A05",
+      "M33.A08",
+      "M30.A09",
+      "M32.A09",
+      "M33.A07",
+      "M33.A01",
+      "M24.A07",
+      "M21.A05",
+      "M30.A07",
+      "M32.A10",
+      "M28.A09",
+      "M33.A03",
+      "M29.A06"
+     ],
+     "planned": [
+      "M45.A03"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A03",
+          "argsJson": "{\"requestId\":\"rrq_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A03"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3962,
+     "ms": 3962,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "96057f4da8a5",
+       "latencyMs": 3942,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11886,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 106,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "3e416562c4a8d83f",
+       "targetsHash": "adabd10349bb7837",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A03",
+         "name": "Cancel unsent review request",
+         "args": {
+          "requestId": "rrq_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3962,
+    "firstReplyMs": 3962,
+    "plannerMs": 3942,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 11886,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 106,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "review-publish-not-listing",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Make this response public on the two-star review rv_2: 'Thank you for telling us.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M45.A08",
+      "M47.A08",
+      "M23.A07",
+      "M45.A05",
+      "M43.A08",
+      "M45.A07",
+      "M45.A01",
+      "M45.A02",
+      "M47.A07",
+      "M19.A09",
+      "M23.A08",
+      "M18.A09",
+      "M19.A10",
+      "M11.A03",
+      "M13.A03",
+      "M12.A03",
+      "M45.A06",
+      "M45.A04",
+      "M11.A02",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you for telling us."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A09",
+          "argsJson": "{\"reviewId\":{\"$lookup\":{\"entity\":\"review\",\"name\":\"rv_2\"}},\"body\":\"Thank you for telling us.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A09"
+         ],
+         "destination": "review"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3136,
+     "ms": 3138,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "c7ee2fc9949a",
+       "latencyMs": 3097,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13061,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 125,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "4ba63806d5f78235",
+       "targetsHash": "9c1003ce540c374e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "Thank you for telling us."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3138,
+    "firstReplyMs": 3136,
+    "plannerMs": 3097,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13061,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 125,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "review-publish-not-listing",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Make this response public on the two-star review rv_2: 'Thank you for telling us.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M45.A08",
+      "M47.A08",
+      "M23.A07",
+      "M45.A05",
+      "M43.A08",
+      "M45.A07",
+      "M45.A01",
+      "M45.A02",
+      "M47.A07",
+      "M19.A09",
+      "M23.A08",
+      "M18.A09",
+      "M19.A10",
+      "M11.A03",
+      "M13.A03",
+      "M12.A03",
+      "M45.A06",
+      "M45.A04",
+      "M11.A02",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you for telling us."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A09",
+          "argsJson": "{\"reviewId\":{\"$lookup\":{\"entity\":\"review\",\"name\":\"rv_2\"}},\"body\":\"Thank you for telling us.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A09"
+         ],
+         "destination": "review"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 3486,
+     "ms": 3489,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "c7ee2fc9949a",
+       "latencyMs": 3447,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13061,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 125,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "4ba63806d5f78235",
+       "targetsHash": "9c1003ce540c374e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "Thank you for telling us."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 3489,
+    "firstReplyMs": 3486,
+    "plannerMs": 3447,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13061,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 125,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "review-publish-not-listing",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Make this response public on the two-star review rv_2: 'Thank you for telling us.'",
+     "status": "done",
+     "reply": "Done: Publish review response.",
+     "offered": [
+      "M45.A09",
+      "M45.A08",
+      "M47.A08",
+      "M23.A07",
+      "M45.A05",
+      "M43.A08",
+      "M45.A07",
+      "M45.A01",
+      "M45.A02",
+      "M47.A07",
+      "M19.A09",
+      "M23.A08",
+      "M18.A09",
+      "M19.A10",
+      "M11.A03",
+      "M13.A03",
+      "M12.A03",
+      "M45.A06",
+      "M45.A04",
+      "M11.A02",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M45.A09"
+     ],
+     "calls": [
+      {
+       "action": "M45.A09",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you for telling us."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A09",
+          "argsJson": "{\"reviewId\":{\"$lookup\":{\"entity\":\"review\",\"name\":\"rv_2\"}},\"body\":\"Thank you for telling us.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A09"
+         ],
+         "destination": "review"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6458,
+     "ms": 6463,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "c7ee2fc9949a",
+       "latencyMs": 6419,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13061,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 125,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "4ba63806d5f78235",
+       "targetsHash": "9c1003ce540c374e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M45.A09",
+         "name": "Publish review response",
+         "args": {
+          "reviewId": "rv_2",
+          "body": "Thank you for telling us."
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6463,
+    "firstReplyMs": 6458,
+    "plannerMs": 6419,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13061,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 125,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

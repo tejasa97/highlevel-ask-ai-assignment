@@ -28,6 +28,12 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
     if (line) lines.push(line);
   }
 
+  if (run.cancelled?.length) {
+    const done = run.cancelled.filter((c) => !c.error);
+    const bad = run.cancelled.filter((c) => c.error);
+    if (done.length) lines.push(`Cancelled ${done.length} earlier ${label(done[0]!.entity)} record${done.length > 1 ? "s" : ""} this request no longer includes: ${list(done.map((c) => c.name), done.length)}.`);
+    if (bad.length) lines.push(`Couldn't cancel ${bad.length}: ${bad.slice(0, NAMES_MAX).map((c) => `${c.name} (${c.error!.message})`).join("; ")}.`);
+  }
   if (run.pending) {
     const p = run.pending;
     const names = [...new Set(p.preview.map((x) => x.label).filter(Boolean))] as string[];
@@ -130,18 +136,23 @@ function describe(step: CStep, r: StepResult, registry: Registry, used: Set<stri
     const name = titleOf(r.output);
     if (r.existing) return `Used the existing ${name ? `"${name}"` : "record"} (${(r.output as { id?: string }).id}) rather than ${a.name.toLowerCase()} again: ${r.existing.message}.`;
     const caveat = r.output === undefined ? undefined : a.caveat?.(r.output);
+    if (r.items?.[0]?.revised) return `Updated the existing ${label(a.entities?.produces ?? "record")}${name ? ` (${name})` : ""} rather than ${a.name.toLowerCase()} again.${firstOf(r)}`;
     return `Done: ${a.name}${name ? ` (${name})` : ""}${r.items?.[0]?.replayed ? ", already done earlier" : ""}${caveat ? `, but ${caveat}` : ""}.${firstOf(r)}`;
   }
   if (step.kind === "forEach" && r.items) {
     const writes = step.calls.filter((c) => c.action.risk !== "read");
     if (writes.length === 0) return used.has(r.id) ? null : eachRead(r.items);
     const actions = writes.map((c) => c.action.name).join(" + ");
-    const ok = r.items.filter((i) => i.status === "done");
+    const done = r.items.filter((i) => i.status === "done");
+    // A create that found the record the last turn made for it updated that one: it is said, not counted as made.
+    const ok = done.filter((i) => !i.revised);
+    const updated = done.filter((i) => i.revised);
     const bad = r.items.filter((i) => i.status === "failed");
     const names = (xs: typeof ok) => xs.map((i) => i.label ?? i.key);
     const out: string[] = [];
     if (r.items.length === 0) return `${actions}: nothing matched, so nothing was changed.`;
     if (ok.length) out.push(`${actions} for ${ok.length} of ${r.items.length}: ${list(names(ok), ok.length)}.`);
+    if (updated.length) out.push(`Updated the ${updated.length > 1 ? `${updated.length} existing records` : "existing record"} from the last turn rather than ${writes.map((c) => c.action.name.toLowerCase()).join(" + ")} again: ${list(names(updated), updated.length)}.`);
     // A write that recorded its outcome as a failure (a bounced email, a failed sync) is not a plain success.
     const caveats = ok.flatMap((i) => step.calls.flatMap((c, n) => (c.action.risk !== "read" && c.action.caveat?.(i.results?.[n]) ? [`${i.label ?? i.key} (${c.action.caveat(i.results?.[n])})`] : [])));
     if (caveats.length) out.push(`But ${caveats.length} of those did not go through: ${caveats.slice(0, NAMES_MAX).join("; ")}${caveats.length > NAMES_MAX ? "; …" : ""}.`);

@@ -9,6 +9,7 @@ import { ENTITIES } from "../store/entities.js";
 import { normalizeDateTimes } from "./datetimes.js";
 import { type ActionRisk, type IdentityBinding, type IdentityResolution, heldWhere, legacyResolution, narrowByRequest, resolveIdentity, resolverOff, revalidate } from "./identity.js";
 import { OTHER_THAN } from "./lookups.js";
+import { asksForMore, idArg, inputKeys, leftOut, type Made, reviseCall, type Revision, tableOf } from "./revise.js";
 import { collectRefs, loopRead, parseRef, pathOf, RefError, type Ref, substitute, valueAt } from "./refs.js";
 
 // Stage 2: run a compiled plan.
@@ -23,6 +24,8 @@ import { collectRefs, loopRead, parseRef, pathOf, RefError, type Ref, substitute
 //   is never left half-done because one of the records it names was misread (the turn can then replan).
 
 export const BULK_MIN = 3;
+/** The id an approval of the amend's cancellations goes by: no plan step has it. */
+export const REVISE_STEP = "revise";
 const PREVIEW_MAX = 10;
 
 export interface Approval {
@@ -54,6 +57,8 @@ type ConcreteCall = {
   binding?: Record<string, unknown>;
   /** Args that use $prev: filled in from the previous call's result just before this call runs. */
   late?: (prev: unknown) => Record<string, unknown>;
+  /** The record this create updates instead of making (see ExecOptions.revises). */
+  revision?: Revision;
 };
 
 /** What $prev shows in a preview, before the call it refers to has run. */
@@ -90,6 +95,8 @@ export interface ItemResult {
   error?: StepError;
   /** Writes that came from the ledger instead of running again. */
   replayed?: number;
+  /** A create that found the record the last turn made for the same thing, and updated that one instead. */
+  revised?: boolean;
 }
 
 export interface StepResult {
@@ -123,6 +130,8 @@ export interface RunResult {
   clarification?: Clarification;
   /** Conservative recovery boundary: even an attempted write that rolled back prevents replanning. */
   writesAttempted?: boolean;
+  /** Records the last turn made that an amended request left out, and cancelled. */
+  cancelled?: { id: string; name: string; entity: string; error?: StepError }[];
 }
 
 export type ExecEvent =
@@ -142,6 +151,12 @@ export interface ExecOptions {
   request?: string;
   /** Everything the user said in the turns the planner saw: a limit their words never give was not asked for. */
   said?: string;
+  /**
+   * Set when the message amends the last turn: what that turn made. A create that can revise (`ActionDef.revise`)
+   * updates the record it made for the same thing instead of making another, and once everything else is done the
+   * records the request no longer includes are cancelled, with an approval, since that is a cancel.
+   */
+  revises?: { made: Made[]; message: string };
 }
 
 export async function execute(plan: CompiledPlan, registry: Registry, ctx: ActionContext, opts: ExecOptions): Promise<RunResult> {
@@ -164,6 +179,12 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
   const checkedActions = new Map<string, { error?: StepError; gate: Pending | null }>();
   const emit = opts.onEvent ?? (() => {});
   let writesAttempted = false;
+  // The last turn's records this run's creates updated; the rest of them are what the amended request left out.
+  const taken = new Set<string>();
+  // Records of a revisable type this run made anew: an amended request that made some replaces what the last turn made.
+  let madeNew = 0;
+  const revising = (call: Call, args: Record<string, unknown>): Revision | undefined =>
+    opts.revises && call.action.risk !== "read" ? reviseCall(call.action, args, opts.revises.made, taken, ctx, registry) : undefined;
   let nameMissing: string | undefined;
   // How each resolve step's record was bound, for the approval preview.
   const bindings = new Map<string, IdentityBinding>();
@@ -213,6 +234,19 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
       }
     }
     return undefined;
+  };
+  /**
+   * A read that lists records, given a list where it takes one id, when no search by name found them ("conversations of
+   * $s1.items[*].id", the leads a date-range search found): the planner meant the read for each. Asking "which one?" of
+   * them would be asking about a choice nobody made.
+   */
+  const fannedOut = (call: Call): { arg: string; values: unknown[] } | undefined => {
+    const at = call.one?.length === 1 && call.one[0]!.length === 1 ? String(call.one[0]![0]) : undefined;
+    if (!at || call.action.risk !== "read" || !("items" in ((call.action.output as { shape?: object }).shape ?? {}))) return undefined;
+    const raw = call.args[at] as string;
+    if (searched.has(rootOf(raw))) return undefined;
+    const values = asList(refValue(raw), raw);
+    return values.length > 1 ? { arg: at, values } : undefined;
   };
   // Looping a change over a search for one name that found several records with exactly that name.
   const sameNamed = (raw: string, list: unknown[]) => {
@@ -403,6 +437,31 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         }
 
         case "action": {
+          const fan = fannedOut(step.call);
+          if (fan) {
+            const pages: unknown[] = [];
+            let failure: StepError | undefined;
+            for (const [i, v] of fan.values.entries()) {
+              const call: Call = { action: step.call.action, args: { ...step.call.args, [fan.arg]: v } };
+              const a = concreteArgs(call, lookup());
+              if (!a.ok) {
+                failure = a.error;
+                break;
+              }
+              const r = runItem(ctx, opts.executionId, step.id, String(i), [{ call, args: a.value }]);
+              if (r.status === "failed") {
+                failure = r.error!;
+                break;
+              }
+              pages.push(r.results![0]);
+            }
+            if (failure) fail(failure);
+            else {
+              const items = pages.flatMap((x) => (isPage(x) ? x.items : []));
+              done({ items, total: items.length });
+            }
+            break;
+          }
           const single = onlyOne(step.call);
           if ("ask" in single) return ask(step, single.ask);
           if ("error" in single) {
@@ -446,7 +505,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
           }
           const checked = checkedActions.get(step.id);
           const cut = step.call.action.risk === "read" ? undefined : cutOf(step);
-          const gate = checked ? checked.gate : gateFor(step, [{ call: step.call, args: args.value }], plan.hash, opts.approvals, 1, [], [step.id], cut);
+          const revision = step.call.action.preflight ? undefined : revising(step.call, args.value);
+          const gate = checked ? checked.gate : gateFor(step, [{ call: step.call, args: args.value, ...(revision ? { revision } : {}) }], plan.hash, opts.approvals, 1, [], [step.id], cut);
           if (gate) {
             results.push({ id: step.id, kind: step.kind, status: "awaiting_confirmation" });
             const pending = withIdentities(gate, plan.steps.filter((s) => (gate.covers ?? [step.id]).includes(s.id)));
@@ -458,7 +518,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             break;
           }
           if (step.call.action.risk !== "read") writesAttempted = true;
-          const r = runItem(ctx, opts.executionId, step.id, "-", [{ call: step.call, args: args.value }]);
+          const r = runItem(ctx, opts.executionId, step.id, "-", [{ call: step.call, args: args.value, ...(revision ? { revision } : {}) }]);
           const existing = r.status === "failed" ? alreadyThere(step, r.error!, plan, ctx, results) : undefined;
           if (existing) done(existing, { existing: r.error! });
           else if (r.status === "failed") fail(r.error!);
@@ -467,7 +527,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             if (step.call.action.risk === "read" && typeof query === "string" && query.trim()) searched.set(step.id, { query, entity: step.call.action.entities?.produces ?? "record" });
             const out = r.results![0];
             if (writeFeeds.has(step.id) && isPage(out) && out.total > out.items.length) cuts.set(step.id, { search: step.id, loaded: out.items.length, total: out.total, asked: !widened });
-            done(r.results![0], { ...(r.replayed ? { items: [r] } : {}), ...(cut ? { capped: cut } : {}) });
+            if (step.call.action.revise && !revision) madeNew++;
+            done(r.results![0], { ...(r.replayed || r.revised ? { items: [r] } : {}), ...(cut ? { capped: cut } : {}) });
           }
           break;
         }
@@ -517,7 +578,8 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
                     return b.value;
                   }
                 : undefined;
-              calls.push({ call, args: a.value, ...(late ? { late } : {}) });
+              const revision = revising(call, a.value);
+              calls.push({ call, args: a.value, ...(late ? { late } : {}), ...(revision ? { revision } : {}) });
             }
             // Only a single call can be checked against the current state: earlier calls in a
             // transactional item may create/change prerequisites for later calls.
@@ -549,6 +611,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
               ? { key: p.key, label: p.label, status: "failed", error: p.error }
               : { label: p.label, ...runItem(ctx, opts.executionId, step.id, p.key, p.calls) },
           );
+          prepared.forEach((p, i) => { if (items[i]!.status !== "failed") madeNew += p.calls.filter((c) => c.call.action.revise && !c.revision).length; });
           const output = prepared.map((p, i) => ({ item: p.item, results: items[i]!.results ?? [] }));
           const failed = items.filter((x) => x.status === "failed").length;
           if (failed > 0 && failed === items.length) fail({ code: "ALL_FAILED", message: `all ${failed} items failed` }, { items });
@@ -558,6 +621,29 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
       }
     } catch (e) {
       fail(toError(e));
+    }
+  }
+
+  // An amended request that updated records the last turn made, or made new ones in their place, and is done: what it
+  // left out is cancelled. A message that asks for more ("one for Tom too"), or a run that did neither (nothing
+  // matched), is not a narrowing, whatever was flagged.
+  if (opts.revises && (taken.size > 0 || madeNew > 0) && !asksForMore(opts.revises.message) && results.every((r) => r.status === "done")) {
+    const creates = plan.steps.flatMap((s) => (s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []));
+    const left = leftOut(creates, opts.revises.made, taken, ctx).filter((l) => registry.get(l.action.revise!.undo));
+    if (left.length) {
+      const gate = cancelGate(left, registry, plan.hash, opts.approvals);
+      if (gate) {
+        emit({ type: "confirm.required", pending: gate });
+        return finish("awaiting_confirmation", { pending: gate });
+      }
+      writesAttempted = true;
+      const cancelled = left.map(({ action, record }) => {
+        const undo = registry.get(action.revise!.undo)!;
+        const args: Record<string, unknown> = { [idArg(record.entity)]: record.id, ...(inputKeys(undo).includes("reason") ? { reason: "Left out when the request changed" } : {}) };
+        const r = runItem(ctx, opts.executionId, REVISE_STEP, record.id, [{ call: { action: undo, args }, args }]);
+        return { id: record.id, name: record.name, entity: record.entity, ...(r.error ? { error: r.error } : {}) };
+      });
+      return finish(cancelled.some((c) => c.error) ? "partial" : "done", { cancelled });
     }
   }
 
@@ -692,7 +778,7 @@ function runItem(ctx: ActionContext, executionId: string, stepId: string, key: s
   let replayed = 0;
   try {
     const results = ctx.store.tx(() =>
-      calls.reduce<unknown[]>((done, { call, args, late }, i) => {
+      calls.reduce<unknown[]>((done, { call, args, late, revision }, i) => {
         const writes = call.action.risk !== "read";
         const ledgerKey = `${executionId}:${stepId}:${key}:${i}`;
         const prior = writes ? ctx.store.recordedWrite(ledgerKey) : undefined;
@@ -700,15 +786,42 @@ function runItem(ctx: ActionContext, executionId: string, stepId: string, key: s
           replayed++;
           return [...done, prior];
         }
-        const value = invoke(call.action, late ? late(done[i - 1]) : args, ctx);
-        if (writes) ctx.store.recordWrite(ledgerKey, call.action.id, value, ctx.clock.now());
+        // A create that updates the record the last turn made: the edits that differ, then the record as it now is.
+        const value = revision ? revised(revision, ctx) : invoke(call.action, late ? late(done[i - 1]) : args, ctx);
+        if (writes && !(revision && !revision.edits.length)) ctx.store.recordWrite(ledgerKey, call.action.id, value, ctx.clock.now());
         return [...done, value];
       }, []),
     );
-    return { key, status: "done", results, ...(replayed ? { replayed } : {}) };
+    return { key, status: "done", results, ...(replayed ? { replayed } : {}), ...(calls.some((c) => c.revision) ? { revised: true } : {}) };
   } catch (e) {
     return { key, status: "failed", error: toError(e) };
   }
+}
+
+function revised(revision: Revision, ctx: ActionContext): unknown {
+  for (const { action, args } of revision.edits) invoke(action, args, ctx);
+  return ctx.store.get(tableOf(revision.id)!, revision.id);
+}
+
+/** What the amended request leaves of the last turn's records: the ones to cancel, asked about as one. */
+function cancelGate(left: ReturnType<typeof leftOut>, registry: Registry, planHash: string, approvals: Approval[] = []): Pending | null {
+  const targets = left.map(({ action, record }) => ({ action: action.revise!.undo, id: record.id }));
+  const targetsHash = createHash("sha256").update(JSON.stringify(targets)).digest("hex").slice(0, 16);
+  const prior = approvals.find((a) => a.stepId === REVISE_STEP && a.planHash === planHash);
+  if (prior?.targetsHash === targetsHash) return null;
+  const entity = left[0]!.record.entity.replaceAll("_", " ");
+  return {
+    stepId: REVISE_STEP,
+    planHash,
+    targetsHash,
+    reason: `cancels ${left.length} earlier ${entity} record${left.length > 1 ? "s" : ""} this request no longer includes`,
+    count: left.length,
+    preview: left.slice(0, PREVIEW_MAX).map(({ action, record }) => {
+      const undo = registry.get(action.revise!.undo)!;
+      return { action: undo.id, name: undo.name, args: { [idArg(action.entities!.produces!)]: record.id }, label: record.name };
+    }),
+    ...(prior ? { changed: true } : {}),
+  };
 }
 
 /** Never invokes handlers, consumes faults, creates records or emits delivery traces. */
@@ -739,7 +852,7 @@ function gateFor(
   if (!reason) return null;
   if (cut) reason += ` (only the first ${cut.loaded} of the ${cut.total} found were looked at)`;
 
-  const targets = writes.map((c) => ({ action: c.call.action.id, args: c.args, ...(c.binding ? { binding: c.binding } : {}) }));
+  const targets = writes.map((c) => ({ action: c.call.action.id, args: c.args, ...(c.binding ? { binding: c.binding } : {}), ...(c.revision ? { revision: { id: c.revision.id, edits: c.revision.edits.map((e) => [e.action.id, e.args]) } } : {}) }));
   const targetsHash = createHash("sha256").update(JSON.stringify({ targets, blocked })).digest("hex").slice(0, 16);
   const prior = approvals.find((a) => a.stepId === step.id && a.planHash === planHash);
   if (prior?.targetsHash === targetsHash) return null;
@@ -751,7 +864,9 @@ function gateFor(
     count,
     preview: writes
       .slice(0, PREVIEW_MAX)
-      .map((c) => ({ action: c.call.action.id, name: c.call.action.name, args: c.args, ...(c.label ? { label: c.label } : {}), ...(c.binding ? { target: c.binding } : {}) })),
+      .map((c) => c.revision
+        ? { action: c.call.action.id, name: `Update the existing ${c.revision.entity.replaceAll("_", " ")}`, args: Object.assign({ [idArg(c.revision.entity)]: c.revision.id }, ...c.revision.edits.map((e) => e.args)), ...(c.label ? { label: c.label } : {}) }
+        : { action: c.call.action.id, name: c.call.action.name, args: c.args, ...(c.label ? { label: c.label } : {}), ...(c.binding ? { target: c.binding } : {}) }),
     ...(blocked.length ? { blocked: blocked.slice(0, PREVIEW_MAX), blockedCount: blocked.length } : {}),
     ...(prior ? { changed: true } : {}),
     ...(covers.length > 1 ? { covers } : {}),
@@ -784,13 +899,13 @@ export function matches(x: unknown, where: Record<string, unknown>): boolean {
         case "ne":
           return v !== want;
         case "gt":
-          return cmp(v, want) > 0;
+          return cmp(day(v, want), want) > 0;
         case "gte":
           return cmp(v, want) >= 0;
         case "lt":
           return cmp(v, want) < 0;
         case "lte":
-          return cmp(v, want) <= 0;
+          return cmp(day(v, want), want) <= 0;
         case "in":
           return Array.isArray(want) && want.includes(v);
         case "nin":
@@ -804,6 +919,11 @@ export function matches(x: unknown, where: Record<string, unknown>): boolean {
       }
     });
   });
+}
+
+/** A bare date bound ("2026-10-18") covers its whole day: "through the 18th" keeps 2026-10-18T09:30:00Z, "after the 18th" drops it. */
+function day(v: unknown, bound: unknown): unknown {
+  return typeof v === "string" && typeof bound === "string" && /^\d{4}-\d{2}-\d{2}$/.test(bound) && /^\d{4}-\d{2}-\d{2}T/.test(v) ? v.slice(0, 10) : v;
 }
 
 function cmp(a: unknown, b: unknown): number {

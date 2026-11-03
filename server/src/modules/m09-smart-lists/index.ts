@@ -144,7 +144,7 @@ const getList = defineAction({
 
 const listLists = defineAction({
   id: "M09.A03",
-  description: "List saved smart lists by name. Active ones are the default; pass status to include deleted lists. This is the catalog of filters, not the records they match.",
+  description: "List saved smart lists by name. Active ones are the default; pass status to include deleted lists. This is the catalog of filters, not the records they match. To count the records on a list, use M09.A07; to see them, use M09.A08.",
   risk: "read",
   input: z.strictObject({ target: z.enum(SMART_LIST_TARGETS).optional(), status: z.enum(["active", "deleted"]).optional(), limit: Limit }),
   output: listOf(SmartList),

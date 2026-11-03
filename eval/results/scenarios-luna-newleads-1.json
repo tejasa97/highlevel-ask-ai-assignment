@@ -1,0 +1,4573 @@
+{
+ "summary": {
+  "label": "luna-newleads-1",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/brief-scenarios",
+  "set": "0730fd2597f1",
+  "tier": "strong",
+  "scenarios": 2,
+  "repeat": 4,
+  "runs": 8,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 75,
+  "allPass": 0,
+  "measured": 2,
+  "flaky": 2,
+  "e2eMs": {
+   "p50": 9981,
+   "p95": 13176
+  },
+  "firstReplyMs": {
+   "p50": 7634,
+   "p95": 13165
+  },
+  "plannerRoundsPerRun": 1.5,
+  "callsPerRun": 25.3,
+  "clarified": {
+   "runs": 1,
+   "passed": 1
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 16526
+ },
+ "runs": [
+  {
+   "id": "brief-heldout-new-leads",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks t WHERE json_extract(t.data,'$.createdAt') >= '2026-10-21' AND (json_extract(t.data,'$.relatedTo.id') IS NULL OR json_extract(t.data,'$.relatedTo.id') NOT IN (SELECT id FROM leads WHERE json_extract(data,'$.status')='new')) → 21, wanted 0"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "New leads keep slipping through the cracks on my end. Can you help me stay on them?",
+     "status": "done",
+     "reply": "Create task for 45 of 45: Hiro Reyes, Ben Haddad, Ben Nguyen, Victor Ito, Grace Patel and 40 more.",
+     "offered": [
+      "M06.A01",
+      "M10.A05",
+      "M03.A03",
+      "M10.A04",
+      "M03.A01",
+      "M04.A01",
+      "M03.A05",
+      "M03.A09",
+      "M03.A04",
+      "M03.A10",
+      "M01.A01",
+      "M05.A06",
+      "M04.A05",
+      "M30.A06",
+      "M36.A07",
+      "M07.A01",
+      "M21.A01",
+      "M47.A01",
+      "M01.A03",
+      "M02.A03",
+      "M04.A03",
+      "M24.A03",
+      "M47.A03",
+      "M40.A07",
+      "M43.A09",
+      "M48.A05",
+      "M49.A07",
+      "M06.A05",
+      "M20.A06",
+      "M47.A04",
+      "M48.A07",
+      "M04.A06",
+      "M01.A07",
+      "M11.A03",
+      "M21.A06",
+      "M15.A05",
+      "M06.A10",
+      "M06.A03",
+      "M38.A05",
+      "M07.A08",
+      "M40.A03",
+      "M48.A03",
+      "M49.A03",
+      "M20.A03",
+      "M11.A02",
+      "M21.A03",
+      "M15.A03",
+      "M07.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "limit": 500
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "limit": 500
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Hiro Reyes about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_1"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Haddad about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_2"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Nguyen about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_3"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Ito about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_4"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Patel about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_5"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Okafor about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_6"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Kim about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_7"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Tara Silva about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_8"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Nguyen about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_9"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Reyes about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_10"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Lena Nguyen about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_11"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Priya Haddad about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_12"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Haddad about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_13"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Larsen about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_14"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Haddad about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_15"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sam Larsen about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_16"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Lena Haddad about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_17"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ana Larsen about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_18"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Quinn Reyes about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_19"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Quinn Costa about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_20"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Ito about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_21"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Patel about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_22"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Reyes about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_23"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Uma Kim about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_24"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Ito about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_25"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Ruiz about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_26"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Quinn Ruiz about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_27"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Omar Nguyen about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_28"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Omar Kim about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_29"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Patel about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_30"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Priya Reyes about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_31"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Hiro Haddad about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_32"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Novak about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_33"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Kofi Nguyen about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_34"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Hiro Ruiz about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_35"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Isla Kim about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_36"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Reyes about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_37"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Jo Nguyen about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_38"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Novak about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_39"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Yusuf Kim about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_40"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Jo Reyes about new lead",
+        "description": "Follow up with this new lead.",
+        "priority": "normal",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_45"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Create follow-up tasks for all new leads, assigned to the current user, so they can stay on them.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}} about new lead\",\"description\":\"Follow up with this new lead.\" ,\"priority\":\"normal\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 13165,
+     "ms": 13176,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "e621750f8918",
+       "latencyMs": 7218,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14693,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 97,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "ef61225d3e05",
+       "latencyMs": 5706,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 19269,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 199,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "8b4908b3571b412a",
+       "targetsHash": "4a6c51c35f49c205",
+       "reason": "changes 45 records at once",
+       "count": 45,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Hiro Reyes about new lead",
+          "description": "Follow up with this new lead.",
+          "priority": "normal",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_1"
+          }
+         },
+         "label": "Hiro Reyes"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Haddad about new lead",
+          "description": "Follow up with this new lead.",
+          "priority": "normal",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_2"
+          }
+         },
+         "label": "Ben Haddad"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Nguyen about new lead",
+          "description": "Follow up with this new lead.",
+          "priority": "normal",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_3"
+          }
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Ito about new lead",
+          "description": "Follow up with this new lead.",
+          "priority": "normal",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_4"
+          }
+         },
+         "label": "Victor Ito"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Grace Patel about new lead",
+          "description": "Follow up with this new lead.",
+          "priority": "normal",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_5"
+          }
+         },
+         "label": "Grace Patel"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Wen Okafor about new lead",
+          "description": "Follow up with this new lead.",
+          "priority": "normal",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_6"
+          }
+         },
+         "label": "Wen Okafor"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Kim about new lead",
+          "description": "Follow up with this new lead.",
+          "priority": "normal",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_7"
+          }
+         },
+         "label": "Victor Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Tara Silva about new lead",
+          "description": "Follow up with this new lead.",
+          "priority": "normal",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_8"
+          }
+         },
+         "label": "Tara Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Grace Nguyen about new lead",
+          "description": "Follow up with this new lead.",
+          "priority": "normal",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_9"
+          }
+         },
+         "label": "Grace Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Reyes about new lead",
+          "description": "Follow up with this new lead.",
+          "priority": "normal",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_10"
+          }
+         },
+         "label": "Ben Reyes"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 13176,
+    "firstReplyMs": 13165,
+    "plannerMs": 12924,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 47,
+    "clarifications": 0,
+    "usage": {
+     "input": 33962,
+     "cachedRead": 13056,
+     "cacheWrite": 0,
+     "output": 296,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-new-leads",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "New leads keep slipping through the cracks on my end. Can you help me stay on them?",
+     "status": "done",
+     "reply": "Create task for 24 of 24: Ben Haddad, Victor Ito, Wen Okafor, Grace Nguyen, Ben Reyes and 19 more.",
+     "offered": [
+      "M06.A01",
+      "M10.A05",
+      "M03.A03",
+      "M10.A04",
+      "M03.A01",
+      "M04.A01",
+      "M03.A05",
+      "M03.A09",
+      "M03.A04",
+      "M03.A10",
+      "M01.A01",
+      "M05.A06",
+      "M04.A05",
+      "M30.A06",
+      "M36.A07",
+      "M07.A01",
+      "M21.A01",
+      "M47.A01",
+      "M01.A03",
+      "M02.A03",
+      "M04.A03",
+      "M24.A03",
+      "M47.A03",
+      "M06.A03",
+      "M06.A10",
+      "M21.A03",
+      "M06.A04",
+      "M01.A10",
+      "M21.A09",
+      "M21.A07",
+      "M06.A09",
+      "M13.A07",
+      "M13.A04",
+      "M12.A07",
+      "M15.A05",
+      "M06.A02",
+      "M06.A08",
+      "M03.A08",
+      "M07.A03",
+      "M21.A05",
+      "M32.A09",
+      "M48.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Haddad",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_2"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Ito",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_4"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Okafor",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_6"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Nguyen",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_9"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Reyes",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_10"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Haddad",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_13"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Larsen",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_14"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sam Larsen",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_16"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Ito",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_21"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Patel",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_22"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Uma Kim",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_24"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Ito",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_25"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Ruiz",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_26"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Omar Nguyen",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_28"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Novak",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_33"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Kofi Nguyen",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_34"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Isla Kim",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_36"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Jo Nguyen",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_38"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Yusuf Kim",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_40"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Jo Reyes",
+        "description": "Follow up on this new lead",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_45"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search tasks and appointments associated with leads to identify new leads that do not already have follow-up, and create follow-up tasks for those leads.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"status\":\"new\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"description\":\"Follow up on this new lead\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 9976,
+     "ms": 9981,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "e621750f8918",
+       "latencyMs": 4421,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14699,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 103,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "ed685f20095b",
+       "latencyMs": 5467,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 18778,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 195,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "cf77cf7a0201aed8",
+       "targetsHash": "db8d79a2654ef43b",
+       "reason": "changes 24 records at once",
+       "count": 24,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Haddad",
+          "description": "Follow up on this new lead",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_2"
+          }
+         },
+         "label": "Ben Haddad"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Ito",
+          "description": "Follow up on this new lead",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_4"
+          }
+         },
+         "label": "Victor Ito"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Wen Okafor",
+          "description": "Follow up on this new lead",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_6"
+          }
+         },
+         "label": "Wen Okafor"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Grace Nguyen",
+          "description": "Follow up on this new lead",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_9"
+          }
+         },
+         "label": "Grace Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Reyes",
+          "description": "Follow up on this new lead",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_10"
+          }
+         },
+         "label": "Ben Reyes"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Grace Haddad",
+          "description": "Follow up on this new lead",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_13"
+          }
+         },
+         "label": "Grace Haddad"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Larsen",
+          "description": "Follow up on this new lead",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_14"
+          }
+         },
+         "label": "Ben Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Sam Larsen",
+          "description": "Follow up on this new lead",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_16"
+          }
+         },
+         "label": "Sam Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Ito",
+          "description": "Follow up on this new lead",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_21"
+          }
+         },
+         "label": "Femi Ito"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Patel",
+          "description": "Follow up on this new lead",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_22"
+          }
+         },
+         "label": "Victor Patel"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 9981,
+    "firstReplyMs": 9976,
+    "plannerMs": 9888,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 26,
+    "clarifications": 0,
+    "usage": {
+     "input": 33477,
+     "cachedRead": 13056,
+     "cacheWrite": 0,
+     "output": 298,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-new-leads",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "New leads keep slipping through the cracks on my end. Can you help me stay on them?",
+     "status": "done",
+     "reply": "Create task for 24 of 24: Ben Haddad, Victor Ito, Wen Okafor, Grace Nguyen, Ben Reyes and 19 more.",
+     "offered": [
+      "M06.A01",
+      "M10.A05",
+      "M03.A03",
+      "M10.A04",
+      "M03.A01",
+      "M04.A01",
+      "M03.A05",
+      "M03.A09",
+      "M03.A04",
+      "M03.A10",
+      "M01.A01",
+      "M05.A06",
+      "M04.A05",
+      "M30.A06",
+      "M36.A07",
+      "M07.A01",
+      "M21.A01",
+      "M47.A01",
+      "M01.A03",
+      "M02.A03",
+      "M04.A03",
+      "M24.A03",
+      "M47.A03",
+      "M02.A08",
+      "M06.A05",
+      "M49.A07",
+      "M08.A06",
+      "M11.A03",
+      "M01.A07",
+      "M04.A06",
+      "M06.A03",
+      "M15.A05",
+      "M49.A08",
+      "M06.A04",
+      "M06.A08",
+      "M16.A01",
+      "M03.A08",
+      "M47.A04",
+      "M21.A06",
+      "M48.A05",
+      "M48.A03",
+      "M49.A03",
+      "M08.A02",
+      "M11.A02",
+      "M15.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Ben Haddad",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_2"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Victor Ito",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_4"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Wen Okafor",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_6"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Grace Nguyen",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_9"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Ben Reyes",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_10"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Grace Haddad",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_13"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Ben Larsen",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_14"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Sam Larsen",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_16"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Femi Ito",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_21"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Victor Patel",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_22"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Uma Kim",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_24"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Nina Ito",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_25"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Nina Ruiz",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_26"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Omar Nguyen",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_28"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Wen Novak",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_33"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Kofi Nguyen",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_34"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Isla Kim",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_36"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Jo Nguyen",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_38"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Yusuf Kim",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_40"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Victor Larsen",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Marco Brown",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Femi Silva",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Dev Kim",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with new lead: Jo Reyes",
+        "description": "Reach out and keep this new lead from slipping through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_45"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Create a follow-up task for each new lead, with me as the assignee",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"status\":\"new\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with new lead: {{$item.name}}\",\"description\":\"Reach out and keep this new lead from slipping through the cracks.\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 10555,
+     "ms": 10563,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "e621750f8918",
+       "latencyMs": 4446,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14693,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 92,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "89613dbd7b63",
+       "latencyMs": 6039,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 37411,
+        "cachedRead": 24960,
+        "cacheWrite": 0,
+        "output": 222,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "18b28caaf62e0023",
+       "targetsHash": "68b6142d64a3dfa3",
+       "reason": "changes 24 records at once",
+       "count": 24,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with new lead: Ben Haddad",
+          "description": "Reach out and keep this new lead from slipping through the cracks.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_2"
+          }
+         },
+         "label": "Ben Haddad"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with new lead: Victor Ito",
+          "description": "Reach out and keep this new lead from slipping through the cracks.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_4"
+          }
+         },
+         "label": "Victor Ito"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with new lead: Wen Okafor",
+          "description": "Reach out and keep this new lead from slipping through the cracks.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_6"
+          }
+         },
+         "label": "Wen Okafor"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with new lead: Grace Nguyen",
+          "description": "Reach out and keep this new lead from slipping through the cracks.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_9"
+          }
+         },
+         "label": "Grace Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with new lead: Ben Reyes",
+          "description": "Reach out and keep this new lead from slipping through the cracks.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_10"
+          }
+         },
+         "label": "Ben Reyes"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with new lead: Grace Haddad",
+          "description": "Reach out and keep this new lead from slipping through the cracks.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_13"
+          }
+         },
+         "label": "Grace Haddad"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with new lead: Ben Larsen",
+          "description": "Reach out and keep this new lead from slipping through the cracks.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_14"
+          }
+         },
+         "label": "Ben Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with new lead: Sam Larsen",
+          "description": "Reach out and keep this new lead from slipping through the cracks.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_16"
+          }
+         },
+         "label": "Sam Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with new lead: Femi Ito",
+          "description": "Reach out and keep this new lead from slipping through the cracks.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_21"
+          }
+         },
+         "label": "Femi Ito"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with new lead: Victor Patel",
+          "description": "Reach out and keep this new lead from slipping through the cracks.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_22"
+          }
+         },
+         "label": "Victor Patel"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 10563,
+    "firstReplyMs": 10555,
+    "plannerMs": 10485,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 26,
+    "clarifications": 0,
+    "usage": {
+     "input": 52104,
+     "cachedRead": 31488,
+     "cacheWrite": 0,
+     "output": 314,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-new-leads",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "New leads keep slipping through the cracks on my end. Can you help me stay on them?",
+     "status": "done",
+     "reply": "Create task for 24 of 24: Ben Haddad, Victor Ito, Wen Okafor, Grace Nguyen, Ben Reyes and 19 more.",
+     "offered": [
+      "M06.A01",
+      "M10.A05",
+      "M03.A03",
+      "M10.A04",
+      "M03.A01",
+      "M04.A01",
+      "M03.A05",
+      "M03.A09",
+      "M03.A04",
+      "M03.A10",
+      "M01.A01",
+      "M05.A06",
+      "M04.A05",
+      "M30.A06",
+      "M36.A07",
+      "M07.A01",
+      "M21.A01",
+      "M47.A01",
+      "M01.A03",
+      "M02.A03",
+      "M04.A03",
+      "M24.A03",
+      "M47.A03",
+      "M11.A05",
+      "M03.A07",
+      "M36.A01",
+      "M06.A09",
+      "M36.A04",
+      "M06.A06",
+      "M11.A02",
+      "M48.A03",
+      "M21.A03",
+      "M28.A03",
+      "M06.A03",
+      "M36.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Haddad",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_2"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Ito",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_4"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Okafor",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_6"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Nguyen",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_9"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Reyes",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_10"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Haddad",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_13"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Larsen",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_14"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sam Larsen",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_16"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Ito",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_21"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Patel",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_22"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Uma Kim",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_24"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Ito",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_25"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Ruiz",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_26"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Omar Nguyen",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_28"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Novak",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_33"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Kofi Nguyen",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_34"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Isla Kim",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_36"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Jo Nguyen",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_38"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Yusuf Kim",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_40"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Jo Reyes",
+        "description": "Follow up on this new lead.",
+        "dueDate": "2026-10-22",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_45"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "What follow-up would help you stay on top of new leads—should I create a task for each new lead?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M06.A01",
+         "argument": "title",
+         "argsJson": "{}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"status\":\"new\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"description\":\"Follow up on this new lead.\",\"dueDate\":\"2026-10-22\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5338,
+     "ms": 10999,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "e621750f8918",
+       "latencyMs": 5246,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14697,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 113,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "f6efa5bde0a4",
+       "latencyMs": 5595,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 16010,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 207,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "clarified": {
+      "question": "What follow-up would help you stay on top of new leads—should I create a task for each new lead?",
+      "answer": "Create a follow-up task due tomorrow for every lead that's still marked new."
+     },
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "769109032f8934da",
+       "targetsHash": "993800a819a266fb",
+       "reason": "changes 24 records at once",
+       "count": 24,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Haddad",
+          "description": "Follow up on this new lead.",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_2"
+          }
+         },
+         "label": "Ben Haddad"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Ito",
+          "description": "Follow up on this new lead.",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_4"
+          }
+         },
+         "label": "Victor Ito"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Wen Okafor",
+          "description": "Follow up on this new lead.",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_6"
+          }
+         },
+         "label": "Wen Okafor"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Grace Nguyen",
+          "description": "Follow up on this new lead.",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_9"
+          }
+         },
+         "label": "Grace Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Reyes",
+          "description": "Follow up on this new lead.",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_10"
+          }
+         },
+         "label": "Ben Reyes"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Grace Haddad",
+          "description": "Follow up on this new lead.",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_13"
+          }
+         },
+         "label": "Grace Haddad"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Larsen",
+          "description": "Follow up on this new lead.",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_14"
+          }
+         },
+         "label": "Ben Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Sam Larsen",
+          "description": "Follow up on this new lead.",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_16"
+          }
+         },
+         "label": "Sam Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Ito",
+          "description": "Follow up on this new lead.",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_21"
+          }
+         },
+         "label": "Femi Ito"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Patel",
+          "description": "Follow up on this new lead.",
+          "dueDate": "2026-10-22",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_22"
+          }
+         },
+         "label": "Victor Patel"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 10999,
+    "firstReplyMs": 5338,
+    "plannerMs": 10841,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 26,
+    "clarifications": 1,
+    "usage": {
+     "input": 30707,
+     "cachedRead": 13056,
+     "cacheWrite": 0,
+     "output": 320,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-indirect-new-leads",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "I keep forgetting to follow up with new leads. Help me stay on top of them.",
+     "status": "done",
+     "reply": "Create task for 1 of 1: Wen Okafor.",
+     "offered": [
+      "M06.A01",
+      "M43.A09",
+      "M03.A05",
+      "M07.A08",
+      "M03.A07",
+      "M07.A01",
+      "M03.A01",
+      "M28.A08",
+      "M03.A03",
+      "M03.A04",
+      "M03.A08",
+      "M43.A07",
+      "M11.A05",
+      "M10.A04",
+      "M49.A07",
+      "M21.A01",
+      "M47.A01",
+      "M01.A07",
+      "M02.A08",
+      "M04.A06",
+      "M06.A05",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M07.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M03.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-21",
+        "createdTo": "2026-10-21",
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Okafor",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_6"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-21\",\"createdTo\":\"2026-10-21\",\"status\":\"new\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"description\":\"Follow up with this new lead.\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5407,
+     "ms": 5407,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "0efc64225eb0",
+       "latencyMs": 5233,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14779,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 217,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5407,
+    "firstReplyMs": 5407,
+    "plannerMs": 5233,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 14779,
+     "cachedRead": 6528,
+     "cacheWrite": 0,
+     "output": 217,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-indirect-new-leads",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "I keep forgetting to follow up with new leads. Help me stay on top of them.",
+     "status": "done",
+     "reply": "Create task for 1 of 1: Wen Okafor.",
+     "offered": [
+      "M06.A01",
+      "M43.A09",
+      "M03.A05",
+      "M07.A08",
+      "M03.A07",
+      "M07.A01",
+      "M03.A01",
+      "M28.A08",
+      "M03.A03",
+      "M03.A04",
+      "M03.A08",
+      "M43.A07",
+      "M11.A05",
+      "M10.A04",
+      "M49.A07",
+      "M21.A01",
+      "M47.A01",
+      "M01.A07",
+      "M02.A08",
+      "M04.A06",
+      "M06.A05",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M07.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M03.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-19",
+        "createdTo": "2026-10-25",
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Okafor",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_6"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-19\",\"createdTo\":\"2026-10-25\",\"status\":\"new\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"description\":\"Follow up with this new lead.\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5552,
+     "ms": 5552,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "0efc64225eb0",
+       "latencyMs": 5456,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14779,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 217,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5552,
+    "firstReplyMs": 5552,
+    "plannerMs": 5456,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 14779,
+     "cachedRead": 6528,
+     "cacheWrite": 0,
+     "output": 217,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-indirect-new-leads",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "I keep forgetting to follow up with new leads. Help me stay on top of them.",
+     "status": "done",
+     "reply": "Create task for 24 of 24: Ben Haddad, Victor Ito, Wen Okafor, Grace Nguyen, Ben Reyes and 19 more.",
+     "offered": [
+      "M06.A01",
+      "M43.A09",
+      "M03.A05",
+      "M07.A08",
+      "M03.A07",
+      "M07.A01",
+      "M03.A01",
+      "M28.A08",
+      "M03.A03",
+      "M03.A04",
+      "M03.A08",
+      "M43.A07",
+      "M11.A05",
+      "M10.A04",
+      "M49.A07",
+      "M21.A01",
+      "M47.A01",
+      "M01.A07",
+      "M02.A08",
+      "M04.A06",
+      "M06.A05",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M07.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M03.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Haddad",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_2"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Ito",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_4"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Okafor",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_6"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Nguyen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_9"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Reyes",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_10"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Haddad",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_13"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Larsen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_14"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sam Larsen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_16"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Ito",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_21"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Patel",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_22"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Uma Kim",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_24"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Ito",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_25"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Ruiz",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_26"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Omar Nguyen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_28"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Novak",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_33"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Kofi Nguyen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_34"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Isla Kim",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_36"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Jo Nguyen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_38"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Yusuf Kim",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_40"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Jo Reyes",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_45"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"status\":\"new\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"description\":\"Follow up with this new lead.\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 5725,
+     "ms": 5732,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "0efc64225eb0",
+       "latencyMs": 5609,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14773,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 197,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "cee7470f2bf7f475",
+       "targetsHash": "1d61af6e0c9daf0c",
+       "reason": "changes 24 records at once",
+       "count": 24,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Haddad",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_2"
+          }
+         },
+         "label": "Ben Haddad"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Ito",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_4"
+          }
+         },
+         "label": "Victor Ito"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Wen Okafor",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_6"
+          }
+         },
+         "label": "Wen Okafor"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Grace Nguyen",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_9"
+          }
+         },
+         "label": "Grace Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Reyes",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_10"
+          }
+         },
+         "label": "Ben Reyes"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Grace Haddad",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_13"
+          }
+         },
+         "label": "Grace Haddad"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Larsen",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_14"
+          }
+         },
+         "label": "Ben Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Sam Larsen",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_16"
+          }
+         },
+         "label": "Sam Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Ito",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_21"
+          }
+         },
+         "label": "Femi Ito"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Patel",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_22"
+          }
+         },
+         "label": "Victor Patel"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5732,
+    "firstReplyMs": 5725,
+    "plannerMs": 5609,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 26,
+    "clarifications": 0,
+    "usage": {
+     "input": 14773,
+     "cachedRead": 6528,
+     "cacheWrite": 0,
+     "output": 197,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-indirect-new-leads",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks t WHERE json_extract(t.data,'$.createdAt') >= '2026-10-21' AND (json_extract(t.data,'$.relatedTo.id') IS NULL OR json_extract(t.data,'$.relatedTo.id') NOT IN (SELECT id FROM leads WHERE json_extract(data,'$.status')='new')) → 21, wanted 0"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "I keep forgetting to follow up with new leads. Help me stay on top of them.",
+     "status": "done",
+     "reply": "Create task for 45 of 45: Hiro Reyes, Ben Haddad, Ben Nguyen, Victor Ito, Grace Patel and 40 more.",
+     "offered": [
+      "M06.A01",
+      "M43.A09",
+      "M03.A05",
+      "M07.A08",
+      "M03.A07",
+      "M07.A01",
+      "M03.A01",
+      "M28.A08",
+      "M03.A03",
+      "M03.A04",
+      "M03.A08",
+      "M43.A07",
+      "M11.A05",
+      "M10.A04",
+      "M49.A07",
+      "M21.A01",
+      "M47.A01",
+      "M01.A07",
+      "M02.A08",
+      "M04.A06",
+      "M06.A05",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M07.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M03.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "limit": 500
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "limit": 500
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Hiro Reyes",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_1"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Haddad",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_2"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Nguyen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_3"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Ito",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_4"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Patel",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_5"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Okafor",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_6"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Kim",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_7"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Tara Silva",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_8"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Nguyen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_9"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Reyes",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_10"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Lena Nguyen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_11"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Priya Haddad",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_12"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Grace Haddad",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_13"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Larsen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_14"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Haddad",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_15"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sam Larsen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_16"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Lena Haddad",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_17"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ana Larsen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_18"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Quinn Reyes",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_19"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Quinn Costa",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_20"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Ito",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_21"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Patel",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_22"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Reyes",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_23"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Uma Kim",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_24"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Ito",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_25"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Ruiz",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_26"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Quinn Ruiz",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_27"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Omar Nguyen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_28"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Omar Kim",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_29"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Patel",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_30"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Priya Reyes",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_31"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Hiro Haddad",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_32"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Novak",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_33"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Kofi Nguyen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_34"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Hiro Ruiz",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_35"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Isla Kim",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_36"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Reyes",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_37"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Jo Nguyen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_38"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Nina Novak",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_39"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Yusuf Kim",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_40"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Jo Reyes",
+        "description": "Follow up with this new lead.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_45"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"description\":\"Follow up with this new lead.\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 7634,
+     "ms": 7640,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "71c80e319e29",
+       "promptHash": "0efc64225eb0",
+       "latencyMs": 7463,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14777,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 192,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "c810c026396d10d9",
+       "targetsHash": "fcf14bbf9383f203",
+       "reason": "changes 45 records at once",
+       "count": 45,
+       "preview": [
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Hiro Reyes",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_1"
+          }
+         },
+         "label": "Hiro Reyes"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Haddad",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_2"
+          }
+         },
+         "label": "Ben Haddad"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Nguyen",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_3"
+          }
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Ito",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_4"
+          }
+         },
+         "label": "Victor Ito"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Grace Patel",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_5"
+          }
+         },
+         "label": "Grace Patel"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Wen Okafor",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_6"
+          }
+         },
+         "label": "Wen Okafor"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Kim",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_7"
+          }
+         },
+         "label": "Victor Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Tara Silva",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_8"
+          }
+         },
+         "label": "Tara Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Grace Nguyen",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_9"
+          }
+         },
+         "label": "Grace Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Reyes",
+          "description": "Follow up with this new lead.",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_10"
+          }
+         },
+         "label": "Ben Reyes"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 7640,
+    "firstReplyMs": 7634,
+    "plannerMs": 7463,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 47,
+    "clarifications": 0,
+    "usage": {
+     "input": 14777,
+     "cachedRead": 6528,
+     "cacheWrite": 0,
+     "output": 192,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

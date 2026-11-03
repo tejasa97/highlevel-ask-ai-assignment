@@ -308,6 +308,17 @@ describe("ref errors name the legal steps", () => {
     assert.deepEqual(s2.kind === "filter" ? s2.where : null, { id: { nin: ["ld_1"] } });
   });
 
+  test("an exclude by the other list's name for the id (leadId on leads) compares the items' own id", () => {
+    const steps = (by: string) => plan([action("s1", "M03.A03", {}), action("s2", "M21.A03", { leadId: "ld_1" }), op("s3", "exclude", { in: "$s1.items", by, set: "$s2.items[*].leadId" })]);
+    const r = compile(steps("leadId"), registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    const ex = r.plan.steps.find((s) => s.id === "s3")!;
+    assert.equal(ex.kind === "exclude" ? ex.by : null, "id");
+    // A field the items really lack is still an error.
+    const bad = compile(steps("nope"), registry);
+    assert.ok(!bad.ok && /items have no field "nope"/.test(bad.errors.join("\n")));
+  });
+
   test("says a prompt block is not a step and to copy its value in as plain text", () => {
     for (const block of ["$looked", "$mentions", "$context", "$recent_records"]) {
       const r = badRef(block);
@@ -378,5 +389,47 @@ describe("ids carry their record type", () => {
     assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
     const step = r.ok ? r.plan.steps[2]! : undefined;
     assert.equal(step?.kind === "forEach" ? step.calls[0]!.args.ownerId : undefined, "$rr");
+  });
+});
+
+describe("a filter on an id column", () => {
+  const errorsOf = (steps: Step[]) => {
+    const r = compile(plan(steps), registry);
+    return r.ok ? "" : r.errors.join("\n");
+  };
+  const leads = (where: unknown) => errorsOf([action("s1", "M03.A03", {}), op("s2", "filter", { in: "$s1.items", where })]);
+
+  test("by a name is sent back: no id equals a name", () => {
+    assert.match(leads({ campaignId: { eq: "Facebook campaign" } }), /campaignId holds ids.*"Facebook campaign" is a name/);
+    assert.match(leads({ ownerId: { in: ["Ana", "us_2"] } }), /ownerId holds ids/);
+  });
+
+  test("by an id, a $ref or a name column is fine", () => {
+    assert.equal(leads({ campaignId: { eq: "cp_3" } }), "");
+    assert.equal(leads({ id: { in: ["ld_1", "ld_2"] } }), "");
+    assert.equal(leads({ name: { eq: "Priya Haddad" } }), "");
+  });
+});
+
+describe("a read inside a forEach", () => {
+  const errorsOf = (steps: Step[]) => {
+    const r = compile(plan(steps), registry);
+    return r.ok ? "" : r.errors.join("\n");
+  };
+  const leads = action("s1", "M03.A03", {});
+  const write = { action: "M06.A01", args: { title: "Follow up", relatedTo: { type: "lead", id: "$item.id" } } };
+
+  test("that nothing uses is sent back: it cannot leave an item out of the writes beside it", () => {
+    const msg = errorsOf([leads, op("s2", "forEach", { in: "$s1.items", do: [{ action: "M21.A03", args: { leadId: "$item.id" } }, write] })]);
+    assert.match(msg, /do\[0\] M21\.A03 only reads.*exclude/);
+  });
+
+  test("used by the next call ($prev) or by a later step is fine", () => {
+    assert.equal(errorsOf([leads, op("s2", "forEach", { in: "$s1.items", do: [{ action: "M21.A03", args: { leadId: "$item.id" } }, { action: "M06.A01", args: { title: "$prev.items" } }] })]).includes("only reads"), false);
+    assert.equal(errorsOf([leads, op("s2", "forEach", { in: "$s1.items", do: [{ action: "M21.A03", args: { leadId: "$item.id" } }, write] }), action("s3", "M06.A01", { title: "$s2[*].results[0].total" })]).includes("only reads"), false);
+  });
+
+  test("a loop of reads alone is left to the other checks", () => {
+    assert.equal(errorsOf([leads, op("s2", "forEach", { in: "$s1.items", do: [{ action: "M21.A03", args: { leadId: "$item.id" } }] })]).includes("only reads"), false);
   });
 });

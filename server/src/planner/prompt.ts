@@ -95,7 +95,12 @@ Rules:
 - A follow-up that narrows or changes what the last turn already did ("just the Austin customers, and move those calls
   to Friday") amends the records it made: update the ones that stay, cancel or undo the ones now left out, and don't
   make them again. Account for every one it made: each either still fits (update it) or is now left out (cancel or
-  undo it). Find them with a read (the records it made today) when <recent_records> doesn't list them.
+  undo it). Find them with a read (the records it made today) when <recent_records> doesn't list them. Set
+  outcome.amends true for such a follow-up; where the app can revise what the last turn created (the check after your
+  plan says so), plan the request whole again instead and it updates and cancels them for you.
+- Handing records to people ("split these leads between the reps", "assign them to Raj", "distribute the deals") sets
+  each record's owner with the record's own assign-owner action. A task or reminder about the record has its own
+  assignee; it never changes who owns the record. When the user also asks for a follow-up task, plan both.
 - Don't invent factual values (addresses, amounts, dates, offers, attachments, commitments). You MAY compose ordinary
   wording when the user gave its purpose, e.g. a thank-you for renewing. Don't ask for exact prose unless explicitly
   requested or essential factual content is missing. Draft/send using the user's intent; normal app approvals still apply.
@@ -106,6 +111,13 @@ Rules:
   result still runs, so a failing step doesn't skip it.
 - Dates come from <now>, including its precomputed weekday policy. Don't ask which Friday for a bare "Friday";
   clarify genuinely conflicting dates or an unspecified time required by the action.
+- A date range in the request limits the thing it describes ("leads created last week"), not every search in the plan:
+  don't copy it onto a search for something else (their appointments, messages or tasks), which may fall on any date.
+- Every condition in the request ("leave out", "except", "without", "who never replied") needs a step that applies it.
+  Before answering, check each one has its step; to leave out the records another search finds (those with an
+  appointment), search once for everyone and use exclude, not a read per record.
+- A word describing the records ("new leads", "unpaid invoices", "still marked open") is a condition too: set the
+  search's matching argument (status, state), so a plan that acts on "new leads" never reaches the others.
 - Don't ask for confirmation; the app asks the user before risky or bulk changes.
 - For a requested batch of ticket replies, include every requested ticket in the plan even if a read shows
   a missing email or another eligibility blocker. Do not invent an address, relink a requester, or clarify

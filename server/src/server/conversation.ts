@@ -43,6 +43,8 @@ interface Turn {
   answer?: string;
   pending?: Pending;
   approvals?: Approval[];
+  /** Set when the planner said the message amends the last turn: the records that turn made, for the executor to update. */
+  made?: WorkingRecord[];
 }
 
 export class Conversation {
@@ -56,6 +58,8 @@ export class Conversation {
    */
   private answering: string | undefined;
   private records: WorkingRecord[] = [];
+  /** Every record the last turn that made any made (`records` keeps the newest few of all turns): what an amend revises. */
+  private lastMade: WorkingRecord[] = [];
   private clarifications: Clarifications;
 
   constructor(
@@ -77,6 +81,7 @@ export class Conversation {
     this.turns.clear();
     this.history.length = 0;
     this.records = [];
+    this.lastMade = [];
     this.clarifications = this.newClarifications();
   }
 
@@ -130,7 +135,7 @@ export class Conversation {
       if (signal?.aborted) return this.finish(message, "failed", "The request was cancelled. Nothing was changed.", emit);
       this.carry = outcome.carry;
       const id = attempt ? `${turnId}_retry` : turnId;
-      const turn: Turn = { id, message, request, said, plan: outcome.plan, executionId: `ex_${id}`, answer: outcome.answer };
+      const turn: Turn = { id, message, request, said, plan: outcome.plan, executionId: `ex_${id}`, answer: outcome.answer, ...(outcome.amends && this.lastMade.length ? { made: this.lastMade } : {}) };
       this.turns.set(id, turn);
       emit("plan", { hash: turn.plan.hash, steps: turn.plan.steps.map(describeStep) });
       failed = await this.run(turn, actorId, emit, undefined, attempt === 0);
@@ -252,10 +257,12 @@ export class Conversation {
       turn.plan,
       this.deps.registry,
       { ...this.world, actorId, onCall },
-      { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e), request: turn.request, said: turn.said },
+      { executionId: turn.executionId, approvals, onEvent: (e) => emit("exec", e), request: turn.request, said: turn.said, ...(turn.made ? { revises: { made: turn.made, message: turn.message } } : {}) },
     );
     emit("run", { status: result.status, ms: Math.round(performance.now() - t), steps: result.steps });
     this.records = rememberRecords(this.records, turn.plan, result);
+    const made = rememberRecords([], turn.plan, result, Infinity, true);
+    if (made.length) this.lastMade = made;
     const audit = store.audit();
     emit("diff", { changes: diff(before, store), audit: audit.slice(0, audit.length - auditBefore) });
 

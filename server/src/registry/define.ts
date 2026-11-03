@@ -63,9 +63,11 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   requires?: string[];
   /**
    * For a create a follow-up may narrow ("only the Facebook ones, due tomorrow"): `key` is the argument that says which
-   * record it is for ("relatedTo.id"), the same path on the record it makes; `edits` maps each other argument to the
-   * action that changes it on a made record; `undo` cancels one. A follow-up then remakes the request whole, and the code
-   * keeps, edits, makes or undoes the last turn's records to match.
+   * record it is for ("relatedTo.id"), matched to the `for` of the records the last turn made; `edits` maps each other
+   * argument to the action that changes it on one (it takes `<entity>Id` and that argument); `undo` cancels one. When
+   * the planner says a message amends the last turn, the executor plans nothing itself: a create whose key matches a
+   * record the last turn made updates that record's differing arguments instead of making another, and once the run
+   * is done the last turn's records no create took are cancelled with `undo`, after an approval.
    */
   revise?: { key: string; edits: Record<string, string>; undo: string };
   /** Optional side-effect-free eligibility check. Throw an ActionError for a known blocker;

@@ -200,6 +200,52 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(more.requests.length, 1);
   });
 
+  test("a reply that flags the follow-up as an amend makes the request whole without being asked about the remake", async () => {
+    const last = { carry: { prev: ["M06.A01"], entities: ["task"], made: ["task"] }, records: [{ entity: "task", id: "tsk_90", name: "Call Ana", for: "ld_4" }] };
+    const amends = { ...createTask(), outcome: { effect: "change" as const, actions: ["M06.A01"], destination: null, amends: true } };
+    const planner = scripted(amends);
+    const out = await planTurn({ message: "Only the Austin ones, due Friday", tier: "fast", ...last }, { registry, retriever, planner, clock: frozenClock() });
+    assert.ok(out.kind === "plan" && out.amends === true, JSON.stringify(out));
+    assert.equal(planner.requests.length, 1);
+    // A reply that didn't flag it is asked once, with the wording that says the app updates and cancels.
+    const plain = scripted(createTask(), amends);
+    const asked = await planTurn({ message: "Only the Austin ones, due Friday", tier: "fast", ...last }, { registry, retriever, planner: plain, clock: frozenClock() });
+    assert.ok(asked.kind === "plan" && asked.amends === true, JSON.stringify(asked));
+  });
+
+  test("an outcome that edits and cancels the last turn's records by hand is asked once, then the amend is the plan", async () => {
+    const last = { carry: { prev: ["M06.A01"], entities: ["task"], made: ["task"] }, records: [{ entity: "task", id: "tsk_90", name: "Call Ana", for: "ld_4" }] };
+    const hand = { ...reply({ steps: [{ id: "s1", kind: "action", action: "M06.A06", argsJson: JSON.stringify({ taskId: "tsk_90", dueDate: "2026-10-23" }) }] }), outcome: { effect: "change" as const, actions: ["M06.A06", "M06.A10"], destination: null } };
+    const whole = { ...createTask(), outcome: { effect: "change" as const, actions: ["M06.A01"], destination: null, amends: true } };
+    const planner = scripted(hand, whole);
+    const out = await planTurn({ message: "Only the Austin ones, due Friday", tier: "fast", ...last }, { registry, retriever, planner, clock: frozenClock() });
+    assert.ok(out.kind === "plan" && out.amends === true && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A01"), JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+    assert.match(planner.requests[1]!.user, /plan the request whole again with outcome\.amends true/);
+    // Asked for more, the same outcome is left alone; a plain edit with no cancel is not an amend.
+    const more = scripted(hand, hand, hand);
+    await planTurn({ message: "Also push Ana's task to Friday", tier: "fast", ...last }, { registry, retriever, planner: more, clock: frozenClock() });
+    assert.ok(more.requests.every((r) => !/outcome\.amends true/.test(r.user)), "asked for more is not an amend");
+    const edit = { ...hand, outcome: { effect: "change" as const, actions: ["M06.A06"], destination: null } };
+    const only = scripted(edit);
+    assert.equal((await planTurn({ message: "Push Ana's task to Friday", tier: "fast", ...last }, { registry, retriever, planner: only, clock: frozenClock() })).kind, "plan");
+    assert.equal(only.requests.length, 1);
+  });
+
+  test("a reply that flags an amend but only edits the last turn's records is asked to plan the request whole", async () => {
+    const last = { carry: { prev: ["M06.A01"], entities: ["task"], made: ["task"] }, records: [{ entity: "task", id: "tsk_90", name: "Call Ana", for: "ld_4" }] };
+    const edits = { ...reply({ steps: [{ id: "s1", kind: "action", action: "M06.A06", argsJson: JSON.stringify({ taskId: "tsk_90", dueDate: "2026-10-23" }) }] }), outcome: { effect: "change" as const, actions: ["M06.A06"], destination: null, amends: true } };
+    const whole = { ...createTask(), outcome: { effect: "change" as const, actions: ["M06.A01"], destination: null, amends: true } };
+    const planner = scripted(edits, whole);
+    const out = await planTurn({ message: "Only the Austin ones, due Friday", tier: "fast", ...last }, { registry, retriever, planner, clock: frozenClock() });
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A01"), JSON.stringify(out));
+    assert.match(planner.requests[1]!.user, /outcome\.amends is true, but the plan only edits the task records/);
+    // Not an amend after all: the same edit with the flag off stands.
+    const plain = scripted({ ...edits, outcome: { ...edits.outcome, amends: false } });
+    assert.equal((await planTurn({ message: "Push Ana's task to Friday", tier: "fast", ...last }, { registry, retriever, planner: plain, clock: frozenClock() })).kind, "plan");
+    assert.equal(plain.requests.length, 1);
+  });
+
   test("asked about a remake, a reply that says it will change those records but makes them again is not let through", async () => {
     const last = { carry: { prev: ["M06.A01"], entities: ["task"], made: ["task"] }, records: [{ entity: "task", id: "tsk_90", name: "Call Ana", for: "ld_4" }] };
     const message = "Only the Austin ones, and make those due Friday";
@@ -224,7 +270,7 @@ describe("grounded outcomes and clarifications", () => {
     const out = await planTurn({ message, tier: "fast", ...last }, { registry, retriever, planner, clock: frozenClock() });
     assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A06"), JSON.stringify(out));
     assert.equal(planner.requests.length, 2);
-    assert.match(planner.requests[1]!.user, /already made 1 task record[\s\S]*look first to read which still fit/);
+    assert.match(planner.requests[1]!.user, /already made 1 task record[\s\S]*outcome\.amends true[\s\S]*plan no edits or cancels of them yourself/);
     assert.doesNotMatch(planner.requests[1]!.user, /requested operation M06\.A01 is missing/);
     // Nor when a prose reply came first, stating a change it named no actions for.
     const prose = { ...reply({ steps: null }), type: "answer" as const, text: "I can't amend that from here.", outcome: { effect: "change" as const, actions: [], destination: null } };

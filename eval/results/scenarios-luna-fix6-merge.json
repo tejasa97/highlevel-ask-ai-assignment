@@ -1,0 +1,817 @@
+{
+ "summary": {
+  "label": "luna-fix6-merge",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/module-scenarios/role-ids",
+  "set": "8cfe9190f91a",
+  "tier": "strong",
+  "scenarios": 1,
+  "repeat": 3,
+  "runs": 3,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 0,
+  "allPass": 0,
+  "measured": 1,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 13783,
+   "p95": 13983
+  },
+  "firstReplyMs": {
+   "p50": 4012,
+   "p95": 4353
+  },
+  "plannerRoundsPerRun": 3,
+  "callsPerRun": 0,
+  "clarified": {
+   "runs": 3,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 14057
+ },
+ "runs": [
+  {
+   "id": "merge-two-sarahs",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "clarify, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM contacts WHERE id='ct_32' → \"active\", wanted \"merged\""
+    }
+   ],
+   "failureClass": "clarification",
+   "turns": [
+    {
+     "user": "Merge the two Sarah Johnson contacts",
+     "status": "clarify",
+     "reply": "I found 2 contact records named Sarah Johnson. Which one is the contact that stays?",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should be kept, and which should be merged into it?",
+        "options": null,
+        "reason": "There are two contacts with that name, and merging is irreversible; I need you to choose which one stays.",
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4012,
+     "ms": 4012,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6fc1ca2efc79",
+       "latencyMs": 3958,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12373,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 161,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "Keep the Brightside one",
+     "status": "clarify",
+     "reply": "I couldn't match \"That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say.\" to one of them. Which contact did you mean by \"Sarah Johnson\"? Pick one, or say \"none of these\".",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should stay?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after identity check",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should be kept?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "identity",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8122,
+     "ms": 8122,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "dff51cc03cf0",
+       "latencyMs": 3956,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12400,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 115,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after identity check",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b2e99f2df6b2",
+       "latencyMs": 4078,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12475,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 116,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "clarified": {
+      "question": "I found 2 contact records named Sarah Johnson. Which one is the contact that stays?",
+      "answer": "That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say."
+     }
+    }
+   ],
+   "metrics": {
+    "ms": 12134,
+    "firstReplyMs": 4012,
+    "plannerMs": 11992,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 0,
+    "clarifications": 1,
+    "usage": {
+     "input": 37248,
+     "cachedRead": 18432,
+     "cacheWrite": 0,
+     "output": 392,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "merge-two-sarahs",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "clarify, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM contacts WHERE id='ct_32' → \"active\", wanted \"merged\""
+    }
+   ],
+   "failureClass": "clarification",
+   "turns": [
+    {
+     "user": "Merge the two Sarah Johnson contacts",
+     "status": "clarify",
+     "reply": "I found 2 contact records named Sarah Johnson. Which one is the contact that stays?",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should be kept, and which should be merged into it?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4353,
+     "ms": 4353,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6fc1ca2efc79",
+       "latencyMs": 4292,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12371,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "Keep the Brightside one",
+     "status": "clarify",
+     "reply": "I couldn't match \"That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say.\" to one of them. Which contact did you mean by \"Sarah Johnson\"? Pick one, or say \"none of these\".",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should stay?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after identity check",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should be kept?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9428,
+     "ms": 9430,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "dff51cc03cf0",
+       "latencyMs": 4216,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12400,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 132,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after identity check",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b2e99f2df6b2",
+       "latencyMs": 5091,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12475,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 133,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "clarified": {
+      "question": "I found 2 contact records named Sarah Johnson. Which one is the contact that stays?",
+      "answer": "That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say."
+     }
+    }
+   ],
+   "metrics": {
+    "ms": 13783,
+    "firstReplyMs": 4353,
+    "plannerMs": 13599,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 0,
+    "clarifications": 1,
+    "usage": {
+     "input": 37246,
+     "cachedRead": 18432,
+     "cacheWrite": 0,
+     "output": 406,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "merge-two-sarahs",
+   "category": "ambiguous",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "clarify, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM contacts WHERE id='ct_32' → \"active\", wanted \"merged\""
+    }
+   ],
+   "failureClass": "clarification",
+   "turns": [
+    {
+     "user": "Merge the two Sarah Johnson contacts",
+     "status": "clarify",
+     "reply": "I found 2 contact records named Sarah Johnson. Which one is the contact that stays?",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should be kept, and which should be merged into it?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3845,
+     "ms": 3845,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6fc1ca2efc79",
+       "latencyMs": 3779,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12375,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "Keep the Brightside one",
+     "status": "clarify",
+     "reply": "I couldn't match \"That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say.\" to one of them. Which contact did you mean by \"Sarah Johnson\"? Pick one, or say \"none of these\".",
+     "offered": [
+      "M02.A09",
+      "M01.A06",
+      "M08.A09",
+      "M01.A09",
+      "M02.A06",
+      "M01.A01",
+      "M01.A05",
+      "M02.A07",
+      "M01.A07",
+      "M01.A03",
+      "M47.A09",
+      "M07.A06",
+      "M02.A05",
+      "M01.A02",
+      "M02.A10",
+      "M21.A06",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should stay?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"duplicateId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after identity check",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Sarah Johnson contact should be kept?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A06"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M01.A06",
+         "argument": "keepId",
+         "argsJson": "{\"keepId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}}}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 10137,
+     "ms": 10138,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "dff51cc03cf0",
+       "latencyMs": 3735,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12400,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 132,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after identity check",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "b2e99f2df6b2",
+       "latencyMs": 6300,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12473,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 116,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "clarified": {
+      "question": "I found 2 contact records named Sarah Johnson. Which one is the contact that stays?",
+      "answer": "That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say."
+     }
+    }
+   ],
+   "metrics": {
+    "ms": 13983,
+    "firstReplyMs": 3845,
+    "plannerMs": 13814,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 0,
+    "clarifications": 1,
+    "usage": {
+     "input": 37248,
+     "cachedRead": 18432,
+     "cacheWrite": 0,
+     "output": 389,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

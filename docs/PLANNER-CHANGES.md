@@ -153,6 +153,43 @@ Each item came from a scenario family that Luna (low reasoning) failed, and each
 
 Code: [lookups](../server/src/core/lookups.ts), [identity](../server/src/core/identity.ts), [clarification checks](../server/src/planner/clarification.ts), [turn](../server/src/planner/turn.ts). Tests sit beside each file.
 
+## 9. Amending what the last turn made, done by code
+
+"Only the Facebook ones, and make those tasks due tomorrow" narrows what the last turn did. Luna would plan it as hand edits, or make everything again so each lead had two open tasks. The planner now only says that a message amends (`outcome.amends`) and plans the request whole. Code does the rest ([revise](../server/src/core/revise.ts), [execute](../server/src/core/execute.ts)).
+
+- **A create declares how to revise itself.** `ActionDef.revise` names the argument that says what the record is about (a task's `relatedTo.id`), the edit action per field (`dueDate` → M06.A06, `assigneeId` → M06.A05, `priority` → M06.A07) and the undo (M06.A10). Registry tests check each declaration names real actions that take the record id.
+- **Matching.** The conversation keeps what the last turn that wrote anything made (`lastMade`, writes only: a read-only attempt or retry never replaces it). A create whose key matches an open record of that turn runs the edits for the fields that now differ, or nothing when none do. Two creates never share a record.
+- **Cancelling what was left out.** When the run is done, the message does not ask for more ("one for Tom too"), and the run either updated a record or made a new one, the open records nobody took are cancelled. That sits behind its own approval (step `revise`), shown with the records' names. A run that matched nothing cancels nothing.
+- **Guards in the turn loop.** An amend whose plan only edits the records the last turn made, without saying which still belong, is sent back to plan the request whole (`editsOnly` in [turn](../server/src/planner/turn.ts)). A repeat of the last turn's creates without the flag is asked first.
+- **Reads over a found list.** A read given a list of ids for an argument that takes one id now runs once per value instead of asking "which one" (`fannedOut` in `execute.ts`).
+- **Id columns are never names.** A filter such as `campaignId eq "Facebook campaign"` can only keep nothing, so the compiler sends it back with the way out: resolve the record, or use the search's own argument (here `source`).
+
+Development runs on Luna (low reasoning), not a clean benchmark: the Facebook follow-up scenarios went from 0 of 4 and 2 of 4 passes to 3 of 4 and 4 of 4 over the last fix. Four runs per scenario is a development signal; the remaining misses are turn-1 plans that pick a different lead set, which the amend code cannot repair. Tests: [revise](../server/src/core/revise.test.ts), [records](../server/src/server/records.test.ts), [turn](../server/src/planner/turn.test.ts), [compile](../server/src/core/compile.test.ts).
+
+## 10. Splitting leads between reps, found by the quiet-leads scenarios
+
+"Find last week's leads who never replied, leave out anyone with an appointment, split the rest between the available reps and give each a follow-up task" failed on Luna for five separate reasons, each fixed in general:
+
+- **Owner or assignee.** Luna read "split between the reps" as the task's assignee and never set the lead's owner. The prompt now says that handing records to people sets each record's owner, a task has its own assignee, and a request for both plans both. The descriptions of `M03.A05`, `M06.A01`, `M01.A08` and `M12.A10` (and their search cards) point at each other.
+- **Who is waiting.** `M11.A10` was sometimes called with `waitingOn: "team"`, which lists the leads who already replied. Its description now leads with the phrases that mean each value ("has not replied", "never got back to us" are `contact`).
+- **Whole-day date bounds.** `createdAt lte "2026-10-18"` dropped everything created on the 18th, because a timestamp sorts after the bare date. A bare date bound now covers its whole day (`lte` keeps it, `gt` drops it). This was a plain bug in the filter, not a planner slip.
+- **Reads that cannot filter.** A read inside a forEach, such as a per-lead appointment check beside the writes, left out nothing. The compiler now sends it back unless a later call (`$prev`) or step uses its result, and says to read once and use an exclude.
+- **Dropped or misplaced conditions.** Two prompt rules: a date range limits only what it describes (don't copy "last week" onto the appointment search), and every "leave out / except / without" needs a step that applies it.
+
+Development runs on Luna (low reasoning): the two quiet-leads wordings went from 1 of 6 passes to 12 of 12 over the last change. Re-running the follow-up scenarios gave 11 of 12. Those numbers come from a few runs and the prompt rules were written after reading these failures, so treat them as a development signal; the held-out wording passed 6 of 6 with the fixes but before the last two rules were added. A full 2-run pass of the brief set was disturbed by Codex 403 reconnect errors at 14-way concurrency and is not a benchmark. Tests: [compile](../server/src/core/compile.test.ts) and [execute](../server/src/core/execute.test.ts).
+
+## 11. "New leads" meant every lead, found by the new-leads scenarios
+
+"New leads keep slipping through the cracks, help me stay on them" (and the version that asks for a task for every lead "still marked new") made a task for all 45 leads instead of the 24 whose status is `new`. The word "new" was read as a description of the leads, not a filter. Three small general fixes:
+
+- **The status argument says what it is for.** `M03.A03`'s `status` now reads "where the lead stands now; 'new leads', 'still marked new' → new; always set it when the request names a status".
+- **A prompt rule for describing words.** "A word describing the records ("new leads", "unpaid invoices", "still marked open") is a condition too: set the search's matching argument." It sits beside the existing every-condition rule.
+- **A task about a record points at it.** `M06.A01`'s `relatedTo` says to set it whenever the task is about one record. Without it one run made the right 24 tasks and linked none of them to a lead.
+
+Two more Luna slips with the same shape of fix: `M09.A03` (the catalog of smart lists) now says that counting the records on a list is `M09.A07` and seeing them is `M09.A08` (2 of 6 passes before, 8 of 8 after), and a Codex run that reached for a tool the planner switches off is now retried once instead of failing the turn.
+
+Development runs on Luna (low reasoning): the two new-leads wordings went from 0 of 4 to 12 of 12 over the last change. The rules were written after reading these failures, so this is a development signal, not a held-out result. The complex amend follow-up (a six-step plan, then "only the Facebook campaign, due tomorrow") still passes 5 of 6; the miss was a plan the repair round could not fix, and is not addressed.
+
 ## Two corrections found during validation
 
 **Bookkeeping is not the same as a user-facing change.** Report execution updates its last-run timestamp; trigger testing records a test firing without starting a workflow. The first read-outcome guard wrongly rejected them. They now declare `query: true`, so that check recognizes them without lowering execution risk or permissions. Registry validation forbids the flag on external/destructive actions. Other simulated business submissions are not queries. A `look` round still accepts only actions whose execution risk is `read`.

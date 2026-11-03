@@ -8,6 +8,7 @@ import { normalizeDateTimes } from "./datetimes.js";
 import { lowerLookups, OTHER_THAN } from "./lookups.js";
 import { argumentEntities } from "../registry/arguments.js";
 import type { IdentityBinding } from "./identity.js";
+import { idArg } from "./revise.js";
 
 // Stage 1 of validation: everything that can be checked before anything runs.
 // - structure: unique step ids, known actions that were offered to the planner this turn, JSON in argsJson/whereJson
@@ -190,12 +191,14 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
             err(`exclude needs "by" (a field of each item) and "set" (a $ref to a list)`);
             continue;
           }
-          checkField(item, s.by, `"by"`, err);
+          // "by" is a field of the items being kept, and a lead's own id is "id": "leadId" is how the other list names it.
+          const by = itemEnt && !itemEnt.ids && s.by === idArg(itemEnt.entity) && !fieldsOf(item).includes(s.by) && fieldsOf(item).includes("id") ? "id" : s.by;
+          checkField(item, by, `"by"`, err);
           const setType = listRef(s.set, scope, `"set"`, err);
           if (setType && kindOf((unwrap(setType).items ?? ANY) as JsonSchema) === "object") {
             err(`"set" ${s.set} is a list of objects; point at the field, e.g. ${s.set}[*].id`);
           }
-          steps.push({ id: s.id, kind: "exclude", in: s.in as string, by: s.by, set: s.set, deps: [...deps], type: inType });
+          steps.push({ id: s.id, kind: "exclude", in: s.in as string, by, set: s.set, deps: [...deps], type: inType });
           types.set(s.id, inType);
         } else {
           if (!s.do?.length) {
@@ -230,6 +233,14 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
             );
           });
           if (calls.some((c) => !c)) continue;
+          // A read in "do" can't leave an item out: the writes beside it run for every item anyway. Unless a
+          // later call ($prev) or step uses what it returned, it is wasted work, and the leftover items get the writes.
+          const readOnly = (calls as Call[]).map((c) => c.action.risk === "read");
+          const unused = s.do.findIndex((_, i) => readOnly[i] && !(i + 1 < s.do!.length && /\$prev\b/.test(s.do![i + 1]!.argsJson)) && !raw.some((o) => o.id !== s.id && new RegExp(`\\$${s.id}(?![\\w])`).test(JSON.stringify(o))));
+          if (unused >= 0 && readOnly.includes(false)) {
+            err(`do[${unused}] ${s.do[unused]!.action} only reads, and nothing uses what it returns, so it doesn't leave any item out of the writes beside it. To skip some items (those with an appointment, say), read once for all of them before the loop and use an exclude step on that list; "do" holds only what changes each item`);
+            continue;
+          }
           // results[k] is what do[k] returned for the item.
           const results = { ...arrayOf(ANY), prefixItems: (calls as Call[]).map((c) => c.action.outputSchema ?? ANY) };
           const out = arrayOf({ type: "object", properties: { item, results } });
@@ -608,6 +619,13 @@ function checkWhere(where: Record<string, unknown>, item: JsonSchema, scope: Sco
         if (t && (op === "in" || op === "nin") && kindOf(t) !== "array" && kindOf(t) !== "any") err(`whereJson.${field}.${op} needs a list, ${val} is not one`);
       } else if ((op === "in" || op === "nin") && !Array.isArray(val)) {
         err(`whereJson.${field}.${op} needs a list or a $ref to one`);
+      }
+      // An id column never equals a name: that filter drops every item and the turn ends "nothing matched".
+      for (const v of Array.isArray(val) ? val : [val]) {
+        if (typeof v === "string" && !v.startsWith("$") && /(^|[a-z])Id$/.test(field) && !/^[a-z]{2,4}_\w+$/.test(v) && (op === "eq" || op === "ne" || op === "in" || op === "nin")) {
+          err(`whereJson.${field}: ${field} holds ids (like "ab_12"), ${JSON.stringify(v)} is a name. Look the record up with a resolve step and use "$id.id", or, if the search action has an argument for it (a source, a status), use that and drop this condition`);
+          break;
+        }
       }
     }
   }

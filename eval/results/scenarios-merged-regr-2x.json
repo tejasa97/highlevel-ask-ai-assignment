@@ -1,0 +1,6343 @@
+{
+ "summary": {
+  "label": "merged-regr-2x",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/scenarios",
+  "set": "6b297b0555d4",
+  "tier": "strong",
+  "scenarios": 23,
+  "repeat": 2,
+  "runs": 46,
+  "infraRuns": 17,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 15,
+  "measured": 15,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 4855,
+   "p95": 9533
+  },
+  "firstReplyMs": {
+   "p50": 4846,
+   "p95": 9533
+  },
+  "plannerRoundsPerRun": 1.1,
+  "callsPerRun": 1.8,
+  "clarified": {
+   "runs": 0,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 82101
+ },
+ "runs": [
+  {
+   "id": "ambiguous-two-sarahs",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Text Sarah Johnson that we're running 10 minutes late",
+     "status": "needs_clarification",
+     "reply": "More than one contact matches \"Sarah Johnson\": Sarah Johnson (sarah.johnson@brightside.example, +15550100001, Brightside), Sarah Johnson (sjohnson@gmail.example, +15550100001). Which one is contact id (ct_…); give this or leadId?",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M28.A10",
+      "M22.A07",
+      "M47.A10",
+      "M20.A08",
+      "M20.A07",
+      "M12.A03",
+      "M12.A01",
+      "M12.A06",
+      "M12.A07",
+      "M47.A05",
+      "M11.A10",
+      "M38.A08",
+      "M24.A04",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M15.A06",
+      "M13.A05",
+      "M28.A03",
+      "M03.A03",
+      "M13.A07"
+     ],
+     "planned": [
+      "M12.A03"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Sarah Johnson",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M12.A03",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"body\":\"We're running 10 minutes late.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M12.A03"
+         ],
+         "destination": "sms"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7046,
+     "ms": 7046,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "ba93b48def01",
+       "latencyMs": 6832,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13897,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 139,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 7046,
+    "firstReplyMs": 7046,
+    "plannerMs": 6832,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 13897,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 139,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "ambiguous-two-sarahs",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Text Sarah Johnson that we're running 10 minutes late",
+     "status": "clarify",
+     "reply": "I found 2 contact records named Sarah Johnson. Which one do you mean?",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M28.A10",
+      "M22.A07",
+      "M47.A10",
+      "M20.A08",
+      "M20.A07",
+      "M12.A03",
+      "M12.A01",
+      "M12.A06",
+      "M12.A07",
+      "M47.A05",
+      "M11.A10",
+      "M38.A08",
+      "M24.A04",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M15.A06",
+      "M13.A05",
+      "M28.A03",
+      "M03.A03",
+      "M13.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "I found two contacts named Sarah Johnson. Which one should I text?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M12.A03"
+         ],
+         "destination": "sms"
+        },
+        "clarification": "identity",
+        "lookup": null,
+        "missing": {
+         "action": "M12.A03",
+         "argument": "contactId",
+         "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\"}},\"body\":\"We're running 10 minutes late\"}"
+        }
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9048,
+     "ms": 9048,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "ba93b48def01",
+       "latencyMs": 8902,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 27995,
+        "cachedRead": 13696,
+        "cacheWrite": 0,
+        "output": 155,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 9048,
+    "firstReplyMs": 9048,
+    "plannerMs": 8902,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 27995,
+     "cachedRead": 13696,
+     "cacheWrite": 0,
+     "output": 155,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "ambiguous-zoe-then-answer",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Make Aisha the owner of Zoe Costa",
+     "status": "needs_clarification",
+     "reply": "More than one contact matches \"Zoe Costa\": Zoe Costa (zoe.costa@wayne.example, +15558243603, Wayne), Zoe Costa (zoe.costa@umbrella.example, +15558782163, Umbrella). Which one is contact id (ct_…)?",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M47.A04",
+      "M11.A03",
+      "M02.A08",
+      "M06.A05",
+      "M20.A06",
+      "M50.A04",
+      "M47.A01",
+      "M03.A10",
+      "M49.A06",
+      "M03.A03",
+      "M04.A03",
+      "M11.A02",
+      "M48.A02",
+      "M48.A03",
+      "M01.A02",
+      "M01.A03",
+      "M21.A06"
+     ],
+     "planned": [
+      "M01.A07"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Zoe Costa",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Aisha",
+          "whereJson": null
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M01.A07",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"ownerId\":\"$s2.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7648,
+     "ms": 7648,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "3679266b1bd5",
+       "latencyMs": 7345,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13196,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 161,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "the one at Umbrella",
+     "status": "done",
+     "reply": "Done: Assign contact owner (Zoe Costa).",
+     "offered": [],
+     "planned": [
+      "M01.A07"
+     ],
+     "calls": [
+      {
+       "action": "M01.A07",
+       "args": {
+        "contactId": "ct_30",
+        "ownerId": "us_5"
+       }
+      }
+     ],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 10,
+     "ms": 10
+    }
+   ],
+   "metrics": {
+    "ms": 7658,
+    "firstReplyMs": 7648,
+    "plannerMs": 7345,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13196,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 161,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "ambiguous-zoe-then-answer",
+   "category": "ambiguous",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Make Aisha the owner of Zoe Costa",
+     "status": "needs_clarification",
+     "reply": "More than one contact matches \"Zoe Costa\": Zoe Costa (zoe.costa@wayne.example, +15558243603, Wayne), Zoe Costa (zoe.costa@umbrella.example, +15558782163, Umbrella). Which one is contact id (ct_…)?",
+     "offered": [
+      "M01.A07",
+      "M04.A06",
+      "M03.A05",
+      "M47.A04",
+      "M11.A03",
+      "M02.A08",
+      "M06.A05",
+      "M20.A06",
+      "M50.A04",
+      "M47.A01",
+      "M03.A10",
+      "M49.A06",
+      "M03.A03",
+      "M04.A03",
+      "M11.A02",
+      "M48.A02",
+      "M48.A03",
+      "M01.A02",
+      "M01.A03",
+      "M21.A06"
+     ],
+     "planned": [
+      "M01.A07"
+     ],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Zoe Costa",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Aisha",
+          "whereJson": null
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M01.A07",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"ownerId\":\"$s2.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4846,
+     "ms": 4846,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "3679266b1bd5",
+       "latencyMs": 4733,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13198,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 161,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "the one at Umbrella",
+     "status": "done",
+     "reply": "Done: Assign contact owner (Zoe Costa).",
+     "offered": [],
+     "planned": [
+      "M01.A07"
+     ],
+     "calls": [
+      {
+       "action": "M01.A07",
+       "args": {
+        "contactId": "ct_30",
+        "ownerId": "us_5"
+       }
+      }
+     ],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9,
+     "ms": 9
+    }
+   ],
+   "metrics": {
+    "ms": 4855,
+    "firstReplyMs": 4846,
+    "plannerMs": 4733,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13198,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 161,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-appointment-reschedule",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Push Sarah Johnson's Agency plan walkthrough to Monday, same time",
+     "status": "done",
+     "reply": "Done: Reschedule appointment (Agency plan walkthrough).",
+     "offered": [
+      "M44.A02",
+      "M22.A05",
+      "M44.A04",
+      "M22.A10",
+      "M21.A04",
+      "M12.A04",
+      "M38.A08",
+      "M38.A09",
+      "M15.A06",
+      "M06.A01",
+      "M50.A06",
+      "M07.A01",
+      "M28.A06",
+      "M22.A09",
+      "M26.A07",
+      "M21.A02",
+      "M21.A03",
+      "M26.A02",
+      "M40.A04",
+      "M30.A04",
+      "M31.A04",
+      "M12.A07"
+     ],
+     "planned": [
+      "M21.A04"
+     ],
+     "calls": [
+      {
+       "action": "M21.A04",
+       "args": {
+        "appointmentId": "ap_1",
+        "date": "2026-10-26"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "appointment",
+          "name": "Sarah Johnson Agency",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M21.A04",
+          "argsJson": "{\"appointmentId\":\"$s1.id\",\"date\":\"2026-10-26\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M21.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4391,
+     "ms": 4391,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "e26982b7ff18",
+       "latencyMs": 4319,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12908,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 139,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4391,
+    "firstReplyMs": 4391,
+    "plannerMs": 4319,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12908,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 139,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-appointment-reschedule",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Push Sarah Johnson's Agency plan walkthrough to Monday, same time",
+     "status": "done",
+     "reply": "Done: Reschedule appointment (Agency plan walkthrough).",
+     "offered": [
+      "M44.A02",
+      "M22.A05",
+      "M44.A04",
+      "M22.A10",
+      "M21.A04",
+      "M12.A04",
+      "M38.A08",
+      "M38.A09",
+      "M15.A06",
+      "M06.A01",
+      "M50.A06",
+      "M07.A01",
+      "M28.A06",
+      "M22.A09",
+      "M26.A07",
+      "M21.A02",
+      "M21.A03",
+      "M26.A02",
+      "M40.A04",
+      "M30.A04",
+      "M31.A04",
+      "M12.A07"
+     ],
+     "planned": [
+      "M21.A04"
+     ],
+     "calls": [
+      {
+       "action": "M21.A04",
+       "args": {
+        "appointmentId": "ap_1",
+        "date": "2026-10-26"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "appointment",
+          "name": "Sarah Johnson's Agency plan walkthrough",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M21.A04",
+          "argsJson": "{\"appointmentId\":\"$s1.id\",\"date\":\"2026-10-26\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M21.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5412,
+     "ms": 5412,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "e26982b7ff18",
+       "latencyMs": 4795,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12906,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 142,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5412,
+    "firstReplyMs": 5412,
+    "plannerMs": 4795,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12906,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 142,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-campaign-pause",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Pause the fall webinar campaign",
+     "status": "done",
+     "reply": "Done: Pause campaign (Fall Webinar Series).",
+     "offered": [
+      "M15.A08",
+      "M15.A09",
+      "M30.A07",
+      "M15.A07",
+      "M16.A09",
+      "M15.A01",
+      "M30.A08",
+      "M42.A05",
+      "M15.A05",
+      "M30.A06",
+      "M30.A09",
+      "M15.A03",
+      "M41.A07",
+      "M15.A02",
+      "M15.A10"
+     ],
+     "planned": [
+      "M15.A08"
+     ],
+     "calls": [
+      {
+       "action": "M15.A08",
+       "args": {
+        "campaignId": "cp_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M15.A08",
+          "argsJson": "{\"campaignId\":{\"$lookup\":{\"entity\":\"campaign\",\"name\":\"fall webinar campaign\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M15.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4111,
+     "ms": 4111,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "be243b9891f2",
+       "latencyMs": 4084,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11147,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 115,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4111,
+    "firstReplyMs": 4111,
+    "plannerMs": 4084,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11147,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 115,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-campaign-pause",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Pause the fall webinar campaign",
+     "status": "done",
+     "reply": "Done: Pause campaign (Fall Webinar Series).",
+     "offered": [
+      "M15.A08",
+      "M15.A09",
+      "M30.A07",
+      "M15.A07",
+      "M16.A09",
+      "M15.A01",
+      "M30.A08",
+      "M42.A05",
+      "M15.A05",
+      "M30.A06",
+      "M30.A09",
+      "M15.A03",
+      "M41.A07",
+      "M15.A02",
+      "M15.A10"
+     ],
+     "planned": [
+      "M15.A08"
+     ],
+     "calls": [
+      {
+       "action": "M15.A08",
+       "args": {
+        "campaignId": "cp_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M15.A08",
+          "argsJson": "{\"campaignId\":{\"$lookup\":{\"entity\":\"campaign\",\"name\":\"fall webinar campaign\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M15.A08"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4196,
+     "ms": 4196,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "be243b9891f2",
+       "latencyMs": 4170,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11145,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 115,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4196,
+    "firstReplyMs": 4196,
+    "plannerMs": 4170,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11145,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 115,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-card-refund-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "done",
+     "reply": "Done: Create refund request.",
+     "offered": [
+      "M33.A01",
+      "M33.A09",
+      "M33.A04",
+      "M33.A06",
+      "M33.A08",
+      "M29.A08",
+      "M33.A05",
+      "M29.A03",
+      "M32.A09",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M29.A04",
+      "M28.A06",
+      "M33.A03",
+      "M01.A02",
+      "M01.A03",
+      "M33.A07",
+      "M29.A06",
+      "M28.A03"
+     ],
+     "planned": [
+      "M01.A03",
+      "M29.A06",
+      "M33.A01"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Rosa Ito"
+       }
+      },
+      {
+       "action": "M29.A06",
+       "args": {
+        "contactId": "ct_1",
+        "status": "succeeded",
+        "limit": 1
+       }
+      },
+      {
+       "action": "M33.A01",
+       "args": {
+        "paymentId": "pay_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Rosa Ito's last payment was made by card, bank transfer, cash, or check?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M33.A01"
+         ],
+         "destination": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M33.A01",
+         "argument": "paymentId",
+         "argsJson": "{\"paymentId\":{\"$lookup\":{\"entity\":\"payment\",\"name\":\"Rosa Ito's last payment\"}}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair clarification binding",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M01.A03",
+          "argsJson": "{\"query\":\"Rosa Ito\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M29.A06",
+          "argsJson": "{\"contactId\":\"$s1.items[0].id\",\"status\":\"succeeded\",\"limit\":1}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M33.A01",
+          "argsJson": "{\"paymentId\":\"$s2.items[0].id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M33.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "Lookup entity does not match argument paymentId; expected a non-identity input"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 9533,
+     "ms": 9533,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "47e103829496",
+       "latencyMs": 4250,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12543,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 131,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair clarification binding",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "fac8b25a912a",
+       "latencyMs": 5199,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 12734,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 180,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 9533,
+    "firstReplyMs": 9533,
+    "plannerMs": 9449,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 3,
+    "clarifications": 0,
+    "usage": {
+     "input": 25277,
+     "cachedRead": 12288,
+     "cacheWrite": 0,
+     "output": 311,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-card-refund-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "done",
+     "reply": "Done: Create refund request.",
+     "offered": [
+      "M33.A01",
+      "M33.A09",
+      "M33.A04",
+      "M33.A06",
+      "M33.A08",
+      "M29.A08",
+      "M33.A05",
+      "M29.A03",
+      "M32.A09",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M29.A04",
+      "M28.A06",
+      "M33.A03",
+      "M01.A02",
+      "M01.A03",
+      "M33.A07",
+      "M29.A06",
+      "M28.A03"
+     ],
+     "planned": [
+      "M01.A03",
+      "M29.A06",
+      "M33.A01"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Rosa Ito"
+       }
+      },
+      {
+       "action": "M29.A06",
+       "args": {
+        "contactId": "ct_1",
+        "status": "succeeded",
+        "method": "card",
+        "limit": 1
+       }
+      },
+      {
+       "action": "M33.A01",
+       "args": {
+        "paymentId": "pay_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M01.A03",
+          "argsJson": "{\"query\":\"Rosa Ito\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M29.A06",
+          "argsJson": "{\"contactId\":\"$s1.items[0].id\",\"status\":\"succeeded\",\"method\":\"card\",\"limit\":1}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M33.A01",
+          "argsJson": "{\"paymentId\":\"$s2.items[0].id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M33.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6037,
+     "ms": 6037,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "47e103829496",
+       "latencyMs": 6008,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12543,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 184,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6037,
+    "firstReplyMs": 6037,
+    "plannerMs": 6008,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 3,
+    "clarifications": 0,
+    "usage": {
+     "input": 12543,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 184,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-opportunity-stage",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Move the Hooli deal back to Proposal",
+     "status": "done",
+     "reply": "Done: Move opportunity to stage (Hooli - Agency plan).",
+     "offered": [
+      "M04.A05",
+      "M04.A10",
+      "M05.A07",
+      "M05.A06",
+      "M04.A04",
+      "M04.A09",
+      "M41.A06",
+      "M04.A01",
+      "M27.A05",
+      "M37.A06",
+      "M29.A08",
+      "M21.A04",
+      "M06.A06",
+      "M39.A06",
+      "M05.A10",
+      "M04.A02",
+      "M04.A03",
+      "M05.A09",
+      "M06.A09",
+      "M29.A06"
+     ],
+     "planned": [
+      "M04.A03",
+      "M04.A05"
+     ],
+     "calls": [
+      {
+       "action": "M04.A03",
+       "args": {
+        "query": "Hooli"
+       }
+      },
+      {
+       "action": "M04.A05",
+       "args": {
+        "opportunityId": "op_7",
+        "stage": "Proposal"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M04.A03",
+          "argsJson": "{\"query\":\"Hooli\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M04.A05",
+          "argsJson": "{\"opportunityId\":\"$s1.items[0].id\",\"stage\":\"Proposal\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M04.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4271,
+     "ms": 4271,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "07b6295660a0",
+       "latencyMs": 4223,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12137,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 142,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4271,
+    "firstReplyMs": 4271,
+    "plannerMs": 4223,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12137,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 142,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-opportunity-stage",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Move the Hooli deal back to Proposal",
+     "status": "done",
+     "reply": "Done: Move opportunity to stage (Hooli - Agency plan).",
+     "offered": [
+      "M04.A05",
+      "M04.A10",
+      "M05.A07",
+      "M05.A06",
+      "M04.A04",
+      "M04.A09",
+      "M41.A06",
+      "M04.A01",
+      "M27.A05",
+      "M37.A06",
+      "M29.A08",
+      "M21.A04",
+      "M06.A06",
+      "M39.A06",
+      "M05.A10",
+      "M04.A02",
+      "M04.A03",
+      "M05.A09",
+      "M06.A09",
+      "M29.A06"
+     ],
+     "planned": [
+      "M04.A05"
+     ],
+     "calls": [
+      {
+       "action": "M04.A05",
+       "args": {
+        "opportunityId": "op_7",
+        "stage": "Proposal"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "opportunity",
+          "name": "Hooli",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M04.A05",
+          "argsJson": "{\"opportunityId\":\"$s1.id\",\"stage\":\"Proposal\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M04.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4521,
+     "ms": 4521,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "07b6295660a0",
+       "latencyMs": 4489,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12137,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 135,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4521,
+    "firstReplyMs": 4521,
+    "plannerMs": 4489,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12137,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 135,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-payment-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a payment request for Marcus Lee's overdue invoice",
+     "status": "done",
+     "reply": "Done: Create payment request.",
+     "offered": [
+      "M29.A01",
+      "M28.A08",
+      "M29.A04",
+      "M29.A02",
+      "M28.A10",
+      "M28.A02",
+      "M29.A07",
+      "M28.A01",
+      "M33.A01",
+      "M28.A03",
+      "M29.A06",
+      "M29.A05",
+      "M28.A07",
+      "M32.A01",
+      "M45.A01",
+      "M01.A02",
+      "M01.A03",
+      "M13.A01",
+      "M13.A03",
+      "M33.A09",
+      "M33.A07",
+      "M13.A07",
+      "M33.A03"
+     ],
+     "planned": [
+      "M28.A03",
+      "M29.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_33",
+        "status": "open",
+        "overdue": true,
+        "limit": 500
+       }
+      },
+      {
+       "action": "M29.A01",
+       "args": {
+        "contactId": "ct_33",
+        "invoiceId": "inv_9"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Marcus Lee",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M28.A03",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"status\":\"open\",\"overdue\":true}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M29.A01",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"invoiceId\":\"$s2.items[*].id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M29.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5674,
+     "ms": 5674,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "3e76317936b0",
+       "latencyMs": 5643,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13893,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 178,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5674,
+    "firstReplyMs": 5674,
+    "plannerMs": 5643,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 13893,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 178,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-payment-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a payment request for Marcus Lee's overdue invoice",
+     "status": "done",
+     "reply": "Done: Create payment request.",
+     "offered": [
+      "M29.A01",
+      "M28.A08",
+      "M29.A04",
+      "M29.A02",
+      "M28.A10",
+      "M28.A02",
+      "M29.A07",
+      "M28.A01",
+      "M33.A01",
+      "M28.A03",
+      "M29.A06",
+      "M29.A05",
+      "M28.A07",
+      "M32.A01",
+      "M45.A01",
+      "M01.A02",
+      "M01.A03",
+      "M13.A01",
+      "M13.A03",
+      "M33.A09",
+      "M33.A07",
+      "M13.A07",
+      "M33.A03"
+     ],
+     "planned": [
+      "M28.A03",
+      "M29.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_33",
+        "status": "open",
+        "overdue": true
+       }
+      },
+      {
+       "action": "M28.A03",
+       "args": {
+        "contactId": "ct_33",
+        "status": "open",
+        "overdue": true
+       }
+      },
+      {
+       "action": "M29.A01",
+       "args": {
+        "contactId": "ct_33",
+        "invoiceId": "inv_9"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Marcus Lee",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M28.A03",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"overdue\":true,\"status\":\"open\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M29.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after reads",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M29.A01",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"invoiceId\":\"$s2.items[0].id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M29.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8377,
+     "ms": 8377,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "3e76317936b0",
+       "latencyMs": 3981,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13895,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 138,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after reads",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6354f50ae91e",
+       "latencyMs": 4305,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14142,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 118,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8377,
+    "firstReplyMs": 8377,
+    "plannerMs": 8286,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 3,
+    "clarifications": 0,
+    "usage": {
+     "input": 28037,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 256,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-tag-rename",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Rename the partner tag to referral-partner",
+     "status": "done",
+     "reply": "Done: Rename tag (referral-partner).",
+     "offered": [
+      "M08.A03",
+      "M08.A09",
+      "M08.A01",
+      "M08.A06",
+      "M09.A04",
+      "M05.A04",
+      "M49.A04",
+      "M08.A08",
+      "M05.A07",
+      "M08.A05",
+      "M10.A04",
+      "M35.A04",
+      "M01.A09",
+      "M39.A04",
+      "M39.A05",
+      "M01.A06"
+     ],
+     "planned": [
+      "M08.A03"
+     ],
+     "calls": [
+      {
+       "action": "M08.A03",
+       "args": {
+        "tagId": "tg_4",
+        "name": "referral-partner"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M08.A03",
+          "argsJson": "{\"tagId\":{\"$lookup\":{\"entity\":\"tag\",\"name\":\"partner\"}},\"name\":\"referral-partner\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M08.A03"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4016,
+     "ms": 4016,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "8385c2a3012d",
+       "latencyMs": 3990,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11056,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 121,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4016,
+    "firstReplyMs": 4016,
+    "plannerMs": 3990,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11056,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 121,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-tag-rename",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Rename the partner tag to referral-partner",
+     "status": "done",
+     "reply": "Done: Rename tag (referral-partner).",
+     "offered": [
+      "M08.A03",
+      "M08.A09",
+      "M08.A01",
+      "M08.A06",
+      "M09.A04",
+      "M05.A04",
+      "M49.A04",
+      "M08.A08",
+      "M05.A07",
+      "M08.A05",
+      "M10.A04",
+      "M35.A04",
+      "M01.A09",
+      "M39.A04",
+      "M39.A05",
+      "M01.A06"
+     ],
+     "planned": [
+      "M08.A03"
+     ],
+     "calls": [
+      {
+       "action": "M08.A03",
+       "args": {
+        "tagId": "tg_4",
+        "name": "referral-partner"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M08.A03",
+          "argsJson": "{\"tagId\":{\"$lookup\":{\"entity\":\"tag\",\"name\":\"partner\"}},\"name\":\"referral-partner\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M08.A03"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5342,
+     "ms": 5342,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "8385c2a3012d",
+       "latencyMs": 5306,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 22307,
+        "cachedRead": 17024,
+        "cacheWrite": 0,
+        "output": 137,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5342,
+    "firstReplyMs": 5342,
+    "plannerMs": 5306,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 22307,
+     "cachedRead": 17024,
+     "cacheWrite": 0,
+     "output": 137,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-task-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a high priority task for Tom to call Rosa Ito tomorrow",
+     "status": "done",
+     "reply": "Done: Create task (Call Rosa Ito).",
+     "offered": [
+      "M06.A07",
+      "M06.A01",
+      "M47.A05",
+      "M07.A01",
+      "M06.A03",
+      "M06.A02",
+      "M06.A09",
+      "M06.A06",
+      "M21.A01",
+      "M03.A01",
+      "M41.A01",
+      "M15.A07",
+      "M10.A01",
+      "M05.A01",
+      "M06.A10",
+      "M48.A02",
+      "M48.A03",
+      "M01.A02",
+      "M01.A03",
+      "M47.A01"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Call Rosa Ito",
+        "description": "Call Rosa Ito",
+        "assigneeId": "us_4",
+        "dueDate": "2026-10-22",
+        "priority": "high",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_1"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Tom",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Rosa Ito",
+          "whereJson": null
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M06.A01",
+          "argsJson": "{\"title\":\"Call Rosa Ito\",\"description\":\"Call Rosa Ito\",\"assigneeId\":\"$s1.id\",\"dueDate\":\"2026-10-22\",\"priority\":\"high\",\"relatedTo\":{\"type\":\"contact\",\"id\":\"$s2.id\"}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5431,
+     "ms": 5431,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "9ab760f17441",
+       "latencyMs": 5377,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12884,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 193,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5431,
+    "firstReplyMs": 5431,
+    "plannerMs": 5377,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12884,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 193,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-task-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a high priority task for Tom to call Rosa Ito tomorrow",
+     "status": "done",
+     "reply": "Done: Create task (Call Rosa Ito).",
+     "offered": [
+      "M06.A07",
+      "M06.A01",
+      "M47.A05",
+      "M07.A01",
+      "M06.A03",
+      "M06.A02",
+      "M06.A09",
+      "M06.A06",
+      "M21.A01",
+      "M03.A01",
+      "M41.A01",
+      "M15.A07",
+      "M10.A01",
+      "M05.A01",
+      "M06.A10",
+      "M48.A02",
+      "M48.A03",
+      "M01.A02",
+      "M01.A03",
+      "M47.A01"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Call Rosa Ito",
+        "description": "Call Rosa Ito",
+        "assigneeId": "us_4",
+        "dueDate": "2026-10-22",
+        "priority": "high",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_1"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Tom",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Rosa Ito",
+          "whereJson": null
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M06.A01",
+          "argsJson": "{\"title\":\"Call Rosa Ito\",\"description\":\"Call Rosa Ito\",\"assigneeId\":\"$s1.id\",\"dueDate\":\"2026-10-22\",\"priority\":\"high\",\"relatedTo\":{\"type\":\"contact\",\"id\":\"$s2.id\"}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4664,
+     "ms": 4664,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "9ab760f17441",
+       "latencyMs": 4628,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12882,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 193,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4664,
+    "firstReplyMs": 4664,
+    "plannerMs": 4628,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12882,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 193,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "failure-deactivated-assignee",
+   "category": "failure",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "reply",
+     "detail": "missing /deactivat|inactive|no longer|not active/"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a task for Dan Ortiz to prepare the Q4 forecast",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036643d8b3c0d-BLR)",
+     "offered": [
+      "M06.A01",
+      "M06.A03",
+      "M06.A06",
+      "M27.A01",
+      "M06.A07",
+      "M07.A01",
+      "M06.A09",
+      "M04.A01",
+      "M34.A01",
+      "M04.A07",
+      "M03.A01",
+      "M05.A01",
+      "M15.A01",
+      "M49.A08",
+      "M45.A01",
+      "M21.A01",
+      "M47.A01",
+      "M07.A03",
+      "M47.A03",
+      "M21.A03",
+      "M28.A06",
+      "M01.A03",
+      "M03.A03",
+      "M04.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3472,
+     "ms": 3472,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3472,
+    "firstReplyMs": 3472,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "failure-deactivated-assignee",
+   "category": "failure",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "reply",
+     "detail": "missing /deactivat|inactive|no longer|not active/"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a task for Dan Ortiz to prepare the Q4 forecast",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a540367aef7e3c00-BLR)",
+     "offered": [
+      "M06.A01",
+      "M06.A03",
+      "M06.A06",
+      "M27.A01",
+      "M06.A07",
+      "M07.A01",
+      "M06.A09",
+      "M04.A01",
+      "M34.A01",
+      "M04.A07",
+      "M03.A01",
+      "M05.A01",
+      "M15.A01",
+      "M49.A08",
+      "M45.A01",
+      "M21.A01",
+      "M47.A01",
+      "M07.A03",
+      "M47.A03",
+      "M21.A03",
+      "M28.A06",
+      "M01.A03",
+      "M03.A03",
+      "M04.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4358,
+     "ms": 4358,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 4358,
+    "firstReplyMs": 4358,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "failure-dnd-contact",
+   "category": "failure",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "reply",
+     "detail": "missing /do.not.disturb|\\bdnd\\b/"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Email Marcus Lee that his onboarding call is confirmed for Monday",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a540364949e23c07-BLR)",
+     "offered": [
+      "M23.A07",
+      "M27.A08",
+      "M28.A07",
+      "M48.A01",
+      "M27.A09",
+      "M15.A05",
+      "M22.A08",
+      "M24.A09",
+      "M28.A08",
+      "M22.A07",
+      "M13.A05",
+      "M01.A08",
+      "M13.A03",
+      "M13.A04",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M32.A08",
+      "M29.A01",
+      "M13.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3573,
+     "ms": 3573,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3573,
+    "firstReplyMs": 3573,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "failure-dnd-contact",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Email Marcus Lee that his onboarding call is confirmed for Monday",
+     "status": "failed",
+     "reply": "Couldn't send email: Marcus Lee is on do-not-disturb.",
+     "offered": [
+      "M23.A07",
+      "M27.A08",
+      "M28.A07",
+      "M48.A01",
+      "M27.A09",
+      "M15.A05",
+      "M22.A08",
+      "M24.A09",
+      "M28.A08",
+      "M22.A07",
+      "M13.A05",
+      "M01.A08",
+      "M13.A03",
+      "M13.A04",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M32.A08",
+      "M29.A01",
+      "M13.A07"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_33",
+        "subject": "Onboarding call confirmed for Monday",
+        "body": "Hi Marcus, your onboarding call is confirmed for Monday."
+       },
+       "error": "CONFLICT: Marcus Lee is on do-not-disturb"
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Marcus Lee",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M13.A03",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"subject\":\"Onboarding call confirmed for Monday\",\"body\":\"Hi Marcus, your onboarding call is confirmed for Monday.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M13.A03"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4428,
+     "ms": 4434,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "261a2f7aebf2",
+       "latencyMs": 4351,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13138,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 152,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "171c0498169ceb31",
+       "targetsHash": "155065b7d29ab80f",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_33",
+          "subject": "Onboarding call confirmed for Monday",
+          "body": "Hi Marcus, your onboarding call is confirmed for Monday."
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_33",
+         "name": "Marcus Lee",
+         "text": "Marcus Lee",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-07-23T15:00:00.000Z",
+         "fingerprint": "0f7e84119eb82f22"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4434,
+    "firstReplyMs": 4428,
+    "plannerMs": 4351,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13138,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 152,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "failure-email-provider-down",
+   "category": "failure",
+   "pass": true,
+   "infra": "provider",
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Email Rosa Ito to thank her for renewing",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a540365f99f33c0d-BLR)",
+     "offered": [
+      "M13.A03",
+      "M13.A01",
+      "M13.A10",
+      "M45.A02",
+      "M47.A08",
+      "M47.A09",
+      "M28.A08",
+      "M44.A07",
+      "M13.A04",
+      "M30.A01",
+      "M48.A08",
+      "M13.A02",
+      "M30.A08",
+      "M13.A05",
+      "M03.A01",
+      "M01.A02",
+      "M01.A03",
+      "M12.A03",
+      "M27.A08",
+      "M12.A01",
+      "M14.A01",
+      "M12.A10",
+      "M01.A08",
+      "M03.A03",
+      "M13.A07",
+      "M28.A03",
+      "M45.A04",
+      "M12.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3538,
+     "ms": 3538,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3538,
+    "firstReplyMs": 3538,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "failure-email-provider-down",
+   "category": "failure",
+   "pass": true,
+   "infra": "provider",
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Email Rosa Ito to thank her for renewing",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036624af03c12-BLR)",
+     "offered": [
+      "M13.A03",
+      "M13.A01",
+      "M13.A10",
+      "M45.A02",
+      "M47.A08",
+      "M47.A09",
+      "M28.A08",
+      "M44.A07",
+      "M13.A04",
+      "M30.A01",
+      "M48.A08",
+      "M13.A02",
+      "M30.A08",
+      "M13.A05",
+      "M03.A01",
+      "M01.A02",
+      "M01.A03",
+      "M12.A03",
+      "M27.A08",
+      "M12.A01",
+      "M14.A01",
+      "M12.A10",
+      "M01.A08",
+      "M03.A03",
+      "M13.A07",
+      "M28.A03",
+      "M45.A04",
+      "M12.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3531,
+     "ms": 3531,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3531,
+    "firstReplyMs": 3531,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "followup-task-amend",
+   "category": "followup",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "turn 1: failed, wanted done"
+    },
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE (json_extract(data,'$.title') LIKE '%Marco Patel%' OR json_extract(data,'$.relatedTo.id')='ct_4') → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE (json_extract(data,'$.title') LIKE '%Marco Patel%' OR json_extract(data,'$.relatedTo.id')='ct_4') AND json_extract(data,'$.assigneeId')='us_5' AND json_extract(data,'$.priority')='high' AND json_extract(data,'$.dueDate')='2026-10-23' → 0, wanted 1"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a task to send the proposal to Marco Patel, due Friday",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a5403677fba53c13-BLR)",
+     "offered": [
+      "M06.A01",
+      "M06.A06",
+      "M27.A08",
+      "M28.A06",
+      "M06.A03",
+      "M28.A01",
+      "M29.A01",
+      "M28.A07",
+      "M27.A01",
+      "M45.A02",
+      "M07.A01",
+      "M45.A01",
+      "M06.A07",
+      "M06.A05",
+      "M28.A10",
+      "M01.A02",
+      "M01.A03",
+      "M21.A01",
+      "M47.A01",
+      "M04.A07",
+      "M13.A03",
+      "M32.A08",
+      "M45.A04",
+      "M13.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3420,
+     "ms": 3420,
+     "infra": "provider"
+    },
+    {
+     "user": "Actually give it to Aisha and make it high priority",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a540368dfc5683f3-BLR)",
+     "offered": [
+      "M06.A07",
+      "M47.A05",
+      "M47.A01",
+      "M11.A03",
+      "M45.A05",
+      "M06.A03",
+      "M45.A02",
+      "M18.A09",
+      "M06.A01",
+      "M21.A06",
+      "M24.A08",
+      "M06.A06",
+      "M14.A09",
+      "M13.A09",
+      "M27.A08",
+      "M48.A02",
+      "M48.A03",
+      "M03.A01",
+      "M11.A02",
+      "M45.A04"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3542,
+     "ms": 3542,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 6962,
+    "firstReplyMs": 3420,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "followup-task-amend",
+   "category": "followup",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "turn 1: failed, wanted done"
+    },
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE (json_extract(data,'$.title') LIKE '%Marco Patel%' OR json_extract(data,'$.relatedTo.id')='ct_4') → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE (json_extract(data,'$.title') LIKE '%Marco Patel%' OR json_extract(data,'$.relatedTo.id')='ct_4') AND json_extract(data,'$.assigneeId')='us_5' AND json_extract(data,'$.priority')='high' AND json_extract(data,'$.dueDate')='2026-10-23' → 0, wanted 1"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a task to send the proposal to Marco Patel, due Friday",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a540367b3a1b3c01-BLR)",
+     "offered": [
+      "M06.A01",
+      "M06.A06",
+      "M27.A08",
+      "M28.A06",
+      "M06.A03",
+      "M28.A01",
+      "M29.A01",
+      "M28.A07",
+      "M27.A01",
+      "M45.A02",
+      "M07.A01",
+      "M45.A01",
+      "M06.A07",
+      "M06.A05",
+      "M28.A10",
+      "M01.A02",
+      "M01.A03",
+      "M21.A01",
+      "M47.A01",
+      "M04.A07",
+      "M13.A03",
+      "M32.A08",
+      "M45.A04",
+      "M13.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3666,
+     "ms": 3666,
+     "infra": "provider"
+    },
+    {
+     "user": "Actually give it to Aisha and make it high priority",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036935fa73c01-BLR)",
+     "offered": [
+      "M06.A07",
+      "M47.A05",
+      "M47.A01",
+      "M11.A03",
+      "M45.A05",
+      "M06.A03",
+      "M45.A02",
+      "M18.A09",
+      "M06.A01",
+      "M21.A06",
+      "M24.A08",
+      "M06.A06",
+      "M14.A09",
+      "M13.A09",
+      "M27.A08",
+      "M48.A02",
+      "M48.A03",
+      "M03.A01",
+      "M11.A02",
+      "M45.A04"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3875,
+     "ms": 3875,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 7541,
+    "firstReplyMs": 3666,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "followup-void-draft-invoice",
+   "category": "followup",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "turn 1: failed, wanted done"
+    },
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M28.A09 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM invoices WHERE id='inv_7' → \"draft\", wanted \"void\""
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "What's the status of Omar Larsen's invoice?",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036937c3a3c07-BLR)",
+     "offered": [
+      "M28.A07",
+      "M28.A03",
+      "M28.A02",
+      "M28.A01",
+      "M27.A02",
+      "M28.A10",
+      "M29.A02",
+      "M28.A05",
+      "M29.A06",
+      "M30.A10",
+      "M27.A10",
+      "M46.A10",
+      "M32.A08",
+      "M47.A10",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A01",
+      "M27.A08",
+      "M27.A03",
+      "M32.A03",
+      "M30.A03",
+      "M31.A03",
+      "M32.A02",
+      "M30.A02",
+      "M31.A02"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3986,
+     "ms": 3986,
+     "infra": "provider"
+    },
+    {
+     "user": "Void it, they cancelled the order",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036acc9633c01-BLR)",
+     "offered": [
+      "M28.A09",
+      "M32.A09",
+      "M32.A10",
+      "M29.A03",
+      "M06.A10",
+      "M13.A05",
+      "M21.A05",
+      "M45.A03",
+      "M32.A07",
+      "M30.A09",
+      "M24.A07",
+      "M32.A03",
+      "M32.A02",
+      "M32.A08",
+      "M33.A08",
+      "M06.A08",
+      "M21.A10",
+      "M28.A03",
+      "M13.A07",
+      "M45.A04",
+      "M33.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4010,
+     "ms": 4010,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 7996,
+    "firstReplyMs": 3986,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "followup-void-draft-invoice",
+   "category": "followup",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "turn 1: failed, wanted done"
+    },
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M28.A09 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.status') FROM invoices WHERE id='inv_7' → \"draft\", wanted \"void\""
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "What's the status of Omar Larsen's invoice?",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036a58d013c01-BLR)",
+     "offered": [
+      "M28.A07",
+      "M28.A03",
+      "M28.A02",
+      "M28.A01",
+      "M27.A02",
+      "M28.A10",
+      "M29.A02",
+      "M28.A05",
+      "M29.A06",
+      "M30.A10",
+      "M27.A10",
+      "M46.A10",
+      "M32.A08",
+      "M47.A10",
+      "M13.A01",
+      "M01.A02",
+      "M01.A03",
+      "M29.A01",
+      "M27.A08",
+      "M27.A03",
+      "M32.A03",
+      "M30.A03",
+      "M31.A03",
+      "M32.A02",
+      "M30.A02",
+      "M31.A02"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3757,
+     "ms": 3757,
+     "infra": "provider"
+    },
+    {
+     "user": "Void it, they cancelled the order",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036be5ca33c06-BLR)",
+     "offered": [
+      "M28.A09",
+      "M32.A09",
+      "M32.A10",
+      "M29.A03",
+      "M06.A10",
+      "M13.A05",
+      "M21.A05",
+      "M45.A03",
+      "M32.A07",
+      "M30.A09",
+      "M24.A07",
+      "M32.A03",
+      "M32.A02",
+      "M32.A08",
+      "M33.A08",
+      "M06.A08",
+      "M21.A10",
+      "M28.A03",
+      "M13.A07",
+      "M45.A04",
+      "M33.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3967,
+     "ms": 3967,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 7724,
+    "firstReplyMs": 3757,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "indirect-chase-late-payers",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M28.A08 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_5' → 1, wanted 2"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_6' → 1, wanted 2"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_9' → 0, wanted 1"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Chase everyone who's more than two weeks late paying, but skip anyone we already reminded this week",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036c5b8323c0c-BLR)",
+     "offered": [
+      "M28.A10",
+      "M28.A06",
+      "M28.A08",
+      "M06.A01",
+      "M24.A10",
+      "M24.A09",
+      "M29.A03",
+      "M24.A07",
+      "M22.A06",
+      "M32.A05",
+      "M44.A09",
+      "M06.A06",
+      "M47.A05",
+      "M21.A08",
+      "M30.A07",
+      "M28.A03",
+      "M13.A01",
+      "M13.A03",
+      "M13.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4075,
+     "ms": 4075,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 4075,
+    "firstReplyMs": 4075,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "indirect-chase-late-payers",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M28.A08 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_5' → 1, wanted 2"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_6' → 1, wanted 2"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_array_length(json_extract(data,'$.reminders')) FROM invoices WHERE id='inv_9' → 0, wanted 1"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Chase everyone who's more than two weeks late paying, but skip anyone we already reminded this week",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036d388e63c00-BLR)",
+     "offered": [
+      "M28.A10",
+      "M28.A06",
+      "M28.A08",
+      "M06.A01",
+      "M24.A10",
+      "M24.A09",
+      "M29.A03",
+      "M24.A07",
+      "M22.A06",
+      "M32.A05",
+      "M44.A09",
+      "M06.A06",
+      "M47.A05",
+      "M21.A08",
+      "M30.A07",
+      "M28.A03",
+      "M13.A01",
+      "M13.A03",
+      "M13.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3374,
+     "ms": 3374,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3374,
+    "firstReplyMs": 3374,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "indirect-cover-for-lucia",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M06.A05 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.assigneeId') FROM tasks WHERE id='tk_19' → \"us_3\", wanted \"us_2\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_3' AND json_extract(data,'$.status')='open' → 1, wanted 0"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Lucia is out this week, have Raj cover her open tasks",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036acdd3a3c0d-BLR)",
+     "offered": [
+      "M06.A05",
+      "M06.A03",
+      "M22.A09",
+      "M06.A04",
+      "M06.A08",
+      "M06.A07",
+      "M06.A09",
+      "M50.A07",
+      "M46.A07",
+      "M22.A04",
+      "M49.A09",
+      "M47.A05",
+      "M50.A06",
+      "M38.A09",
+      "M41.A07",
+      "M48.A02",
+      "M48.A03",
+      "M03.A05",
+      "M04.A06",
+      "M47.A04",
+      "M21.A06",
+      "M07.A03",
+      "M47.A03",
+      "M21.A03",
+      "M21.A01",
+      "M20.A01",
+      "M01.A03",
+      "M03.A03",
+      "M04.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4141,
+     "ms": 4141,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 4141,
+    "firstReplyMs": 4141,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "indirect-cover-for-lucia",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M06.A05 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.assigneeId') FROM tasks WHERE id='tk_19' → \"us_3\", wanted \"us_2\""
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.assigneeId')='us_3' AND json_extract(data,'$.status')='open' → 1, wanted 0"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Lucia is out this week, have Raj cover her open tasks",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036c238fd3c07-BLR)",
+     "offered": [
+      "M06.A05",
+      "M06.A03",
+      "M22.A09",
+      "M06.A04",
+      "M06.A08",
+      "M06.A07",
+      "M06.A09",
+      "M50.A07",
+      "M46.A07",
+      "M22.A04",
+      "M49.A09",
+      "M47.A05",
+      "M50.A06",
+      "M38.A09",
+      "M41.A07",
+      "M48.A02",
+      "M48.A03",
+      "M03.A05",
+      "M04.A06",
+      "M47.A04",
+      "M21.A06",
+      "M07.A03",
+      "M47.A03",
+      "M21.A03",
+      "M21.A01",
+      "M20.A01",
+      "M01.A03",
+      "M03.A03",
+      "M04.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3442,
+     "ms": 3442,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3442,
+    "firstReplyMs": 3442,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "indirect-noah-helps-sales",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M49.A05 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM teams, json_each(json_extract(teams.data,'$.memberIds')) m WHERE teams.id='tm_1' AND m.value='us_6' → 0, wanted 1"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Noah is going to help out on the sales team for a while",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036e9b92d3c13-BLR)",
+     "offered": [
+      "M49.A01",
+      "M49.A05",
+      "M49.A07",
+      "M05.A01",
+      "M49.A03",
+      "M04.A01",
+      "M49.A06",
+      "M49.A08",
+      "M03.A05",
+      "M04.A06",
+      "M36.A09",
+      "M03.A10",
+      "M10.A05",
+      "M21.A06",
+      "M35.A09",
+      "M48.A02",
+      "M48.A03",
+      "M48.A01",
+      "M02.A08",
+      "M48.A05"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3598,
+     "ms": 3598,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3598,
+    "firstReplyMs": 3598,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "indirect-noah-helps-sales",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M49.A05 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM teams, json_each(json_extract(teams.data,'$.memberIds')) m WHERE teams.id='tm_1' AND m.value='us_6' → 0, wanted 1"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Noah is going to help out on the sales team for a while",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036ede9d63c0d-BLR)",
+     "offered": [
+      "M49.A01",
+      "M49.A05",
+      "M49.A07",
+      "M05.A01",
+      "M49.A03",
+      "M04.A01",
+      "M49.A06",
+      "M49.A08",
+      "M03.A05",
+      "M04.A06",
+      "M36.A09",
+      "M03.A10",
+      "M10.A05",
+      "M21.A06",
+      "M35.A09",
+      "M48.A02",
+      "M48.A03",
+      "M48.A01",
+      "M02.A08",
+      "M48.A05"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3628,
+     "ms": 3628,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3628,
+    "firstReplyMs": 3628,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "indirect-who-is-waiting",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M11.A10 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "reply",
+     "detail": "missing /11 conversations/"
+    },
+    {
+     "kind": "reply",
+     "detail": "missing /Tara Silva/"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Who's still waiting on a reply from us?",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036d75b653c00-BLR)",
+     "offered": [
+      "M11.A10",
+      "M11.A02",
+      "M47.A08",
+      "M43.A08",
+      "M24.A08",
+      "M45.A09",
+      "M13.A09",
+      "M45.A08",
+      "M47.A10",
+      "M45.A02",
+      "M12.A09",
+      "M18.A10",
+      "M20.A10",
+      "M11.A09",
+      "M16.A04",
+      "M12.A07",
+      "M13.A07",
+      "M07.A03",
+      "M13.A03",
+      "M12.A03",
+      "M03.A03",
+      "M48.A03",
+      "M45.A06",
+      "M45.A04"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3368,
+     "ms": 3368,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3368,
+    "firstReplyMs": 3368,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "indirect-who-is-waiting",
+   "category": "indirect",
+   "pass": false,
+   "infra": "provider",
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "failed, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M11.A10 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "reply",
+     "detail": "missing /11 conversations/"
+    },
+    {
+     "kind": "reply",
+     "detail": "missing /Tara Silva/"
+    }
+   ],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Who's still waiting on a reply from us?",
+     "status": "failed",
+     "reply": "The planner failed: Codex: Reconnecting... 2/5 (unexpected status 403 Forbidden: Unknown error, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: a54036dcdc1a3c07-BLR)",
+     "offered": [
+      "M11.A10",
+      "M11.A02",
+      "M47.A08",
+      "M43.A08",
+      "M24.A08",
+      "M45.A09",
+      "M13.A09",
+      "M45.A08",
+      "M47.A10",
+      "M45.A02",
+      "M12.A09",
+      "M18.A10",
+      "M20.A10",
+      "M11.A09",
+      "M16.A04",
+      "M12.A07",
+      "M13.A07",
+      "M07.A03",
+      "M13.A03",
+      "M12.A03",
+      "M03.A03",
+      "M48.A03",
+      "M45.A06",
+      "M45.A04"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 0,
+     "planner": [],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 3553,
+     "ms": 3553,
+     "infra": "provider"
+    }
+   ],
+   "metrics": {
+    "ms": 3553,
+    "firstReplyMs": 3553,
+    "plannerMs": 0,
+    "plannerRounds": 0,
+    "modelCalls": 0,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 0,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 0,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": []
+  },
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M01.A05",
+      "M02.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A10",
+      "M20.A10",
+      "M01.A09",
+      "M02.A06",
+      "M10.A10",
+      "M47.A09",
+      "M44.A07",
+      "M49.A10",
+      "M25.A05",
+      "M14.A05",
+      "M09.A08",
+      "M05.A05",
+      "M03.A02",
+      "M02.A02",
+      "M48.A02",
+      "M01.A03",
+      "M02.A03",
+      "M20.A03",
+      "M10.A03",
+      "M47.A03",
+      "M44.A03",
+      "M49.A03",
+      "M25.A03",
+      "M14.A03",
+      "M09.A03"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A05"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "limit": 500
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M01.A03",
+          "argsJson": "{\"query\":\"Wayne\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M01.A05",
+            "argsJson": "{\"contactId\":\"$item.id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4143,
+     "ms": 4143,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "72551fde56ee",
+       "latencyMs": 4117,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14166,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 166,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "4a9fc3cd0a2b63a9",
+       "targetsHash": "8afb3e2213c04eab",
+       "reason": "deletes or cancels records",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_20"
+         },
+         "label": "Lena Larsen"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_21"
+         },
+         "label": "Ana Okafor"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_24"
+         },
+         "label": "Nina Novak"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_26"
+         },
+         "label": "Zoe Costa"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_27"
+         },
+         "label": "Ben Patel"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4143,
+    "firstReplyMs": 4143,
+    "plannerMs": 4117,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 14166,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 166,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "multi-bulk-archive-declined",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Archive every contact at Wayne",
+     "status": "cancelled",
+     "reply": "Cancelled. Nothing was changed by that step.",
+     "offered": [
+      "M01.A05",
+      "M02.A05",
+      "M01.A02",
+      "M01.A06",
+      "M01.A10",
+      "M20.A10",
+      "M01.A09",
+      "M02.A06",
+      "M10.A10",
+      "M47.A09",
+      "M44.A07",
+      "M49.A10",
+      "M25.A05",
+      "M14.A05",
+      "M09.A08",
+      "M05.A05",
+      "M03.A02",
+      "M02.A02",
+      "M48.A02",
+      "M01.A03",
+      "M02.A03",
+      "M20.A03",
+      "M10.A03",
+      "M47.A03",
+      "M44.A03",
+      "M49.A03",
+      "M25.A03",
+      "M14.A03",
+      "M09.A03"
+     ],
+     "planned": [
+      "M01.A03",
+      "M01.A05"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Wayne",
+        "limit": 500
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M01.A03",
+          "argsJson": "{\"query\":\"Wayne\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M01.A05",
+            "argsJson": "{\"contactId\":\"$item.id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4312,
+     "ms": 4312,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "72551fde56ee",
+       "latencyMs": 4293,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14164,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 166,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "4a9fc3cd0a2b63a9",
+       "targetsHash": "8afb3e2213c04eab",
+       "reason": "deletes or cancels records",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_20"
+         },
+         "label": "Lena Larsen"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_21"
+         },
+         "label": "Ana Okafor"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_24"
+         },
+         "label": "Nina Novak"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_26"
+         },
+         "label": "Zoe Costa"
+        },
+        {
+         "action": "M01.A05",
+         "name": "Archive contact",
+         "args": {
+          "contactId": "ct_27"
+         },
+         "label": "Ben Patel"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4312,
+    "firstReplyMs": 4312,
+    "plannerMs": 4293,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 14164,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 166,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "multi-email-and-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Email Sarah Johnson at Brightside that the Agency plan is $297 a month, and create a task for Raj to follow up with her on Friday",
+     "status": "done",
+     "reply": "Done: Send email.\nDone: Create task (Follow up with Sarah Johnson).",
+     "offered": [
+      "M13.A03",
+      "M06.A01",
+      "M13.A04",
+      "M06.A03",
+      "M28.A08",
+      "M30.A01",
+      "M15.A05",
+      "M45.A02",
+      "M30.A04",
+      "M07.A01",
+      "M27.A01",
+      "M27.A08",
+      "M04.A01",
+      "M28.A01",
+      "M30.A05",
+      "M01.A02",
+      "M01.A03",
+      "M21.A02",
+      "M21.A03",
+      "M04.A02",
+      "M04.A03",
+      "M48.A02",
+      "M48.A03",
+      "M12.A03",
+      "M47.A08",
+      "M21.A01",
+      "M47.A01",
+      "M12.A04",
+      "M15.A06",
+      "M03.A03",
+      "M13.A07",
+      "M45.A04",
+      "M12.A07"
+     ],
+     "planned": [
+      "M13.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_31",
+        "subject": "Agency plan pricing",
+        "body": "The Agency plan is $297 a month."
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sarah Johnson",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-23",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_31"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M13.A03",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\",\"where\":{\"company\":\"Brightside\"}}},\"subject\":\"Agency plan pricing\",\"body\":\"The Agency plan is $297 a month.\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M06.A01",
+          "argsJson": "{\"title\":\"Follow up with Sarah Johnson\",\"assigneeId\":{\"$lookup\":{\"entity\":\"user\",\"name\":\"Raj\"}},\"dueDate\":\"2026-10-23\",\"relatedTo\":{\"type\":\"contact\",\"id\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\",\"where\":{\"company\":\"Brightside\"}}}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M13.A03",
+          "M06.A01"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4579,
+     "ms": 4583,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "a286f0aa054c",
+       "latencyMs": 4515,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 16742,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 233,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "2fc3015c2574304d",
+       "targetsHash": "71131b991b89ef71",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_31",
+          "subject": "Agency plan pricing",
+          "body": "The Agency plan is $297 a month."
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_31",
+         "name": "Sarah Johnson",
+         "text": "Sarah Johnson",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-08-22T11:00:00.000Z",
+         "fingerprint": "1e9c57b15d41d66d",
+         "where": {
+          "company": "Brightside"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4583,
+    "firstReplyMs": 4579,
+    "plannerMs": 4515,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 16742,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 233,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "multi-email-and-task",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Email Sarah Johnson at Brightside that the Agency plan is $297 a month, and create a task for Raj to follow up with her on Friday",
+     "status": "done",
+     "reply": "Done: Send email.\nDone: Create task (Follow up with Sarah Johnson about the Agency plan).",
+     "offered": [
+      "M13.A03",
+      "M06.A01",
+      "M13.A04",
+      "M06.A03",
+      "M28.A08",
+      "M30.A01",
+      "M15.A05",
+      "M45.A02",
+      "M30.A04",
+      "M07.A01",
+      "M27.A01",
+      "M27.A08",
+      "M04.A01",
+      "M28.A01",
+      "M30.A05",
+      "M01.A02",
+      "M01.A03",
+      "M21.A02",
+      "M21.A03",
+      "M04.A02",
+      "M04.A03",
+      "M48.A02",
+      "M48.A03",
+      "M12.A03",
+      "M47.A08",
+      "M21.A01",
+      "M47.A01",
+      "M12.A04",
+      "M15.A06",
+      "M03.A03",
+      "M13.A07",
+      "M45.A04",
+      "M12.A07"
+     ],
+     "planned": [
+      "M13.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_31",
+        "subject": "Agency plan pricing",
+        "body": "The Agency plan is $297 a month."
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Sarah Johnson about the Agency plan",
+        "assigneeId": "us_2",
+        "dueDate": "2026-10-23"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M13.A03",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Sarah Johnson\",\"where\":{\"company\":\"Brightside\"}}},\"subject\":\"Agency plan pricing\",\"body\":\"The Agency plan is $297 a month.\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M06.A01",
+          "argsJson": "{\"title\":\"Follow up with Sarah Johnson about the Agency plan\",\"assigneeId\":{\"$lookup\":{\"entity\":\"user\",\"name\":\"Raj\"}},\"dueDate\":\"2026-10-23\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M13.A03",
+          "M06.A01"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4816,
+     "ms": 4819,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "a286f0aa054c",
+       "latencyMs": 4758,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 16740,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 207,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "ed5788e8759ddd71",
+       "targetsHash": "71131b991b89ef71",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_31",
+          "subject": "Agency plan pricing",
+          "body": "The Agency plan is $297 a month."
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_31",
+         "name": "Sarah Johnson",
+         "text": "Sarah Johnson",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-08-22T11:00:00.000Z",
+         "fingerprint": "1e9c57b15d41d66d",
+         "where": {
+          "company": "Brightside"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4819,
+    "firstReplyMs": 4816,
+    "plannerMs": 4758,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 16740,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 207,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "multi-facebook-leads",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Assign last week's Facebook leads to the available sales reps, round robin",
+     "status": "done",
+     "reply": "Assign lead owner for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A05",
+      "M49.A08",
+      "M04.A06",
+      "M22.A01",
+      "M01.A07",
+      "M03.A03",
+      "M02.A08",
+      "M11.A03",
+      "M21.A06",
+      "M21.A07",
+      "M20.A06",
+      "M46.A07",
+      "M03.A06",
+      "M15.A04",
+      "M50.A06",
+      "M06.A05",
+      "M47.A04",
+      "M48.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M03.A03",
+      "M48.A03",
+      "M03.A05"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\",\"source\":\"facebook_ads\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s2.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4579,
+     "ms": 4583,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "9c4c0f207584",
+       "latencyMs": 4536,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12812,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 229,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "e1ee41c6ff2b5924",
+       "targetsHash": "8f5f103f8713d82b",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4583,
+    "firstReplyMs": 4579,
+    "plannerMs": 4536,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 8,
+    "clarifications": 0,
+    "usage": {
+     "input": 12812,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 229,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "multi-facebook-leads",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Assign last week's Facebook leads to the available sales reps, round robin",
+     "status": "done",
+     "reply": "Assign lead owner for 4 of 4: Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A05",
+      "M49.A08",
+      "M04.A06",
+      "M22.A01",
+      "M01.A07",
+      "M03.A03",
+      "M02.A08",
+      "M11.A03",
+      "M21.A06",
+      "M21.A07",
+      "M20.A06",
+      "M46.A07",
+      "M03.A06",
+      "M15.A04",
+      "M50.A06",
+      "M06.A05",
+      "M47.A04",
+      "M48.A03",
+      "M11.A02",
+      "M03.A01",
+      "M04.A01",
+      "M03.A10",
+      "M03.A04",
+      "M21.A03",
+      "M03.A02",
+      "M03.A09",
+      "M01.A03",
+      "M13.A07",
+      "M01.A01",
+      "M32.A03",
+      "M03.A07",
+      "M21.A01",
+      "M49.A07",
+      "M36.A01",
+      "M02.A01",
+      "M47.A01",
+      "M05.A01",
+      "M27.A10",
+      "M28.A03",
+      "M15.A03",
+      "M49.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M48.A03",
+      "M03.A05"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "source": "facebook_ads",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_2"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads created last week from Facebook ads, then assign each lead to available sales reps in round-robin order.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"source\":\"facebook_ads\",\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s2.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 10264,
+     "ms": 10267,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "9c4c0f207584",
+       "latencyMs": 5466,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12812,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 98,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "a82abc85671b",
+       "latencyMs": 4650,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 18386,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 229,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "8195106332fd5293",
+       "targetsHash": "8f5f103f8713d82b",
+       "reason": "changes 4 records at once",
+       "count": 4,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_2"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_4"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_5"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_2"
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 10267,
+    "firstReplyMs": 10264,
+    "plannerMs": 10116,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 8,
+    "clarifications": 0,
+    "usage": {
+     "input": 31198,
+     "cachedRead": 12288,
+     "cacheWrite": 0,
+     "output": 327,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "multi-lost-deal-with-note",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Mark the Soylent Pro plan deal as lost, they went with a competitor, and add a note on it that we should revisit in Q2",
+     "status": "done",
+     "reply": "Done: Mark opportunity lost (Soylent - Pro plan).\nDone: Create note.",
+     "offered": [
+      "M04.A09",
+      "M07.A06",
+      "M04.A05",
+      "M03.A09",
+      "M07.A01",
+      "M04.A08",
+      "M47.A07",
+      "M04.A10",
+      "M30.A04",
+      "M05.A06",
+      "M27.A04",
+      "M44.A04",
+      "M31.A04",
+      "M04.A01",
+      "M28.A08",
+      "M04.A02",
+      "M04.A03",
+      "M05.A07",
+      "M05.A09",
+      "M05.A10",
+      "M07.A03"
+     ],
+     "planned": [
+      "M04.A09",
+      "M07.A01"
+     ],
+     "calls": [
+      {
+       "action": "M04.A09",
+       "args": {
+        "opportunityId": "op_5",
+        "reason": "went with a competitor"
+       }
+      },
+      {
+       "action": "M07.A01",
+       "args": {
+        "body": "We should revisit in Q2.",
+        "attachTo": {
+         "type": "opportunity",
+         "id": "op_5"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M04.A09",
+          "argsJson": "{\"opportunityId\":{\"$lookup\":{\"entity\":\"opportunity\",\"name\":\"Soylent Pro\"}},\"reason\":\"went with a competitor\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M07.A01",
+          "argsJson": "{\"body\":\"We should revisit in Q2.\",\"attachTo\":{\"type\":\"opportunity\",\"id\":{\"$lookup\":{\"entity\":\"opportunity\",\"name\":\"Soylent Pro\"}}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M04.A09",
+          "M07.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5184,
+     "ms": 5184,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "c589176a9f66",
+       "latencyMs": 5125,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12531,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 188,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5184,
+    "firstReplyMs": 5184,
+    "plannerMs": 5125,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12531,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 188,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "multi-lost-deal-with-note",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Mark the Soylent Pro plan deal as lost, they went with a competitor, and add a note on it that we should revisit in Q2",
+     "status": "done",
+     "reply": "Done: Mark opportunity lost (Soylent - Pro plan).\nDone: Create note.",
+     "offered": [
+      "M04.A09",
+      "M07.A06",
+      "M04.A05",
+      "M03.A09",
+      "M07.A01",
+      "M04.A08",
+      "M47.A07",
+      "M04.A10",
+      "M30.A04",
+      "M05.A06",
+      "M27.A04",
+      "M44.A04",
+      "M31.A04",
+      "M04.A01",
+      "M28.A08",
+      "M04.A02",
+      "M04.A03",
+      "M05.A07",
+      "M05.A09",
+      "M05.A10",
+      "M07.A03"
+     ],
+     "planned": [
+      "M04.A09",
+      "M07.A01"
+     ],
+     "calls": [
+      {
+       "action": "M04.A09",
+       "args": {
+        "opportunityId": "op_5",
+        "reason": "went with a competitor"
+       }
+      },
+      {
+       "action": "M07.A01",
+       "args": {
+        "body": "We should revisit in Q2",
+        "attachTo": {
+         "type": "opportunity",
+         "id": "op_5"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M04.A09",
+          "argsJson": "{\"opportunityId\":{\"$lookup\":{\"entity\":\"opportunity\",\"name\":\"Soylent Pro\"}},\"reason\":\"went with a competitor\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M07.A01",
+          "argsJson": "{\"body\":\"We should revisit in Q2\",\"attachTo\":{\"type\":\"opportunity\",\"id\":{\"$lookup\":{\"entity\":\"opportunity\",\"name\":\"Soylent Pro\"}}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M04.A09",
+          "M07.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4937,
+     "ms": 4937,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "c589176a9f66",
+       "latencyMs": 4886,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12529,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 186,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4937,
+    "firstReplyMs": 4937,
+    "plannerMs": 4886,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12529,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 186,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "unsupported-linkedin-post",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Post our fall webinar announcement on LinkedIn",
+     "status": "unsupported",
+     "reply": "Delivery to LinkedIn isn't supported. Nothing was sent or published. Supported surfaces: SMS, Email, Form, Survey, Booking page, Website, Funnel, Landing page, Blog, Course, Lesson, CRM community, Customer review response, Simulated business directory listing.",
+     "offered": [
+      "M43.A07",
+      "M38.A09",
+      "M43.A09",
+      "M43.A10",
+      "M42.A01",
+      "M38.A02",
+      "M40.A09",
+      "M23.A09",
+      "M43.A08",
+      "M04.A05",
+      "M38.A10",
+      "M04.A01",
+      "M38.A03",
+      "M15.A05",
+      "M42.A08",
+      "M43.A05",
+      "M38.A01",
+      "M37.A09",
+      "M35.A09",
+      "M07.A08",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "unsupported",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": "LinkedIn is not a supported delivery surface in this CRM, and no listed action can publish directly to LinkedIn.",
+        "alternatives": [
+         "Create a draft blog post announcement instead."
+        ],
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": "LinkedIn"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4489,
+     "ms": 4489,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "d8612e0f2b4b",
+       "latencyMs": 4471,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12296,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 101,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4489,
+    "firstReplyMs": 4489,
+    "plannerMs": 4471,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 12296,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 101,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "unsupported-linkedin-post",
+   "category": "unsupported",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Post our fall webinar announcement on LinkedIn",
+     "status": "unsupported",
+     "reply": "Delivery to LinkedIn isn't supported. Nothing was sent or published. Supported surfaces: SMS, Email, Form, Survey, Booking page, Website, Funnel, Landing page, Blog, Course, Lesson, CRM community, Customer review response, Simulated business directory listing.",
+     "offered": [
+      "M43.A07",
+      "M38.A09",
+      "M43.A09",
+      "M43.A10",
+      "M42.A01",
+      "M38.A02",
+      "M40.A09",
+      "M23.A09",
+      "M43.A08",
+      "M04.A05",
+      "M38.A10",
+      "M04.A01",
+      "M38.A03",
+      "M15.A05",
+      "M42.A08",
+      "M43.A05",
+      "M38.A01",
+      "M37.A09",
+      "M35.A09",
+      "M07.A08",
+      "M07.A03"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "unsupported",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": "There’s no LinkedIn publishing action available. The listed publishing actions support a blog, website, funnel, landing page, and other CRM surfaces, but not LinkedIn.",
+        "alternatives": [
+         "Publish the announcement on the blog"
+        ],
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": "LinkedIn"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6065,
+     "ms": 6065,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "d8612e0f2b4b",
+       "latencyMs": 6040,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 24787,
+        "cachedRead": 18304,
+        "cacheWrite": 0,
+        "output": 127,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6065,
+    "firstReplyMs": 6065,
+    "plannerMs": 6040,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 24787,
+     "cachedRead": 18304,
+     "cacheWrite": 0,
+     "output": 127,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

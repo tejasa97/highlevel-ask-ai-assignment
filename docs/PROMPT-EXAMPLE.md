@@ -105,7 +105,8 @@ Rules:
   ID argument. Code finds exactly one record; no match fails without creating anything, and multiple
   matches ask the user.
 - A follow-up that narrows or changes what the last turn already did amends the records it made: update
-  the ones that stay, cancel or undo the ones now left out, and don't make them again.
+  the ones that stay, cancel or undo the ones now left out, and don't make them again. Set outcome.amends
+  true and plan the request whole: the app updates and cancels the earlier records for you.
 - Dates come from <now>. Don't ask for confirmation; the app asks the user before risky or bulk changes.
   ... (about 30 rules in all)
 Ops (kind "op"):
@@ -311,7 +312,7 @@ The readback only covers filter and exclude steps that feed a write loop. In the
     { "action": "M06.A06", "argsJson": "{\"taskId\":\"$item.id\",\"dueDate\":\"2026-10-22\"}" } ] }
 ```
 
-The loop reads the task search directly, so there's no filter chain to say back. The plan compiled, and all five tasks got tomorrow's due date. Ben Nguyen's task stayed open. The other two runs failed in different ways. One ran out of repairs: its plan still lacked the cancel its own stated outcome needed. The other assigned the four Facebook leads again and created four new tasks for them, so each ended up with two, and its cancel step selected nothing. The benchmark marks these as failed follow-ups (BENCHMARK.md lists them). "Amend what the last turn made" is the weakest part of the planner on this model.
+The loop reads the task search directly, so there's no filter chain to say back. The plan compiled, and all five tasks got tomorrow's due date. Ben Nguyen's task stayed open. The other two runs failed in different ways. One ran out of repairs: its plan still lacked the cancel its own stated outcome needed. The other assigned the four Facebook leads again and created four new tasks for them, so each ended up with two, and its cancel step selected nothing. The benchmark marks these as failed follow-ups (BENCHMARK.md lists them). "Amend what the last turn made" was the weakest part of the planner on this model, and the benchmark numbers above predate the fix: the planner now flags the amend and code updates and cancels the earlier tasks (PLANNER-CHANGES.md, section 9).
 
 ---
 

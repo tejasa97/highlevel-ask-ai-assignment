@@ -11,11 +11,12 @@ const strings = { type: ["array", "null"], items: { type: "string" } };
 
 const outcome = {
   type: "object", additionalProperties: false,
-  required: ["effect", "actions", "destination"],
+  required: ["effect", "actions", "destination", "amends"],
   properties: {
     effect: { enum: ["read", "change"] },
     actions: { type: "array", items: { type: "string" }, description: "Catalog IDs of the final requested operations, not prerequisite reads. Empty only while searching for the final action." },
     destination: { ...nullable("string"), description: "Explicit delivery surface ID from delivery_surfaces; preserve an unsupported platform's name instead of substituting a supported surface. Null when not a delivery request." },
+    amends: { type: "boolean", description: "True only when this message narrows or changes what your last turn already made (\"only the Facebook ones, due tomorrow\"), and the plan is the whole request again: the app then updates the records that stay and cancels the ones left out. False for anything new, and for \"one for Tom too\"." },
   },
 };
 const lookup = {
@@ -135,7 +136,7 @@ export const SubmitPlan = z.object({
   query: z.string().nullable().default(null),
   text: z.string().nullable().default(null),
   // Optional at the internal boundary for existing saved replies; every new provider call requires these on wire.
-  outcome: z.object({ effect: z.enum(["read", "change"]), actions: z.array(z.string()), destination: z.string().nullable() }).nullable().optional(),
+  outcome: z.object({ effect: z.enum(["read", "change"]), actions: z.array(z.string()), destination: z.string().nullable(), amends: z.boolean().optional() }).nullable().optional(),
   clarification: z.enum(["identity", "content", "choice"]).nullable().optional(),
   lookup: z.object({ entity: z.string(), name: z.string(), whereJson: z.string().nullable() }).nullable().optional(),
   missing: z.object({ action: z.string(), argument: z.string(), argsJson: z.string() }).nullable().optional(),

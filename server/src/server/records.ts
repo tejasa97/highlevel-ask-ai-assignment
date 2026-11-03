@@ -7,7 +7,8 @@ export interface WorkingRecord { entity: string; id: string; name: string; for?:
 export const MAX_RECORDS = 12;
 
 /** Remember identities actually observed by the executor, never planned IDs or raw result records. */
-export function rememberRecords(previous: WorkingRecord[], plan: CompiledPlan, result: RunResult): WorkingRecord[] {
+/** With `writesOnly`, only what the plan's writes made or changed: what an amend revises, never the records a search merely read. */
+export function rememberRecords(previous: WorkingRecord[], plan: CompiledPlan, result: RunResult, cap = MAX_RECORDS, writesOnly = false): WorkingRecord[] {
   const records = [...previous];
   const add = (entity: string, value: unknown) => {
     if (!value || typeof value !== "object") return;
@@ -35,15 +36,15 @@ export function rememberRecords(previous: WorkingRecord[], plan: CompiledPlan, r
       continue;
     }
     if (step.status !== "done") continue;
-    if (compiled?.kind === "resolve") add(compiled.entity, step.output);
-    if (compiled?.kind !== "action") continue;
+    if (compiled?.kind === "resolve" && !writesOnly) add(compiled.entity, step.output);
+    if (compiled?.kind !== "action" || (writesOnly && compiled.call.action.risk === "read")) continue;
     const entity = produced(compiled.call.action);
     if (!entity) continue;
     const out = step.output as { items?: unknown[] } | undefined;
     if (Array.isArray(out?.items)) for (const item of out.items.slice(0, MAX_RECORDS)) add(entity, item);
     else add(entity, step.output);
   }
-  return records.slice(-MAX_RECORDS);
+  return records.slice(-cap);
 }
 
 /** What an action's output is a record of: what it declares, or for a "Get …" read of one record type, that type. */

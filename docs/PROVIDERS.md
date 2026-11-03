@@ -98,8 +98,8 @@ still advertised skills and tools despite the disabling flags.** Do not treat th
 
 This is a trusted local development provider. It strips inherited API credentials, checks the
 current login before enforcing ChatGPT authentication, uses a private working directory and
-read-only sandbox, and requests restricted runtime capabilities. Unexpected tool events and
-configuration errors fail the request; this cannot undo any tool action already started by
+read-only sandbox, and requests restricted runtime capabilities. An unexpected tool event is retried once with a fresh run (Luna now and then reaches for a tool that is
+switched off); a second one and configuration errors fail the request; this cannot undo any tool action already started by
 the runtime. Keep it out of public or untrusted services. For raw API-key calls, use the Qwen
 provider above.
 

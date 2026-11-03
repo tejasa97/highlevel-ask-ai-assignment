@@ -1,0 +1,3252 @@
+{
+ "summary": {
+  "label": "merged-param-rest-2x",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/param-scenarios",
+  "set": "0710af9db56c",
+  "tier": "strong",
+  "scenarios": 11,
+  "repeat": 2,
+  "runs": 22,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 11,
+  "measured": 11,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 4512,
+   "p95": 6445
+  },
+  "firstReplyMs": {
+   "p50": 4512,
+   "p95": 6441
+  },
+  "plannerRoundsPerRun": 1.05,
+  "callsPerRun": 1.3,
+  "clarified": {
+   "runs": 0,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 39086
+ },
+ "runs": [
+  {
+   "id": "param-apply-tag",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Tag Omar Larsen as a partner",
+     "status": "done",
+     "reply": "Apply tag to record for 1 of 1: Omar Larsen.",
+     "offered": [
+      "M08.A08",
+      "M08.A01",
+      "M08.A06",
+      "M08.A09",
+      "M08.A02",
+      "M08.A07",
+      "M01.A03",
+      "M01.A09",
+      "M03.A01",
+      "M03.A07",
+      "M02.A01",
+      "M04.A06",
+      "M03.A05",
+      "M27.A03",
+      "M15.A04",
+      "M01.A02",
+      "M02.A10"
+     ],
+     "planned": [
+      "M08.A02",
+      "M01.A03",
+      "M08.A06"
+     ],
+     "calls": [
+      {
+       "action": "M08.A02",
+       "args": {
+        "query": "partner"
+       }
+      },
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Omar Larsen",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M08.A06",
+       "args": {
+        "tagId": "tg_4",
+        "recordType": "contact",
+        "recordId": "ct_7"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M08.A02",
+          "argsJson": "{\"query\":\"partner\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M01.A03",
+          "argsJson": "{\"query\":\"Omar Larsen\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s2.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M08.A06",
+            "argsJson": "{\"tagId\":\"$s1.items[0].id\",\"recordType\":\"contact\",\"recordId\":\"$item.id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M08.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4703,
+     "ms": 4703,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "a22f068c555e",
+       "latencyMs": 4670,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12055,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 210,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4703,
+    "firstReplyMs": 4703,
+    "plannerMs": 4670,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 3,
+    "clarifications": 0,
+    "usage": {
+     "input": 12055,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 210,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-apply-tag",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Tag Omar Larsen as a partner",
+     "status": "done",
+     "reply": "Apply tag to record for 1 of 1: partner.",
+     "offered": [
+      "M08.A08",
+      "M08.A01",
+      "M08.A06",
+      "M08.A09",
+      "M08.A02",
+      "M08.A07",
+      "M01.A03",
+      "M01.A09",
+      "M03.A01",
+      "M03.A07",
+      "M02.A01",
+      "M04.A06",
+      "M03.A05",
+      "M27.A03",
+      "M15.A04",
+      "M01.A02",
+      "M02.A10"
+     ],
+     "planned": [
+      "M08.A02",
+      "M01.A03",
+      "M08.A06"
+     ],
+     "calls": [
+      {
+       "action": "M08.A02",
+       "args": {
+        "query": "partner",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Omar Larsen"
+       }
+      },
+      {
+       "action": "M08.A06",
+       "args": {
+        "tagId": "tg_4",
+        "recordType": "contact",
+        "recordId": "ct_7"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M08.A02",
+          "argsJson": "{\"query\":\"partner\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M01.A03",
+          "argsJson": "{\"query\":\"Omar Larsen\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": "{\"name\":\"partner\"}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M08.A06",
+            "argsJson": "{\"tagId\":\"$item.id\",\"recordType\":\"contact\",\"recordId\":\"$s2.items[0].id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M08.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4890,
+     "ms": 4890,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "a22f068c555e",
+       "latencyMs": 4857,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12055,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 215,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4890,
+    "firstReplyMs": 4890,
+    "plannerMs": 4857,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 3,
+    "clarifications": 0,
+    "usage": {
+     "input": 12055,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 215,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-create-tag",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a purple tag called trade-show-2026, for leads we meet at expos",
+     "status": "done",
+     "reply": "Done: Create tag (trade-show-2026).",
+     "offered": [
+      "M08.A01",
+      "M21.A03",
+      "M08.A02",
+      "M21.A01",
+      "M04.A01",
+      "M08.A06",
+      "M21.A09",
+      "M08.A03",
+      "M08.A10",
+      "M03.A01",
+      "M03.A10",
+      "M10.A01",
+      "M21.A07",
+      "M08.A08",
+      "M03.A05",
+      "M24.A03",
+      "M06.A03",
+      "M03.A03",
+      "M48.A03"
+     ],
+     "planned": [
+      "M08.A01"
+     ],
+     "calls": [
+      {
+       "action": "M08.A01",
+       "args": {
+        "name": "trade-show-2026",
+        "color": "purple",
+        "description": "For leads we meet at expos"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M08.A01",
+          "argsJson": "{\"name\":\"trade-show-2026\",\"color\":\"purple\",\"description\":\"For leads we meet at expos\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M08.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4810,
+     "ms": 4810,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "846e16efd993",
+       "latencyMs": 4761,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12763,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 119,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4810,
+    "firstReplyMs": 4810,
+    "plannerMs": 4761,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12763,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 119,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-create-tag",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a purple tag called trade-show-2026, for leads we meet at expos",
+     "status": "done",
+     "reply": "Done: Create tag (trade-show-2026).",
+     "offered": [
+      "M08.A01",
+      "M21.A03",
+      "M08.A02",
+      "M21.A01",
+      "M04.A01",
+      "M08.A06",
+      "M21.A09",
+      "M08.A03",
+      "M08.A10",
+      "M03.A01",
+      "M03.A10",
+      "M10.A01",
+      "M21.A07",
+      "M08.A08",
+      "M03.A05",
+      "M24.A03",
+      "M06.A03",
+      "M03.A03",
+      "M48.A03"
+     ],
+     "planned": [
+      "M08.A01"
+     ],
+     "calls": [
+      {
+       "action": "M08.A01",
+       "args": {
+        "name": "trade-show-2026",
+        "color": "purple",
+        "description": "For leads we meet at expos"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M08.A01",
+          "argsJson": "{\"name\":\"trade-show-2026\",\"color\":\"purple\",\"description\":\"For leads we meet at expos\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M08.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4376,
+     "ms": 4376,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "846e16efd993",
+       "latencyMs": 4331,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12763,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 119,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4376,
+    "firstReplyMs": 4376,
+    "plannerMs": 4331,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12763,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 119,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-create-task",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a high priority task for Aisha Bello to send the renewal contract to Femi Schmidt, due October 28",
+     "status": "done",
+     "reply": "Done: Create task (Send renewal contract to Femi Schmidt).",
+     "offered": [
+      "M06.A07",
+      "M06.A06",
+      "M06.A01",
+      "M28.A06",
+      "M28.A01",
+      "M28.A10",
+      "M07.A01",
+      "M06.A09",
+      "M45.A02",
+      "M06.A03",
+      "M47.A05",
+      "M45.A01",
+      "M28.A08",
+      "M27.A08",
+      "M30.A01",
+      "M48.A02",
+      "M48.A03",
+      "M01.A02",
+      "M01.A03",
+      "M04.A07",
+      "M21.A01",
+      "M47.A01",
+      "M45.A04"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Send renewal contract to Femi Schmidt",
+        "description": "Send the renewal contract to Femi Schmidt.",
+        "assigneeId": "us_5",
+        "dueDate": "2026-10-28",
+        "priority": "high",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_15"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Aisha Bello",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Femi Schmidt",
+          "whereJson": null
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M06.A01",
+          "argsJson": "{\"title\":\"Send renewal contract to Femi Schmidt\",\"description\":\"Send the renewal contract to Femi Schmidt.\",\"assigneeId\":\"$s1.id\",\"dueDate\":\"2026-10-28\",\"priority\":\"high\",\"relatedTo\":{\"type\":\"contact\",\"id\":\"$s2.id\"}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4524,
+     "ms": 4524,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "84c69361d254",
+       "latencyMs": 4480,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13519,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 206,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4524,
+    "firstReplyMs": 4524,
+    "plannerMs": 4480,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13519,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 206,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-create-task",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a high priority task for Aisha Bello to send the renewal contract to Femi Schmidt, due October 28",
+     "status": "done",
+     "reply": "Done: Create task (Send the renewal contract to Femi Schmidt).",
+     "offered": [
+      "M06.A07",
+      "M06.A06",
+      "M06.A01",
+      "M28.A06",
+      "M28.A01",
+      "M28.A10",
+      "M07.A01",
+      "M06.A09",
+      "M45.A02",
+      "M06.A03",
+      "M47.A05",
+      "M45.A01",
+      "M28.A08",
+      "M27.A08",
+      "M30.A01",
+      "M48.A02",
+      "M48.A03",
+      "M01.A02",
+      "M01.A03",
+      "M04.A07",
+      "M21.A01",
+      "M47.A01",
+      "M45.A04"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Send the renewal contract to Femi Schmidt",
+        "description": "Send the renewal contract to Femi Schmidt",
+        "assigneeId": "us_5",
+        "dueDate": "2026-10-28",
+        "priority": "high",
+        "relatedTo": {
+         "type": "contact",
+         "id": "ct_15"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Aisha Bello",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Femi Schmidt",
+          "whereJson": null
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M06.A01",
+          "argsJson": "{\"title\":\"Send the renewal contract to Femi Schmidt\",\"description\":\"Send the renewal contract to Femi Schmidt\",\"assigneeId\":\"$s1.id\",\"dueDate\":\"2026-10-28\",\"priority\":\"high\",\"relatedTo\":{\"type\":\"contact\",\"id\":\"$s2.id\"}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4870,
+     "ms": 4870,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "84c69361d254",
+       "latencyMs": 4820,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13523,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 205,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4870,
+    "firstReplyMs": 4870,
+    "plannerMs": 4820,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13523,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 205,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-custom-dropdown",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Add a dropdown field on contacts called Preferred Language, with the options English, Spanish and French",
+     "status": "done",
+     "reply": "Done: Create custom field.",
+     "offered": [
+      "M10.A01",
+      "M10.A07",
+      "M10.A08",
+      "M10.A09",
+      "M23.A06",
+      "M07.A01",
+      "M18.A04",
+      "M01.A08",
+      "M01.A09",
+      "M01.A01",
+      "M01.A04",
+      "M10.A03",
+      "M27.A03",
+      "M02.A06",
+      "M08.A06"
+     ],
+     "planned": [
+      "M10.A01"
+     ],
+     "calls": [
+      {
+       "action": "M10.A01",
+       "args": {
+        "key": "preferred_language",
+        "label": "Preferred Language",
+        "module": "contact",
+        "type": "dropdown",
+        "options": [
+         {
+          "value": "English",
+          "label": "English"
+         },
+         {
+          "value": "Spanish",
+          "label": "Spanish"
+         },
+         {
+          "value": "French",
+          "label": "French"
+         }
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M10.A01",
+          "argsJson": "{\"key\":\"preferred_language\",\"label\":\"Preferred Language\",\"module\":\"contact\",\"type\":\"dropdown\",\"options\":[{\"value\":\"English\",\"label\":\"English\"},{\"value\":\"Spanish\",\"label\":\"Spanish\"},{\"value\":\"French\",\"label\":\"French\"}]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M10.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4285,
+     "ms": 4285,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6b9256809681",
+       "latencyMs": 4223,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11829,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 149,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4285,
+    "firstReplyMs": 4285,
+    "plannerMs": 4223,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11829,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 149,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-custom-dropdown",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Add a dropdown field on contacts called Preferred Language, with the options English, Spanish and French",
+     "status": "done",
+     "reply": "Done: Create custom field.",
+     "offered": [
+      "M10.A01",
+      "M10.A07",
+      "M10.A08",
+      "M10.A09",
+      "M23.A06",
+      "M07.A01",
+      "M18.A04",
+      "M01.A08",
+      "M01.A09",
+      "M01.A01",
+      "M01.A04",
+      "M10.A03",
+      "M27.A03",
+      "M02.A06",
+      "M08.A06"
+     ],
+     "planned": [
+      "M10.A01"
+     ],
+     "calls": [
+      {
+       "action": "M10.A01",
+       "args": {
+        "key": "preferred_language",
+        "label": "Preferred Language",
+        "module": "contact",
+        "type": "dropdown",
+        "options": [
+         {
+          "value": "english",
+          "label": "English"
+         },
+         {
+          "value": "spanish",
+          "label": "Spanish"
+         },
+         {
+          "value": "french",
+          "label": "French"
+         }
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M10.A01",
+          "argsJson": "{\"key\":\"preferred_language\",\"label\":\"Preferred Language\",\"module\":\"contact\",\"type\":\"dropdown\",\"options\":[{\"value\":\"english\",\"label\":\"English\"},{\"value\":\"spanish\",\"label\":\"Spanish\"},{\"value\":\"french\",\"label\":\"French\"}]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M10.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4283,
+     "ms": 4283,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6b9256809681",
+       "latencyMs": 4235,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11829,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 151,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4283,
+    "firstReplyMs": 4283,
+    "plannerMs": 4235,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11829,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 151,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-opportunity-close-date",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Push the expected close date on the Hooli - Agency plan deal to November 20th 2026",
+     "status": "done",
+     "reply": "Done: Set expected close date (Hooli - Agency plan).",
+     "offered": [
+      "M04.A07",
+      "M28.A06",
+      "M04.A05",
+      "M04.A03",
+      "M06.A06",
+      "M22.A08",
+      "M38.A08",
+      "M28.A07",
+      "M04.A02",
+      "M04.A10",
+      "M04.A09",
+      "M04.A08",
+      "M22.A07",
+      "M47.A05",
+      "M21.A02",
+      "M21.A03",
+      "M05.A07",
+      "M05.A06",
+      "M05.A09",
+      "M05.A10"
+     ],
+     "planned": [
+      "M04.A07"
+     ],
+     "calls": [
+      {
+       "action": "M04.A07",
+       "args": {
+        "opportunityId": "op_7",
+        "expectedCloseDate": "2026-11-20"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M04.A07",
+          "argsJson": "{\"opportunityId\":{\"$lookup\":{\"entity\":\"opportunity\",\"name\":\"Hooli - Agency plan\"}},\"expectedCloseDate\":\"2026-11-20\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M04.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4469,
+     "ms": 4469,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6efe91c8f49c",
+       "latencyMs": 4390,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12087,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 131,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4469,
+    "firstReplyMs": 4469,
+    "plannerMs": 4390,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12087,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 131,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-opportunity-close-date",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Push the expected close date on the Hooli - Agency plan deal to November 20th 2026",
+     "status": "done",
+     "reply": "Done: Set expected close date (Hooli - Agency plan).",
+     "offered": [
+      "M04.A07",
+      "M28.A06",
+      "M04.A05",
+      "M04.A03",
+      "M06.A06",
+      "M22.A08",
+      "M38.A08",
+      "M28.A07",
+      "M04.A02",
+      "M04.A10",
+      "M04.A09",
+      "M04.A08",
+      "M22.A07",
+      "M47.A05",
+      "M21.A02",
+      "M21.A03",
+      "M05.A07",
+      "M05.A06",
+      "M05.A09",
+      "M05.A10"
+     ],
+     "planned": [
+      "M04.A07"
+     ],
+     "calls": [
+      {
+       "action": "M04.A07",
+       "args": {
+        "opportunityId": "op_7",
+        "expectedCloseDate": "2026-11-20"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "opportunity",
+          "name": "Hooli - Agency plan",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M04.A07",
+          "argsJson": "{\"opportunityId\":\"$s1.id\",\"expectedCloseDate\":\"2026-11-20\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M04.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5658,
+     "ms": 5658,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6efe91c8f49c",
+       "latencyMs": 5622,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 24369,
+        "cachedRead": 18048,
+        "cacheWrite": 0,
+        "output": 165,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5658,
+    "firstReplyMs": 5658,
+    "plannerMs": 5622,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 24369,
+     "cachedRead": 18048,
+     "cacheWrite": 0,
+     "output": 165,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-opportunity-value",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "The Initech - Agency plan deal is now worth $7,250",
+     "status": "done",
+     "reply": "Done: Update opportunity value (Initech - Agency plan).",
+     "offered": [
+      "M04.A04",
+      "M30.A04",
+      "M04.A01",
+      "M30.A01",
+      "M04.A02",
+      "M05.A06",
+      "M04.A05",
+      "M32.A08",
+      "M05.A07",
+      "M26.A01",
+      "M44.A02",
+      "M44.A04",
+      "M44.A06",
+      "M26.A02",
+      "M44.A05",
+      "M04.A03",
+      "M21.A02",
+      "M21.A03",
+      "M05.A04",
+      "M26.A05",
+      "M26.A07",
+      "M03.A10",
+      "M03.A01",
+      "M05.A01"
+     ],
+     "planned": [
+      "M04.A04"
+     ],
+     "calls": [
+      {
+       "action": "M04.A04",
+       "args": {
+        "opportunityId": "op_4",
+        "value": 7250
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M04.A04",
+          "argsJson": "{\"opportunityId\":{\"$lookup\":{\"entity\":\"opportunity\",\"name\":\"Initech - Agency plan\"}},\"value\":7250}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M04.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4547,
+     "ms": 4547,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "a110f2e8cad1",
+       "latencyMs": 4490,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13244,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 124,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4547,
+    "firstReplyMs": 4547,
+    "plannerMs": 4490,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13244,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 124,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-opportunity-value",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "The Initech - Agency plan deal is now worth $7,250",
+     "status": "done",
+     "reply": "Done: Update opportunity value (Initech - Agency plan).",
+     "offered": [
+      "M04.A04",
+      "M30.A04",
+      "M04.A01",
+      "M30.A01",
+      "M04.A02",
+      "M05.A06",
+      "M04.A05",
+      "M32.A08",
+      "M05.A07",
+      "M26.A01",
+      "M44.A02",
+      "M44.A04",
+      "M44.A06",
+      "M26.A02",
+      "M44.A05",
+      "M04.A03",
+      "M21.A02",
+      "M21.A03",
+      "M05.A04",
+      "M26.A05",
+      "M26.A07",
+      "M03.A10",
+      "M03.A01",
+      "M05.A01"
+     ],
+     "planned": [
+      "M04.A04"
+     ],
+     "calls": [
+      {
+       "action": "M04.A03",
+       "args": {
+        "query": "Initech - Agency plan"
+       }
+      },
+      {
+       "action": "M04.A02",
+       "args": {
+        "opportunityId": "op_4"
+       }
+      },
+      {
+       "action": "M04.A04",
+       "args": {
+        "opportunityId": "op_4",
+        "value": 7250
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M04.A03",
+          "argsJson": "{\"query\":\"Initech - Agency plan\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"exists\":true}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M04.A02",
+          "argsJson": "{\"opportunityId\":\"$s2.items[*].id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M04.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after reads",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M04.A04",
+          "argsJson": "{\"opportunityId\":{\"$lookup\":{\"entity\":\"opportunity\",\"name\":\"Initech - Agency plan\"}},\"value\":7250}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M04.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 10422,
+     "ms": 10422,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "a110f2e8cad1",
+       "latencyMs": 6226,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 26687,
+        "cachedRead": 19200,
+        "cacheWrite": 0,
+        "output": 205,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after reads",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "a4c1638c0349",
+       "latencyMs": 4122,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13746,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 124,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 10422,
+    "firstReplyMs": 10422,
+    "plannerMs": 10348,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 3,
+    "clarifications": 0,
+    "usage": {
+     "input": 40433,
+     "cachedRead": 25344,
+     "cacheWrite": 0,
+     "output": 329,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-pinned-note",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Add a pinned note on Ana Ruiz: prefers calls after 3pm Eastern",
+     "status": "done",
+     "reply": "Done: Create note.",
+     "offered": [
+      "M07.A08",
+      "M01.A08",
+      "M07.A09",
+      "M23.A08",
+      "M07.A01",
+      "M11.A08",
+      "M22.A03",
+      "M37.A05",
+      "M22.A07",
+      "M22.A01",
+      "M22.A08",
+      "M07.A02",
+      "M07.A03",
+      "M21.A01",
+      "M07.A06",
+      "M01.A02",
+      "M01.A03",
+      "M43.A09",
+      "M12.A10",
+      "M13.A10",
+      "M11.A02"
+     ],
+     "planned": [
+      "M07.A01"
+     ],
+     "calls": [
+      {
+       "action": "M07.A01",
+       "args": {
+        "body": "Prefers calls after 3pm Eastern",
+        "attachTo": {
+         "type": "contact",
+         "id": "ct_3"
+        },
+        "pinned": true
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M07.A01",
+          "argsJson": "{\"body\":\"Prefers calls after 3pm Eastern\",\"attachTo\":{\"type\":\"contact\",\"id\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Ana Ruiz\"}}},\"pinned\":true}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M07.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4490,
+     "ms": 4490,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "d4093762a79a",
+       "latencyMs": 4449,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12473,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 137,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4490,
+    "firstReplyMs": 4490,
+    "plannerMs": 4449,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12473,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 137,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-pinned-note",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Add a pinned note on Ana Ruiz: prefers calls after 3pm Eastern",
+     "status": "done",
+     "reply": "Done: Create note.",
+     "offered": [
+      "M07.A08",
+      "M01.A08",
+      "M07.A09",
+      "M23.A08",
+      "M07.A01",
+      "M11.A08",
+      "M22.A03",
+      "M37.A05",
+      "M22.A07",
+      "M22.A01",
+      "M22.A08",
+      "M07.A02",
+      "M07.A03",
+      "M21.A01",
+      "M07.A06",
+      "M01.A02",
+      "M01.A03",
+      "M43.A09",
+      "M12.A10",
+      "M13.A10",
+      "M11.A02"
+     ],
+     "planned": [
+      "M07.A01"
+     ],
+     "calls": [
+      {
+       "action": "M07.A01",
+       "args": {
+        "body": "Prefers calls after 3pm Eastern",
+        "attachTo": {
+         "type": "contact",
+         "id": "ct_3"
+        },
+        "pinned": true
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M07.A01",
+          "argsJson": "{\"body\":\"Prefers calls after 3pm Eastern\",\"attachTo\":{\"type\":\"contact\",\"id\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Ana Ruiz\"}}},\"pinned\":true}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M07.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4177,
+     "ms": 4177,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "d4093762a79a",
+       "latencyMs": 4141,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12475,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 137,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4177,
+    "firstReplyMs": 4177,
+    "plannerMs": 4141,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12475,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 137,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-pipeline-stage",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Add a stage called Contract Sent to the Sales Pipeline with an 80% win probability",
+     "status": "done",
+     "reply": "Done: Add pipeline stage (Sales Pipeline).",
+     "offered": [
+      "M05.A06",
+      "M05.A01",
+      "M05.A10",
+      "M05.A07",
+      "M05.A02",
+      "M05.A08",
+      "M04.A01",
+      "M05.A04",
+      "M04.A05",
+      "M05.A05",
+      "M04.A02",
+      "M03.A10",
+      "M05.A03",
+      "M05.A09",
+      "M36.A04",
+      "M36.A01"
+     ],
+     "planned": [
+      "M05.A06"
+     ],
+     "calls": [
+      {
+       "action": "M05.A06",
+       "args": {
+        "pipelineId": "pl_1",
+        "name": "Contract Sent",
+        "probability": 80
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M05.A06",
+          "argsJson": "{\"pipelineId\":{\"$lookup\":{\"entity\":\"pipeline\",\"name\":\"Sales Pipeline\"}},\"name\":\"Contract Sent\",\"probability\":80}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M05.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4464,
+     "ms": 4464,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "164c8a68f969",
+       "latencyMs": 4434,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11132,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 124,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4464,
+    "firstReplyMs": 4464,
+    "plannerMs": 4434,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11132,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 124,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-pipeline-stage",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Add a stage called Contract Sent to the Sales Pipeline with an 80% win probability",
+     "status": "done",
+     "reply": "Done: Add pipeline stage (Sales Pipeline).",
+     "offered": [
+      "M05.A06",
+      "M05.A01",
+      "M05.A10",
+      "M05.A07",
+      "M05.A02",
+      "M05.A08",
+      "M04.A01",
+      "M05.A04",
+      "M04.A05",
+      "M05.A05",
+      "M04.A02",
+      "M03.A10",
+      "M05.A03",
+      "M05.A09",
+      "M36.A04",
+      "M36.A01"
+     ],
+     "planned": [
+      "M05.A06"
+     ],
+     "calls": [
+      {
+       "action": "M05.A06",
+       "args": {
+        "pipelineId": "pl_1",
+        "name": "Contract Sent",
+        "probability": 80
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M05.A06",
+          "argsJson": "{\"pipelineId\":{\"$lookup\":{\"entity\":\"pipeline\",\"name\":\"Sales Pipeline\"}},\"name\":\"Contract Sent\",\"probability\":80}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M05.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4248,
+     "ms": 4248,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "164c8a68f969",
+       "latencyMs": 4208,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11132,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 124,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4248,
+    "firstReplyMs": 4248,
+    "plannerMs": 4208,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11132,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 124,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-schedule-sms",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Schedule a text to Ben Brown for tomorrow at 9am: \"Your demo is confirmed for Thursday at 2pm\"",
+     "status": "done",
+     "reply": "Done: Schedule SMS.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M12.A03",
+      "M12.A01",
+      "M38.A08",
+      "M23.A07",
+      "M22.A01",
+      "M15.A06",
+      "M22.A08",
+      "M22.A07",
+      "M46.A07",
+      "M15.A07",
+      "M12.A06",
+      "M21.A04",
+      "M12.A07",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05",
+      "M13.A03",
+      "M47.A08",
+      "M03.A03",
+      "M13.A07"
+     ],
+     "planned": [
+      "M12.A04"
+     ],
+     "calls": [
+      {
+       "action": "M12.A04",
+       "args": {
+        "contactId": "ct_6",
+        "body": "Your demo is confirmed for Thursday at 2pm",
+        "sendAt": "2026-10-22T13:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M12.A04",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Ben Brown\"}},\"body\":\"Your demo is confirmed for Thursday at 2pm\",\"sendAt\":\"2026-10-22T09:00:00-04:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M12.A04"
+         ],
+         "destination": "sms"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 4479,
+     "ms": 4482,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6ef24398e4fb",
+       "latencyMs": 4440,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14226,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 149,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "faed81238267a264",
+       "targetsHash": "976c00bfbae88348",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M12.A04",
+         "name": "Schedule SMS",
+         "args": {
+          "contactId": "ct_6",
+          "body": "Your demo is confirmed for Thursday at 2pm",
+          "sendAt": "2026-10-22T13:00:00.000Z"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_6",
+         "name": "Ben Brown",
+         "text": "Ben Brown",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-09-17T14:00:00.000Z",
+         "fingerprint": "9bffb21f5e20ce6f"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4482,
+    "firstReplyMs": 4479,
+    "plannerMs": 4440,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 14226,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 149,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-schedule-sms",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Schedule a text to Ben Brown for tomorrow at 9am: \"Your demo is confirmed for Thursday at 2pm\"",
+     "status": "done",
+     "reply": "Done: Schedule SMS.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M12.A03",
+      "M12.A01",
+      "M38.A08",
+      "M23.A07",
+      "M22.A01",
+      "M15.A06",
+      "M22.A08",
+      "M22.A07",
+      "M46.A07",
+      "M15.A07",
+      "M12.A06",
+      "M21.A04",
+      "M12.A07",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05",
+      "M13.A03",
+      "M47.A08",
+      "M03.A03",
+      "M13.A07"
+     ],
+     "planned": [
+      "M12.A04"
+     ],
+     "calls": [
+      {
+       "action": "M12.A04",
+       "args": {
+        "contactId": "ct_6",
+        "body": "Your demo is confirmed for Thursday at 2pm",
+        "sendAt": "2026-10-22T13:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M12.A04",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Ben Brown\"}},\"body\":\"Your demo is confirmed for Thursday at 2pm\",\"sendAt\":\"2026-10-22T09:00:00-04:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M12.A04"
+         ],
+         "destination": "sms"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6441,
+     "ms": 6445,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "6ef24398e4fb",
+       "latencyMs": 6410,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 28517,
+        "cachedRead": 20224,
+        "cacheWrite": 0,
+        "output": 174,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "faed81238267a264",
+       "targetsHash": "976c00bfbae88348",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M12.A04",
+         "name": "Schedule SMS",
+         "args": {
+          "contactId": "ct_6",
+          "body": "Your demo is confirmed for Thursday at 2pm",
+          "sendAt": "2026-10-22T13:00:00.000Z"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_6",
+         "name": "Ben Brown",
+         "text": "Ben Brown",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-09-17T14:00:00.000Z",
+         "fingerprint": "9bffb21f5e20ce6f"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6445,
+    "firstReplyMs": 6441,
+    "plannerMs": 6410,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 28517,
+     "cachedRead": 20224,
+     "cacheWrite": 0,
+     "output": 174,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-task-due-tomorrow",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Move the 'Call back Dev Ruiz' task to tomorrow",
+     "status": "done",
+     "reply": "Done: Set task due date (Call back Dev Ruiz).",
+     "offered": [
+      "M06.A06",
+      "M06.A09",
+      "M21.A04",
+      "M06.A01",
+      "M07.A01",
+      "M06.A07",
+      "M06.A10",
+      "M06.A04",
+      "M04.A05",
+      "M28.A06",
+      "M22.A08",
+      "M22.A07",
+      "M22.A01",
+      "M15.A07",
+      "M39.A06",
+      "M21.A02",
+      "M21.A03",
+      "M01.A02",
+      "M01.A03",
+      "M04.A07",
+      "M04.A10",
+      "M11.A07",
+      "M47.A06",
+      "M24.A04",
+      "M11.A02"
+     ],
+     "planned": [
+      "M06.A06"
+     ],
+     "calls": [
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_9",
+        "dueDate": "2026-10-22"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "task",
+          "name": "Call back Dev Ruiz",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M06.A06",
+          "argsJson": "{\"taskId\":\"$s1.id\",\"dueDate\":\"2026-10-22\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4512,
+     "ms": 4512,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "7dff28c5d6cf",
+       "latencyMs": 4472,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13332,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4512,
+    "firstReplyMs": 4512,
+    "plannerMs": 4472,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13332,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 141,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-task-due-tomorrow",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Move the 'Call back Dev Ruiz' task to tomorrow",
+     "status": "done",
+     "reply": "Done: Set task due date (Call back Dev Ruiz).",
+     "offered": [
+      "M06.A06",
+      "M06.A09",
+      "M21.A04",
+      "M06.A01",
+      "M07.A01",
+      "M06.A07",
+      "M06.A10",
+      "M06.A04",
+      "M04.A05",
+      "M28.A06",
+      "M22.A08",
+      "M22.A07",
+      "M22.A01",
+      "M15.A07",
+      "M39.A06",
+      "M21.A02",
+      "M21.A03",
+      "M01.A02",
+      "M01.A03",
+      "M04.A07",
+      "M04.A10",
+      "M11.A07",
+      "M47.A06",
+      "M24.A04",
+      "M11.A02"
+     ],
+     "planned": [
+      "M06.A06"
+     ],
+     "calls": [
+      {
+       "action": "M06.A06",
+       "args": {
+        "taskId": "tk_9",
+        "dueDate": "2026-10-22"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M06.A06",
+          "argsJson": "{\"taskId\":{\"$lookup\":{\"entity\":\"task\",\"name\":\"Call back Dev Ruiz\"}},\"dueDate\":\"2026-10-22\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A06"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5232,
+     "ms": 5232,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "7dff28c5d6cf",
+       "latencyMs": 5207,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13332,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 127,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5232,
+    "firstReplyMs": 5232,
+    "plannerMs": 5207,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13332,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 127,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-task-priority",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Bump 'Check in with Lena Larsen' to urgent",
+     "status": "done",
+     "reply": "Found 1 contact: Lena Larsen: email lena.larsen@wayne.example, phone +15556633467, company Wayne, tags newsletter, status active.\nDone: Set task priority (Check in with Lena Larsen).",
+     "offered": [
+      "M24.A10",
+      "M47.A05",
+      "M47.A10",
+      "M22.A10",
+      "M06.A07",
+      "M13.A02",
+      "M44.A10",
+      "M28.A08",
+      "M45.A02",
+      "M33.A06",
+      "M03.A08",
+      "M15.A07",
+      "M14.A08",
+      "M28.A10",
+      "M16.A07",
+      "M01.A02",
+      "M01.A03",
+      "M21.A09",
+      "M21.A10",
+      "M13.A07",
+      "M45.A04",
+      "M29.A06"
+     ],
+     "planned": [
+      "M01.A03",
+      "M06.A07"
+     ],
+     "calls": [
+      {
+       "action": "M01.A03",
+       "args": {
+        "query": "Lena Larsen"
+       }
+      },
+      {
+       "action": "M06.A07",
+       "args": {
+        "taskId": "tk_6",
+        "priority": "urgent"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M01.A03",
+          "argsJson": "{\"query\":\"Lena Larsen\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M06.A07",
+          "argsJson": "{\"taskId\":{\"$lookup\":{\"entity\":\"task\",\"name\":\"Check in with Lena Larsen\"}},\"priority\":\"urgent\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4388,
+     "ms": 4388,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "c685aa9825af",
+       "latencyMs": 4359,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12781,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 150,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4388,
+    "firstReplyMs": 4388,
+    "plannerMs": 4359,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 12781,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 150,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-task-priority",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Bump 'Check in with Lena Larsen' to urgent",
+     "status": "done",
+     "reply": "Done: Set task priority (Check in with Lena Larsen).",
+     "offered": [
+      "M24.A10",
+      "M47.A05",
+      "M47.A10",
+      "M22.A10",
+      "M06.A07",
+      "M13.A02",
+      "M44.A10",
+      "M28.A08",
+      "M45.A02",
+      "M33.A06",
+      "M03.A08",
+      "M15.A07",
+      "M14.A08",
+      "M28.A10",
+      "M16.A07",
+      "M01.A02",
+      "M01.A03",
+      "M21.A09",
+      "M21.A10",
+      "M13.A07",
+      "M45.A04",
+      "M29.A06"
+     ],
+     "planned": [
+      "M06.A07"
+     ],
+     "calls": [
+      {
+       "action": "M06.A07",
+       "args": {
+        "taskId": "tk_6",
+        "priority": "urgent"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "task",
+          "name": "Check in with Lena Larsen",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M06.A07",
+          "argsJson": "{\"taskId\":\"$s1.id\",\"priority\":\"urgent\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A07"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 4335,
+     "ms": 4335,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "3d25d7793063",
+       "promptHash": "c685aa9825af",
+       "latencyMs": 4300,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12779,
+        "cachedRead": 6144,
+        "cacheWrite": 0,
+        "output": 136,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 4335,
+    "firstReplyMs": 4335,
+    "plannerMs": 4300,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12779,
+     "cachedRead": 6144,
+     "cacheWrite": 0,
+     "output": 136,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

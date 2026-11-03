@@ -1,0 +1,1360 @@
+{
+ "summary": {
+  "label": "xref-sms",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/param-scenarios",
+  "set": "e995e0bf6b71",
+  "tier": "strong",
+  "scenarios": 3,
+  "repeat": 3,
+  "runs": 9,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 3,
+  "measured": 3,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 6232,
+   "p95": 7193
+  },
+  "firstReplyMs": {
+   "p50": 6228,
+   "p95": 7191
+  },
+  "plannerRoundsPerRun": 1,
+  "callsPerRun": 1,
+  "clarified": {
+   "runs": 0,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 12178
+ },
+ "runs": [
+  {
+   "id": "param-contact-sms-off",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Victor Brown asked us to stop texting him. Turn off SMS for him, email is still fine.",
+     "status": "done",
+     "reply": "Done: Set communication preferences (Victor Brown).",
+     "offered": [
+      "M12.A09",
+      "M12.A03",
+      "M13.A10",
+      "M12.A05",
+      "M13.A03",
+      "M12.A10",
+      "M01.A08",
+      "M31.A10",
+      "M12.A01",
+      "M12.A04",
+      "M13.A05",
+      "M14.A01",
+      "M14.A03",
+      "M14.A04",
+      "M45.A03",
+      "M01.A02",
+      "M01.A03",
+      "M13.A09",
+      "M47.A08",
+      "M03.A03",
+      "M12.A07",
+      "M13.A07",
+      "M45.A04"
+     ],
+     "planned": [
+      "M01.A08"
+     ],
+     "calls": [
+      {
+       "action": "M01.A08",
+       "args": {
+        "contactId": "ct_8",
+        "email": true,
+        "sms": false
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Victor Brown",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M01.A08",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"sms\":false,\"email\":true}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A08"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5719,
+     "ms": 5719,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "c5097dc084ec",
+       "latencyMs": 5545,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14122,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5719,
+    "firstReplyMs": 5719,
+    "plannerMs": 5545,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 14122,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 141,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-contact-sms-off",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Victor Brown asked us to stop texting him. Turn off SMS for him, email is still fine.",
+     "status": "done",
+     "reply": "Done: Set communication preferences (Victor Brown).",
+     "offered": [
+      "M12.A09",
+      "M12.A03",
+      "M13.A10",
+      "M12.A05",
+      "M13.A03",
+      "M12.A10",
+      "M01.A08",
+      "M31.A10",
+      "M12.A01",
+      "M12.A04",
+      "M13.A05",
+      "M14.A01",
+      "M14.A03",
+      "M14.A04",
+      "M45.A03",
+      "M01.A02",
+      "M01.A03",
+      "M13.A09",
+      "M47.A08",
+      "M03.A03",
+      "M12.A07",
+      "M13.A07",
+      "M45.A04"
+     ],
+     "planned": [
+      "M01.A08"
+     ],
+     "calls": [
+      {
+       "action": "M01.A08",
+       "args": {
+        "contactId": "ct_8",
+        "email": true,
+        "sms": false
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Victor Brown",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M01.A08",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"sms\":false,\"email\":true}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A08"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5812,
+     "ms": 5812,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "c5097dc084ec",
+       "latencyMs": 5680,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14122,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5812,
+    "firstReplyMs": 5812,
+    "plannerMs": 5680,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 14122,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 141,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-contact-sms-off",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Victor Brown asked us to stop texting him. Turn off SMS for him, email is still fine.",
+     "status": "done",
+     "reply": "Done: Set communication preferences (Victor Brown).",
+     "offered": [
+      "M12.A09",
+      "M12.A03",
+      "M13.A10",
+      "M12.A05",
+      "M13.A03",
+      "M12.A10",
+      "M01.A08",
+      "M31.A10",
+      "M12.A01",
+      "M12.A04",
+      "M13.A05",
+      "M14.A01",
+      "M14.A03",
+      "M14.A04",
+      "M45.A03",
+      "M01.A02",
+      "M01.A03",
+      "M13.A09",
+      "M47.A08",
+      "M03.A03",
+      "M12.A07",
+      "M13.A07",
+      "M45.A04"
+     ],
+     "planned": [
+      "M01.A08"
+     ],
+     "calls": [
+      {
+       "action": "M01.A08",
+       "args": {
+        "contactId": "ct_8",
+        "email": true,
+        "sms": false
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Victor Brown",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M01.A08",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"sms\":false,\"email\":true}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M01.A08"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6597,
+     "ms": 6597,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "c5097dc084ec",
+       "latencyMs": 6419,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14120,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6597,
+    "firstReplyMs": 6597,
+    "plannerMs": 6419,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 14120,
+     "cachedRead": 6272,
+     "cacheWrite": 0,
+     "output": 141,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-schedule-sms",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Schedule a text to Ben Brown for tomorrow at 9am: \"Your demo is confirmed for Thursday at 2pm\"",
+     "status": "done",
+     "reply": "Done: Schedule SMS.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M12.A03",
+      "M12.A10",
+      "M12.A01",
+      "M38.A08",
+      "M23.A07",
+      "M15.A06",
+      "M22.A01",
+      "M22.A08",
+      "M22.A07",
+      "M46.A07",
+      "M12.A06",
+      "M21.A04",
+      "M14.A03",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05",
+      "M13.A03",
+      "M47.A08",
+      "M03.A03",
+      "M12.A07",
+      "M13.A07"
+     ],
+     "planned": [
+      "M12.A04"
+     ],
+     "calls": [
+      {
+       "action": "M12.A04",
+       "args": {
+        "contactId": "ct_6",
+        "body": "Your demo is confirmed for Thursday at 2pm",
+        "sendAt": "2026-10-22T13:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M12.A04",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Ben Brown\"}},\"body\":\"Your demo is confirmed for Thursday at 2pm\",\"sendAt\":\"2026-10-22T09:00:00-04:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M12.A04"
+         ],
+         "destination": "sms",
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6228,
+     "ms": 6232,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "987409158c13",
+       "latencyMs": 6054,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14543,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 153,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "faed81238267a264",
+       "targetsHash": "976c00bfbae88348",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M12.A04",
+         "name": "Schedule SMS",
+         "args": {
+          "contactId": "ct_6",
+          "body": "Your demo is confirmed for Thursday at 2pm",
+          "sendAt": "2026-10-22T13:00:00.000Z"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_6",
+         "name": "Ben Brown",
+         "text": "Ben Brown",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-09-17T14:00:00.000Z",
+         "fingerprint": "9bffb21f5e20ce6f"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6232,
+    "firstReplyMs": 6228,
+    "plannerMs": 6054,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 14543,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 153,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-schedule-sms",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Schedule a text to Ben Brown for tomorrow at 9am: \"Your demo is confirmed for Thursday at 2pm\"",
+     "status": "done",
+     "reply": "Done: Schedule SMS.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M12.A03",
+      "M12.A10",
+      "M12.A01",
+      "M38.A08",
+      "M23.A07",
+      "M15.A06",
+      "M22.A01",
+      "M22.A08",
+      "M22.A07",
+      "M46.A07",
+      "M12.A06",
+      "M21.A04",
+      "M14.A03",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05",
+      "M13.A03",
+      "M47.A08",
+      "M03.A03",
+      "M12.A07",
+      "M13.A07"
+     ],
+     "planned": [
+      "M12.A04"
+     ],
+     "calls": [
+      {
+       "action": "M12.A04",
+       "args": {
+        "contactId": "ct_6",
+        "body": "Your demo is confirmed for Thursday at 2pm",
+        "sendAt": "2026-10-22T13:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M12.A04",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Ben Brown\"}},\"body\":\"Your demo is confirmed for Thursday at 2pm\",\"sendAt\":\"2026-10-22T09:00:00-04:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M12.A04"
+         ],
+         "destination": "sms",
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 6737,
+     "ms": 6740,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "987409158c13",
+       "latencyMs": 6566,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14541,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 153,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "faed81238267a264",
+       "targetsHash": "976c00bfbae88348",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M12.A04",
+         "name": "Schedule SMS",
+         "args": {
+          "contactId": "ct_6",
+          "body": "Your demo is confirmed for Thursday at 2pm",
+          "sendAt": "2026-10-22T13:00:00.000Z"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_6",
+         "name": "Ben Brown",
+         "text": "Ben Brown",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-09-17T14:00:00.000Z",
+         "fingerprint": "9bffb21f5e20ce6f"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6740,
+    "firstReplyMs": 6737,
+    "plannerMs": 6566,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 14541,
+     "cachedRead": 6272,
+     "cacheWrite": 0,
+     "output": 153,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-schedule-sms",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Schedule a text to Ben Brown for tomorrow at 9am: \"Your demo is confirmed for Thursday at 2pm\"",
+     "status": "done",
+     "reply": "Done: Schedule SMS.",
+     "offered": [
+      "M12.A04",
+      "M12.A05",
+      "M12.A03",
+      "M12.A10",
+      "M12.A01",
+      "M38.A08",
+      "M23.A07",
+      "M15.A06",
+      "M22.A01",
+      "M22.A08",
+      "M22.A07",
+      "M46.A07",
+      "M12.A06",
+      "M21.A04",
+      "M14.A03",
+      "M01.A02",
+      "M01.A03",
+      "M13.A04",
+      "M13.A05",
+      "M13.A03",
+      "M47.A08",
+      "M03.A03",
+      "M12.A07",
+      "M13.A07"
+     ],
+     "planned": [
+      "M12.A04"
+     ],
+     "calls": [
+      {
+       "action": "M12.A04",
+       "args": {
+        "contactId": "ct_6",
+        "body": "Your demo is confirmed for Thursday at 2pm",
+        "sendAt": "2026-10-22T13:00:00.000Z"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M12.A04",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Ben Brown\"}},\"body\":\"Your demo is confirmed for Thursday at 2pm\",\"sendAt\":\"2026-10-22T09:00:00-04:00\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M12.A04"
+         ],
+         "destination": "sms",
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 7191,
+     "ms": 7193,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "987409158c13",
+       "latencyMs": 7016,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14543,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 153,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "faed81238267a264",
+       "targetsHash": "976c00bfbae88348",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M12.A04",
+         "name": "Schedule SMS",
+         "args": {
+          "contactId": "ct_6",
+          "body": "Your demo is confirmed for Thursday at 2pm",
+          "sendAt": "2026-10-22T13:00:00.000Z"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_6",
+         "name": "Ben Brown",
+         "text": "Ben Brown",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-09-17T14:00:00.000Z",
+         "fingerprint": "9bffb21f5e20ce6f"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 7193,
+    "firstReplyMs": 7191,
+    "plannerMs": 7016,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 14543,
+     "cachedRead": 6272,
+     "cacheWrite": 0,
+     "output": 153,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-sms-template",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create an SMS template named Appointment reminder with the body: Hi {{firstName}}, see you at {{time}} tomorrow",
+     "status": "done",
+     "reply": "Done: Create message template (Appointment reminder).",
+     "offered": [
+      "M14.A03",
+      "M22.A06",
+      "M14.A01",
+      "M22.A05",
+      "M21.A04",
+      "M21.A01",
+      "M12.A04",
+      "M14.A09",
+      "M22.A07",
+      "M21.A03",
+      "M20.A01",
+      "M24.A10",
+      "M07.A01",
+      "M06.A01",
+      "M24.A01",
+      "M13.A01",
+      "M12.A01",
+      "M12.A07"
+     ],
+     "planned": [
+      "M14.A01"
+     ],
+     "calls": [
+      {
+       "action": "M14.A01",
+       "args": {
+        "name": "Appointment reminder",
+        "channel": "sms",
+        "body": "Hi {{firstName}}, see you at {{time}} tomorrow"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M14.A01",
+          "argsJson": "{\"name\":\"Appointment reminder\",\"channel\":\"sms\",\"body\":\"Hi {{firstName}}, see you at {{time}} tomorrow\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M14.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5426,
+     "ms": 5426,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "14b0696df86f",
+       "latencyMs": 5377,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12590,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 127,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5426,
+    "firstReplyMs": 5426,
+    "plannerMs": 5377,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12590,
+     "cachedRead": 6272,
+     "cacheWrite": 0,
+     "output": 127,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-sms-template",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create an SMS template named Appointment reminder with the body: Hi {{firstName}}, see you at {{time}} tomorrow",
+     "status": "done",
+     "reply": "Done: Create message template (Appointment reminder).",
+     "offered": [
+      "M14.A03",
+      "M22.A06",
+      "M14.A01",
+      "M22.A05",
+      "M21.A04",
+      "M21.A01",
+      "M12.A04",
+      "M14.A09",
+      "M22.A07",
+      "M21.A03",
+      "M20.A01",
+      "M24.A10",
+      "M07.A01",
+      "M06.A01",
+      "M24.A01",
+      "M13.A01",
+      "M12.A01",
+      "M12.A07"
+     ],
+     "planned": [
+      "M14.A01"
+     ],
+     "calls": [
+      {
+       "action": "M14.A01",
+       "args": {
+        "name": "Appointment reminder",
+        "channel": "sms",
+        "body": "Hi {{firstName}}, see you at {{time}} tomorrow"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M14.A01",
+          "argsJson": "{\"name\":\"Appointment reminder\",\"channel\":\"sms\",\"body\":\"Hi {{firstName}}, see you at {{time}} tomorrow\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M14.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 5674,
+     "ms": 5674,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "14b0696df86f",
+       "latencyMs": 5616,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12588,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 127,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 5674,
+    "firstReplyMs": 5674,
+    "plannerMs": 5616,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12588,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 127,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-sms-template",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create an SMS template named Appointment reminder with the body: Hi {{firstName}}, see you at {{time}} tomorrow",
+     "status": "done",
+     "reply": "Done: Create message template (Appointment reminder).",
+     "offered": [
+      "M14.A03",
+      "M22.A06",
+      "M14.A01",
+      "M22.A05",
+      "M21.A04",
+      "M21.A01",
+      "M12.A04",
+      "M14.A09",
+      "M22.A07",
+      "M21.A03",
+      "M20.A01",
+      "M24.A10",
+      "M07.A01",
+      "M06.A01",
+      "M24.A01",
+      "M13.A01",
+      "M12.A01",
+      "M12.A07"
+     ],
+     "planned": [
+      "M14.A01"
+     ],
+     "calls": [
+      {
+       "action": "M14.A01",
+       "args": {
+        "name": "Appointment reminder",
+        "channel": "sms",
+        "body": "Hi {{firstName}}, see you at {{time}} tomorrow"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M14.A01",
+          "argsJson": "{\"name\":\"Appointment reminder\",\"channel\":\"sms\",\"body\":\"Hi {{firstName}}, see you at {{time}} tomorrow\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M14.A01"
+         ],
+         "destination": null,
+         "amends": false
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6368,
+     "ms": 6368,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "b9f3e000b44a",
+       "promptHash": "14b0696df86f",
+       "latencyMs": 6311,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12588,
+        "cachedRead": 6272,
+        "cacheWrite": 0,
+        "output": 127,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 6368,
+    "firstReplyMs": 6368,
+    "plannerMs": 6311,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12588,
+     "cachedRead": 6272,
+     "cacheWrite": 0,
+     "output": 127,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}
