@@ -1,4 +1,5 @@
 import { ClaudeCliPlanner } from "./claude-cli.js";
+import { CodexAppServerPlanner } from "./codex-app-server.js";
 import { CodexCliPlanner, type Reasoning } from "./codex-cli.js";
 import { QwenPlanner } from "./qwen.js";
 import type { Planner } from "./types.js";
@@ -25,17 +26,21 @@ export function makePlanner(kind = process.env.PLANNER?.trim() || defaultPlanner
       fast: process.env.CLAUDE_FAST_MODEL || HAIKU,
     });
   }
-  if (kind === "codex-cli") {
-    return new CodexCliPlanner({
+  if (kind === "codex-cli" || kind === "codex-app-server") {
+    // Same models, reasoning and login as codex-cli; codex-app-server keeps one `codex app-server` process (experimental
+    // in CLI 0.159) running across calls instead of starting `codex exec` for each.
+    const models = {
       strong: process.env.CODEX_MODEL || "gpt-6.1-sol",
       fast: process.env.CODEX_FAST_MODEL || process.env.CODEX_MODEL || "gpt-6.1-sol",
-    }, {
+    };
+    const options = {
       executable: process.env.CODEX_BIN,
       reasoning: {
         strong: (process.env.CODEX_REASONING || "low") as Reasoning,
         fast: (process.env.CODEX_FAST_REASONING || process.env.CODEX_REASONING || "low") as Reasoning,
       },
-    });
+    };
+    return kind === "codex-cli" ? new CodexCliPlanner(models, options) : new CodexAppServerPlanner(models, options);
   }
   if (kind === "qwen" || kind === "qwen-token-plan") {
     // `||`, not `??`: a blank `QWEN_BASE_URL=` line in .env must fall back to the default, not post to "/chat/completions".
@@ -57,7 +62,7 @@ export function makePlanner(kind = process.env.PLANNER?.trim() || defaultPlanner
       responseFormat: pinnedFormat(process.env.QWEN_RESPONSE_FORMAT),
     });
   }
-  throw new Error(`unknown PLANNER "${kind}"; supported: claude-cli, codex-cli, qwen`);
+  throw new Error(`unknown PLANNER "${kind}"; supported: claude-cli, codex-cli, codex-app-server, qwen`);
 }
 
 /** Picks the provider when PLANNER is unset, and says so on stderr: every entry point (serve, ask, probe, eval) gets the line. */

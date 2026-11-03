@@ -10,11 +10,11 @@ interface Options {
   reasoning?: Record<Tier, Reasoning>;
 }
 
-const KEEP_ENV = ["HOME", "PATH", "USER", "LANG", "TMPDIR", "CODEX_HOME"];
-const MAX_BYTES = 4 * 1024 * 1024;
-const TIMEOUT_MS = 120_000;
+export const KEEP_ENV = ["HOME", "PATH", "USER", "LANG", "TMPDIR", "CODEX_HOME"];
+export const MAX_BYTES = 4 * 1024 * 1024;
+export const TIMEOUT_MS = 120_000;
 // Verified against CLI 0.159.0. Unknown/ignored settings fail closed below.
-const DISABLED = [
+export const DISABLED = [
   "shell_tool", "unified_exec", "apps", "plugins", "remote_plugin", "hooks", "memories",
   "multi_agent", "multi_agent_v2", "view_image", "image_generation", "browser_use",
   "browser_use_external", "computer_use", "workspace_dependencies", "skill_search",
@@ -96,11 +96,11 @@ export class CodexCliPlanner implements Planner {
   }
 }
 
-function failure(message: string): PlannerError {
+export function failure(message: string): PlannerError {
   return new PlannerError(`Codex: ${message.slice(0, 500)}`, /429|rate.?limit|usage.?limit|quota|credit.?balance/i.test(message) ? "rate_limited" : "provider");
 }
 
-function parseUsage(value: unknown) {
+export function parseUsage(value: unknown) {
   const u = value as Record<string, unknown> | undefined;
   const count = (key: string, optional = false): number => {
     const v = u?.[key] ?? (optional ? 0 : undefined);
