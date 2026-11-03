@@ -653,6 +653,8 @@ describe("a write by id to one of several same-named records", () => {
     const q = oneOfSameNamed(r.plan, sarahs, registry, world().store, "Merge the two Sarah Johnson contacts");
     assert.match(q?.text ?? "", /Which one is the contact that stays\?/);
     assert.equal(oneOfSameNamed(r.plan, sarahs, registry, world().store, "Merge the two Sarah Johnson contacts\nKeep the Brightside one"), undefined);
+    const pick = { entity: "contact", id: "ct_31", name: "Sarah Johnson", text: "Sarah Johnson", provenance: "user-selected" as const, matchReason: "exact-name" as const, fingerprint: "" };
+    assert.equal(oneOfSameNamed(r.plan, sarahs, registry, world().store, "Merge the two Sarah Johnson contacts", [pick]), undefined);
   });
 
   test("passes when the user picked that record when asked", () => {

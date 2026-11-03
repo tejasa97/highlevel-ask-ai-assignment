@@ -970,6 +970,8 @@ export function oneOfSameNamed(plan: CompiledPlan, named: Mention[], registry: R
     // Sarahs": which one stays is still the user's call).
     const role = hit.length === found.length ? splitRole(writes, new Set(found.map((c) => c.id))) : "";
     if (role === undefined) continue;
+    // The user picked one of them when asked which stays: the other is the one merged into it.
+    if (hit.length === found.length && picks.some((p) => found.some((c) => c.id === p.id))) continue;
     const options = found.map(optionLabel);
     return { text: `More than one ${m.entity} matches "${m.name}": ${options.join(", ")}. ${role ? `Which one is ${role}?` : "Which one?"}`, options };
   }
