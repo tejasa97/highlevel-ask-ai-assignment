@@ -335,7 +335,10 @@ export async function runNer(call: (signal: AbortSignal) => Promise<NerSidecarRe
   } catch (err) {
     // The turn's own signal wins: a user cancel is never the sidecar's fault, whatever the call reported.
     const kind: NerFailureKind | undefined = opts.signal?.aborted ? "cancelled" : timeout.aborted ? "timeout" : err instanceof NerSidecarError ? err.kind : undefined;
-    if (!kind) throw err;
+    if (!kind) {
+      opts.breaker?.release();
+      throw err;
+    }
     const status = err instanceof NerSidecarError ? err.status : undefined;
     const retryAfterMs = err instanceof NerSidecarError && kind === "http" ? err.retryAfterMs : undefined;
     const excused = kind === "timeout" ? opts.pending?.() : undefined;

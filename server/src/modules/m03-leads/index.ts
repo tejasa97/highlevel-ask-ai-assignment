@@ -101,12 +101,12 @@ const searchLeads = defineAction({
     createdFrom: z.iso.date().optional(),
     createdTo: z.iso.date().optional(),
     source: z.enum(LEAD_SOURCES).optional().describe("where the lead came from; Facebook ads → facebook_ads"),
-    status: z.enum(LEAD_STATUSES).optional(),
+    status: z.enum(LEAD_STATUSES).optional().describe('where the lead stands now; "new leads", "still marked new" → new; always set it when the request names a status'),
     ownerId: z.string().optional(),
     unassigned: z.boolean().optional().describe("true = only leads with no owner"),
     minScore: z.number().optional(),
     maxScore: z.number().optional(),
-    campaignId: z.string().optional(),
+    campaignId: z.string().optional().describe("id of a named marketing campaign; where leads came from (Facebook, Google, a form) is source, not a campaign"),
     query: z.string().optional().describe("part of a name, email or company"),
     limit: Limit,
   }),
@@ -171,7 +171,7 @@ const updateLead = defineAction({
 
 const assignLeadOwner = defineAction({
   id: "M03.A05",
-  description: "Make a staff user the owner of a lead. For contacts, use M01.A07 Assign contact owner.",
+  description: "Make a staff user the owner of a lead. To follow up with a lead without changing its owner, create a to-do with M06.A01. For contacts, use M01.A07 Assign contact owner.",
   synonyms: ["distribute leads", "split leads between reps", "round-robin leads", "hand leads to sales"],
   risk: "write",
   input: z.strictObject({ leadId: LeadId, ownerId: z.string().describe("user id") }),

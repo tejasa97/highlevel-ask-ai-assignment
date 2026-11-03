@@ -98,6 +98,9 @@ Rules:
   undo it). Find them with a read (the records it made today) when <recent_records> doesn't list them.
   When <last_made> is present, instead plan the last turn's whole request again with the new terms, as if asked fresh,
   with no steps that update or cancel those records: running it edits each record that still fits and undoes the rest.
+- Handing records to people ("split these leads between the reps", "assign them to Raj", "distribute the deals") sets
+  each record's owner with the record's own assign-owner action. A task or reminder about the record has its own
+  assignee; it never changes who owns the record. When the user also asks for a follow-up task, plan both.
 - Don't invent factual values (addresses, amounts, dates, offers, attachments, commitments). You MAY compose ordinary
   wording when the user gave its purpose, e.g. a thank-you for renewing. Don't ask for exact prose unless explicitly
   requested or essential factual content is missing. Draft/send using the user's intent; normal app approvals still apply.
@@ -108,6 +111,13 @@ Rules:
   result still runs, so a failing step doesn't skip it.
 - Dates come from <now>, including its precomputed weekday policy. Don't ask which Friday for a bare "Friday";
   clarify genuinely conflicting dates or an unspecified time required by the action.
+- A date range in the request limits the thing it describes ("leads created last week"), not every search in the plan:
+  don't copy it onto a search for something else (their appointments, messages or tasks), which may fall on any date.
+- Every condition in the request ("leave out", "except", "without", "who never replied") needs a step that applies it.
+  Before answering, check each one has its step; to leave out the records another search finds (those with an
+  appointment), search once for everyone and use exclude, not a read per record.
+- A word describing the records ("new leads", "unpaid invoices", "still marked open") is a condition too: set the
+  search's matching argument (status, state), so a plan that acts on "new leads" never reaches the others.
 - Don't ask for confirmation; the app asks the user before risky or bulk changes.
 - For a requested batch of ticket replies, include every requested ticket in the plan even if a read shows
   a missing email or another eligibility blocker. Do not invent an address, relink a requester, or clarify

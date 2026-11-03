@@ -283,6 +283,21 @@ describe("forEach over a literal list of ids", () => {
   });
 });
 
+describe("a bare date bound covers its whole day", () => {
+  const made = "2026-10-18T09:30:00.000Z";
+  test("lte keeps a timestamp on the bound's day and gt drops it", () => {
+    assert.equal(matches({ createdAt: made }, { createdAt: { lte: "2026-10-18" } }), true);
+    assert.equal(matches({ createdAt: made }, { createdAt: { gt: "2026-10-18" } }), false);
+    assert.equal(matches({ createdAt: "2026-10-19T00:00:00.000Z" }, { createdAt: { lte: "2026-10-18" } }), false);
+    assert.equal(matches({ createdAt: "2026-10-19T00:00:00.000Z" }, { createdAt: { gt: "2026-10-18" } }), true);
+  });
+  test("gte and lt already treat a bare date as the start of its day, and full timestamps compare as before", () => {
+    assert.equal(matches({ createdAt: made }, { createdAt: { gte: "2026-10-18" } }), true);
+    assert.equal(matches({ createdAt: made }, { createdAt: { lt: "2026-10-18" } }), false);
+    assert.equal(matches({ createdAt: made }, { createdAt: { lte: "2026-10-18T09:00:00.000Z" } }), false);
+  });
+});
+
 describe("null-aware filters", () => {
   test("orNull admits null and missing values but preserves bounds and other fields", async () => {
     const ctx = fresh();
@@ -483,6 +498,22 @@ describe("one value of a list in a single-ID argument", () => {
     const details = r.clarification!.candidates.map((c) => c.detail ?? "");
     assert.ok(details.every((d) => !/\bKai\b|\bMorgan\b/.test(d)), JSON.stringify(details));
     assert.ok(details.some((d) => d.includes("Globex")) && details.some((d) => d.includes("Initech")), JSON.stringify(details));
+  });
+});
+
+describe("a list-reading action given the leads a search found", () => {
+  test("reads for each lead instead of asking which one", async () => {
+    const w = fresh();
+    const leads = w.store.all<{ id: string }>("leads").slice(0, 3);
+    const p = compiled(plan([
+      action("s1", "M03.A03", {}),
+      op("s2", "filter", { in: "$s1.items", where: { id: { in: leads.map((l) => l.id) } } }),
+      action("s3", "M21.A03", { leadId: "$s2[*].id" }),
+    ]));
+    const r = await execute(p, registry, w, { executionId: "fan-reads" });
+    assert.equal(r.status, "done", JSON.stringify(r));
+    const out = r.steps.find((x) => x.id === "s3")!;
+    assert.equal(out.status, "done");
   });
 });
 

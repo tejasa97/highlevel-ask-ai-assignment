@@ -68,7 +68,12 @@ export class CodexCliPlanner implements Planner {
         "--output-schema", schema, "--output-last-message", final,
         ...config.flatMap((c) => ["-c", c]), "-",
       ];
-      const usage = await run(executable, args, req.user, { cwd, env, signal });
+      // The model now and then reaches for a tool that is switched off; a fresh run nearly always answers directly.
+      const attempt = () => run(executable, args, req.user, { cwd, env, signal });
+      const usage = await attempt().catch((err) => {
+        if (err instanceof PlannerError && /unexpected planner tool\/item/.test(err.message) && !signal.aborted) return attempt();
+        throw err;
+      });
       if (!usage) throw failure("no usage in reply");
       let text: string;
       let json: unknown;

@@ -21,7 +21,7 @@ function openTask(store: Store, id: string, doing: string): Task {
 const createTask = defineAction({
   id: "M06.A01",
   description:
-    "Create a to-do for a staff user, optionally about a contact, lead or opportunity. Leave dueDate out unless the user gave one; it can't be in the past.",
+    "Create a to-do for a staff user, optionally about a contact, lead or opportunity. Leave dueDate out unless the user gave one; it can't be in the past. A to-do does not make anyone the owner of a lead; for that use M03.A05.",
   synonyms: ["follow up", "follow-up reminder", "remind me", "to-do", "don't forget", "keep track of", "stay on top of"],
   risk: "write",
   input: z.strictObject({
@@ -30,12 +30,12 @@ const createTask = defineAction({
     assigneeId: z.string().optional().describe("user id"),
     dueDate: z.iso.date().optional(),
     priority: z.enum(PRIORITIES).optional().describe("default normal"),
-    relatedTo: z.strictObject(Related.shape).optional(),
+    relatedTo: z.strictObject(Related.shape).optional().describe("the contact, lead or deal the task is about; set it whenever the task is about one record"),
   }),
   output: Task,
   entities: { produces: "task", optionalConsumes: ["user", "contact", "lead", "opportunity"] },
   typedIds: { "relatedTo.id": "relatedTo.type" },
-  revise: { key: "relatedTo.id", edits: { dueDate: "M06.A06", assigneeId: "M06.A05", priority: "M06.A07", title: "M06.A04", description: "M06.A04" }, undo: "M06.A10" },
+  revise: { key: "relatedTo.id", edits: { dueDate: "M06.A06", assigneeId: "M06.A05", priority: "M06.A07" }, undo: "M06.A10" },
   example: () => ({ title: "Call back about pricing", assigneeId: "us_4", dueDate: "2026-10-23", relatedTo: { type: "contact", id: "ct_1" } }),
   handler: (a, { store, clock, actorId }) => {
     if (a.assigneeId) activeUser(store, a.assigneeId, "be assigned tasks");

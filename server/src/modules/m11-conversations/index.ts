@@ -218,7 +218,7 @@ const summarize = defineAction({
 const unanswered = defineAction({
   id: "M11.A10",
   description:
-    'List open conversations waiting for a reply, longest wait first. waitingOn "team" = the customer wrote last and we haven\'t answered. waitingOn "contact" = we wrote last and they haven\'t replied (e.g. leads who never answered our follow-up). People we never messaged have no conversation, so they don\'t appear.',
+    'List open conversations where the last message has not been answered, longest wait first. waitingOn "contact" = we wrote last and they haven\'t replied ("has not replied", "never got back to us", "went quiet", "no answer to our follow-up"). waitingOn "team" = the customer wrote last and we haven\'t answered ("unanswered messages", "waiting on us"). People we never messaged have no conversation, so they don\'t appear.',
   risk: "read",
   input: z.strictObject({
     waitingOn: z.enum(["team", "contact"]).describe('who owes the next reply. "team": they wrote last, so they are waiting on us ("who is waiting on a reply from us"); "contact": we wrote last and are waiting on them ("who hasn\'t replied to us")'),

@@ -139,6 +139,18 @@ Code: [shared prompt](../server/src/planner/prompt.ts).
 
 Code: [action metadata](../server/src/registry/define.ts), [registry surfaces](../server/src/registry/registry.ts), [prompt](../server/src/planner/prompt.ts), [turn checks](../server/src/planner/turn.ts). Tests: [contracts](../server/src/planner/contracts.test.ts), [turns](../server/src/planner/turn.test.ts).
 
+## 8. Rules found while running Luna against the same suites
+
+These came from a parallel branch (`feature/ner-integration`) and were brought over without its own amend mechanism, since the revise step here already covers that.
+
+- A bare date in a date-time input ("November 2") is not a supplied time, and the year is never asked: today's date and the workspace zone are given in `<now>`.
+- A name looked up next to an id the same call already holds is the other record (merge "Sarah Johnson" into the Sarah we kept), and the user's pick is not bound to a lookup told to skip it. A `$lookup` whose name is a record id is that id.
+- A search that lists records, given a list where it takes one id, runs once per value instead of asking "which one?".
+- A bare date bound covers its whole day ("through the 18th" keeps a record made that morning).
+- The compiler sends back a read inside a `forEach` that leaves nothing out, a filter that compares an id column to a name, and an `exclude` on a lead's own id written as `leadId`.
+- Prompt rules: handing records to people sets the record's owner, a date range limits only the thing it describes, every condition in the request needs a step, and a word describing the records ("new leads") is a filter.
+- The Codex adapter retries once on an unexpected tool event.
+
 ## Two corrections found during validation
 
 **Bookkeeping is not the same as a user-facing change.** Report execution updates its last-run timestamp; trigger testing records a test firing without starting a workflow. The first read-outcome guard wrongly rejected them. They now declare `query: true`, so that check recognizes them without lowering execution risk or permissions. Registry validation forbids the flag on external/destructive actions. Other simulated business submissions are not queries. A `look` round still accepts only actions whose execution risk is `read`.

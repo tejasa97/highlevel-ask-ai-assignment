@@ -214,6 +214,19 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     }
     return undefined;
   };
+  /**
+   * A read that lists records, given a list where it takes one id, when no search by name found them ("conversations of
+   * $s1.items[*].id", the leads a date-range search found): the planner meant the read for each. Asking "which one?" of
+   * them would be asking about a choice nobody made.
+   */
+  const fannedOut = (call: Call): { arg: string; values: unknown[] } | undefined => {
+    const at = call.one?.length === 1 && call.one[0]!.length === 1 ? String(call.one[0]![0]) : undefined;
+    if (!at || call.action.risk !== "read" || !("items" in ((call.action.output as { shape?: object }).shape ?? {}))) return undefined;
+    const raw = call.args[at] as string;
+    if (searched.has(rootOf(raw))) return undefined;
+    const values = asList(refValue(raw), raw);
+    return values.length > 1 ? { arg: at, values } : undefined;
+  };
   // Looping a change over a search for one name that found several records with exactly that name.
   const sameNamed = (raw: string, list: unknown[]) => {
     const c = several(raw);
@@ -403,6 +416,31 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         }
 
         case "action": {
+          const fan = fannedOut(step.call);
+          if (fan) {
+            const pages: unknown[] = [];
+            let failure: StepError | undefined;
+            for (const [i, v] of fan.values.entries()) {
+              const call: Call = { action: step.call.action, args: { ...step.call.args, [fan.arg]: v } };
+              const a = concreteArgs(call, lookup());
+              if (!a.ok) {
+                failure = a.error;
+                break;
+              }
+              const r = runItem(ctx, opts.executionId, step.id, String(i), [{ call, args: a.value }]);
+              if (r.status === "failed") {
+                failure = r.error!;
+                break;
+              }
+              pages.push(r.results![0]);
+            }
+            if (failure) fail(failure);
+            else {
+              const items = pages.flatMap((x) => (isPage(x) ? x.items : []));
+              done({ items, total: items.length });
+            }
+            break;
+          }
           const single = onlyOne(step.call);
           if ("ask" in single) return ask(step, single.ask);
           if ("error" in single) {
@@ -785,13 +823,13 @@ export function matches(x: unknown, where: Record<string, unknown>): boolean {
         case "ne":
           return v !== want;
         case "gt":
-          return cmp(v, want) > 0;
+          return cmp(day(v, want), want) > 0;
         case "gte":
           return cmp(v, want) >= 0;
         case "lt":
           return cmp(v, want) < 0;
         case "lte":
-          return cmp(v, want) <= 0;
+          return cmp(day(v, want), want) <= 0;
         case "in":
           return Array.isArray(want) && want.includes(v);
         case "nin":
@@ -805,6 +843,11 @@ export function matches(x: unknown, where: Record<string, unknown>): boolean {
       }
     });
   });
+}
+
+/** A bare date bound ("2026-10-18") covers its whole day: "through the 18th" keeps 2026-10-18T09:30:00Z, "after the 18th" drops it. */
+function day(v: unknown, bound: unknown): unknown {
+  return typeof v === "string" && typeof bound === "string" && /^\d{4}-\d{2}-\d{2}$/.test(bound) && /^\d{4}-\d{2}-\d{2}T/.test(v) ? v.slice(0, 10) : v;
 }
 
 function cmp(a: unknown, b: unknown): number {
