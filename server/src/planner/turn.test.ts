@@ -114,6 +114,49 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(planner.requests.length, 2);
   });
 
+  test("a plan after a look gets its own repair when an empty reply spent the first", async () => {
+    const read = { effect: "read" as const, actions: ["M50.A08"], destination: null };
+    const empty = reply({ type: "plan", steps: [], outcome: read });
+    const find = reply({ type: "look", steps: [{ id: "find", kind: "action", action: "M50.A03", argsJson: JSON.stringify({ query: "New Contacts" }) }], outcome: read });
+    const setsRange = reply({ type: "plan", outcome: read, steps: [
+      { id: "s1", kind: "action", action: "M50.A05", argsJson: JSON.stringify({ reportId: "rpt_1", from: "2026-09-22", to: "2026-10-21" }) },
+      { id: "s2", kind: "action", action: "M50.A08", argsJson: JSON.stringify({ reportId: "rpt_1" }) },
+    ] });
+    const compare = reply({ type: "plan", outcome: read, steps: [{ id: "s1", kind: "action", action: "M50.A08", argsJson: JSON.stringify({ reportId: "rpt_1" }) }] });
+    const planner = scripted(empty, find, setsRange, compare);
+    const out = await planTurn({ message: "Compare the New Contacts report for the last 30 days against the 30 days before that", tier: "fast" }, {
+      registry, retriever, planner, clock: frozenClock(), look: async () => [{ id: "find", output: { items: [{ id: "rpt_1", name: "New Contacts" }], total: 1 } }],
+    });
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.deepEqual(out.plan.steps.map((s) => s.kind === "action" ? s.call.action.id : ""), ["M50.A08"]);
+  });
+
+  test("a read-only outcome sent back for a write and sent again runs its reads alone", async () => {
+    const read = { effect: "read" as const, actions: ["M50.A08"], destination: null };
+    const setsRange = reply({ type: "plan", outcome: read, steps: [
+      { id: "s1", kind: "action", action: "M50.A05", argsJson: JSON.stringify({ reportId: "rpt_1", from: "2026-09-22", to: "2026-10-21" }) },
+      { id: "s2", kind: "action", action: "M50.A08", argsJson: JSON.stringify({ reportId: "rpt_1" }) },
+    ] });
+    const planner = scripted(setsRange, setsRange);
+    const out = await planTurn({ message: "Compare the New Contacts report for the last 30 days against the 30 days before that", tier: "fast" }, { registry, retriever, planner, clock: frozenClock() });
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.deepEqual(out.plan.steps.map((s) => s.kind === "action" ? s.call.action.id : ""), ["M50.A08"]);
+    const asks = await planTurn({ message: "Set the New Contacts report to the last 30 days and compare it", tier: "fast" }, { registry, retriever, planner: scripted(setsRange, setsRange), clock: frozenClock() });
+    assert.ok(asks.kind !== "plan", "a message that asks for the change keeps it");
+  });
+
+  test("a report found by name is compared alone when the range change is sent again", async () => {
+    const read = { effect: "read" as const, actions: ["M50.A08"], destination: null };
+    const setsRange = reply({ type: "plan", outcome: read, steps: [
+      { id: "s1", kind: "resolve", entity: "report", name: "New Contacts" },
+      { id: "s2", kind: "action", action: "M50.A05", argsJson: JSON.stringify({ reportId: "$s1.id", from: "2026-09-22", to: "2026-10-21" }) },
+      { id: "s3", kind: "action", action: "M50.A08", argsJson: JSON.stringify({ reportId: "$s1.id" }) },
+    ] });
+    const out = await planTurn({ message: "Compare the New Contacts report for the last 30 days against the 30 days before that", tier: "fast" }, { registry, retriever, planner: scripted(setsRange, setsRange), clock: frozenClock() });
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.deepEqual(out.plan.steps.map((s) => s.kind === "action" ? s.call.action.id : s.kind), ["resolve", "M50.A08"]);
+  });
+
   test("a prerequisite-only plan is repaired rather than returned as completed", async () => {
     const planner = scripted(tasks("plan"), { ...createTask(), outcome: change });
     const { out } = await run("Create a task like my other tasks", planner);

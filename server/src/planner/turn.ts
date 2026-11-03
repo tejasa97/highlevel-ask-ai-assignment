@@ -467,8 +467,9 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     if (!outcome && d.outcome) { outcome = d.outcome; outcomeFrom = reply; }
     else if (restate && outcome?.effect === "change" && d.outcome?.effect === "change" && d.outcome.actions.length) { outcome = { ...outcome, actions: d.outcome.actions }; outcomeFrom = reply; }
     // A look that called its own reads the outcome, for a message that also tells ("Which leads never replied? Split
-    // them between the reps"), described the look: the change the reply after it states is the request's.
-    else if (restate && outcome?.effect === "read" && lookStated && d.outcome?.effect === "change" && d.outcome.actions.length && toldPart(input.message)) { outcome = d.outcome; outcomeFrom = reply; }
+    // them between the reps"), described the look: the change the reply after it states is the request's, when the message
+    // names a change (a plain "compare" does not: the reply that adds a range change to it is wrong, not the look).
+    else if (restate && outcome?.effect === "read" && lookStated && d.outcome?.effect === "change" && d.outcome.actions.length && toldPart(input.message) && (!lookPlan || readOnlyIntentError(input.message, lookPlan, offered, registry).length)) { outcome = d.outcome; outcomeFrom = reply; }
     else if (outcome && !outcome.actions.length && d.outcome?.actions.length) outcome = { ...outcome, actions: d.outcome.actions };
     restate = false;
     if (outcome?.destination && !deliverySurfaces.some((s) => s.id === outcome!.destination)) {
@@ -616,6 +617,10 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       lookStated = outcomeFrom === reply && outcome?.effect === "read";
       await runLook(compiled.plan, lookSource.steps ?? []);
       if (nerClarify) return nerClarify;
+      // What the look found is new to the planner: the plan after it gets its own repair, not the one a reply before it spent.
+      repaired = false;
+      planRepairs = 0;
+      lastErrors = Infinity;
       restate = true;
       user = prompt();
       reply = await call(user, "plan after look");
@@ -744,6 +749,14 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     }
     emit({ type: "compile.errors", data: { errors } });
     if (!mayRepair(errors)) {
+      // Told to leave out a write for a read-only outcome and sent it again: the reads are the answer, so they run alone,
+      // when what's left still does the outcome and the message asks for no change.
+      if (compiled.ok && outcome?.effect === "read" && errors.length && errors.every((e) => READ_ONLY_WRITE.test(e))) {
+        const kept = withoutWrites(compiled.plan);
+        if (kept.steps.length && !outcomeErrors(kept, outcome, undefined, (id) => registry.get(id)).length && !readOnlyIntentError(input.message, kept, offered, registry).length) {
+          return { kind: "plan", plan: kept, carry: carryOf(kept, registry) };
+        }
+      }
       if (verdict) return verdict;
       // Searched, and still naming no action that makes the change: no action does it.
       if (searchedFor && outcome?.effect === "change" && !outcome.actions.length) return { kind: "reply", status: "unsupported", text: `I couldn't find an action for that (${searchedFor}).` };
@@ -1002,6 +1015,20 @@ const isYesNo = (message: string) => isQuestion(message) && /^(is|isn't|are|aren
 
 /** The outcome errors a plan of prerequisite reads gets, and no others. */
 const PREREQUISITES_ONLY = /^(requested operation \S+ (is missing; prerequisite reads|.*is not in the plan: add a step that calls)|the requested outcome changes records, but this plan only reads)/;
+
+/** The error a plan gets for a write under a read-only outcome (see outcomeErrors). */
+const READ_ONLY_WRITE = /^the requested outcome is read-only, but /;
+
+/** The plan without the steps that change anything, and without any step built on one that does. */
+function withoutWrites(plan: CompiledPlan): CompiledPlan {
+  const dropped = new Set<string>();
+  const steps = plan.steps.filter((s) => {
+    const keep = (s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : []).every((c) => c.action.risk === "read" || c.action.query) && !s.deps.some((d) => dropped.has(d));
+    if (!keep) dropped.add(s.id);
+    return keep;
+  });
+  return { ...plan, steps };
+}
 
 const readsOnly = (plan: CompiledPlan) => plan.steps.every((s) => callsOf(s).every((a) => a.risk === "read"));
 
