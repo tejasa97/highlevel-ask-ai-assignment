@@ -109,7 +109,7 @@ Cost is real tokens priced at list rates: the Token Plan is prepaid, so no money
 
 ## Verify and evaluate
 
-In `server/`, `npm run typecheck` and `npm test` run the 2,603 deterministic tests. They include the **smoke test of all 500 handlers** (`server/src/registry/smoke.test.ts`): every action's example call, a made-up param and, for actions with a required id, an unknown id, and a check that each module registers all ten of its catalog actions. In `web/`, run `npm run build`.
+In `server/`, `npm run typecheck` and `npm test` run the 2,791 deterministic tests. They include the **smoke test of all 500 handlers** (`server/src/registry/smoke.test.ts`): every action's example call, a made-up param and, for actions with a required id, an unknown id, and a check that each module registers all ten of its catalog actions. In `web/`, run `npm run build`.
 
 **The eval dataset** is 273 scenarios across all 50 modules, with at least one checked action in every module: 150 direct, 25 indirect, 44 multi-step, 13 follow-up, 11 ambiguous, 3 unsupported and 27 failure cases. Each scenario is a JSON conversation with expected outcomes and automated assertions on the status, the actions planned, their arguments, the reply, and the **final database state** (SQL queries). Every run starts from a fresh seeded database and goes through the same conversation code as the web app.
 
