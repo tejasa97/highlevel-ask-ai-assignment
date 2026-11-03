@@ -94,7 +94,7 @@ export interface IdentityQuery {
 }
 
 export interface IdentityConfig {
-  /** Max Levenshtein distance for the near-miss generator (whole normalized name). */
+  /** Most edits a near miss may take, over the whole normalized name or across its words (a swap is one edit). */
   editMaxDistance: number;
   /** Most candidates offered in a question. */
   suggestMax: number;
@@ -151,20 +151,56 @@ export function fingerprint(c: Pick<Candidate, "name" | "detail" | "inactive">):
   return createHash("sha256").update(JSON.stringify([c.name, c.detail ?? "", c.inactive ?? ""])).digest("hex").slice(0, 16);
 }
 
-function levenshtein(a: string, b: string, max: number): number {
+/** Edit distance where swapping two neighbouring letters is one edit ("sarha" → "sarah"), capped at max + 1. */
+export function editDistance(a: string, b: string, max: number): number {
   if (Math.abs(a.length - b.length) > max) return max + 1;
+  let before: number[] = [];
   let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
   for (let i = 1; i <= a.length; i++) {
     const cur = [i];
     let best = i;
     for (let j = 1; j <= b.length; j++) {
       cur[j] = Math.min(prev[j]! + 1, cur[j - 1]! + 1, prev[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) cur[j] = Math.min(cur[j]!, before[j - 2]! + 1);
       best = Math.min(best, cur[j]!);
     }
+    // A row's minimum never falls in a later row, a swap included, so the cap can stop early.
     if (best > max) return max + 1;
+    before = prev;
     prev = cur;
   }
   return prev[b.length]!;
+}
+
+/**
+ * A near miss of a record's name, within max edits: the whole name ("Ana Ruis"), or the words said, each a different
+ * word of the name, exactly or within the edits left ("Sarha" for Sarah Johnson, "Jhon Smith" for John Smith).
+ * A word of three letters or fewer must be exact: "Jo" is not a slip for "Bo".
+ */
+export function nearMiss(said: string, name: string, max: number): boolean {
+  const n = norm(name);
+  if (editDistance(n, said, max) <= max) return true;
+  const words = n.split(" ");
+  let left = max;
+  let slipped = false;
+  const used = new Set<number>();
+  for (const w of said.split(" ")) {
+    const at = words.findIndex((x, i) => !used.has(i) && x === w);
+    if (at >= 0) { used.add(at); continue; }
+    if (w.length <= 3) return false;
+    let pick = -1;
+    let cost = left + 1;
+    words.forEach((x, i) => {
+      if (used.has(i)) return;
+      const d = editDistance(x, w, left);
+      if (d < cost) { pick = i; cost = d; }
+    });
+    if (pick < 0 || cost > left) return false;
+    used.add(pick);
+    left -= cost;
+    slipped = true;
+  }
+  return slipped;
 }
 
 /**
@@ -225,7 +261,7 @@ export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; st
         const c = inScope(id, row.name);
         if (c) add(c, "alias");
       }
-      if (edits && levenshtein(norm(row.name), key, config.editMaxDistance) <= config.editMaxDistance) near.push(row);
+      if (edits && nearMiss(key, row.name, config.editMaxDistance)) near.push(row);
     }
   }
   if (!found.size) {
@@ -299,7 +335,8 @@ export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; st
   if (!resolver.strictNames) {
     const noun = new Set(q.entity.split("_"));
     const said = key.split(" ").filter((w) => w && !noun.has(w));
-    const holds = said.length ? usable.filter((c) => wholeWords(said, `${c.name} ${c.detail ?? ""}`)) : [];
+    // A near miss never binds, even when its detail happens to hold the words.
+    const holds = said.length ? usable.filter((c) => c.matchReason !== "edit" && wholeWords(said, `${c.name} ${c.detail ?? ""}`)) : [];
     if (holds.length === 1) return bind(holds[0]!, "lookup", "write: the one record holding every word said");
   }
   return { ...base, kind: "suggest", candidates: top(usable), decision: "write: no strong key, asking" };

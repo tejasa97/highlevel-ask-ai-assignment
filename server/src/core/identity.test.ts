@@ -8,7 +8,7 @@ import { world } from "../store/world.js";
 import { testWorld } from "../testkit.js";
 import { compile, type CompiledPlan } from "./compile.js";
 import { execute, type ExecEvent } from "./execute.js";
-import { heldWhere, identityConfig, type IdentityQuery, resolveIdentity, revalidate, userSelected } from "./identity.js";
+import { editDistance, heldWhere, identityConfig, nearMiss,type IdentityQuery, resolveIdentity, revalidate, userSelected } from "./identity.js";
 
 let registry: Registry;
 before(async () => {
@@ -70,6 +70,40 @@ describe("resolveIdentity", () => {
     const r = resolve({ text: "Ana Ruis", actionRisk: "write" });
     assert.equal(r.kind, "suggest");
     assert.deepEqual(r.candidates.map((c) => [c.id, c.matchReason]), [["ct_3", "edit"]]);
+  });
+
+  test("two swapped letters are one edit; a word of three letters or fewer must be exact", () => {
+    assert.equal(editDistance("sarha", "sarah", 1), 1);
+    assert.equal(editDistance("jhon", "john", 1), 1);
+    assert.equal(editDistance("jhon smtih", "john smith", 1), 2, "capped at max + 1");
+    assert.ok(nearMiss("sarha", "Sarah Johnson", 1), "one word of the name, misspelt");
+    assert.ok(nearMiss("jhon smith", "John Smith", 1));
+    assert.ok(!nearMiss("jhon smtih", "John Smith", 1), "two slips is past the budget");
+    assert.ok(!nearMiss("bo", "Jo Park", 1), "a short word is never a slip on its own");
+  });
+
+  test("a misspelt first name (\"Sarha\") asks did-you-mean for a write or a read, never picks", () => {
+    for (const actionRisk of ["write", "read"] as const) {
+      const r = resolve({ text: "Sarha", actionRisk });
+      assert.equal(r.kind, "suggest", r.decision);
+      assert.ok(r.candidates.every((c) => c.matchReason === "edit"));
+      assert.deepEqual(r.candidates.filter((c) => c.name === "Sarah Johnson").map((c) => c.id).sort(), ["ct_31", "ct_32"], "both Sarah Johnsons are offered");
+    }
+  });
+
+  test("\"Jhon Smith\" offers the one John Smith as a question; two close Johns are both offered", () => {
+    const w = world();
+    const smith = w.f.contact({ firstName: "John", lastName: "Smith" });
+    for (const actionRisk of ["write", "read"] as const) {
+      const r = resolve({ text: "Jhon Smith", actionRisk }, w);
+      assert.equal(r.kind, "suggest", r.decision);
+      assert.deepEqual(r.candidates.map((c) => [c.id, c.matchReason]), [[smith.id, "edit"]]);
+    }
+    const park = w.f.contact({ firstName: "John", lastName: "Park" });
+    const r = resolve({ text: "Jhon", actionRisk: "write" }, w);
+    assert.equal(r.kind, "suggest", r.decision);
+    assert.deepEqual(r.candidates.map((c) => c.id).sort(), [smith.id, park.id].sort());
+    assert.equal(resolve({ text: "Jhon Smtih", actionRisk: "write" }, w).kind, "not_found", "two slips is no near miss");
   });
 
   test("a missing person with a 0.92 embedding lookalike is a suggestion, never a binding", () => {
@@ -162,6 +196,14 @@ describe("execution", () => {
     assert.equal(r.clarification?.kind, "suggest");
     assert.deepEqual(r.clarification?.candidates.map((c) => c.name), ["Ana Ruiz"]);
     assert.ok(events.some((e) => e.type === "identity.resolved" && e.kind === "suggest"));
+  });
+
+  test("a misspelt first name with two close matches asks which, and nothing is written", async () => {
+    const { r, w } = await run(draft("Sarha"));
+    assert.equal(r.status, "needs_clarification");
+    assert.equal(r.clarification?.kind, "suggest");
+    assert.ok((r.clarification?.candidates.filter((c) => c.name === "Sarah Johnson").length ?? 0) >= 2);
+    assert.equal(w.store.all("emails").length, world().store.all("emails").length);
   });
 
   test("an exact unique email recipient binds and runs", async () => {
