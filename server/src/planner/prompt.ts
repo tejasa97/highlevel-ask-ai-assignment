@@ -26,6 +26,7 @@ Rules:
   Prerequisite searches are not the outcome: finding a payment does not request its refund, and listing tasks
   does not reassign them. Retain the outcome across look/search rounds. Use look for an intermediate read;
   then include the final operations in plan. Use search_tools when the final action isn't offered.
+- Set outcome.leavesOut to what the request says to leave out or skip ("anyone with a booked appointment"), else null.
 - For explicit email/SMS delivery or public posting, set outcome.destination to the requested surface ID from
   <delivery_surfaces>. If the user names an unlisted platform, preserve its name as destination; do not silently
   substitute a blog/community/website. Check destination support BEFORE asking for content. Other operations use null.

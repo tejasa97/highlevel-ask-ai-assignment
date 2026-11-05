@@ -57,6 +57,18 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: {
   return [...new Set(errors)];
 }
 
+/**
+ * The request says to leave records out, and no step does. Asked once: a read's own argument may already do it, which
+ * this can't see. A filter that only keeps ("who have not replied") doesn't leave out what the request named.
+ */
+export function leavesOutError(plan: CompiledPlan, outcome?: Outcome): string[] {
+  const what = outcome?.leavesOut?.trim();
+  if (!what) return [];
+  const drops = plan.steps.some((s) => s.kind === "exclude" || (s.kind === "filter" && Object.values(s.where).some((c) => c === false || (!!c && typeof c === "object" && ("ne" in c || "nin" in c)))));
+  if (drops) return [];
+  return [`outcome.leavesOut says to leave out "${what}", but no step does. Read what decides it and add an exclude step before the change: "in" the list, "by" a field of its items, "set" the matching field of that read's items. If a read's argument already leaves them out, plan the same again`];
+}
+
 const SEND = /\bsend\b/i;
 const DRAFT = /\b(draft|drafts|drafting|prepare|write up)\b/i;
 const HOLD = /\b(don'?t|do not|not|without|never|before|later|until)\b.{0,20}\bsend/i;

@@ -29,7 +29,7 @@ import { readOnlyIntentError, toldPart } from "./completion.js";
 import { repairBlock, SYSTEM, userBlock } from "./prompt.js";
 import { SUBMIT_PLAN_SCHEMA, SubmitPlan } from "./submit-plan.js";
 import { type PlanResult, type Planner, PlannerError, type Tier } from "./types.js";
-import { emptyTargets, outcomeErrors, type Outcome, selectionReadback } from "./contracts.js";
+import { emptyTargets, leavesOutError, outcomeErrors, type Outcome, selectionReadback } from "./contracts.js";
 import { assessClarification, namesField } from "./clarification.js";
 import { appendPlannerDebug, debugReason, type PlannerDebug, plannerDebugEnabled } from "./debug.js";
 
@@ -388,6 +388,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   // The plan whose records were said back to the planner. It compiled and passed every check, so when the reply after
   // it doesn't hold up, that plan runs rather than nothing.
   let selectionChecked: CompiledPlan | undefined;
+  let leavesOutChecked = false;
   const failedAfterCheck = (text: string) => (selectionChecked ? { kind: "plan" as const, plan: selectionChecked, carry: carryOf(selectionChecked, registry) } : failed(text));
   let lookPlan: CompiledPlan | undefined;
   let looks = 0;
@@ -727,6 +728,14 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         if (nerClarify) return nerClarify;
         user = `${prompt()}\n${ANSWER_FROM_LOOKED}`;
         reply = await call(user, "answer after look");
+        continue;
+      }
+      const kept = leavesOutChecked ? [] : leavesOutError(compiled.plan, outcome);
+      if (kept.length) {
+        leavesOutChecked = true;
+        emit({ type: "compile.errors", data: { errors: kept } });
+        user = prompt();
+        reply = await call(repairBlock(user, reply.json, kept), "repair leaves out");
         continue;
       }
       const picked = !empty.length && !selectionChecked && outcome?.effect === "change" ? selectionReadback(compiled.plan, lookResults, input.message) : [];

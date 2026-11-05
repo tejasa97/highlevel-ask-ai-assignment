@@ -69,6 +69,15 @@ describe("grounded outcomes and clarifications", () => {
   const change = { effect: "change" as const, actions: ["M06.A01"], destination: null };
   const tasks = (type: "look" | "plan") => reply({ type, steps: [{ id: "read", kind: "action", action: "M06.A03", argsJson: "{}" }], outcome: change });
 
+  test("a plan that doesn't leave out what its outcome says is asked once, then stands", async () => {
+    const leaving = { ...change, leavesOut: "anyone already called" };
+    const planner = scripted(reply({ steps: createTask().steps, outcome: leaving }), reply({ steps: createTask().steps, outcome: leaving }));
+    const { out } = await run("Create a task to call Ana Ruiz, leaving out anyone already called", planner);
+    assert.equal(planner.requests.length, 2);
+    assert.match(planner.requests[1]!.user, /leave out "anyone already called", but no step does/);
+    assert.equal(out.kind, "plan");
+  });
+
   test("an answer to a question is planned with the message it answers in view", async () => {
     const planner = scripted(createTask());
     await run("The lead from Wayne.", planner, { answering: "Create a task to call Ana Ruiz about partnering" });

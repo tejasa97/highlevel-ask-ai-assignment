@@ -3,7 +3,7 @@ import { before, test } from "node:test";
 import { compile } from "../core/compile.js";
 import { loadRegistry, Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
-import { checkIdentity, emptyTargets, outcomeErrors, selectionReadback } from "./contracts.js";
+import { checkIdentity, emptyTargets, leavesOutError, outcomeErrors, selectionReadback } from "./contracts.js";
 import type { SubmitPlan } from "./submit-plan.js";
 
 let registry: Registry;
@@ -191,4 +191,25 @@ test("publishing a course may publish the lesson the same plan made, and nothing
   // A lesson this plan didn't make, or a course nobody asked to publish, is still left out.
   assert.match(check({}, { ...outcome, actions: ["M40.A01", "M40.A09"] }), /M41\.A09 sends to Lesson/);
   assert.match(check({ courseId: "$s1.id", title: "Welcome" }, { ...outcome, actions: ["M40.A01", "M41.A01"] }), /M41\.A09 sends to Lesson/);
+});
+
+test("a request that leaves records out needs a step that does", () => {
+  const plan = (pick: object) => {
+    const r = compile({ type: "plan", steps: [
+      { id: "s1", kind: "action", action: "M06.A03", argsJson: "{}" },
+      { id: "s2", kind: "action", action: "M06.A03", argsJson: JSON.stringify({ status: "open" }) },
+      { id: "s3", kind: "op", op: "filter", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: null, ...pick },
+    ], question: null, options: null, reason: null, alternatives: null, query: null, text: null } satisfies SubmitPlan, registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    return r.plan;
+  };
+  const outcome = { effect: "change" as const, actions: [], destination: null, leavesOut: "the open ones" };
+  // "Have not replied" kept by a filter is not the exclusion the request named.
+  const keeps = plan({ whereJson: JSON.stringify({ id: { in: "$s2.items[*].id" } }) });
+  assert.match(leavesOutError(keeps, outcome)[0]!, /leave out "the open ones", but no step does/);
+  assert.deepEqual(leavesOutError(plan({ op: "exclude", by: "id", set: "$s2.items[*].id" }), outcome), []);
+  assert.deepEqual(leavesOutError(plan({ whereJson: JSON.stringify({ id: { nin: "$s2.items[*].id" } }) }), outcome), []);
+  assert.deepEqual(leavesOutError(plan({ whereJson: JSON.stringify({ status: { ne: "open" } }) }), outcome), []);
+  assert.deepEqual(leavesOutError(keeps, { ...outcome, leavesOut: null }), []);
+  assert.deepEqual(leavesOutError(keeps, undefined), []);
 });
