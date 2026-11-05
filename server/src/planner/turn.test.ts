@@ -1059,6 +1059,17 @@ describe("planTurn", () => {
     assert.equal(told.requests.length, 1);
   });
 
+  test("a rejected answer's read outcome doesn't hold the plan that replaces it to reading", async () => {
+    // "The deal is now worth $X" answered as prose with a read outcome, then planned as the change it is.
+    const read = { effect: "read" as const, actions: [] as string[], destination: null };
+    const change = { effect: "change" as const, actions: ["M06.A01"], destination: null };
+    const answer = reply({ type: "answer", text: "There is no request to act on here.", outcome: read });
+    const planner = scripted(answer, { ...createTask(), outcome: change });
+    const { out } = await run("Ana's task is now due tomorrow", planner);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+  });
+
   test("the prompt offers the product and invoice actions for adding a product to an invoice", async () => {
     const planner = scripted(reply({ type: "unsupported", reason: "x" }), reply({ type: "unsupported", reason: "x" }));
     await run("add a product called Gold Plan to Priya's invoice", planner);

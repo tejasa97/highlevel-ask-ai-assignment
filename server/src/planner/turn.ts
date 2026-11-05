@@ -665,6 +665,9 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       const errors = ["there is no <context> or <looked> to answer from; if a listed action reads or checks what was asked, plan it (its result is the answer); otherwise reply answer again"];
       emit({ type: "compile.errors", data: { errors } });
       repaired = true;
+      // The reply sent back for having nothing to answer from also stated a read outcome ("no request here"): that
+      // outcome must not hold the plan that replaces it to reading, when the message is a change.
+      unfreezeRejected();
       reply = await call(repairBlock(user, reply.json, errors), "repair");
       continue;
     }
