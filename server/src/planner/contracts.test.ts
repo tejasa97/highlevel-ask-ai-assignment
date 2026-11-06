@@ -3,7 +3,7 @@ import { before, test } from "node:test";
 import { compile } from "../core/compile.js";
 import { loadRegistry, Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
-import { checkIdentity, emptyTargets, leavesOutError, outcomeErrors, selectionReadback } from "./contracts.js";
+import { checkIdentity, emptyTargets, leavesOutError, readLeavesOut, outcomeErrors, selectionReadback } from "./contracts.js";
 import type { SubmitPlan } from "./submit-plan.js";
 
 let registry: Registry;
@@ -205,6 +205,14 @@ test("a read whose own argument leaves records out satisfies the request", () =>
   const outcome = { effect: "change" as const, actions: [], destination: null, leavesOut: "anyone we already reminded this week" };
   assert.deepEqual(leavesOutError(plan({ minDaysOverdue: 15, notRemindedSince: "2026-10-19" }), outcome), []);
   assert.match(leavesOutError(plan({ minDaysOverdue: 15 }), outcome)[0]!, /no step before the change does/);
+});
+
+test("only a not-word argument with a value or a true un-word flag leaves records out", () => {
+  assert.equal(readLeavesOut({ notRemindedSince: "2026-10-19" }), true);
+  assert.equal(readLeavesOut({ unassigned: true }), true);
+  assert.equal(readLeavesOut({ unassigned: false }), false);
+  assert.equal(readLeavesOut({ notRemindedSince: null }), false);
+  assert.equal(readLeavesOut({ unitPrice: 5, until: "2026-11-01" }), false);
 });
 
 test("a request that leaves records out needs a step that does", () => {

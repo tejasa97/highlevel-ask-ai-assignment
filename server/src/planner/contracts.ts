@@ -57,8 +57,8 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: {
   return [...new Set(errors)];
 }
 
-/** A read that leaves records out itself: "notRemindedSince", "unassigned". Sending that plan back only risks a worse one. */
-const readLeavesOut = (args: Record<string, unknown>) => Object.entries(args).some(([k, v]) => /^(not[A-Z]|un[a-z])/.test(k) && v !== false && v != null);
+/** A read that leaves records out itself: "notRemindedSince", "unassigned". Sending that plan back only risks a worse one. An "un" word counts only as a true flag: "unitPrice" leaves nothing out. */
+export const readLeavesOut = (args: Record<string, unknown>) => Object.entries(args).some(([k, v]) => (/^not[A-Z]/.test(k) && v != null && v !== false) || (/^un[a-z]/.test(k) && v === true));
 
 /**
  * The request says to leave records out, and no step does. Asked once: a read's own argument may do it in a way this
