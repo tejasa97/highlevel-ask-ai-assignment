@@ -126,5 +126,57 @@ describe("typed session identities", () => {
     assert.match(requests[1]!.user, /<failed_attempt>.*first/);
     assert.equal(got.at(-1)?.status, "done");
   });
+
+  test("a revision that changes one record and then fails still knows every record the last turn made", async () => {
+    const ctx = world();
+    const community = ctx.f.community();
+    const channelId = community.channels[0]!.id;
+    const who = ctx.f.contact();
+    const lead = ctx.f.lead();
+    const task = (id: string, title: string) => action(id, "M06.A01", { title, relatedTo: { type: "lead", id: lead.id } });
+    const post = action("post", "M43.A07", { communityId: community.id, channelId, body: "Hi all", contactId: who.id });
+    // The first task is revised, then the post fails: the second task is untouched and still the last turn's.
+    const replies = [response([task("a", "Call"), task("b", "Email")]), response([task("a", "Call back"), post]), response([task("a", "Call back"), post]), response([task("a", "Call again")])];
+    const requests: PlanRequest[] = [];
+    const planner: Planner = { name: "scripted", async plan(req) {
+      requests.push(req);
+      const json = replies.shift()!;
+      return { model: "scripted-provider", json, text: JSON.stringify(json), usage: { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0, billing: "none" }, latencyMs: 0 };
+    } };
+    const chat = new Conversation({ registry, planner, retriever: new Retriever(buildCards(registry)) }, ctx);
+    await chat.ask("Add two tasks for that lead", "fast", "us_1", () => {});
+    await chat.ask(`Make it call back and post "Hi all" as ${who.name}`, "fast", "us_1", () => {});
+    await chat.ask("Now make it call again", "fast", "us_1", () => {});
+    assert.match(requests.at(-1)!.user, /<last_made>2 task \(M06\.A01\)<\/last_made>/, "both tasks still count as the last turn's");
+  });
+
+  test("a revision that fails before changing anything still revises on its retry, and on the next message", async () => {
+    const ctx = world();
+    const community = ctx.f.community();
+    const channelId = community.channels[0]!.id;
+    const who = ctx.f.contact();
+    const lead = ctx.f.lead();
+    const task = (title: string, more = {}) => action("task", "M06.A01", { title, relatedTo: { type: "lead", id: lead.id }, ...more });
+    const post = action("post", "M43.A07", { communityId: community.id, channelId, body: "Hi all", contactId: who.id });
+    // The task needs the post, so the failed post stops the plan before anything changes.
+    const replies = [response([task("Call")]), response([post, task("Call again", { description: "$post.id" })]), response([post, task("Call again", { description: "$post.id" })]), response([task("Call back")])];
+    const requests: PlanRequest[] = [];
+    const planner: Planner = { name: "scripted", async plan(req) {
+      requests.push(req);
+      const json = replies.shift()!;
+      return { model: "scripted-provider", json, text: JSON.stringify(json), usage: { input: 0, cachedRead: 0, cacheWrite: 0, output: 0, thinking: 0, costUsd: 0, billing: "none" }, latencyMs: 0 };
+    } };
+    const chat = new Conversation({ registry, planner, retriever: new Retriever(buildCards(registry)) }, ctx);
+    const tasks = () => ctx.store.all("task").length;
+    await chat.ask("Add a task for that lead", "fast", "us_1", () => {});
+    const made = tasks();
+    await chat.ask(`Post "Hi all" as ${who.name} and call them again instead`, "fast", "us_1", () => {});
+    assert.equal(requests.length, 3);
+    assert.match(requests[2]!.user, /<failed_attempt>/);
+    assert.match(requests[2]!.user, /<last_made>/, "the retry still knows what the last turn made");
+    await chat.ask("Make it call back", "fast", "us_1", () => {});
+    assert.match(requests[3]!.user, /<last_made>/, "so does the next message");
+    assert.equal(tasks(), made, "the follow-up edited the task instead of making another");
+  });
 });
 
