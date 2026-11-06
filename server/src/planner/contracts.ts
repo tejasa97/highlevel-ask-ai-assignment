@@ -57,16 +57,19 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: {
   return [...new Set(errors)];
 }
 
+/** A read that leaves records out itself: "notRemindedSince", "unassigned". Sending that plan back only risks a worse one. */
+const readLeavesOut = (args: Record<string, unknown>) => Object.entries(args).some(([k, v]) => /^(not[A-Z]|un[a-z])/.test(k) && v !== false && v != null);
+
 /**
- * The request says to leave records out, and no step does. Asked once: a read's own argument may already do it, which
- * this can't see. A filter that only keeps ("who have not replied") doesn't leave out what the request named.
+ * The request says to leave records out, and no step does. Asked once: a read's own argument may do it in a way this
+ * can't see. A filter that only keeps ("who have not replied") doesn't leave out what the request named.
  */
 export function leavesOutError(plan: CompiledPlan, outcome?: Outcome): string[] {
   const what = outcome?.leavesOut?.trim();
   if (!what) return [];
   // Only a step ahead of the first change can keep anyone out of it.
   const first = plan.steps.findIndex((s) => (s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : []).some((c) => c.action.risk !== "read"));
-  const drops = (first < 0 ? plan.steps : plan.steps.slice(0, first)).some((s) => s.kind === "exclude" || (s.kind === "filter" && Object.values(s.where).some((c) => c === false || (!!c && typeof c === "object" && ("ne" in c || "nin" in c)))));
+  const drops = (first < 0 ? plan.steps : plan.steps.slice(0, first)).some((s) => s.kind === "exclude" || (s.kind === "action" && readLeavesOut(s.call.args)) || (s.kind === "filter" && Object.values(s.where).some((c) => c === false || (!!c && typeof c === "object" && ("ne" in c || "nin" in c)))));
   if (drops) return [];
   return [`outcome.leavesOut says to leave out "${what}", but no step before the change does. Read what decides it and add an exclude step before the change: "in" the list, "by" a field of its items, "set" the matching field of that read's items. If a read's argument already leaves them out, plan the same again`];
 }

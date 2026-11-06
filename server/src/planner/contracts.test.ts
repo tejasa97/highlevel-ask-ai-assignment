@@ -193,6 +193,20 @@ test("publishing a course may publish the lesson the same plan made, and nothing
   assert.match(check({ courseId: "$s1.id", title: "Welcome" }, { ...outcome, actions: ["M40.A01", "M41.A01"] }), /M41\.A09 sends to Lesson/);
 });
 
+test("a read whose own argument leaves records out satisfies the request", () => {
+  const plan = (args: object) => {
+    const r = compile({ type: "plan", steps: [
+      { id: "s1", kind: "action", action: "M28.A10", argsJson: JSON.stringify(args) },
+      { id: "s2", kind: "op", op: "forEach", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M28.A08", argsJson: JSON.stringify({ invoiceId: "$item.invoiceId" }) }] },
+    ], question: null, options: null, reason: null, alternatives: null, query: null, text: null } satisfies SubmitPlan, registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    return r.plan;
+  };
+  const outcome = { effect: "change" as const, actions: [], destination: null, leavesOut: "anyone we already reminded this week" };
+  assert.deepEqual(leavesOutError(plan({ minDaysOverdue: 15, notRemindedSince: "2026-10-19" }), outcome), []);
+  assert.match(leavesOutError(plan({ minDaysOverdue: 15 }), outcome)[0]!, /no step before the change does/);
+});
+
 test("a request that leaves records out needs a step that does", () => {
   const plan = (pick: object) => {
     const r = compile({ type: "plan", steps: [
