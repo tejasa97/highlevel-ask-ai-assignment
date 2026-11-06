@@ -64,9 +64,11 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: {
 export function leavesOutError(plan: CompiledPlan, outcome?: Outcome): string[] {
   const what = outcome?.leavesOut?.trim();
   if (!what) return [];
-  const drops = plan.steps.some((s) => s.kind === "exclude" || (s.kind === "filter" && Object.values(s.where).some((c) => c === false || (!!c && typeof c === "object" && ("ne" in c || "nin" in c)))));
+  // Only a step ahead of the first change can keep anyone out of it.
+  const first = plan.steps.findIndex((s) => (s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : []).some((c) => c.action.risk !== "read"));
+  const drops = (first < 0 ? plan.steps : plan.steps.slice(0, first)).some((s) => s.kind === "exclude" || (s.kind === "filter" && Object.values(s.where).some((c) => c === false || (!!c && typeof c === "object" && ("ne" in c || "nin" in c)))));
   if (drops) return [];
-  return [`outcome.leavesOut says to leave out "${what}", but no step does. Read what decides it and add an exclude step before the change: "in" the list, "by" a field of its items, "set" the matching field of that read's items. If a read's argument already leaves them out, plan the same again`];
+  return [`outcome.leavesOut says to leave out "${what}", but no step before the change does. Read what decides it and add an exclude step before the change: "in" the list, "by" a field of its items, "set" the matching field of that read's items. If a read's argument already leaves them out, plan the same again`];
 }
 
 const SEND = /\bsend\b/i;

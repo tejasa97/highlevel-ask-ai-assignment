@@ -206,10 +206,24 @@ test("a request that leaves records out needs a step that does", () => {
   const outcome = { effect: "change" as const, actions: [], destination: null, leavesOut: "the open ones" };
   // "Have not replied" kept by a filter is not the exclusion the request named.
   const keeps = plan({ whereJson: JSON.stringify({ id: { in: "$s2.items[*].id" } }) });
-  assert.match(leavesOutError(keeps, outcome)[0]!, /leave out "the open ones", but no step does/);
+  assert.match(leavesOutError(keeps, outcome)[0]!, /leave out "the open ones", but no step before the change does/);
   assert.deepEqual(leavesOutError(plan({ op: "exclude", by: "id", set: "$s2.items[*].id" }), outcome), []);
   assert.deepEqual(leavesOutError(plan({ whereJson: JSON.stringify({ id: { nin: "$s2.items[*].id" } }) }), outcome), []);
   assert.deepEqual(leavesOutError(plan({ whereJson: JSON.stringify({ status: { ne: "open" } }) }), outcome), []);
   assert.deepEqual(leavesOutError(keeps, { ...outcome, leavesOut: null }), []);
   assert.deepEqual(leavesOutError(keeps, undefined), []);
+});
+
+test("an exclude after the change keeps no one out of it", () => {
+  const outcome = { effect: "change" as const, actions: ["M06.A01"], destination: null, leavesOut: "the booked ones" };
+  const read = { id: "s1", kind: "action", action: "M03.A03", argsJson: "{}" };
+  const task = { id: "t", kind: "op", op: "forEach", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M06.A01", argsJson: JSON.stringify({ title: "Call", relatedTo: { type: "lead", id: "$item.id" } }) }] };
+  const exclude = (id: string, list: string) => ({ id, kind: "op", op: "exclude", in: list, whereJson: null, by: "id", set: "$s1.items[*].id", roundRobin: null, do: null });
+  const plan = (steps: unknown[]) => {
+    const r = compile({ type: "plan", steps, question: null, options: null, reason: null, alternatives: null, query: null, text: null } as SubmitPlan, registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("; "));
+    return r.plan;
+  };
+  assert.match(leavesOutError(plan([read, task, exclude("e", "$s1.items")]), outcome)[0]!, /no step before the change does/);
+  assert.deepEqual(leavesOutError(plan([read, exclude("e", "$s1.items"), { ...task, in: "$e" }]), outcome), []);
 });

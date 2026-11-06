@@ -74,7 +74,7 @@ describe("grounded outcomes and clarifications", () => {
     const planner = scripted(reply({ steps: createTask().steps, outcome: leaving }), reply({ steps: createTask().steps, outcome: leaving }));
     const { out } = await run("Create a task to call Ana Ruiz, leaving out anyone already called", planner);
     assert.equal(planner.requests.length, 2);
-    assert.match(planner.requests[1]!.user, /leave out "anyone already called", but no step does/);
+    assert.match(planner.requests[1]!.user, /leave out "anyone already called", but no step before the change does/);
     assert.equal(out.kind, "plan");
   });
 
