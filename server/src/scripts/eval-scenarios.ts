@@ -50,6 +50,7 @@ const planner = useCache ? replayPlanner(live, `${EVAL}cache/${live.name}-${cach
 const subscription = planner.billing === "subscription";
 
 const jobs = scenarios.flatMap((s) => Array.from({ length: repeat }, () => s));
+const planned = jobs.length; // jobs grows when a limit wait re-queues a scenario
 const runs: ScenarioRun[] = [];
 let next = 0;
 let quotaHit = false;
@@ -68,7 +69,7 @@ await Promise.all(
         limitWaits++;
         waitsInARow++;
         jobs.splice(next, 0, s);
-        console.log(`limit hit on ${s.id}: waiting ${waitOnLimitMs / 60_000} min (${limitWaits} so far, ${runs.length}/${jobs.length} done)`);
+        console.log(`limit hit on ${s.id}: waiting ${waitOnLimitMs / 60_000} min (${limitWaits} so far, ${runs.length}/${planned} done)`);
         await new Promise((resolve) => setTimeout(resolve, waitOnLimitMs));
         continue;
       }
@@ -77,7 +78,7 @@ await Promise.all(
       if (r.infra === "rate_limited" && !quotaHit) {
         quotaHit = true;
         next = jobs.length;
-        console.log(`\nquota hit: stopping; ${jobs.length - runs.length} runs not started\n`);
+        console.log(`\nquota hit: stopping; ${planned - runs.length} runs not started\n`);
       }
       console.log(`${r.infra ? "INFRA" : r.pass ? "pass" : "FAIL"}  ${r.id.padEnd(34)} ${String(r.metrics.ms).padStart(6)} ms${r.metrics.clarifications ? " (asked)" : ""}${r.pass ? "" : `  ${r.failures.map((f) => `${f.kind}: ${f.detail}`).join(" · ")}`}`);
     }
@@ -140,7 +141,7 @@ const summary = {
   /** Runs that failed outside the app; the rates below leave them out. */
   infraRuns: runs.length - clean.length,
   /** Jobs never started because the quota ran out. */
-  notRun: jobs.length - runs.length,
+  notRun: planned - runs.length,
   limitWaits,
   passRate: Math.round(passRate * 1000) / 10,
   /** Scenarios that passed every run, and those that passed some but not all (flaky). */
