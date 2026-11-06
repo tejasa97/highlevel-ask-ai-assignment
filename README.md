@@ -176,6 +176,8 @@ The five scenarios that didn't pass were each rerun three times on the same code
 
 **No scenario fails every time, so none is listed for a stronger fallback model.** A stronger model might still help these five, but that hasn't been measured. The two `brief-heldout-*` scenarios were written as hold-outs. They've now been read as failures during this work, so they count as development signal from here on, and neither was fixed by tuning against it.
 
+One fix went in after this run: a revision that changes something and then fails no longer forgets the other records it was revising. It only affects follow-ups, so the 20 multi-turn scenarios were rerun on the final code instead of the whole suite, and all 20 passed (`eval/results/scenarios-port-ner-revision-check.json`).
+
 ## Latency, cost and quality trade-offs
 
 The targets were committed in [docs/PLAN.md](docs/PLAN.md) on 2026-10-23, before the final runs, and were not relaxed afterwards:
