@@ -90,6 +90,10 @@ accept `low`, `medium`, `high` or `xhigh` (default `low`; fast inherits strong i
 Model access depends on your account. `CODEX_BIN` optionally selects an executable;
 `CODEX_HOME` may select your existing CLI authentication directory.
 Card generation stays on Claude so its provenance stamp remains accurate.
+`PLANNER=codex-app-server` takes the same settings and login, but keeps one `codex app-server` process
+running across calls and starts each call as a separate ephemeral thread, instead of starting `codex exec`
+every time. It's opt-in, because that protocol is still marked experimental (CLI 0.159.0). It refuses a login that
+isn't ChatGPT, and a planning turn that tries a tool or asks for an approval fails.
 GPT-6.1 Sol was used through it during development. GPT-6 Luna at low reasoning has its own full run in [BENCHMARK-LUNA.md](BENCHMARK-LUNA.md); the numbers in the main [BENCHMARK.md](../BENCHMARK.md) are DeepSeek's.
 
 The adapter uses the Codex runtime, rather than raw model API calls. It supplies our planner

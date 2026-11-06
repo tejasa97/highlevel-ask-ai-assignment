@@ -29,7 +29,7 @@ const opt = (name: string) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const repeat = Number(opt("repeat") ?? 1);
-const concurrency = Number(opt("concurrency") ?? (process.env.PLANNER === "codex-cli" ? 1 : 4));
+const concurrency = Number(opt("concurrency") ?? (process.env.PLANNER?.startsWith("codex-") ? 1 : 4));
 const only = opt("only")?.split(",");
 const label = opt("label") ?? "latest";
 const tier = args.includes("--fast") ? "fast" : "strong";

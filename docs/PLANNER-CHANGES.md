@@ -168,6 +168,14 @@ The last full Luna runs turned up these. The first was a real wrong write: a con
 - An answer the turn rejects for having nothing to answer from no longer holds the plan that replaces it to reading: the read outcome it declared goes with it.
 - Action wording: recording a payment sets `invoiceId` when the request mentions an invoice, and "the Facebook campaign" is the lead source `facebook_ads`, with no condition on `campaignId`.
 
+Then the work left on other branches came in, after that run. These are general rules, not fixes for one scenario's wording:
+
+- The planner now writes `outcome.leavesOut`: what the request says to leave out ("anyone with a booked appointment"). If no step ahead of the first change does that, the plan goes back once with the fix named. A filter that only keeps doesn't count, and a step after the change is too late.
+- A read that leaves records out itself counts: `notRemindedSince` with a date, or `unassigned: true`. The first version of the check missed this and sent back a correct plan, and Luna's rewrite then reminded the wrong invoice. Being asked again isn't free, because a rewrite can be worse.
+- A date-time written with an offset that is one of the workspace zone's own means local wall time. Models often write the wrong season's offset, which moved the appointment an hour after the clocks changed. A foreign offset is still honored.
+- Near misses count a swap of two letters as one edit ("Sarha"), and a slip in one word of the name counts ("Sarha" for Sarah Johnson). They only ever offer a "did you mean", and never bind a record on their own.
+- `PLANNER=codex-app-server` is an opt-in way to reach the same models: one long-lived Codex process serves every call, instead of a new `codex exec` for each. See [PROVIDERS.md](PROVIDERS.md).
+
 `brief-heldout-quiet-leads` and `brief-heldout-new-leads` were read as failures during this work, so they are development signal now rather than hold-outs. Nothing was tuned against their wording.
 
 ## Two corrections found during validation
@@ -186,7 +194,7 @@ A turn makes at most **8 planner calls**, within **180 seconds** across all of t
 - **Clarification repair.** One repair of a malformed or unbound clarification, kept separate so it can't use up the plan's repair.
 - **Identity check.** A grounded replan after a lookup answers the identity question. A second is allowed only for a different name.
 - **Bad JSON.** An unparseable reply is asked for once more per turn.
-- **One-off checks.** One round each for a plan that remakes what the last turn made, for a change whose filter steps are read back in plain words to check the picked records (the selection check), and for a change whose target list was already read as empty.
+- **One-off checks.** One round each for a plan that remakes what the last turn made, for a change whose filter steps are read back in plain words to check the picked records (the selection check), for a change whose target list was already read as empty, and for a plan with no step that leaves out what the request says to leave out.
 
 A spent budget ends the turn with a reply. No retry sends or writes on its own, and genuine business choices stay with the user.
 
