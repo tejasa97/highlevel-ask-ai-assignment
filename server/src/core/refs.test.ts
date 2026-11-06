@@ -27,4 +27,9 @@ describe("reading a loop's results", () => {
     assert.deepEqual(valueAt(ran, at("$s2.results[*].items[*].leadId"), "$s2"), ["ld_1"]);
     assert.ok("type" in typeAt(loop, at("$s2.results[*].items[*].leadId"), "$s2"));
   });
+
+  test("results[*] followed by a field no call returned is refused, not read as nothing", () => {
+    assert.match(String((typeAt(loop, at("$s2[*].results[*].leadId"), "$s2") as { error: string }).error), /\$s2\[\*\]\.results\[\*\] has no field "leadId"; fields: items, total/);
+    assert.ok("type" in typeAt(loop, at("$s2[*].results[*].total"), "$s2"));
+  });
 });

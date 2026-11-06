@@ -18,6 +18,10 @@ export interface ActionContext {
   actorId?: string;
   /** Told about every handler run, for tracing (the debug view). */
   onCall?: (c: CallTrace) => void;
+  /** A follow-up's revision (core/revise.ts): may run a create as edits to a record the last turn made, and return that. */
+  revise?: (actionId: string, args: Record<string, unknown>, ctx: ActionContext) => { value: unknown } | undefined;
+  /** In a revision, the store as it was before the turn it revises: reads see what that turn's request saw. */
+  asOf?: ActionContext["store"];
 }
 
 export interface CallTrace {
@@ -56,6 +60,15 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   destination?: { id: string; label: string };
   /** Look-alike actions in other modules, always retrieved together. */
   siblings?: string[];
+  /** Actions that must run first on the same record or one inside it (approve before execute, publish a lesson before its course): retrieved whenever this one is. */
+  requires?: string[];
+  /**
+   * For a create a follow-up may narrow ("only the Facebook ones, due tomorrow"): `key` is the argument that says which
+   * record it is for ("relatedTo.id"), the same path on the record it makes; `edits` maps each other argument to the
+   * action that changes it on a made record; `undo` cancels one. A follow-up then remakes the request whole, and the code
+   * keeps, edits, makes or undoes the last turn's records to match.
+   */
+  revise?: { key: string; edits: Record<string, string>; undo: string };
   /** Optional side-effect-free eligibility check. Throw an ActionError for a known blocker;
    * return recipient/target details that must be bound to approval. Never deliver, audit or consume faults.
    * The handler must still repeat its checks at execution time. */

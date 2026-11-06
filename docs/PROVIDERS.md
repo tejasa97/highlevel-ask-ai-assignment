@@ -90,7 +90,13 @@ accept `low`, `medium`, `high` or `xhigh` (default `low`; fast inherits strong i
 Model access depends on your account. `CODEX_BIN` optionally selects an executable;
 `CODEX_HOME` may select your existing CLI authentication directory.
 Card generation stays on Claude so its provenance stamp remains accurate.
-GPT-6.1 Sol and GPT-6 Luna were used through it during development; the benchmark numbers are DeepSeek's.
+`PLANNER=codex-app-server` takes the same settings and login, but keeps one `codex app-server` process
+running across calls and starts each call as a separate ephemeral thread, instead of starting `codex exec`
+every time. It's opt-in, because that protocol is still marked experimental (CLI 0.159.0). It refuses a login that
+isn't ChatGPT, and a planning turn that tries a tool or asks for an approval fails.
+It's faster: over 12 direct scenarios run twice each on GPT-6 Luna, the median first reply was 6.3 s against 8.9 s for
+`codex exec`, with 23 of 24 passing on each. It hasn't had a full benchmark run of its own.
+GPT-6.1 Sol was used through `codex exec` during development. GPT-6 Luna at low reasoning has its own full run in [BENCHMARK-LUNA.md](BENCHMARK-LUNA.md); the numbers in the main [BENCHMARK.md](../BENCHMARK.md) are DeepSeek's.
 
 The adapter uses the Codex runtime, rather than raw model API calls. It supplies our planner
 instructions, request and output schema, while Codex adds runtime framing. **The captured request
@@ -98,8 +104,8 @@ still advertised skills and tools despite the disabling flags.** Do not treat th
 
 This is a trusted local development provider. It strips inherited API credentials, checks the
 current login before enforcing ChatGPT authentication, uses a private working directory and
-read-only sandbox, and requests restricted runtime capabilities. Unexpected tool events and
-configuration errors fail the request; this cannot undo any tool action already started by
+read-only sandbox, and requests restricted runtime capabilities. An unexpected tool event is retried once with a fresh run (Luna now and then reaches for a tool that is
+switched off); a second one and configuration errors fail the request; this cannot undo any tool action already started by
 the runtime. Keep it out of public or untrusted services. For raw API-key calls, use the Qwen
 provider above.
 

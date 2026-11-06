@@ -8,22 +8,42 @@ import type { SubmitPlan } from "./submit-plan.js";
 export type Outcome = NonNullable<SubmitPlan["outcome"]>;
 
 /** Checks declared task coverage, not the truth of the model's interpretation of the request. */
-export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: { message: string; offered: RegisteredAction[] }): string[] {
+export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: { message: string; offered: RegisteredAction[] }, actionOf: (id: string) => RegisteredAction | undefined = () => undefined): string[] {
   if (!outcome) return []; // historical saved replies predate the contract
   const calls = plan.steps.flatMap((s) => s.kind === "action" ? [s.call.action] : s.kind === "forEach" ? s.calls.map((c) => c.action) : []);
   const ids = new Set(calls.map((a) => a.id));
-  const errors = outcome.actions.filter((id) => !ids.has(id)).map((id) => `requested operation ${id} is missing; prerequisite reads do not complete it`);
+  // "Mark Kai Morgan as contacted" declared with Get lead details: that read only finds the lead the change already takes.
+  const changed = new Set(calls.filter((a) => a.risk !== "read").flatMap((a) => a.entities?.consumes ?? []));
+  const findsTarget = (id: string) => {
+    const a = actionOf(id);
+    return outcome.effect === "change" && a?.risk === "read" && !!a.entities?.consumes?.length && a.entities.consumes.every((e) => changed.has(e));
+  };
+  // A small planner can act on "add a step that calls X", not on "X is missing": say which call, and what ran instead.
+  const ran = [...ids].join(", ");
+  const errors = outcome.actions.filter((id) => !ids.has(id) && !findsTarget(id)).map((id) => {
+    const name = actionOf(id)?.name;
+    return `requested operation ${id}${name ? ` (${name})` : ""} is not in the plan: add a step that calls ${id} with its arguments from the message${ran ? `; ${ran} ${ids.size > 1 ? "do" : "does"} not do it` : ""}`;
+  });
   if (outcome.effect === "change" && !calls.some((a) => a.risk !== "read")) errors.push("the requested outcome changes records, but this plan only reads; use look for prerequisites, then plan the final change");
   if (outcome.effect === "change" && !outcome.actions.length) errors.push("identify the final requested action(s), using search_tools if needed, before returning a plan");
-  if (outcome.effect === "read" && calls.some((a) => a.risk !== "read" && !a.query)) errors.push("the requested outcome is read-only; do not introduce a change");
+  // "Compare the report for the last 30 days" planned as set the report's range, then compare: say which call changes
+  // records, so the repair drops that one instead of resending the same plan.
+  const writes = [...new Map(calls.filter((a) => a.risk !== "read" && !a.query).map((a) => [a.id, a])).values()];
+  if (outcome.effect === "read" && writes.length) {
+    const reads = calls.filter((a) => a.risk === "read" || a.query).map((a) => a.id);
+    errors.push(`the requested outcome is read-only, but ${writes.map((a) => `${a.id} (${a.name})`).join(", ")} ${writes.length > 1 ? "change" : "changes"} records: leave ${writes.length > 1 ? "them" : "it"} out${reads.length ? ` and answer with ${[...new Set(reads)].join(", ")} alone` : " and use read actions only"}`);
+  }
   if (outcome.destination) for (const a of calls) {
     if (a.destination && a.destination.id !== outcome.destination) errors.push(`${a.id} delivers to ${a.destination.label}, not the requested destination ${outcome.destination}`);
   }
   // A destination says where a record would go, not that it goes now: "draft reminders" for email stays a draft.
   const sendAsked = !!request && SEND.test(request.message) && !HOLD.test(request.message);
   const deliver = !!request && (sendAsked || (!!outcome.destination && !DRAFT.test(request.message)));
+  // "Build a course with a lesson and publish it": publishing the course takes publishing the lesson this plan just made.
+  const neededFirst = (a: RegisteredAction) => outcome.actions.some((id) => actionOf(id)?.requires?.includes(a.id))
+    && calls.some((c) => c.risk !== "read" && !!c.entities?.produces && !c.entities.consumes?.includes(c.entities.produces) && !!a.entities?.consumes?.includes(c.entities.produces));
   if (request && !deliver) for (const a of calls) {
-    if (a.destination && !outcome.actions.includes(a.id)) errors.push(`${a.id} sends to ${a.destination.label}, but the request doesn't ask to send anything; leave out ${a.id} and keep what was made unsent`);
+    if (a.destination && !outcome.actions.includes(a.id) && !neededFirst(a)) errors.push(`${a.id} sends to ${a.destination.label}, but the request doesn't ask to send anything; leave out ${a.id} and keep what was made unsent`);
   }
   if (request && deliver && !calls.some((a) => a.destination)) {
     // "Send a review request" planned as only creating one: the record exists, but nothing went out.
@@ -35,6 +55,23 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: {
     }
   }
   return [...new Set(errors)];
+}
+
+/** A read that leaves records out itself: "notRemindedSince", "unassigned". Sending that plan back only risks a worse one. An "un" word counts only as a true flag: "unitPrice" leaves nothing out. */
+export const readLeavesOut = (args: Record<string, unknown>) => Object.entries(args).some(([k, v]) => (/^not[A-Z]/.test(k) && v != null && v !== false) || (/^un[a-z]/.test(k) && v === true));
+
+/**
+ * The request says to leave records out, and no step does. Asked once: a read's own argument may do it in a way this
+ * can't see. A filter that only keeps ("who have not replied") doesn't leave out what the request named.
+ */
+export function leavesOutError(plan: CompiledPlan, outcome?: Outcome): string[] {
+  const what = outcome?.leavesOut?.trim();
+  if (!what) return [];
+  // Only a step ahead of the first change can keep anyone out of it.
+  const first = plan.steps.findIndex((s) => (s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : []).some((c) => c.action.risk !== "read"));
+  const drops = (first < 0 ? plan.steps : plan.steps.slice(0, first)).some((s) => s.kind === "exclude" || (s.kind === "action" && readLeavesOut(s.call.args)) || (s.kind === "filter" && Object.values(s.where).some((c) => c === false || (!!c && typeof c === "object" && ("ne" in c || "nin" in c)))));
+  if (drops) return [];
+  return [`outcome.leavesOut says to leave out "${what}", but no step before the change does. Read what decides it and add an exclude step before the change: "in" the list, "by" a field of its items, "set" the matching field of that read's items. If a read's argument already leaves them out, plan the same again`];
 }
 
 const SEND = /\bsend\b/i;

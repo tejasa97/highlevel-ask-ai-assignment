@@ -81,7 +81,7 @@ Code: [identity checks](../server/src/planner/contracts.ts), [clarification chec
 
 ## 2. Preserve the final requested operation across intermediate reads
 
-**What changed.** Planner replies declare `outcome: {effect, actions, destination}`. `actions` names the final requested catalog operations, not prerequisite reads. The first declared outcome is kept within the turn; an initially empty action list can be filled after discovery. Compilation checks for missing declared operations. A requested change cannot finish with only reads or a prose answer. A read request cannot add writes. A plan that sends when the user asked only for a draft, or only creates a record the user asked to send, goes back for repair.
+**What changed.** Planner replies declare `outcome: {effect, actions, destination}`. `actions` names the final requested catalog operations, not prerequisite reads. The first declared outcome is kept within the turn, except one on an `unsupported` reply, which says what the model thinks it can do rather than what was asked; an initially empty action list can be filled after discovery. Compilation checks for missing declared operations. A requested change cannot finish with only reads or a prose answer. A read request cannot add writes. A plan that sends when the user asked only for a draft, or only creates a record the user asked to send, goes back for repair.
 
 **Why.** “Find the payment” is not “request the refund”; “list the tasks” is not “reassign the tasks”. Before this, any action call could make a plan look complete, even if it only located records. A stable declared target makes this kind of early stop detectable.
 
@@ -139,6 +139,45 @@ Code: [shared prompt](../server/src/planner/prompt.ts).
 
 Code: [action metadata](../server/src/registry/define.ts), [registry surfaces](../server/src/registry/registry.ts), [prompt](../server/src/planner/prompt.ts), [turn checks](../server/src/planner/turn.ts). Tests: [contracts](../server/src/planner/contracts.test.ts), [turns](../server/src/planner/turn.test.ts).
 
+## 8. Rules found while running Luna against the same suites
+
+These came from a parallel branch (`feature/ner-integration`) and were brought over without its own amend mechanism, since the revise step here already covers that.
+
+- A bare date in a date-time input ("November 2") is not a supplied time, and the year is never asked: today's date and the workspace zone are given in `<now>`.
+- A name looked up next to an id the same call already holds is the other record (merge "Sarah Johnson" into the Sarah we kept), and the user's pick is not bound to a lookup told to skip it. A `$lookup` whose name is a record id is that id.
+- A list where an action takes one id is a compile error that names the fix: `$lookup` for a record the user named, `forEach` with `$item.id` for each record. The engine used to guess, asking "which one?" about a choice nobody made.
+- A bare date bound covers its whole day ("through the 18th" keeps a record made that morning).
+- The compiler sends back a read inside a `forEach` that leaves nothing out, a filter that compares an id column to a name, and an `exclude` on a lead's own id written as `leadId`.
+- Prompt rules: handing records to people sets the record's owner, a date range limits only the thing it describes, every condition in the request needs a step, and a word describing the records ("new leads") is a filter.
+- The Codex adapter retries once on an unexpected tool event.
+
+Two scenarios still failed every time after that, `w1-course-build` and `brief-heldout-then-facebook`, and fixing them added these. `brief-heldout-then-facebook` was a hold-out, so it's now development signal.
+
+- An action can declare another it `requires`, now including one on a record inside it: publishing a course takes publishing its lesson. A plan may run that prerequisite for a record it just made, even though the request never names it.
+- A follow-up that amends what the last turn made isn't held to redo what still stands. The turn's earlier steps count as done unless the message names that action again or asks for more ("also", "another").
+- A revision that fails or waits for approval leaves the record of what the last turn made in place, so the automatic retry edits those records instead of making them again.
+- Compile errors now say how to fix `$item` outside a `forEach`, and a field read off a search's `{items, total}` result points at `.items[*].<field>`.
+
+The last full Luna runs turned up these. The first was a real wrong write: a condition on a `forEach` was dropped, so an update meant for one team went to all three.
+
+- A condition on a `forEach` or `exclude` over a `$ref` becomes its own filter step in front of it. On a written-out list it's a compile error, because the list should name only the items meant.
+- `argsJson` that ends with brackets still open gets an error naming the closers it's missing. Luna used to resend the same broken JSON on repair.
+- Funnel steps resolve by name within their funnel, through a `funnel_step` lookup on the step actions.
+- Records resolve by their own id as well as by name, and the custom-field and membership actions declare what type each id argument takes.
+- Prompt rule: a meeting or ticket called by whose it is ("Sarah Johnson's walkthrough") is resolved as that record, without looking the person up first.
+- An answer the turn rejects for having nothing to answer from no longer holds the plan that replaces it to reading: the read outcome it declared goes with it.
+- Action wording: recording a payment sets `invoiceId` when the request mentions an invoice, and "the Facebook campaign" is the lead source `facebook_ads`, with no condition on `campaignId`.
+
+Then the work left on other branches came in, after that run. These are general rules, not fixes for one scenario's wording:
+
+- The planner now writes `outcome.leavesOut`: what the request says to leave out ("anyone with a booked appointment"). If no step ahead of the first change does that, the plan goes back once with the fix named. A filter that only keeps doesn't count, and a step after the change is too late.
+- A read that leaves records out itself counts: `notRemindedSince` with a date, or `unassigned: true`. The first version of the check missed this and sent back a correct plan, and Luna's rewrite then reminded the wrong invoice. Being asked again isn't free, because a rewrite can be worse.
+- A date-time written with an offset that is one of the workspace zone's own means local wall time. Models often write the wrong season's offset, which moved the appointment an hour after the clocks changed. A foreign offset is still honored.
+- Near misses count a swap of two letters as one edit ("Sarha"), and a slip in one word of the name counts ("Sarha" for Sarah Johnson). They only ever offer a "did you mean", and never bind a record on their own.
+- `PLANNER=codex-app-server` is an opt-in way to reach the same models: one long-lived Codex process serves every call, instead of a new `codex exec` for each. See [PROVIDERS.md](PROVIDERS.md).
+
+`brief-heldout-quiet-leads` and `brief-heldout-new-leads` were read as failures during this work, so they are development signal now rather than hold-outs. Nothing was tuned against their wording.
+
 ## Two corrections found during validation
 
 **Bookkeeping is not the same as a user-facing change.** Report execution updates its last-run timestamp; trigger testing records a test firing without starting a workflow. The first read-outcome guard wrongly rejected them. They now declare `query: true`, so that check recognizes them without lowering execution risk or permissions. Registry validation forbids the flag on external/destructive actions. Other simulated business submissions are not queries. A `look` round still accepts only actions whose execution risk is `read`.
@@ -151,11 +190,11 @@ A turn makes at most **8 planner calls**, within **180 seconds** across all of t
 
 - **Search.** Up to two `search_tools` rounds. The second comes with a note that matching or de-duplicating lists is done with ops, not an action.
 - **Look.** Up to two read-only look rounds. Asking for a third gets one nudge to plan with what was read.
-- **Plan repair.** One round of compile or outcome errors fed back, and a second only if the first left fewer errors.
+- **Plan repair.** One round of compile or outcome errors fed back, and a second only if the first left fewer errors, or fixed all of them and met new ones.
 - **Clarification repair.** One repair of a malformed or unbound clarification, kept separate so it can't use up the plan's repair.
 - **Identity check.** A grounded replan after a lookup answers the identity question. A second is allowed only for a different name.
 - **Bad JSON.** An unparseable reply is asked for once more per turn.
-- **One-off checks.** One round each for a plan that remakes what the last turn made, for a change whose filter steps are read back in plain words to check the picked records (the selection check), and for a change whose target list was already read as empty.
+- **One-off checks.** One round each for a plan that remakes what the last turn made, for a change whose filter steps are read back in plain words to check the picked records (the selection check), for a change whose target list was already read as empty, and for a plan with no step that leaves out what the request says to leave out.
 
 A spent budget ends the turn with a reply. No retry sends or writes on its own, and genuine business choices stay with the user.
 
@@ -168,4 +207,4 @@ A spent budget ends the turn with a reply. No retry sends or writes on its own, 
 
 ## What the evidence supports
 
-These changes were built and checked checkpoint by checkpoint on development branches, mostly with Codex models; those reports are in git history, and [the journey](JOURNEY.md) keeps the sequence. The current measurement is [BENCHMARK.md](../BENCHMARK.md): 273 scenarios × 3 on DeepSeek, with every failing run listed. Inspected regression and development cases are not an untouched holdout. Deterministic tests show the plumbing works; they don't show a success-rate change.
+These changes were built and checked checkpoint by checkpoint on development branches, mostly with Codex models; those reports are in git history, and [the journey](JOURNEY.md) keeps the sequence. The current measurement is [BENCHMARK.md](../BENCHMARK.md): 273 scenarios × 3 on DeepSeek, with every failing run listed. The small-model run is [BENCHMARK-LUNA.md](BENCHMARK-LUNA.md): the 273 scenarios × 1 on GPT-6 Luna at low reasoning. Inspected regression and development cases are not an untouched holdout. Deterministic tests show the plumbing works; they don't show a success-rate change.

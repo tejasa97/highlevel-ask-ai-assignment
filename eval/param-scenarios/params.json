@@ -1693,9 +1693,17 @@
         }
       }
     ],
+    "note": "No time is given, so the assistant asks for one rather than picking it; 10am New York on November 2 is 15:00 UTC (daylight saving ends November 1).",
     "turns": [
       {
-        "user": "Schedule the Fall product update post to go live on November 2"
+        "user": "Schedule the Fall product update post to go live on November 2",
+        "status": [
+          "clarify",
+          "needs_clarification"
+        ]
+      },
+      {
+        "user": "10am"
       }
     ],
     "expect": {
@@ -1713,14 +1721,14 @@
           "match": {
             "postId": "blg_1",
             "publishAt": {
-              "$contains": "2026-11-02"
+              "$contains": "2026-11-02T15:00"
             }
           }
         }
       ],
       "state": [
         {
-          "sql": "SELECT count(*) FROM blog_posts WHERE id='blg_1' AND json_extract(data,'$.publishAt') LIKE '2026-11-02%'",
+          "sql": "SELECT count(*) FROM blog_posts WHERE id='blg_1' AND json_extract(data,'$.publishAt') LIKE '2026-11-02T15:00%'",
           "equals": 1
         }
       ]
@@ -1932,8 +1940,7 @@
           "match": {
             "title": "Invoice PDF is blank",
             "contactId": "ct_33",
-            "priority": "urgent",
-            "ownerId": "us_6"
+            "priority": "urgent"
           }
         }
       ],

@@ -11,11 +11,12 @@ const strings = { type: ["array", "null"], items: { type: "string" } };
 
 const outcome = {
   type: "object", additionalProperties: false,
-  required: ["effect", "actions", "destination"],
+  required: ["effect", "actions", "destination", "leavesOut"],
   properties: {
     effect: { enum: ["read", "change"] },
     actions: { type: "array", items: { type: "string" }, description: "Catalog IDs of the final requested operations, not prerequisite reads. Empty only while searching for the final action." },
     destination: { ...nullable("string"), description: "Explicit delivery surface ID from delivery_surfaces; preserve an unsupported platform's name instead of substituting a supported surface. Null when not a delivery request." },
+    leavesOut: { ...nullable("string"), description: "What the request says to leave out, skip or exclude, in its own words. Null when it says nothing of the kind." },
   },
 };
 const lookup = {
@@ -135,7 +136,7 @@ export const SubmitPlan = z.object({
   query: z.string().nullable().default(null),
   text: z.string().nullable().default(null),
   // Optional at the internal boundary for existing saved replies; every new provider call requires these on wire.
-  outcome: z.object({ effect: z.enum(["read", "change"]), actions: z.array(z.string()), destination: z.string().nullable() }).nullable().optional(),
+  outcome: z.object({ effect: z.enum(["read", "change"]), actions: z.array(z.string()), destination: z.string().nullable(), leavesOut: z.string().nullable().optional() }).nullable().optional(),
   clarification: z.enum(["identity", "content", "choice"]).nullable().optional(),
   lookup: z.object({ entity: z.string(), name: z.string(), whereJson: z.string().nullable() }).nullable().optional(),
   missing: z.object({ action: z.string(), argument: z.string(), argsJson: z.string() }).nullable().optional(),

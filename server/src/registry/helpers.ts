@@ -51,6 +51,9 @@ export function candidates<T extends { id: string }>(
   inactive?: (d: T) => string | undefined,
 ): Candidate[] {
   const out = (ds: T[]) => ds.map((d) => ({ id: d.id, name: label(d), ...(detail ? { detail: detail(d) } : {}), ...(inactive?.(d) ? { inactive: inactive(d) } : {}) }));
+  // A record named by its own id ("tic_1") is that record, whatever its label says.
+  const byId = docs.filter((d) => d.id === name.trim());
+  if (byId.length) return out(byId);
   if (!inactive) return out(matchByName(docs, name, label));
   const usable = matchByName(docs.filter((d) => !inactive(d)), name, label);
   return out(usable.length ? usable : matchByName(docs.filter((d) => inactive(d)), name, label));
@@ -81,6 +84,11 @@ export function singular(s: string): string {
     : /(ches|shes|xes|sses|zes)$/.test(w) ? w.slice(0, -2)
     : w.endsWith("s") ? w.slice(0, -1)
     : w).join(" ");
+}
+
+/** A URL slug from a title: "Our new pricing!" → "our-new-pricing". */
+export function slugOf(title: string): string {
+  return title.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "page";
 }
 
 /** Search output: `items` is capped at `limit`, `total` counts every match. */

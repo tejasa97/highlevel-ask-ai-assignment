@@ -118,6 +118,8 @@ export interface TurnTrace {
   ms: number;
   /** The one clarifying question the run answered, and the answer it got. */
   clarified?: { question: string; answer: string };
+  /** The turn's NER sidecar calls (its `ner` events: outcome, versions, ...), on builds that emit them. */
+  ner?: Record<string, unknown>[];
 }
 
 export interface RunMetrics {
@@ -157,6 +159,8 @@ export interface RunDeps {
   tier?: Tier;
   /** Which agent answers: the planner (default) or the one-call-per-step baseline (server/baseline.ts). */
   agent?: "planner" | "baseline";
+  /** Reply statuses the one unscripted question is answered on; defaults to "clarify". */
+  answerOn?: string[];
 }
 
 const MAX_APPROVALS = 5;
@@ -210,6 +214,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
       else if (event === "plan") trace.planned.push(...data.steps.flatMap((st: { calls?: { action: string }[] }) => (st.calls ?? []).map((c) => c.action)));
       else if (event === "call") trace.calls.push({ action: data.action, args: data.args, ...(data.error ? { error: `${data.error.code}: ${data.error.message}` } : {}) });
       else if (event === "diff") changes += data.changes.length;
+      else if (event === "ner") (trace.ner ??= []).push(data);
       else if (event === "confirm") {
         pendingTurn = data.turnId;
         (trace.confirmations ??= []).push(data.pending);
@@ -234,7 +239,7 @@ export async function runScenario(s: Scenario, deps: RunDeps): Promise<ScenarioR
     try {
       await chat.ask(t.user, deps.tier ?? "strong", "us_1", emit);
       await approve();
-      if (trace.status === "clarify" && !askedFor && !turns.some((x) => x.clarified)) {
+      if ((deps.answerOn ?? ["clarify"]).includes(trace.status) && !askedFor && !turns.some((x) => x.clarified)) {
         trace.clarified = { question: trace.reply, answer: t.answer ?? DEFAULT_ANSWER };
         await chat.ask(trace.clarified.answer, deps.tier ?? "strong", "us_1", emit);
         await approve();

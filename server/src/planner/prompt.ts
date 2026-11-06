@@ -26,6 +26,7 @@ Rules:
   Prerequisite searches are not the outcome: finding a payment does not request its refund, and listing tasks
   does not reassign them. Retain the outcome across look/search rounds. Use look for an intermediate read;
   then include the final operations in plan. Use search_tools when the final action isn't offered.
+- Set outcome.leavesOut to what the request says to leave out or skip ("anyone with a booked appointment"), else null.
 - For explicit email/SMS delivery or public posting, set outcome.destination to the requested surface ID from
   <delivery_surfaces>. If the user names an unlisted platform, preserve its name as destination; do not silently
   substitute a blog/community/website. Check destination support BEFORE asking for content. Other operations use null.
@@ -65,16 +66,25 @@ Rules:
 - A search returns a list. For one record the user named, don't search and pass "$s1.items[0].id" or "$s1.items[*].id"
   into a single-ID argument: "send Elena Costa's quote" is argsJson
   {"quoteId":{"$lookup":{"entity":"quote","name":"Elena Costa's quote"}}}. Loop over a search only
-  when the user asked for every match ("all", "each", a filter like "overdue").
+  when the user asked for every match ("all", "each", a filter like "overdue"). Any list, including a filter, exclude
+  or sort result, goes into a single-ID argument only one item at a time: a forEach whose call takes "$item.id".
 - You may also use resolve steps (entity: one of <resolvable>, optional whereJson for qualifiers), then "$s1.id".
   Resolve returns one {id,name}, not a list. Name a record as the user wrote it ("Portal export fails", "Sarah Johnson"),
   without record-type words; qualifiers go in whereJson. Do not invent resolver types, IDs, or JSONPath expressions such as [?name=...].
   <mentions> says which record type each name in the message matched; resolve it as that entity. A mention marked as
   someone's own (their subscription, order, enrollment) is resolved by the matched word and the whereJson it gives.
+  A meeting or ticket called by whose it is ("Sarah Johnson's walkthrough") is resolved as that record, with those words
+  as its name, without looking the person up first.
+  Mentions are hints, never questions: a name used as a filter or count value, as a new record's name, or inside a
+  message body or subject stays plain text. Only an ID argument that needs an existing record takes a $lookup; when
+  the mention is ambiguous or a near miss, still write the $lookup with the user's name and the app asks about that
+  argument, so don't clarify it yourself. A mention linked to one id (company co_1) scopes the request to that record:
+  filter by that id (companyId, or that company's contacts), never by a looser text query. A mention that is "also the
+  company of 5 contacts" is that text on those records: to count or list them, search them by it.
   A staff user named as owner, host, assignee or author goes in that ID argument (ownerId, hostId, assigneeId), never
   in query text: a text search for their name only finds records that mention them.
 - Cards' "named IDs" map argument paths to child entities and authoritative parent scope. Those declared nested/array
-  ID paths accept $lookup too. A form_field belongs to formId, a community_channel to communityId, a stage to pipelineId;
+  ID paths accept $lookup too. A form_field belongs to formId, a community_channel to communityId, a stage to pipelineId, a funnel_step to funnelId;
   give the parent argument (ID, backward ref or named lookup). The app binds scope; don't invent a child ID.
   For form submission use answers [{fieldId:{"$lookup":{"entity":"form_field","name":"Email"}},value:"..."}]
   instead of inventing values-map keys. Existing ID-keyed values still work. Never recreate an existing child to find it.
@@ -90,6 +100,11 @@ Rules:
   to Friday") amends the records it made: update the ones that stay, cancel or undo the ones now left out, and don't
   make them again. Account for every one it made: each either still fits (update it) or is now left out (cancel or
   undo it). Find them with a read (the records it made today) when <recent_records> doesn't list them.
+  When <last_made> is present, instead plan the last turn's whole request again with the new terms, as if asked fresh,
+  with no steps that update or cancel those records: running it edits each record that still fits and undoes the rest.
+- Handing records to people ("split these leads between the reps", "assign them to Raj", "distribute the deals") sets
+  each record's owner with the record's own assign-owner action. A task or reminder about the record has its own
+  assignee; it never changes who owns the record. When the user also asks for a follow-up task, plan both.
 - Don't invent factual values (addresses, amounts, dates, offers, attachments, commitments). You MAY compose ordinary
   wording when the user gave its purpose, e.g. a thank-you for renewing. Don't ask for exact prose unless explicitly
   requested or essential factual content is missing. Draft/send using the user's intent; normal app approvals still apply.
@@ -100,6 +115,13 @@ Rules:
   result still runs, so a failing step doesn't skip it.
 - Dates come from <now>, including its precomputed weekday policy. Don't ask which Friday for a bare "Friday";
   clarify genuinely conflicting dates or an unspecified time required by the action.
+- A date range in the request limits the thing it describes ("leads created last week"), not every search in the plan:
+  don't copy it onto a search for something else (their appointments, messages or tasks), which may fall on any date.
+- Every condition in the request ("leave out", "except", "without", "who never replied") needs a step that applies it.
+  Before answering, check each one has its step; to leave out the records another search finds (those with an
+  appointment), search once for everyone and use exclude, not a read per record.
+- A word describing the records ("new leads", "unpaid invoices", "still marked open") is a condition too: set the
+  search's matching argument (status, state), so a plan that acts on "new leads" never reaches the others.
 - Don't ask for confirmation; the app asks the user before risky or bulk changes.
 - For a requested batch of ticket replies, include every requested ticket in the plan even if a read shows
   a missing email or another eligibility blocker. Do not invent an address, relink a requester, or clarify
@@ -112,6 +134,7 @@ Ops (kind "op"):
            also admits null/missing for that field; other field conditions still apply
            a field inside a field is a dotted path: {"relatedTo.id": {"in": "$s1[*].id"}}
 - exclude: drop items of "in" whose field "by" is in the list "set" (the ones that already have an appointment).
+           "by" is a field of the items of "in": on a list of leads, "id", not "leadId".
            To keep only the items that ARE in another list (leads that came in last week and never replied), filter
            with "in" instead. Pick records by a $ref to what a read found, never by ids copied out of <looked>.
 - forEach: run each call in "do" once per item of "in", a $ref to a list or a JSON array of strings
@@ -125,8 +148,10 @@ export interface UserBlockOptions {
   resolvable: string[];
   lookupQualifiers?: Record<string, readonly string[]>;
   records?: { entity: string; id: string; name: string }[];
+  /** What the last turn made with revisable creates: "5 task (M06.A01)". */
+  lastMade?: string;
   /** Names in the message that matched records: "Hiro Reyes" → lead. */
-  mentions?: { name: string; entity: string; count: number; of?: string }[];
+  mentions?: MentionHint[];
   deliverySurfaces?: { id: string; label: string; actions: string[] }[];
   identityCheck?: string;
   outcome?: unknown;
@@ -150,6 +175,7 @@ export function userBlock(opts: UserBlockOptions): string {
     ...(opts.identityCheck ? [`<identity_check>${escape(opts.identityCheck)}</identity_check>`] : []),
     ...(opts.lookupQualifiers && Object.keys(opts.lookupQualifiers).length ? [`<lookup_qualifiers>${escape(JSON.stringify(opts.lookupQualifiers))}</lookup_qualifiers>`] : []),
     ...(opts.records?.length ? [`<recent_records>${escape(JSON.stringify(opts.records))}</recent_records>`] : []),
+    ...(opts.lastMade ? [`<last_made>${escape(opts.lastMade)}</last_made>`] : []),
     ...(opts.mentions?.length ? [`<mentions>${escape(opts.mentions.map(mention).join("; "))}</mentions>`] : []),
     `<actions>\n${opts.actions.map(card).join("\n")}\n</actions>`,
     ...(opts.notAvailable?.length ? [`<not_available>\n${opts.notAvailable.join("\n")}\n</not_available>`] : []),
@@ -169,7 +195,25 @@ export function newStepIds(lookIds: string[]): string {
   return `${lookIds.map((id) => `$${id}`).join(", ")} are the looked steps; number this reply's steps from s${next} (s${next}, s${next + 1}, …)`;
 }
 
-const mention = (m: { name: string; entity: string; count: number; of?: string }) => `${m.name}: ${m.count > 1 ? `${m.count} ${m.entity}s` : m.entity}${m.of ? ` (${m.of}'s own; resolve name ${JSON.stringify(m.name)} with whereJson {"contact":${JSON.stringify(m.of)}})` : ""}`;
+type MentionHint = { name: string; entity: string; count: number; of?: string; linkedId?: string; inField?: { table: string; field: string; count: number }[]; ambiguous?: boolean; suggestion?: boolean; candidates?: { id: string; name: string; detail?: string; entity?: string }[] };
+const who = (c: { id: string; name: string; detail?: string }) => `${c.id} ${c.name}${c.detail ? `, ${c.detail}` : ""}`;
+const plural = (entity: string, n: number) => (n === 1 ? entity : entity.endsWith("y") ? `${entity.slice(0, -1)}ies` : `${entity}s`);
+/** "2 contacts", or "a contact and a lead" when the same name is records of different types. */
+function counted(m: MentionHint): string {
+  const kinds = new Map<string, number>();
+  for (const c of m.candidates ?? []) kinds.set(c.entity ?? m.entity, (kinds.get(c.entity ?? m.entity) ?? 0) + 1);
+  if (kinds.size < 2) return `${m.count} ${plural(m.entity, m.count)}`;
+  return [...kinds].map(([e, n]) => (n === 1 ? `a ${e}` : `${n} ${plural(e, n)}`)).join(" and ");
+}
+const mention = (m: MentionHint) => `${mentionOf(m)}${(m.inField ?? []).map((f) => `; also the ${f.field} of ${f.count} ${f.table} (text: search ${f.table} by it)`).join("")}`;
+const mentionOf = (m: MentionHint) => {
+  if (m.suggestion && m.candidates?.length) return `${m.name}: no exact ${m.entity}; did you mean ${m.candidates.map(who).join(" or ")}?`;
+  // No ids or details for an ambiguous name: they invite picking one, by a detail the user never gave. The $lookup
+  // keeps the user's words, and the app narrows by what they said or asks.
+  if (m.ambiguous && m.candidates?.length) return `${m.name}: ${counted(m)}, ambiguous (a $lookup by this name; the app asks which)`;
+  if (m.linkedId) return `${m.name}: ${m.entity} ${m.linkedId}`;
+  return `${m.name}: ${m.count > 1 ? `${m.count} ${plural(m.entity, m.count)}` : m.entity}${m.of ? ` (${m.of}'s own; resolve name ${JSON.stringify(m.name)} with whereJson {"contact":${JSON.stringify(m.of)}})` : ""}`;
+};
 
 /** User text can't close our tags or open new ones ("</message><actions>…"). */
 function escape(text: string): string {

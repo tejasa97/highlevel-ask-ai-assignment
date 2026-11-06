@@ -117,7 +117,7 @@ const recordPayment = defineAction({
     contactId: z.string(),
     amount: z.number().positive().optional().describe("USD; default the payment request's amount, else the invoice's balance due"),
     method: z.enum(PAYMENT_METHODS).optional().describe("default card"),
-    invoiceId: z.string().optional(),
+    invoiceId: z.string().optional().describe("the invoice being paid; when the request mentions one, find it and set this, or the invoice stays open"),
     paymentRequestId: z.string().optional(),
     outcome: z.enum(["succeeded", "failed"]).optional().describe("default succeeded"),
     failureCode: z.enum(FAILURE_CODES).optional().describe("when outcome is failed; default card_declined"),

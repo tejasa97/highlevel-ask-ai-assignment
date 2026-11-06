@@ -9,8 +9,8 @@ import type { SearchCard } from "./cards.js";
 //      the rest follow in reciprocal-rank-fusion order.
 //   2. Walk the merged ranking with a per-module cap until k cards are picked.
 //   3. Add what the planner will need next to them: look-alike siblings, a producer for any record type
-//      a picked card needs but nothing picked returns, the previous turn's actions, and the actions that change
-//      what it made.
+//      a picked card needs but nothing picked returns, the previous turn's actions, the actions that change
+//      what it made, and what a picked action needs run first.
 
 /** Most actions offered for changing one record type the previous turn made. */
 const MAX_AMEND = 8;
@@ -85,7 +85,7 @@ export interface Dense {
 }
 
 /** "bm25" and "dense" are the ranked slots: "dense" when only the embedding ranking found the card. */
-export type Why = "bm25" | "dense" | "sibling" | "producer" | "carried" | "mention";
+export type Why = "bm25" | "dense" | "sibling" | "producer" | "carried" | "mention" | "prerequisite";
 
 export interface Pick {
   id: string;
@@ -259,6 +259,12 @@ export class Retriever {
     // Siblings only for the strongest picks: for weak ones they mostly add noise to the prompt.
     for (const p of picks.filter((x) => x.why === "bm25" || x.why === "dense").slice(0, o.siblings)) {
       for (const s of this.byId.get(p.id)!.siblings) add(s, "sibling", p.id);
+    }
+
+    // "Refund her payment" ranks request and execute, but an execute needs the approval in between: offer every
+    // action a pick requires first, or the plan skips the step and the execute is refused.
+    for (const p of [...picks]) {
+      for (const r of this.byId.get(p.id)!.requires) add(r, "prerequisite", p.id);
     }
 
     if (o.producers) {

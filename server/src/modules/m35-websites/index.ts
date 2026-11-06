@@ -2,7 +2,7 @@ import { tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
-import { atLeastOne, blankToNull, contains, Limit, listOf, noChange, page, requirePermission, requireState } from "../../registry/helpers.js";
+import { atLeastOne, blankToNull, contains, Limit, listOf, noChange, page, requirePermission, requireState, slugOf } from "../../registry/helpers.js";
 import type { ModuleExports } from "../../registry/registry.js";
 import type { Store } from "../../store/db.js";
 import { Website, type SitePage } from "./schema.js";
@@ -121,7 +121,7 @@ const addPage = defineAction({
   input: z.strictObject({
     websiteId: WebsiteId,
     title: Text,
-    slug: Text,
+    slug: Text.optional().describe("URL path segment; leave it out to derive it from the title"),
     landingPageId: z.string().optional().describe("landing page id (lp_…), if this page shows one"),
   }),
   output: Website,
@@ -129,7 +129,7 @@ const addPage = defineAction({
   example: (f) => ({ websiteId: f.website().id, title: "About", slug: "about" }),
   handler: (a, { store, clock }) => {
     const w = load(store, a.websiteId);
-    const slug = a.slug.trim();
+    const slug = a.slug?.trim() || slugOf(a.title);
     if (w.pages.some((p) => p.slug.toLowerCase() === slug.toLowerCase())) {
       throw new ActionError("DUPLICATE", `This website already has a page with slug "${slug}"`);
     }

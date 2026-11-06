@@ -227,6 +227,63 @@ describe("M45–M47 through real HTTP (scripted plans, not AI evaluation)", () =
     assert.match(last(done,"reply").text,/Maple Dental.*directory google/);
   });
 
+  test("a click sends the option token: the plan resumes once, a second click replays, a forged token is refused", async () => {
+    const plan = reply({ steps: [{ id: "s1", kind: "action", action: "M01.A04", argsJson: JSON.stringify({ contactId: { $lookup: { entity: "contact", name: "Sarah Johnson" } }, lastName: "Johnson-Lee" }) }] });
+    const p = scripted(plan);
+    const app = await start(p), store = app.world().store;
+    const first = await app.ask("Change Sarah Johnson's last name to Johnson-Lee");
+    const { clarification } = last(first, "reply");
+    assert.equal(clarification.options.length, 2);
+    assert.doesNotMatch(JSON.stringify(clarification), /ct_3/, "the client sees tokens, never record ids");
+    const bad = await app.post("/api/clarify", { clarificationId: clarification.id });
+    assert.equal(bad.status, 400);
+    const forged = await events(await app.post("/api/clarify", { clarificationId: clarification.id, optionToken: "ct_32" }));
+    assert.match(last(forged, "error").message, /isn't one this chat offered/);
+    assert.equal(last(forged, "reply"), undefined);
+    const pick = clarification.options.find((o: { label: string }) => /gmail/.test(o.label)).token;
+    const done = await events(await app.post("/api/clarify", { clarificationId: clarification.id, optionToken: pick }));
+    assert.equal(last(done, "reply").status, "done", JSON.stringify(last(done, "reply")));
+    assert.ok(kinds(done).includes("clarify.resolved"));
+    const audit = store.audit().length;
+    const twice = await events(await app.post("/api/clarify", { clarificationId: clarification.id, optionToken: pick }));
+    assert.equal(last(twice, "reply").replayed, true);
+    assert.equal(last(twice, "reply").status, "done");
+    assert.equal(store.audit().length, audit, "the second click writes nothing");
+    assert.equal(p.requests.length, 1);
+    assert.equal(store.get<any>("contacts", "ct_32").lastName, "Johnson-Lee");
+    assert.notEqual(store.get<any>("contacts", "ct_31").lastName, "Johnson-Lee");
+  });
+
+  test("the planner's own question about a shared name takes the user's answer as the pick, and asks once", async () => {
+    const asks = reply({ type: "clarify", clarification: "identity", question: "Which Sarah Johnson should I text?", missing: { action: "M12.A03", argument: "contactId", argsJson: JSON.stringify({ contactId: { $lookup: { entity: "contact", name: "Sarah Johnson" } }, body: "your invoice is ready" }) } });
+    const text = reply({ steps: [{ id: "s1", kind: "action", action: "M12.A03", argsJson: JSON.stringify({ contactId: { $lookup: { entity: "contact", name: "Sarah Johnson" } }, body: "your invoice is ready" }) }] });
+    // Planned again after the answer, the planner asks the same question before it's told the pick.
+    const p = scripted(asks, asks, text);
+    const app = await start(p), store = app.world().store;
+    const first = last(await app.ask("Text Sarah Johnson: your invoice is ready"), "reply");
+    assert.equal(first.status, "clarify");
+    assert.match(first.text, /2 contact records named Sarah Johnson/);
+    const before = store.all<any>("sms").length;
+    const answered = await app.ask("The one with the gmail address.");
+    assert.equal(last(answered, "reply").status, "awaiting_confirmation", JSON.stringify(last(answered, "reply")));
+    // The answer's turn is the plan made again with the pick, not the question's.
+    const done = last(await app.confirm(last(answered, "confirm").turnId, true), "reply");
+    assert.equal(done.status, "done", JSON.stringify(done));
+    const sent = store.all<any>("sms").slice(before);
+    assert.deepEqual(sent.map((m) => m.contactId), ["ct_32"]);
+    assert.match(p.requests[2]!.user, /chosenByUser/);
+  });
+
+  test("'none of these' through the clarify endpoint cancels with no write", async () => {
+    const plan = reply({ steps: [{ id: "s1", kind: "action", action: "M01.A04", argsJson: JSON.stringify({ contactId: { $lookup: { entity: "contact", name: "Sarah Johnson" } }, lastName: "Johnson-Lee" }) }] });
+    const app = await start(scripted(plan)), store = app.world().store;
+    const { clarification } = last(await app.ask("Change Sarah Johnson's last name to Johnson-Lee"), "reply");
+    const audit = store.audit().length;
+    const none = await events(await app.post("/api/clarify", { clarificationId: clarification.id, none: true }));
+    assert.equal(last(none, "reply").status, "cancelled");
+    assert.equal(store.audit().length, audit);
+  });
+
   test("internal ticket note never becomes a contact note or a delivered message", async () => {
     const app = await start(scripted(action("M47.A07",{ticketId:"tic_1",body:"Private triage"})));
     const store = app.world().store, notes = store.all("notes"), emails = store.all("emails");

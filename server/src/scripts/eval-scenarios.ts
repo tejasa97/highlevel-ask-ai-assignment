@@ -1,13 +1,14 @@
 // Runs the end-to-end scenarios (eval/scenarios/*.json) against the real planner and reports pass rates,
 // failure kinds, latency, cost and calls. Each run starts from a fresh seeded database. Runs the planner couldn't
 // serve (quota, timeout, provider down) are "infra": counted apart, never in the pass rate. Hitting the quota stops
-// the run, since every later job would fail the same way. A run with --label is also recorded in
+// the run, since every later job would fail the same way; --wait-on-limit <minutes> waits and retries that scenario
+// instead, for a short burst limit, and gives up after 12 waits in a row. A run with --label is also recorded in
 // eval/results/history.jsonl, unless it's a spot check (--only) or no run reached the app.
 // --agent baseline runs the one-call-per-step agent (server/baseline.ts) instead of the planner, for comparison.
 // --cache replays recorded planner replies (eval/cache/) for prompts it has seen and goes live only for the rest, so a
 // change that leaves a scenario's prompts alone is re-checked for free; --refresh re-records. A run that replayed
 // anything is not a latency or cost measurement, so it isn't recorded in the history.
-// Run: npm run eval:scenarios -- [--repeat 3] [--concurrency 4] [--only id-or-prefix,...] [--label name] [--fast] [--agent baseline] [--cache [--refresh]]
+// Run: npm run eval:scenarios -- [--repeat 3] [--concurrency 4] [--only id-or-prefix,...] [--label name] [--fast] [--agent baseline] [--cache [--refresh]] [--wait-on-limit minutes]
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { appendHistory, fingerprint, gitState } from "../eval/history.js";
@@ -29,7 +30,7 @@ const opt = (name: string) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const repeat = Number(opt("repeat") ?? 1);
-const concurrency = Number(opt("concurrency") ?? (process.env.PLANNER === "codex-cli" ? 1 : 4));
+const concurrency = Number(opt("concurrency") ?? (process.env.PLANNER?.startsWith("codex-") ? 1 : 4));
 const only = opt("only")?.split(",");
 const label = opt("label") ?? "latest";
 const tier = args.includes("--fast") ? "fast" : "strong";
@@ -49,9 +50,13 @@ const planner = useCache ? replayPlanner(live, `${EVAL}cache/${live.name}-${cach
 const subscription = planner.billing === "subscription";
 
 const jobs = scenarios.flatMap((s) => Array.from({ length: repeat }, () => s));
+const planned = jobs.length; // jobs grows when a limit wait re-queues a scenario
 const runs: ScenarioRun[] = [];
 let next = 0;
 let quotaHit = false;
+const waitOnLimitMs = Number(opt("wait-on-limit") ?? 0) * 60_000;
+let limitWaits = 0;
+let waitsInARow = 0;
 const started = performance.now();
 console.log(`${scenarioDir}: ${scenarios.length} scenarios × ${repeat} on ${planner.name} (${tier}${agent === "baseline" ? ", baseline agent" : ""}), ${concurrency} at a time\n`);
 await Promise.all(
@@ -59,11 +64,21 @@ await Promise.all(
     while (next < jobs.length) {
       const s = jobs[next++]!;
       const r = await runScenario(s, { registry, planner, retriever, tier, agent });
+      if (r.infra === "rate_limited" && waitOnLimitMs && waitsInARow < 12) {
+        // Measured nothing, so it's run again rather than counted.
+        limitWaits++;
+        waitsInARow++;
+        jobs.splice(next, 0, s);
+        console.log(`limit hit on ${s.id}: waiting ${waitOnLimitMs / 60_000} min (${limitWaits} so far, ${runs.length}/${planned} done)`);
+        await new Promise((resolve) => setTimeout(resolve, waitOnLimitMs));
+        continue;
+      }
+      if (!r.infra) waitsInARow = 0;
       runs.push(r);
       if (r.infra === "rate_limited" && !quotaHit) {
         quotaHit = true;
         next = jobs.length;
-        console.log(`\nquota hit: stopping; ${jobs.length - runs.length} runs not started\n`);
+        console.log(`\nquota hit: stopping; ${planned - runs.length} runs not started\n`);
       }
       console.log(`${r.infra ? "INFRA" : r.pass ? "pass" : "FAIL"}  ${r.id.padEnd(34)} ${String(r.metrics.ms).padStart(6)} ms${r.metrics.clarifications ? " (asked)" : ""}${r.pass ? "" : `  ${r.failures.map((f) => `${f.kind}: ${f.detail}`).join(" · ")}`}`);
     }
@@ -126,7 +141,8 @@ const summary = {
   /** Runs that failed outside the app; the rates below leave them out. */
   infraRuns: runs.length - clean.length,
   /** Jobs never started because the quota ran out. */
-  notRun: jobs.length - runs.length,
+  notRun: planned - runs.length,
+  limitWaits,
   passRate: Math.round(passRate * 1000) / 10,
   /** Scenarios that passed every run, and those that passed some but not all (flaky). */
   allPass: measured.filter((s) => byId.get(s.id)!.every((r) => r.pass)).length,

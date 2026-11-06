@@ -1,0 +1,981 @@
+{
+ "summary": {
+  "label": "port-ner-funnel-steps",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/scenarios,eval/brief-scenarios,eval/param-scenarios,eval/module-scenarios/coverage,eval/module-scenarios/wave1,eval/module-scenarios/m45-m47/development,eval/module-scenarios/m45-m47/reporting,eval/module-scenarios/m45-m47/trails,eval/module-scenarios/questions,eval/module-scenarios/role-ids,eval/policy-scenarios/partial-confirmation",
+  "set": "47a370239d5c",
+  "tier": "strong",
+  "scenarios": 1,
+  "repeat": 4,
+  "runs": 4,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 1,
+  "measured": 1,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 18881,
+   "p95": 22555
+  },
+  "firstReplyMs": {
+   "p50": 18877,
+   "p95": 22549
+  },
+  "plannerRoundsPerRun": 1.5,
+  "callsPerRun": 3.8,
+  "clarified": {
+   "runs": 0,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 41530
+ },
+ "runs": [
+  {
+   "id": "cov-funnel-reorder-and-remove",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "In the Webinar Signup funnel, remove the Landing step and then put Thank You before Registration",
+     "status": "done",
+     "reply": "Done: Remove funnel step (Webinar Signup).\nDone: Reorder funnel steps (Webinar Signup).",
+     "offered": [
+      "M36.A03",
+      "M16.A06",
+      "M24.A08",
+      "M36.A09",
+      "M36.A07",
+      "M24.A07",
+      "M36.A05",
+      "M37.A09",
+      "M36.A06",
+      "M36.A04",
+      "M37.A10",
+      "M37.A07",
+      "M36.A01",
+      "M36.A02",
+      "M36.A08",
+      "M05.A03",
+      "M35.A03",
+      "M01.A03"
+     ],
+     "planned": [
+      "M36.A02",
+      "M36.A06",
+      "M36.A05"
+     ],
+     "calls": [
+      {
+       "action": "M36.A02",
+       "args": {
+        "funnelId": "fn_1"
+       }
+      },
+      {
+       "action": "M36.A02",
+       "args": {
+        "funnelId": "fn_1"
+       }
+      },
+      {
+       "action": "M36.A06",
+       "args": {
+        "funnelId": "fn_1",
+        "stepId": "fs_1"
+       }
+      },
+      {
+       "action": "M36.A05",
+       "args": {
+        "funnelId": "fn_1",
+        "stepIds": [
+         "fs_3",
+         "fs_2"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M36.A02",
+          "argsJson": "{\"funnelId\":{\"$lookup\":{\"entity\":\"funnel\",\"name\":\"Webinar Signup\"}}}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M36.A06",
+          "argsJson": "{\"funnelId\":\"$s1.id\",\"stepId\":{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Landing\",\"where\":{\"funnelId\":\"$s1.id\"}}}}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M36.A05",
+          "argsJson": "{\"funnelId\":\"$s2.id\",\"stepIds\":[{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Thank You\",\"where\":{\"funnelId\":\"$s2.id\"}}},{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Registration\",\"where\":{\"funnelId\":\"$s2.id\"}}}]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M36.A06",
+          "M36.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 13309,
+     "ms": 13313,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "dd9cea4928c8",
+       "latencyMs": 13215,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12342,
+        "cachedRead": 3328,
+        "cacheWrite": 0,
+        "output": 271,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "7f578c1ac7fe1307",
+       "targetsHash": "96c7c4c88aeb2ba6",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M36.A06",
+         "name": "Remove funnel step",
+         "args": {
+          "funnelId": "fn_1",
+          "stepId": "fs_1"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "funnel_step",
+         "id": "fs_1",
+         "name": "Landing",
+         "text": "Landing",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "fingerprint": "d102a86c16e68b7c",
+         "where": {
+          "funnelId": "fn_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 13313,
+    "firstReplyMs": 13309,
+    "plannerMs": 13215,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 4,
+    "clarifications": 0,
+    "usage": {
+     "input": 12342,
+     "cachedRead": 3328,
+     "cacheWrite": 0,
+     "output": 271,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-funnel-reorder-and-remove",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "In the Webinar Signup funnel, remove the Landing step and then put Thank You before Registration",
+     "status": "done",
+     "reply": "Done: Remove funnel step (Webinar Signup).\nWebinar Signup (funnel): steps Registration (visits 0, advanced 0); Thank You (visits 0, advanced 0), status draft.\nDone: Reorder funnel steps (Webinar Signup).",
+     "offered": [
+      "M36.A03",
+      "M16.A06",
+      "M24.A08",
+      "M36.A09",
+      "M36.A07",
+      "M24.A07",
+      "M36.A05",
+      "M37.A09",
+      "M36.A06",
+      "M36.A04",
+      "M37.A10",
+      "M37.A07",
+      "M36.A01",
+      "M36.A02",
+      "M36.A08",
+      "M05.A03",
+      "M35.A03",
+      "M01.A03"
+     ],
+     "planned": [
+      "M36.A06",
+      "M36.A02",
+      "M36.A05"
+     ],
+     "calls": [
+      {
+       "action": "M36.A06",
+       "args": {
+        "funnelId": "fn_1",
+        "stepId": "fs_1"
+       }
+      },
+      {
+       "action": "M36.A02",
+       "args": {
+        "funnelId": "fn_1"
+       }
+      },
+      {
+       "action": "M36.A05",
+       "args": {
+        "funnelId": "fn_1",
+        "stepIds": [
+         "fs_3",
+         "fs_2"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M36.A06",
+          "argsJson": "{\"funnelId\":{\"$lookup\":{\"entity\":\"funnel\",\"name\":\"Webinar Signup\"}},\"stepId\":{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Landing\",\"where\":{\"funnel\":\"Webinar Signup\"}}}}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M36.A02",
+          "argsJson": "{\"funnelId\":{\"$lookup\":{\"entity\":\"funnel\",\"name\":\"Webinar Signup\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M36.A06",
+          "M36.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M36.A06",
+          "argsJson": "{\"funnelId\":{\"$lookup\":{\"entity\":\"funnel\",\"name\":\"Webinar Signup\"}},\"stepId\":{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Landing\",\"where\":{\"funnel\":\"Webinar Signup\"}}}}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M36.A02",
+          "argsJson": "{\"funnelId\":{\"$lookup\":{\"entity\":\"funnel\",\"name\":\"Webinar Signup\"}}}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M36.A05",
+          "argsJson": "{\"funnelId\":{\"$lookup\":{\"entity\":\"funnel\",\"name\":\"Webinar Signup\"}},\"stepIds\":[{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Thank You\",\"where\":{\"funnel\":\"Webinar Signup\"}}},{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Registration\",\"where\":{\"funnel\":\"Webinar Signup\"}}}]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M36.A06",
+          "M36.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "requested operation M36.A05 (Reorder funnel steps) is not in the plan: add a step that calls M36.A05 with its arguments from the message; M36.A06, M36.A02 do not do it"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 22549,
+     "ms": 22555,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "dd9cea4928c8",
+       "latencyMs": 12649,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 24879,
+        "cachedRead": 12160,
+        "cacheWrite": 0,
+        "output": 210,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "872d1d7f5e2d",
+       "latencyMs": 9775,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 12593,
+        "cachedRead": 3328,
+        "cacheWrite": 0,
+        "output": 287,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "76f2be098ac7dbf3",
+       "targetsHash": "96c7c4c88aeb2ba6",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M36.A06",
+         "name": "Remove funnel step",
+         "args": {
+          "funnelId": "fn_1",
+          "stepId": "fs_1"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "funnel",
+         "id": "fn_1",
+         "name": "Webinar Signup",
+         "text": "Webinar Signup",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-10-21T14:00:00.000Z",
+         "fingerprint": "807dbcad4db78000"
+        },
+        {
+         "entity": "funnel_step",
+         "id": "fs_1",
+         "name": "Landing",
+         "text": "Landing",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "fingerprint": "d102a86c16e68b7c",
+         "where": {
+          "funnel": "Webinar Signup",
+          "funnelId": "fn_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 22555,
+    "firstReplyMs": 22549,
+    "plannerMs": 22424,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 3,
+    "clarifications": 0,
+    "usage": {
+     "input": 37472,
+     "cachedRead": 15488,
+     "cacheWrite": 0,
+     "output": 497,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-funnel-reorder-and-remove",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "In the Webinar Signup funnel, remove the Landing step and then put Thank You before Registration",
+     "status": "done",
+     "reply": "Done: Remove funnel step (Webinar Signup).\nDone: Reorder funnel steps (Webinar Signup).",
+     "offered": [
+      "M36.A03",
+      "M16.A06",
+      "M24.A08",
+      "M36.A09",
+      "M36.A07",
+      "M24.A07",
+      "M36.A05",
+      "M37.A09",
+      "M36.A06",
+      "M36.A04",
+      "M37.A10",
+      "M37.A07",
+      "M36.A01",
+      "M36.A02",
+      "M36.A08",
+      "M05.A03",
+      "M35.A03",
+      "M01.A03"
+     ],
+     "planned": [
+      "M36.A02",
+      "M36.A06",
+      "M36.A05"
+     ],
+     "calls": [
+      {
+       "action": "M36.A02",
+       "args": {
+        "funnelId": "fn_1"
+       }
+      },
+      {
+       "action": "M36.A02",
+       "args": {
+        "funnelId": "fn_1"
+       }
+      },
+      {
+       "action": "M36.A06",
+       "args": {
+        "funnelId": "fn_1",
+        "stepId": "fs_1"
+       }
+      },
+      {
+       "action": "M36.A05",
+       "args": {
+        "funnelId": "fn_1",
+        "stepIds": [
+         "fs_3",
+         "fs_2"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M36.A02",
+          "argsJson": "{\"funnelId\":{\"$lookup\":{\"entity\":\"funnel\",\"name\":\"Webinar Signup\"}}}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M36.A06",
+          "argsJson": "{\"funnelId\":\"$s1.id\",\"stepId\":{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Landing\",\"where\":{\"funnelId\":\"$s1.id\"}}}}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M36.A05",
+          "argsJson": "{\"funnelId\":\"$s2.id\",\"stepIds\":[{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Thank You\",\"where\":{\"funnelId\":\"$s2.id\"}}},{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Registration\",\"where\":{\"funnelId\":\"$s2.id\"}}}]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M36.A06",
+          "M36.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 9824,
+     "ms": 9831,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "dd9cea4928c8",
+       "latencyMs": 9737,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12344,
+        "cachedRead": 3328,
+        "cacheWrite": 0,
+        "output": 271,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s2",
+       "planHash": "7f578c1ac7fe1307",
+       "targetsHash": "96c7c4c88aeb2ba6",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M36.A06",
+         "name": "Remove funnel step",
+         "args": {
+          "funnelId": "fn_1",
+          "stepId": "fs_1"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "funnel_step",
+         "id": "fs_1",
+         "name": "Landing",
+         "text": "Landing",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "fingerprint": "d102a86c16e68b7c",
+         "where": {
+          "funnelId": "fn_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 9831,
+    "firstReplyMs": 9824,
+    "plannerMs": 9737,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 4,
+    "clarifications": 0,
+    "usage": {
+     "input": 12344,
+     "cachedRead": 3328,
+     "cacheWrite": 0,
+     "output": 271,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-funnel-reorder-and-remove",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "In the Webinar Signup funnel, remove the Landing step and then put Thank You before Registration",
+     "status": "done",
+     "reply": "Webinar Signup (funnel): steps Landing (visits 0, advanced 0); Registration (visits 0, advanced 0); Thank You (visits 0, advanced 0), status draft.\nDone: Remove funnel step (Webinar Signup).\nDone: Reorder funnel steps (Webinar Signup).",
+     "offered": [
+      "M36.A03",
+      "M16.A06",
+      "M24.A08",
+      "M36.A09",
+      "M36.A07",
+      "M24.A07",
+      "M36.A05",
+      "M37.A09",
+      "M36.A06",
+      "M36.A04",
+      "M37.A10",
+      "M37.A07",
+      "M36.A01",
+      "M36.A02",
+      "M36.A08",
+      "M05.A03",
+      "M35.A03",
+      "M01.A03"
+     ],
+     "planned": [
+      "M36.A02",
+      "M36.A06",
+      "M36.A05"
+     ],
+     "calls": [
+      {
+       "action": "M36.A02",
+       "args": {
+        "funnelId": "fn_1"
+       }
+      },
+      {
+       "action": "M36.A02",
+       "args": {
+        "funnelId": "fn_1"
+       }
+      },
+      {
+       "action": "M36.A06",
+       "args": {
+        "funnelId": "fn_1",
+        "stepId": "fs_1"
+       }
+      },
+      {
+       "action": "M36.A05",
+       "args": {
+        "funnelId": "fn_1",
+        "stepIds": [
+         "fs_3",
+         "fs_2"
+        ]
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "funnel",
+          "name": "Webinar Signup",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M36.A02",
+          "argsJson": "{\"funnelId\":\"$s1.id\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M36.A06",
+          "argsJson": "{\"funnelId\":\"$s1.id\",\"stepId\":{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Landing\",\"where\":{\"funnelId\":\"$s1.id\"}}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M36.A06",
+          "M36.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "funnel",
+          "name": "Webinar Signup",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M36.A02",
+          "argsJson": "{\"funnelId\":\"$s1.id\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M36.A06",
+          "argsJson": "{\"funnelId\":\"$s1.id\",\"stepId\":{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Landing\",\"where\":{\"funnelId\":\"$s1.id\"}}}}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M36.A05",
+          "argsJson": "{\"funnelId\":\"$s1.id\",\"stepIds\":[{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Thank You\",\"where\":{\"funnelId\":\"$s1.id\"}}},{\"$lookup\":{\"entity\":\"funnel_step\",\"name\":\"Registration\",\"where\":{\"funnelId\":\"$s1.id\"}}}]}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M36.A06",
+          "M36.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "requested operation M36.A05 (Reorder funnel steps) is not in the plan: add a step that calls M36.A05 with its arguments from the message; M36.A02, M36.A06 do not do it"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 18877,
+     "ms": 18881,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "dd9cea4928c8",
+       "latencyMs": 8517,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12340,
+        "cachedRead": 3328,
+        "cacheWrite": 0,
+        "output": 196,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "307fcb475442",
+       "latencyMs": 10287,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 12597,
+        "cachedRead": 3328,
+        "cacheWrite": 0,
+        "output": 286,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "3563dc115e9a1691",
+       "targetsHash": "96c7c4c88aeb2ba6",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M36.A06",
+         "name": "Remove funnel step",
+         "args": {
+          "funnelId": "fn_1",
+          "stepId": "fs_1"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "funnel",
+         "id": "fn_1",
+         "name": "Webinar Signup",
+         "text": "Webinar Signup",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-10-21T14:00:00.000Z",
+         "fingerprint": "807dbcad4db78000"
+        },
+        {
+         "entity": "funnel_step",
+         "id": "fs_1",
+         "name": "Landing",
+         "text": "Landing",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "fingerprint": "d102a86c16e68b7c",
+         "where": {
+          "funnelId": "fn_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 18881,
+    "firstReplyMs": 18877,
+    "plannerMs": 18804,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 4,
+    "clarifications": 0,
+    "usage": {
+     "input": 24937,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 482,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

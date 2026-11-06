@@ -22,6 +22,22 @@ test("a genuine required content input can be asked without a store", () => {
   assert.deepEqual(assessClarification(question("M06.A01", "title"), registry, offered(), "Create a task"), { kind: "question" });
 });
 
+test("a null beside the asked input means it isn't given, so the question stands", () => {
+  assert.deepEqual(assessClarification(question("M06.A01", "title", { title: null }), registry, offered(), "Create a task"), { kind: "question" });
+});
+
+test("a date-time the message gives the time of day for isn't asked, and neither is the workspace time zone", () => {
+  const post = { postId: "bp_1" };
+  const at9 = "Schedule the post to go live on 28 October at 9am";
+  assert.throws(() => assessClarification(question("M38.A08", "publishAt", post), registry, offered(), at9), /gives the time \(9am\)/);
+  assert.throws(() => assessClarification(question("M38.A08", "publishAt", post, { question: "What time zone should I use?" }), registry, offered(), "Schedule the post for November 2"), /America\/New_York/);
+  assert.throws(() => assessClarification(question("M38.A08", "publishAt", post, { question: "Which year should I use for November 2?" }), registry, offered(), "Schedule the post for November 2"), /next one from today/);
+  // A bare day in the date-time is what the question completes, not a supplied value.
+  assert.deepEqual(assessClarification(question("M38.A08", "publishAt", { ...post, publishAt: "2026-11-02" }), registry, offered(), "Schedule the post for November 2"), { kind: "question" });
+  // No time given: what time is still the user's to say.
+  assert.deepEqual(assessClarification(question("M38.A08", "publishAt", post, { question: "What time on November 2?" }), registry, offered(), "Schedule the post for November 2"), { kind: "question" });
+});
+
 test("unbound, unknown, unoffered, optional and already-supplied questions are rejected", () => {
   const w = world();
   for (const q of [

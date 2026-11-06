@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import { before, describe, test } from "node:test";
 import { compile } from "../core/compile.js";
+import { execute } from "../core/execute.js";
+import { resolveIdentity } from "../core/identity.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { buildCards } from "../retrieval/cards.js";
 import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { carryOf, duplicateCreates, inventedIds, isQuestion, oneOfSameNamed, planTurn, staffInQuery, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
+import { carryOf, duplicateCreates, inventedIds, inventedTime, isQuestion, oneOfSameNamed, planTurn, staffInQuery, stillStands, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -67,6 +69,21 @@ describe("grounded outcomes and clarifications", () => {
   const change = { effect: "change" as const, actions: ["M06.A01"], destination: null };
   const tasks = (type: "look" | "plan") => reply({ type, steps: [{ id: "read", kind: "action", action: "M06.A03", argsJson: "{}" }], outcome: change });
 
+  test("a plan that doesn't leave out what its outcome says is asked once, then stands", async () => {
+    const leaving = { ...change, leavesOut: "anyone already called" };
+    const planner = scripted(reply({ steps: createTask().steps, outcome: leaving }), reply({ steps: createTask().steps, outcome: leaving }));
+    const { out } = await run("Create a task to call Ana Ruiz, leaving out anyone already called", planner);
+    assert.equal(planner.requests.length, 2);
+    assert.match(planner.requests[1]!.user, /leave out "anyone already called", but no step before the change does/);
+    assert.equal(out.kind, "plan");
+  });
+
+  test("an answer to a question is planned with the message it answers in view", async () => {
+    const planner = scripted(createTask());
+    await run("The lead from Wayne.", planner, { answering: "Create a task to call Ana Ruiz about partnering" });
+    assert.match(planner.requests[0]!.user, /<message>Create a task to call Ana Ruiz about partnering\nThe lead from Wayne\.<\/message>/);
+  });
+
   test("a choice-labelled team question with no selector is grounded from its required argument", async () => {
     const planner = scripted(reply({ type: "clarify", clarification: "choice", question: "Which sales team?", missing: missing("M49.A05", "teamId", { userId: "us_6" }) }), reply({ steps: [{ id: "join", kind: "action", action: "M49.A05", argsJson: '{"teamId":"tm_1","userId":"us_6"}' }] }));
     const w = world();
@@ -88,6 +105,13 @@ describe("grounded outcomes and clarifications", () => {
     }
   });
 
+  test("a clarify with no question gets one repair: the message usually already gives the value", async () => {
+    const planner = scripted(reply({ type: "clarify", clarification: "content", missing: missing("M06.A01", "title", { dueDate: "2026-10-22" }) }), createTask());
+    const { out } = await run("Create a task to call Ana tomorrow", planner);
+    assert.ok(out.kind === "plan");
+    assert.match(planner.requests[1]!.user, /has none\. If the message already says what M06\.A01 title should be/);
+  });
+
   test("nested field lookup IDs survive the look/replan loop", async () => {
     const form = { $lookup: { entity: "form", name: "Contact Us" } };
     const inspect = reply({ type: "look", steps: [{ id: "inspect", kind: "action", action: "M18.A02", argsJson: JSON.stringify({ formId: form }) }] });
@@ -101,12 +125,65 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(planner.requests.length, 2);
   });
 
+  test("a plan after a look gets its own repair when an empty reply spent the first", async () => {
+    const read = { effect: "read" as const, actions: ["M50.A08"], destination: null };
+    const empty = reply({ type: "plan", steps: [], outcome: read });
+    const find = reply({ type: "look", steps: [{ id: "find", kind: "action", action: "M50.A03", argsJson: JSON.stringify({ query: "New Contacts" }) }], outcome: read });
+    const setsRange = reply({ type: "plan", outcome: read, steps: [
+      { id: "s1", kind: "action", action: "M50.A05", argsJson: JSON.stringify({ reportId: "rpt_1", from: "2026-09-22", to: "2026-10-21" }) },
+      { id: "s2", kind: "action", action: "M50.A08", argsJson: JSON.stringify({ reportId: "rpt_1" }) },
+    ] });
+    const compare = reply({ type: "plan", outcome: read, steps: [{ id: "s1", kind: "action", action: "M50.A08", argsJson: JSON.stringify({ reportId: "rpt_1" }) }] });
+    const planner = scripted(empty, find, setsRange, compare);
+    const out = await planTurn({ message: "Compare the New Contacts report for the last 30 days against the 30 days before that", tier: "fast" }, {
+      registry, retriever, planner, clock: frozenClock(), look: async () => [{ id: "find", output: { items: [{ id: "rpt_1", name: "New Contacts" }], total: 1 } }],
+    });
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.deepEqual(out.plan.steps.map((s) => s.kind === "action" ? s.call.action.id : ""), ["M50.A08"]);
+  });
+
+  test("a read-only outcome sent back for a write and sent again runs its reads alone", async () => {
+    const read = { effect: "read" as const, actions: ["M50.A08"], destination: null };
+    const setsRange = reply({ type: "plan", outcome: read, steps: [
+      { id: "s1", kind: "action", action: "M50.A05", argsJson: JSON.stringify({ reportId: "rpt_1", from: "2026-09-22", to: "2026-10-21" }) },
+      { id: "s2", kind: "action", action: "M50.A08", argsJson: JSON.stringify({ reportId: "rpt_1" }) },
+    ] });
+    const planner = scripted(setsRange, setsRange);
+    const out = await planTurn({ message: "Compare the New Contacts report for the last 30 days against the 30 days before that", tier: "fast" }, { registry, retriever, planner, clock: frozenClock() });
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.deepEqual(out.plan.steps.map((s) => s.kind === "action" ? s.call.action.id : ""), ["M50.A08"]);
+    const asks = await planTurn({ message: "Set the New Contacts report to the last 30 days and compare it", tier: "fast" }, { registry, retriever, planner: scripted(setsRange, setsRange), clock: frozenClock() });
+    assert.ok(asks.kind !== "plan", "a message that asks for the change keeps it");
+  });
+
+  test("a report found by name is compared alone when the range change is sent again", async () => {
+    const read = { effect: "read" as const, actions: ["M50.A08"], destination: null };
+    const setsRange = reply({ type: "plan", outcome: read, steps: [
+      { id: "s1", kind: "resolve", entity: "report", name: "New Contacts" },
+      { id: "s2", kind: "action", action: "M50.A05", argsJson: JSON.stringify({ reportId: "$s1.id", from: "2026-09-22", to: "2026-10-21" }) },
+      { id: "s3", kind: "action", action: "M50.A08", argsJson: JSON.stringify({ reportId: "$s1.id" }) },
+    ] });
+    const out = await planTurn({ message: "Compare the New Contacts report for the last 30 days against the 30 days before that", tier: "fast" }, { registry, retriever, planner: scripted(setsRange, setsRange), clock: frozenClock() });
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.deepEqual(out.plan.steps.map((s) => s.kind === "action" ? s.call.action.id : s.kind), ["resolve", "M50.A08"]);
+  });
+
   test("a prerequisite-only plan is repaired rather than returned as completed", async () => {
     const planner = scripted(tasks("plan"), { ...createTask(), outcome: change });
     const { out } = await run("Create a task like my other tasks", planner);
     assert.ok(out.kind === "plan");
     assert.equal(planner.requests.length, 2);
     assert.match(planner.requests[1]!.user, /only reads/);
+  });
+
+  test("a change planned as only its prerequisite reads runs them as a look, then plans with what they found", async () => {
+    const planner = scripted(tasks("plan"), { ...createTask(), outcome: change });
+    let looks = 0;
+    const { out } = await run("Create a task like my other tasks", planner, {}, async () => (looks++, [{ id: "read", output: { items: [], total: 0 } }]));
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A01"), JSON.stringify(out));
+    assert.equal(looks, 1);
+    assert.match(planner.requests[1]!.user, /<looked>/);
+    assert.doesNotMatch(planner.requests[1]!.user, /only reads/);
   });
 
   test("look then answer cannot drop the requested change, even if the next reply declares a read", async () => {
@@ -255,7 +332,15 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(planner.requests.length, 2);
   });
 
-  test("a plan gets a second repair only when the first left fewer errors", async () => {
+  test("a plan gets a second repair when the first fixed its errors and met a new one", async () => {
+    const first = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$nope" }) }], outcome: change });
+    const other = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "Call Ana", color: "red" }) }], outcome: change });
+    const planner = scripted(first, other, createTask());
+    assert.equal((await run("Create a task", planner)).out.kind, "plan");
+    assert.equal(planner.requests.length, 3);
+  });
+
+  test("a plan gets a second repair only when it got closer", async () => {
     const two = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$nope", color: "red" }) }], outcome: change });
     const one = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$nope" }) }], outcome: change });
     const closer = scripted(two, one, createTask());
@@ -318,12 +403,32 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(planner.requests.length, 1);
   });
 
-  test("a question whose model wants a second look gets the first look's reads, not a failure", async () => {
+  test("a question whose model wants a second look is asked once for its verdict", async () => {
     const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
-    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("look"), outcome: read });
+    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("look"), outcome: read }, reply({ type: "answer", text: "Yes, Ana has 2 tasks.", outcome: read }));
+    let looks = 0;
+    const { out } = await run("Has Ana got any tasks?", planner, {}, async () => (looks++, []));
+    assert.ok(out.kind === "plan" && out.answer === "Yes, Ana has 2 tasks.", JSON.stringify(out));
+    assert.equal(looks, 1);
+    assert.match(planner.requests[2]!.user, /start with the verdict/);
+  });
+
+  test("a question whose model still wants to look after that gets the first look's reads, not a failure", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const planner = scripted({ ...tasks("plan"), outcome: read }, { ...tasks("look"), outcome: read }, { ...tasks("look"), outcome: read });
     const { out } = await run("Has Ana got any tasks?", planner, {}, async () => []);
     assert.ok(out.kind === "plan" && out.answer === undefined, JSON.stringify(out));
-    assert.equal(planner.requests.length, 2);
+    assert.equal(planner.requests.length, 3);
+  });
+
+  test("a second look that reads something new runs, rather than ending on the first look's reads", async () => {
+    const read = { effect: "read" as const, actions: ["M06.A03"], destination: null };
+    const contacts = reply({ type: "look", steps: [{ id: "c", kind: "action", action: "M01.A03", argsJson: "{}" }], outcome: read });
+    const planner = scripted(contacts, { ...tasks("look"), outcome: read }, { ...tasks("plan"), outcome: read });
+    let looks = 0;
+    const { out } = await run("Which tasks does Ana have?", planner, {}, async () => (looks++, []));
+    assert.equal(looks, 2);
+    assert.ok(out.kind === "plan" && out.plan.steps.some((s) => s.kind === "action" && s.call.action.id === "M06.A03"), JSON.stringify(out));
   });
 
   test("the next turn learns which record types this one made, not those it only changed", () => {
@@ -417,6 +522,13 @@ describe("grounded outcomes and clarifications", () => {
     assert.match(planner.requests[1]!.user, /requested_outcome.*change/);
   });
 
+  test("an outcome id the catalog doesn't have is dropped, so the real one found later is what the plan must do", async () => {
+    const planner = scripted(reply({ type: "search_tools", query: "create task", outcome: { ...change, actions: ["M06.A??"] } }), { ...createTask(), outcome: change });
+    const { out } = await run("Remind me to call", planner);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+  });
+
   test("checks a unique identity before passing a speculative question to the user", async () => {
     const planner = scripted(reply({ type: "clarify", missing: missing("M08.A03", "tagId", { name: "referral-partner" }), clarification: "identity", question: "Which partner tag?", lookup: { entity: "tag", name: "partner", whereJson: null } }), reply({ steps: [{ id: "rename", kind: "action", action: "M08.A03", argsJson: JSON.stringify({ tagId: { $lookup: { entity: "tag", name: "partner" } }, name: "referral-partner" }) }] }));
     const w = world();
@@ -433,6 +545,40 @@ describe("grounded outcomes and clarifications", () => {
     const out = await planTurn({ message: "Email Sarah Johnson", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
     assert.ok(out.kind === "reply" && out.status === "clarify");
     assert.equal(planner.requests.length, 1);
+  });
+
+  test("a create sent back because the record exists no longer has to be in the plan", async () => {
+    const create = reply({ type: "plan", outcome: { effect: "change", actions: ["M08.A01", "M08.A06"], destination: null }, steps: [
+      { id: "s1", kind: "resolve", entity: "contact", name: "Omar Larsen", whereJson: null },
+      { id: "s2", kind: "action", action: "M08.A01", argsJson: '{"name":"partner"}' },
+      { id: "s3", kind: "action", action: "M08.A06", argsJson: '{"tagId":"$s2.id","recordType":"contact","recordId":"$s1.id"}' },
+    ] });
+    const reuse = reply({ type: "plan", outcome: { effect: "change", actions: ["M08.A06"], destination: null }, steps: [
+      { id: "s1", kind: "resolve", entity: "contact", name: "Omar Larsen", whereJson: null },
+      { id: "s2", kind: "resolve", entity: "tag", name: "partner", whereJson: null },
+      { id: "s3", kind: "action", action: "M08.A06", argsJson: '{"tagId":"$s2.id","recordType":"contact","recordId":"$s1.id"}' },
+    ] });
+    const w = world();
+    const out = await planTurn({ message: "Tag Omar Larsen as a partner", tier: "fast" }, { registry, retriever, planner: scripted(create, reuse), clock: w.clock, store: w.store });
+    assert.equal(out.kind, "plan", JSON.stringify(out));
+  });
+
+  test("asked again after the user picked one, the question's own call is the plan: the pick and the other record", async () => {
+    const w = world();
+    const sarahs = w.store.find<{ id: string; name: string; company: string | null }>("contacts", (c) => c.name === "Sarah Johnson");
+    const brightside = sarahs.find((c) => c.company === "Brightside")!, other = sarahs.find((c) => c !== brightside)!;
+    const both = { keepId: { $lookup: { entity: "contact", name: "Sarah Johnson" } }, duplicateId: { $lookup: { entity: "contact", name: "Sarah Johnson" } } };
+    const ask = reply({ type: "clarify", missing: missing("M01.A06", "keepId", both), clarification: "choice", question: "Which Sarah Johnson stays?", outcome: { effect: "change", actions: ["M01.A06"], destination: null } });
+    const planner = scripted(ask, ask);
+    const chosen = resolveIdentity({ entity: "contact", text: "Sarah Johnson", qualifiers: "the Brightside one", actionRisk: "write" }, { registry, store: w.store });
+    assert.ok(chosen.kind === "bound");
+    const pick = { ...chosen.binding, provenance: "user-selected" as const };
+    const out = await planTurn({ message: "Merge the two Sarah Johnson contacts", tier: "fast", picks: [pick] }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+    const r = await execute(out.plan, registry, w, { executionId: "merge-picked" });
+    assert.equal(r.status, "awaiting_confirmation", JSON.stringify(r.steps.map((s) => s.error)));
+    assert.deepEqual(r.pending?.preview[0]?.args, { keepId: brightside.id, duplicateId: other.id });
   });
 
   test("asked again after seeing the records, a question about a name that fits two of them goes to the user", async () => {
@@ -470,6 +616,27 @@ describe("grounded outcomes and clarifications", () => {
     assert.ok(out.kind === "reply" && out.status === "failed");
     assert.equal(planner.requests.length, 2);
     assert.equal(w.store.get<{ name: string }>("tags", "tg_4")!.name, "partner");
+  });
+
+  test("repeating an identity question about a name nothing is close to answers not found, without a question", async () => {
+    const ask = (name: string) => reply({ type: "clarify", missing: missing("M01.A07", "contactId", { ownerId: "us_5" }), clarification: "identity", question: `Who is ${name}?`, lookup: { entity: "contact", name, whereJson: null } });
+    const w = world();
+    const none = await planTurn({ message: "Assign Dana Whitfield to Aisha", tier: "fast" }, { registry, retriever, planner: scripted(ask("Dana Whitfield"), ask("Dana Whitfield")), clock: w.clock, store: w.store });
+    assert.ok(none.kind === "reply" && none.status === "failed", JSON.stringify(none));
+    assert.match(none.text, /couldn't find a contact named "Dana Whitfield", so nothing was changed/);
+    // A near miss is still offered.
+    const near = await planTurn({ message: "Assign Sarah Jonson to Aisha", tier: "fast" }, { registry, retriever, planner: scripted(ask("Sarah Jonson"), ask("Sarah Jonson")), clock: w.clock, store: w.store });
+    assert.ok(near.kind === "reply" && near.status === "clarify" && near.options?.some((o) => o.startsWith("Sarah Johnson")), JSON.stringify(near));
+  });
+
+  test("a question that repeats a name no record has answers not found once the planner has been told", async () => {
+    const ask = reply({ type: "clarify", missing: missing("M01.A07", "contactId", { ownerId: "us_5" }), clarification: "choice", question: "What should Dana Whitfield be assigned to?" });
+    const planner = scripted(ask, ask);
+    const w = world();
+    const out = await planTurn({ message: "Assign Dana Whitfield to Aisha", tier: "fast" }, { registry, retriever, planner, clock: w.clock, store: w.store });
+    assert.ok(out.kind === "reply" && out.status === "failed", JSON.stringify(out));
+    assert.match(out.text, /couldn't find a contact named "Dana Whitfield", so nothing was changed/);
+    assert.equal(planner.requests.length, 2);
   });
 
   test("an identity question about a second record gets its own check", async () => {
@@ -559,6 +726,21 @@ describe("a write by id to one of several same-named records", () => {
     assert.equal(oneOfSameNamed(owner(["ct_31"]), sarahs, registry, world().store, "make Aisha the owner of Sarah Johnson\nthe one at Brightside"), undefined);
     assert.equal(oneOfSameNamed(owner(["ct_31", "ct_32"]), sarahs, registry, world().store, "make Aisha the owner of both Sarah Johnsons"), undefined);
   });
+
+  test("a merge of both still asks which one stays, unless the request says", () => {
+    const r = compile(reply({ steps: [{ id: "s1", kind: "action", action: "M01.A06", argsJson: JSON.stringify({ keepId: "ct_31", duplicateId: "ct_32" }) }] }), registry);
+    assert.ok(r.ok, JSON.stringify(r));
+    const q = oneOfSameNamed(r.plan, sarahs, registry, world().store, "Merge the two Sarah Johnson contacts");
+    assert.match(q?.text ?? "", /Which one is the contact that stays\?/);
+    assert.equal(oneOfSameNamed(r.plan, sarahs, registry, world().store, "Merge the two Sarah Johnson contacts\nKeep the Brightside one"), undefined);
+    const pick = { entity: "contact", id: "ct_31", name: "Sarah Johnson", text: "Sarah Johnson", provenance: "user-selected" as const, matchReason: "exact-name" as const, fingerprint: "" };
+    assert.equal(oneOfSameNamed(r.plan, sarahs, registry, world().store, "Merge the two Sarah Johnson contacts", [pick]), undefined);
+  });
+
+  test("passes when the user picked that record when asked", () => {
+    const pick = { entity: "contact", id: "ct_31", name: "Sarah Johnson", text: "Sarah Johnson", provenance: "user-selected" as const, matchReason: "exact-name" as const, fingerprint: "" };
+    assert.equal(oneOfSameNamed(owner(["ct_31"]), sarahs, registry, world().store, "make Aisha the owner of Sarah Johnson", [pick]), undefined);
+  });
 });
 
 describe("planTurn", () => {
@@ -611,6 +793,23 @@ describe("planTurn", () => {
     assert.equal(out.kind, "plan");
     assert.deepEqual(events.flatMap((e) => (e.type === "retrieval" ? [e.data.label] : [])), ["retrieve", "search_tools"]);
     assert.match(events.flatMap((e) => (e.type === "retrieval" ? [e.data.query] : []))[1]!, /create a task to call Ana/);
+  });
+
+  test("what an unsupported reply says it can do doesn't hold the plan after its search to that", async () => {
+    const drafts = { effect: "change" as const, actions: ["M40.A01", "M41.A01"], destination: null };
+    const publish = reply({
+      steps: [
+        { id: "s1", kind: "action", action: "M40.A01", argsJson: JSON.stringify({ title: "Sales 101" }) },
+        { id: "s2", kind: "action", action: "M41.A01", argsJson: JSON.stringify({ courseId: "$s1.id", title: "Cold Calling Basics" }) },
+        { id: "s3", kind: "action", action: "M41.A09", argsJson: JSON.stringify({ lessonId: "$s2.id" }) },
+        { id: "s4", kind: "action", action: "M40.A09", argsJson: JSON.stringify({ courseId: "$s1.id" }) },
+      ],
+      outcome: { ...drafts, actions: [...drafts.actions, "M41.A09", "M40.A09"] },
+    });
+    const planner = scripted(reply({ type: "unsupported", reason: "Publishing a course requires a published lesson first, and I can't publish a new lesson.", outcome: drafts }), publish);
+    const { out } = await run("Build a course called Sales 101 with a lesson called Cold Calling Basics and publish it", planner);
+    assert.equal(out.kind, "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
   });
 
   test("an unsupported reply stands once the extra retrieval has been spent", async () => {
@@ -773,13 +972,15 @@ describe("planTurn", () => {
     });
   });
 
-  test("using an action that wasn't offered gets one repair round", async () => {
+  test("a real action the shortlist missed is offered once named, and its arguments are still checked", async () => {
     const planner = scripted(createTask("M48.A01"), createTask());
     const { out, events } = await run("create a task to call Ana", planner);
     assert.equal(out.kind, "plan");
-    const errs = events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : []));
-    assert.match(errs.join("\n"), /M48\.A01 was not in <actions>/);
-    assert.match(planner.requests[1]!.user, /M48\.A01 was not in <actions>/);
+    const errs = events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : [])).join("\n");
+    assert.doesNotMatch(errs, /was not in <actions>/);
+    assert.match(errs, /M48\.A01/, "the wrong action's arguments get the repair round");
+    const unknown = await run("create a task to call Ana", scripted(createTask("M99.A99"), createTask()));
+    assert.match(unknown.events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : [])).join("\n"), /M99\.A99/, "an id the registry doesn't have is still refused");
   });
 
   test("a plan that only finds records gets one repair round, so it never ends done with nothing said", async () => {
@@ -789,6 +990,17 @@ describe("planTurn", () => {
     assert.match(events.flatMap((e) => (e.type === "compile.errors" ? e.data.errors : [])).join("\n"), /calls no action/);
     const again = await run("create a task to call Ana", scripted(findOnly, findOnly));
     assert.ok(again.out.kind === "reply" && again.out.status === "failed");
+  });
+
+  test("an answer after a look that only found the record is sent back once to read it", async () => {
+    const read = { effect: "read" as const, actions: [], destination: null };
+    const found = reply({ type: "look", steps: [{ id: "s1", kind: "resolve", entity: "campaign", name: "Holiday Offer", whereJson: null }], outcome: read });
+    const guess = reply({ type: "answer", text: "Yes, it is live.", outcome: read });
+    const look: TurnDeps["look"] = async () => [{ id: "s1", output: { id: "cmp_1", name: "Holiday Offer" } }];
+    const planner = scripted(found, guess, guess);
+    const { out } = await run("Is the Holiday Offer campaign live yet?", planner, {}, look);
+    assert.match(planner.requests[2]!.user, /only found which record it is/);
+    assert.equal(out.kind, "plan", "a second answer stands");
   });
 
   test("a listed write verb repairs an all-read plan, but a pure question uses it directly", async () => {
@@ -879,6 +1091,17 @@ describe("planTurn", () => {
     const told = scripted(answer);
     await run("has task tk_1 gone overdue?", told, { context: "user: is tk_1 overdue?\nassistant: No, it's due Friday." });
     assert.equal(told.requests.length, 1);
+  });
+
+  test("a rejected answer's read outcome doesn't hold the plan that replaces it to reading", async () => {
+    // "The deal is now worth $X" answered as prose with a read outcome, then planned as the change it is.
+    const read = { effect: "read" as const, actions: [] as string[], destination: null };
+    const change = { effect: "change" as const, actions: ["M06.A01"], destination: null };
+    const answer = reply({ type: "answer", text: "There is no request to act on here.", outcome: read });
+    const planner = scripted(answer, { ...createTask(), outcome: change });
+    const { out } = await run("Ana's task is now due tomorrow", planner);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
   });
 
   test("the prompt offers the product and invoice actions for adding a product to an invoice", async () => {
@@ -1034,6 +1257,21 @@ describe("creating a record the message names", () => {
     assert.match(duplicateCreates(plan({ firstName: "Sarah", lastName: "Johnson" }), [{ name: "Sarah Johnson", entity: "contact", count: 2 }], "Add Sarah Johnson", sameName).join("\n"), /already exists/);
   });
 
+  test("a name no mention covers still counts when the message says it, the store holds it, and the create feeds a later step", () => {
+    const tag = compile(reply({ steps: [
+      { id: "s1", kind: "action", action: "M08.A01", argsJson: JSON.stringify({ name: "vip" }) },
+      { id: "s2", kind: "action", action: "M08.A06", argsJson: JSON.stringify({ tagId: "$s1.id", recordType: "contact", recordId: "ct_2" }) },
+    ] }), registry);
+    assert.ok(tag.ok, tag.ok ? "" : tag.errors.join("\n"));
+    const marcus = compile(reply({ steps: [{ id: "s1", kind: "action", action: "M01.A01", argsJson: JSON.stringify({ firstName: "Marcus", lastName: "Lee" }) }] }), registry);
+    assert.ok(marcus.ok);
+    assert.deepEqual(duplicateCreates(marcus.plan, [], "Create a contact called Marcus Lee", () => true), [], "the record itself is what's asked for; the resolver warns instead");
+    const held = (entity: string, name: string) => entity === "tag" && name === "vip";
+    assert.match(duplicateCreates(tag.plan, [], 'Tag "Elena Costa" as vip', held).join("\n"), /vip already exists as a tag/);
+    assert.deepEqual(duplicateCreates(tag.plan, [], "Tag Elena with something", held), [], "a name the message doesn't say is the planner's own");
+    assert.deepEqual(duplicateCreates(tag.plan, [], "Tag Elena as vip", () => false), [], "nothing in the store by that name");
+  });
+
   test("leaving out a field the message says comes with it is sent back to be set or asked for", () => {
     const sarah = plan({ firstName: "Sarah" });
     assert.match(unfilledNamedFields(sarah, "Add Sarah as a new contact with the email I'm pasting.").join("\n"), /leaves out email.*clarify/);
@@ -1042,6 +1280,23 @@ describe("creating a record the message names", () => {
     assert.deepEqual(unfilledNamedFields(sarah, "Create a contact named Sarah"), []);
     assert.deepEqual(unfilledNamedFields(sarah, "Email Sarah and create her as a contact"), []);
     assert.deepEqual(unfilledNamedFields(sarah, "Create Sarah and send her an email"), []);
+  });
+
+  test("a scheduled moment with no time of day said is asked about, not picked", () => {
+    const post = (publishAt: string) => {
+      const c = compile(reply({ steps: [{ id: "s1", kind: "action", action: "M38.A08", argsJson: JSON.stringify({ postId: "blg_1", publishAt }) }] }), registry);
+      assert.ok(c.ok, c.ok ? "" : c.errors.join("\n"));
+      return c.plan;
+    };
+    const at2 = post("2026-11-02T14:00:00.000Z");
+    assert.match(inventedTime(at2, "Schedule the Fall product update post to go live on November 2") ?? "", /What time of day should it go live\?/);
+    assert.equal(inventedTime(at2, "10am"), undefined);
+    assert.equal(inventedTime(at2, "Post it at 9:30 on November 2"), undefined);
+    assert.equal(inventedTime(at2, "Schedule it for noon tomorrow"), undefined);
+    assert.equal(inventedTime(at2, "Schedule it to go out in 2 hours"), undefined);
+    assert.equal(inventedTime(at2, "Schedule it for tonight"), undefined);
+    assert.equal(inventedTime(at2, "Push it to Monday, same time"), undefined);
+    assert.equal(inventedTime(at2, "Schedule the post for November 2\nWhat time?\n10am"), undefined, "a time given earlier in the conversation counts");
   });
 });
 
@@ -1060,4 +1315,58 @@ test("a retry that runs the search the failed attempt found nothing with, unchan
   const out = await planTurn({ message: "Archive every contact at Wayne", tier: "fast", failed }, { registry, retriever, planner, clock: frozenClock() }, () => {});
   assert.equal(out.kind, "plan");
   assert.match(planner.requests[1]!.user, /s1: M02\.A03 \{"query":"Wayne"\} already found nothing in <failed_attempt>.*M01\.A03 Search contacts/);
+});
+
+describe("planner debug log", () => {
+  test("PLANNER_DEBUG=1 records every call with its reason, prompt and raw reply, as an event and a JSONL line", async () => {
+    const { mkdtempSync, readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { tmpdir } = await import("node:os");
+    const file = join(mkdtempSync(join(tmpdir(), "pdbg-")), "planner_debug.jsonl");
+    const saved = { on: process.env.PLANNER_DEBUG, file: process.env.PLANNER_DEBUG_FILE };
+    process.env.PLANNER_DEBUG = "1";
+    process.env.PLANNER_DEBUG_FILE = file;
+    try {
+      const { events } = await run("Add a task to call Ana", scripted(reply({ type: "search_tools", query: "create a task" }), createTask()));
+      const debug = events.flatMap((e) => (e.type === "planner.debug" ? [e.data] : []));
+      assert.deepEqual(debug.map((d) => [d.round, d.reason, d.label, d.model]), [[1, "initial", "plan", "fake"], [2, "after retrieval", "plan after search_tools", "fake"]]);
+      assert.match(debug[0]!.user, /Add a task to call Ana/);
+      assert.equal(debug[1]!.raw, JSON.stringify(createTask()));
+      const lines = readFileSync(file, "utf8").trim().split("\n").map((l) => JSON.parse(l));
+      assert.deepEqual(lines.map((l) => l.round), [1, 2]);
+    } finally {
+      for (const [k, v] of [["PLANNER_DEBUG", saved.on], ["PLANNER_DEBUG_FILE", saved.file]] as const) if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+  });
+
+  test("off by default: no planner.debug events", async () => {
+    delete process.env.PLANNER_DEBUG;
+    const { events } = await run("Add a task to call Ana", scripted(createTask()));
+    assert.ok(!events.some((e) => e.type === "planner.debug"));
+  });
+});
+
+describe("an amending plan and what the last turn already ran", () => {
+  const made = [{ id: "tk_1", entity: "task", action: "M06.A01", key: "ld_1", args: {} }] as never;
+  const carry = { prev: ["M03.A05", "M06.A01"], entities: ["lead", "task"], made: ["task"] };
+  const plan = (action: string, args: object) => {
+    const r = compile({ type: "plan", steps: [{ id: "s1", kind: "action", action, argsJson: JSON.stringify(args) }], question: null, options: null, reason: null, alternatives: null, query: null, text: null }, registry);
+    assert.ok(r.ok);
+    return r.plan;
+  };
+  const due = () => plan("M06.A06", { taskId: "tk_1", dueDate: "2026-10-28" });
+
+  test("editing the last turn's records leaves the rest of that turn standing", () => {
+    assert.deepEqual(stillStands(due(), { carry, made, message: "Actually, just the Facebook ones, due tomorrow." }, registry), ["M03.A05", "M06.A01"]);
+  });
+
+  test("an operation the message names again is still required", () => {
+    assert.deepEqual(stillStands(due(), { carry, made, message: "Reassign them to Bob instead, due tomorrow." }, registry), ["M06.A01"]);
+    assert.deepEqual(stillStands(due(), { carry, made, message: "Also add one for Ana." }, registry), []);
+  });
+
+  test("a plan that doesn't touch those records spares nothing", () => {
+    assert.deepEqual(stillStands(plan("M06.A03", {}), { carry, made, message: "Assign them to Bob" }, registry), []);
+    assert.deepEqual(stillStands(plan("M03.A04", { leadId: "ld_1", status: "contacted" }), { carry, made, message: "Mark them contacted" }, registry), []);
+  });
 });

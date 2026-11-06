@@ -232,6 +232,7 @@ const executeRefund = defineAction({
   input: z.strictObject({ refundId: RefundId }),
   output: Refund,
   siblings: ["M29.A08"],
+  requires: ["M33.A07"],
   entities: { consumes: ["refund", "payment", "invoice"] },
   example: (f) => {
     const payment = f.payment({ amount: 40, unallocated: 40 });

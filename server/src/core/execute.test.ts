@@ -4,7 +4,7 @@ import type { SubmitPlan } from "../planner/submit-plan.js";
 import { loadRegistry, type Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
 import { compile, type CompiledPlan } from "./compile.js";
-import { execute, matches, narrowByRequest } from "./execute.js";
+import { execute, identityRisk, matches, narrowByRequest } from "./execute.js";
 import { summarize } from "./summarize.js";
 import { valueAt } from "./refs.js";
 
@@ -215,10 +215,6 @@ describe("compile errors the planner can act on", () => {
   });
 
   test("a filter's result is the list itself, and .items on it reads as that list", () => {
-    const p = plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.items[*].id", ownerId: "us_2" })]);
-    const one = compile(p, registry);
-    assert.ok(one.ok, "a list in a single-value arg must hold exactly one value when it runs");
-    assert.deepEqual(one.ok && one.plan.steps[2]!.kind === "action" ? one.plan.steps[2]!.call.one : null, [["leadId"]]);
     assert.equal(compile(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), op("g", "filter", { in: "$f.items", where: { score: { gte: 0 } } })]), registry).ok, true);
     const e = errs(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.nope", ownerId: "us_2" })]));
     assert.match(e, /already the list of records/);
@@ -235,7 +231,10 @@ describe("compile errors the planner can act on", () => {
   });
 
   test("list where a single value is needed", () => {
-    assert.match(errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: "$s1.items", ownerId: "us_2" })])), /needs a single value/);
+    assert.match(errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: "$s1.items", ownerId: "us_2" })])), /needs a single value, but \$s1\.items is a list; a record the user named is a \$lookup/);
+    const wrapped = errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: { $ref: "$s1.items" }, ownerId: "us_2" })]));
+    assert.match(wrapped, /\$s1\.items is a list/, "a {$ref} object is read as the ref inside it");
+    assert.doesNotMatch(wrapped, /expected string, received object/);
     const inLoop = op("s2", "forEach", { in: "$s1.items", do: [{ action: "M03.A05", args: { leadId: "$s1.items[*].id", ownerId: "us_2" } }] });
     assert.match(errs(plan([action("s1", "M03.A03", {}), inLoop])), /needs a single value/);
   });
@@ -248,7 +247,7 @@ describe("compile errors the planner can act on", () => {
         op("s3", "forEach", { in: "$s1.items", do: [{ action: "M03.A05", args: { leadId: "$item.id", ownerId: "$rr.userId" } }] }),
       ]),
     );
-    assert.match(e, /\$item only works inside forEach/);
+    assert.match(e, /\$item only works inside forEach.*make this step an op forEach.*\$sN\[\*\]\.results\[0\]/);
     assert.match(e, /\$rr needs "roundRobin"/);
   });
 
@@ -277,6 +276,21 @@ describe("forEach over a literal list of ids", () => {
     assert.deepEqual(r.steps[0]!.items!.map((i) => i.label), ["literal_alpha", "literal_beta"]);
     assert.deepEqual((r.steps[0]!.output as { item: string }[]).map((x) => x.item), ["literal_alpha", "literal_beta"]);
     assert.deepEqual(ctx.store.all<{ title: string }>("tasks").filter((t) => t.title === "literal_alpha" || t.title === "literal_beta").map((t) => t.title).sort(), ["literal_alpha", "literal_beta"]);
+  });
+});
+
+describe("a bare date bound covers its whole day", () => {
+  const made = "2026-10-18T09:30:00.000Z";
+  test("lte keeps a timestamp on the bound's day and gt drops it", () => {
+    assert.equal(matches({ createdAt: made }, { createdAt: { lte: "2026-10-18" } }), true);
+    assert.equal(matches({ createdAt: made }, { createdAt: { gt: "2026-10-18" } }), false);
+    assert.equal(matches({ createdAt: "2026-10-19T00:00:00.000Z" }, { createdAt: { lte: "2026-10-18" } }), false);
+    assert.equal(matches({ createdAt: "2026-10-19T00:00:00.000Z" }, { createdAt: { gt: "2026-10-18" } }), true);
+  });
+  test("gte and lt already treat a bare date as the start of its day, and full timestamps compare as before", () => {
+    assert.equal(matches({ createdAt: made }, { createdAt: { gte: "2026-10-18" } }), true);
+    assert.equal(matches({ createdAt: made }, { createdAt: { lt: "2026-10-18" } }), false);
+    assert.equal(matches({ createdAt: made }, { createdAt: { lte: "2026-10-18T09:00:00.000Z" } }), false);
   });
 });
 
@@ -342,6 +356,14 @@ describe("runtime outcomes", () => {
     const p = compiled(plan([{ id: "s1", kind: "resolve", entity: "contact", name: "Quinn Leadonly" }]));
     const r = await execute(p, registry, ctx, { executionId: "wrong-type" });
     assert.equal(r.steps[0]!.error?.message, 'no contact matches "Quinn Leadonly" (but a lead does)');
+  });
+
+  test("a company that is only contacts' text says which records carry it", async () => {
+    const ctx = fresh();
+    ctx.f.contact({ firstName: "Ana", lastName: "One", company: "Umbrellaco" });
+    ctx.f.contact({ firstName: "Ben", lastName: "Two", company: "umbrellaco" });
+    const r = await execute(compiled(plan([{ id: "s1", kind: "resolve", entity: "company", name: "Umbrellaco" }])), registry, ctx, { executionId: "text-company" });
+    assert.equal(r.steps[0]!.error?.message, 'no company matches "Umbrellaco" (2 contacts have company "Umbrellaco")');
   });
 
   test("a name that only matches an unusable record says why, and nothing runs on it", async () => {
@@ -437,29 +459,27 @@ describe("runtime outcomes", () => {
   });
 });
 
-describe("one value of a list in a single-ID argument", () => {
-  const assign = (where: unknown) => compiled(plan([
-    action("s1", "M03.A03", {}),
-    op("s2", "filter", { in: "$s1.items", where }),
-    action("s3", "M03.A05", { leadId: "$s2[*].id", ownerId: "us_2" }),
-  ]));
-
-  test("runs when the list holds exactly one", async () => {
+describe("a run resumed after approval", () => {
+  test("reports what it did before the approval as done, without calling it earlier work", async () => {
     const w = fresh();
-    const lead = w.store.all<{ id: string }>("leads")[0]!;
-    const r = await execute(assign({ id: lead.id }), registry, w, { executionId: "one-lead" });
+    const p = compiled(plan([
+      action("s1", "M40.A01", { title: "Sales 101" }),
+      action("s2", "M41.A01", { courseId: "$s1.id", title: "Cold Calling Basics" }),
+      action("s3", "M41.A09", { lessonId: "$s2.id" }),
+      action("s4", "M40.A09", { courseId: "$s1.id" }),
+    ]));
+    let r = await execute(p, registry, w, { executionId: "course" });
+    const approvals = [];
+    while (r.status === "awaiting_confirmation") {
+      approvals.push(r.pending!);
+      r = await execute(p, registry, w, { executionId: "course", approvals });
+    }
     assert.equal(r.status, "done", JSON.stringify(r));
-    assert.equal(w.store.get<{ ownerId: string }>("leads", lead.id)!.ownerId, "us_2");
-  });
-
-  test("asks which when the list holds several, and fails without changes when it holds none", async () => {
-    const w = fresh();
-    const several = await execute(assign({}), registry, w, { executionId: "many-leads" });
-    assert.equal(several.status, "needs_clarification");
-    assert.ok(several.clarification!.candidates.length > 1);
-    const none = await execute(assign({ id: "nope" }), registry, w, { executionId: "no-lead" });
-    assert.equal(none.status, "failed");
-    assert.match(JSON.stringify(none.steps.at(-1)!.error), /NOT_FOUND.*found nothing/);
+    assert.ok(approvals.length > 0, "the publish waits for approval");
+    const text = summarize(p, r, registry);
+    assert.match(text, /Done: Create course \(Sales 101\)\./);
+    assert.match(text, /Done: Publish course \(Sales 101\)\./);
+    assert.doesNotMatch(text, /already done/);
   });
 });
 
@@ -500,6 +520,20 @@ describe("a create whose record is already there", () => {
     const alone = await execute(compiled(plan([action("s1", "M08.A01", { name: tag.name })])), registry, ctx, { executionId: "tag-alone" });
     assert.equal(alone.status, "failed");
     assert.equal(alone.steps[0]!.error?.code, "DUPLICATE");
+  });
+
+  test("a search, a create of the same record and a write from the search: the create is a get-or-create", async () => {
+    const ctx = fresh();
+    const tag = ctx.store.all<{ id: string; name: string }>("tags")[0]!;
+    const contact = ctx.store.all<{ id: string; name: string; tags: string[] }>("contacts").find((c) => !c.tags.includes(tag.name))!;
+    const p = compiled(plan([
+      action("s1", "M08.A02", { query: tag.name }),
+      action("s2", "M08.A01", { name: tag.name }),
+      action("s3", "M08.A06", { tagId: "$s1.items[0].id", recordType: "contact", recordId: contact.id }),
+    ]));
+    const r = await execute(p, registry, ctx, { executionId: "find-or-make" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps));
+    assert.ok(ctx.store.get<{ tags: string[] }>("contacts", contact.id)!.tags.includes(tag.name));
   });
 });
 
@@ -644,5 +678,21 @@ describe("writes over a search see every match", () => {
     ]));
     const first = await execute(p, registry, ctx, { executionId: "filter-widened" });
     assert.equal(first.pending?.count, 120);
+  });
+});
+
+describe("what a looked-up record is for", () => {
+  test("a record read, filtered, then written through a loop is a write target", () => {
+    // The Sales team is only read (s2), but its available members (s3) are who the leads are assigned to (s5).
+    assert.equal(identityRisk(compiled(facebookWorkflow), "s1"), "write");
+  });
+
+  test("a record only read from stays a read", () => {
+    const p = compiled(plan([
+      { id: "s1", kind: "resolve", entity: "team", name: "Sales" },
+      action("s2", "M49.A09", { teamId: "$s1.id" }),
+      op("s3", "filter", { in: "$s2.members", where: { available: true } }),
+    ]));
+    assert.equal(identityRisk(p, "s1"), "read");
   });
 });

@@ -252,7 +252,7 @@ const assignContactOwner = defineAction({
 const setPreferences = defineAction({
   id: "M01.A08",
   description:
-    "Set how a contact may be reached: email, sms, call (true = allowed) and dnd (do not disturb: blocks every channel). Only the given channels change.",
+    "Set how a contact may be reached: email, sms, call (true = allowed) and dnd (do not disturb: blocks every channel). Only the given channels change. To record that someone asked to stop texts, use M12.A10.",
   risk: "write",
   input: z.strictObject({ contactId: ContactId, ...Preferences.partial().shape }),
   output: Contact,
@@ -336,6 +336,7 @@ export default {
       detail: (c) => [c.email, c.phone, c.company].filter(Boolean).join(", "),
       inactive: (c) => c.status === "active" ? undefined : c.status,
       qualifiers: { company: (c) => c.company, companyId: (c) => c.companyId, email: (c) => c.email, phone: (c) => c.phone },
+      strictNames: true,
     }),
   },
 } satisfies ModuleExports;

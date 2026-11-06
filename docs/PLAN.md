@@ -40,7 +40,7 @@ This one decision carries most of the latency, cost and quality story.
 ┌──────────── Vue 3 chat ────────────┐
 │ messages · step timeline · confirm │
 └───────────────┬────────────────────┘
-                │ POST /api/ask, /api/confirm  →  SSE stream of events
+                │ POST /api/ask, /api/confirm, /api/clarify  →  SSE stream of events
 ┌───────────────▼─────────────────────────────────────────┐
 │ Node (TypeScript, plain node:http)                      │
 │                                                         │
@@ -178,7 +178,7 @@ The example request, as a plan (args and conditions shown as objects for reading
 - **Entity resolution:** names become IDs through the resolvers before anything runs. More than one match means a clarification question, decided in code and not by the LLM. A name that matches nothing stops every write in the plan.
 - A missing required param that can't be inferred also means clarify. The planner says which action and argument are missing (`missing`), so the next message can be bound to it.
 - The risk policy marks which steps need confirmation: `destructive` and `external` actions, and writes repeated over 3 or more items. **This is decided only in code**: the model never emits a `confirm` field, so it can't skip a gate or invent one. Here s9 writes 12 records, so it asks.
-- If compile fails, the planner gets **one** repair call with the rejected plan and the errors attached, and a second only if the first repair cut the error count. **Built differently:** a few narrower checks each get one retry of their own (a bad JSON reply, a plan that would remake the last turn's records, a change whose filtered targets haven't been said back, an empty target list); see `server/src/planner/turn.ts`.
+- If compile fails, the planner gets **one** repair call with the rejected plan and the errors attached, and a second only if the first repair cut the error count or fixed every error it was shown and met new ones. **Built differently:** a few narrower checks each get one retry of their own (a bad JSON reply, a plan that would remake the last turn's records, a change whose filtered targets haven't been said back, an empty target list); see `server/src/planner/turn.ts`.
 
 ### ④ Execute
 - Step runner (`core/execute.ts`): steps run in order, one at a time. **Built differently:** no parallel reads; every action is an in-process SQLite call, so running them concurrently would buy nothing here.
@@ -218,7 +218,7 @@ per turn (at most 8 planner calls, 180 s):
 - **A yes/no or count question can be answered** from the looked records with an `answer`; the reads then run as the plan so the reply shows the records under the verdict.
 - **Structured conditions don't loop:** "skip customers reminded this week" or "if score > 80" are `filter` and `exclude` ops.
 - **Failures:** a failed run gets the one bounded replan in ⑥, not another loop.
-- **Across user turns:** a pending confirmation is kept with its execution id and approvals, and `/api/confirm` resumes it. A clarification ends the turn; the answer arrives as the next message with the question attached.
+- **Across user turns:** a pending confirmation is kept with its execution id and approvals, and `/api/confirm` resumes it. A clarification ends the turn. A "which record?" question is stored with the compiled plan (`server/src/server/clarify.ts`): a click on `/api/clarify` with its option token, or a typed answer matched against the stored candidates, resumes that plan after revalidating the pick, with the paused run's execution id so earlier writes come back from the ledger. A question a look asked plans the message again with the pick bound. A question about a missing input arrives as the next message with the question attached.
 
 **Measuring it:** model calls per turn are logged on every run. In the benchmark the planner made 1.39 calls per run, the median complex task took 1, and the one-call-per-step baseline took 5. The routed, plan-only and observe-loop variants planned here were not run.
 
@@ -241,7 +241,7 @@ Retrieval, `<context>` rebuilding, the plan grammar, validation, execution, the 
 
 ```ts
 interface Planner {
-  readonly name: string                     // "qwen" | "claude-cli" | "codex-cli"
+  readonly name: string                     // "qwen" | "claude-cli" | "codex-cli" | "codex-app-server"
   plan(req: { tier: "fast" | "strong"; system: string; user: string; schema: object; signal?: AbortSignal })
     : Promise<{ model: string; json: unknown; text: string; usage: Usage; latencyMs: number }>
 }
@@ -256,6 +256,7 @@ type Usage = { input: number; cachedRead: number; cacheWrite: number; output: nu
   | `qwen` (default with a Token Plan key) | `deepseek-v4.1-flash-1017` on the Token Plan's OpenAI-compatible endpoint | `json_schema` strict where the model accepts it. DeepSeek rejects it (HTTP 400, checked 2026-10-25), so it gets `json_object` with the schema appended to the system prompt. Thinking off, `max_tokens` 8192, one retry |
   | `claude-cli` (default without a key) | `claude-haiku-5-5` | `claude -p --json-schema`, with no tools, MCP, settings or hooks, an empty cwd and our system prompt. ~0.7 s of process start per call |
   | `codex-cli` (opt-in) | `gpt-6.1-sol`, reasoning low | `codex exec --output-schema` |
+  | `codex-app-server` (opt-in) | same settings as `codex-cli` | one long-running `codex app-server`, a new ephemeral thread per call, with `outputSchema` on the turn |
 
 - **Why not a unified SDK:** it would hide the things the benchmark needs, which are exact cache-token fields and raw requests for traces.
 - **Caching is mostly the layout, not adapter code.** The Token Plan caches a matching prefix automatically, in 1,024-token blocks, with no `cache_control`; the CLIs place their own breakpoints. The static-first layout suits all three.
@@ -322,7 +323,7 @@ What each turn carries forward (`server/src/server/conversation.ts`, `records.ts
 ```
 server/src/
   core/        compile, execute, refs, lookups, summarize, no-match, datetimes
-  planner/     turn, prompt, submit-plan, qwen, claude-cli, codex-cli, index, types, usage
+  planner/     turn, prompt, submit-plan, qwen, claude-cli, codex-cli, codex-app-server, index, types, usage
   retrieval/   cards.json, cards, embed, mentions, retrieve, text, eval
   server/      app (node:http + SSE), conversation, baseline, records, diff
   registry/    define, registry, invoke, helpers, lookup, arguments, catalog.json, smoke.test.ts

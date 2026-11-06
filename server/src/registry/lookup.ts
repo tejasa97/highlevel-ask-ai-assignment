@@ -17,6 +17,7 @@ export function namedResolver<T extends { id: string }>(options: {
   qualifiers?: Record<string, (row: T) => Qualified>;
   exactMention?: boolean;
   parentQualifiers?: string[];
+  strictNames?: boolean;
 }): Resolver {
   const qualifiers = options.qualifiers ?? {};
   return Object.assign((store: Store, name: string, where: LookupWhere = {}): Candidate[] => {
@@ -31,7 +32,7 @@ export function namedResolver<T extends { id: string }>(options: {
       return (Array.isArray(actual) ? actual : [actual]).some((a) => typeof a === "string" && exact(a) === exact(value));
     }));
     return candidates(rows, name, options.name, options.detail, options.inactive);
-  }, { qualifiers: Object.keys(qualifiers), exactMention: options.exactMention ?? false, parentQualifiers: options.parentQualifiers });
+  }, { qualifiers: Object.keys(qualifiers), exactMention: options.exactMention ?? false, parentQualifiers: options.parentQualifiers, ...(options.strictNames ? { strictNames: true } : {}) });
 }
 
 /**

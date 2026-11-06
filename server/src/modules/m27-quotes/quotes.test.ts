@@ -171,6 +171,13 @@ test("M27.A09 accept marks a sent quote accepted", async () => {
   assert.equal(accepted.status, "accepted");
 });
 
+test("M27.A09 accepting an accepted quote changes nothing", async () => {
+  const { w, quote } = await workQuote();
+  w.call("M27.A08", { quoteId: quote.id });
+  const first = w.call("M27.A09", { quoteId: quote.id });
+  assert.deepEqual(w.call("M27.A09", { quoteId: quote.id }), first);
+});
+
 test("M27.A10 convert makes an open invoice with the discounted total and the lines copied", async () => {
   const { w, quote } = await workQuote();
   w.call("M27.A08", { quoteId: quote.id });

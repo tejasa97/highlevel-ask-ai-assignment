@@ -3,6 +3,7 @@ import type { Registry } from "../registry/registry.js";
 import type { Store } from "../store/db.js";
 import { checkIdentity } from "./contracts.js";
 import type { SubmitPlan } from "./submit-plan.js";
+import { TIMEZONE } from "../store/clock.js";
 import { isDeepStrictEqual } from "node:util";
 
 type Lookup = NonNullable<SubmitPlan["lookup"]>;
@@ -10,9 +11,10 @@ type Check = ReturnType<typeof checkIdentity>;
 export type ClarificationCheck =
   | { kind: "question" }
   | { kind: "identity"; lookup: Lookup; check: Check }
-  | { kind: "facts"; digest: string; ambiguous: boolean };
+  | { kind: "facts"; digest: string; ambiguous: boolean; /** Set when the only names found match no record. */ none?: { entity: string; name: string } };
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
-const present = (v: unknown) => v !== undefined && v !== "";
+// A null stands for "not given" ("email": null beside a question about the email), the same as a missing key.
+const present = (v: unknown) => v !== undefined && v !== null && v !== "";
 
 function selector(value: unknown): Lookup | undefined {
   if (!object(value) || !Object.hasOwn(value, "$lookup")) return;
@@ -35,6 +37,11 @@ export function namesField(message: string, path: string): boolean {
   return new RegExp(`${brought}|${pointed}`, "i").test(message);
 }
 
+/** "at 9am", "3:30 pm", "14:00", "noon": the message says what time of day it means. */
+const TIME_OF_DAY = /\b\d{1,2}(:\d{2})?\s*([ap]\.?m\.?)(?![a-z])|\b\d{1,2}:\d{2}\b|\b(noon|midday|midnight)\b/i;
+const isDateTime = (schema: { format?: unknown; anyOf?: unknown }): boolean =>
+  schema.format === "date-time" || (Array.isArray(schema.anyOf) && schema.anyOf.some((s) => isDateTime(s as { format?: unknown })));
+
 class ParentChoice extends Error {
   constructor(readonly lookup: Lookup, readonly check: Check) { super("Parent must be resolved first"); }
 }
@@ -43,6 +50,8 @@ class ParentChoice extends Error {
 export function assessClarification(d: SubmitPlan, registry: Registry, offered: ReadonlySet<string>, message: string, store?: Store): ClarificationCheck {
   if (!d.missing) throw new Error("clarify requires missing {action, argument, argsJson}; bind the question to a required input, or plan/search instead");
   const { action: id, argument: path, argsJson } = d.missing;
+  // <now> settles the zone and the year, so a question about either is never needed, unless the zone is the input itself.
+  if (/time\s?zone|\b(which|what) year\b/i.test(d.question ?? "") && !/zone|year/i.test(path)) throw new Error(`<now> gives today's date and the workspace time zone, ${TIMEZONE}: a date without a year is its next one from today, and a time is in that zone. Don't ask either; plan with the date and time the user gave`);
   const action = registry.get(id);
   if (!action || !offered.has(id)) throw new Error(`Clarification action ${id} must be in <actions>`);
   const args: unknown = JSON.parse(argsJson);
@@ -53,7 +62,13 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
   const inline = selector(field.value);
   if (inline && d.lookup && (inline.entity !== d.lookup.entity || inline.name !== d.lookup.name || !isDeepStrictEqual(JSON.parse(inline.whereJson ?? "{}"), JSON.parse(d.lookup.whereJson ?? "{}")))) throw new Error("Conflicting argument and clarification lookup selectors");
   let lookup = inline ?? d.lookup ?? undefined;
-  if (present(field.value) && !inline) throw new Error(`${path} is already supplied; use plan/look to validate or inspect it, not clarify`);
+  // "2026-11-02" in a date-time input is the day without the time the question asks for, so it isn't supplied yet.
+  const dayOnly = isDateTime(field.schema) && typeof field.value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(field.value.trim());
+  if (present(field.value) && !inline && !dayOnly) throw new Error(`${path} is already supplied; use plan/look to validate or inspect it, not clarify`);
+  // Only when the message's time can belong to this input alone: with two date-times (a start and an end) it may be the other's.
+  const dateTimes = Object.values(properties).filter((p) => isDateTime(p as { format?: unknown; anyOf?: unknown })).length;
+  const time = isDateTime(field.schema) && dateTimes < 2 && message.match(TIME_OF_DAY)?.[0];
+  if (time) throw new Error(`The message gives the time (${time}); set ${path} to it in the workspace time zone, ${TIMEZONE}, written as the input's ISO date-time, rather than asking`);
   const entities = argumentEntities(action, path, args).filter((e) => registry.resolver(e));
   // A question about a plain value ("what time?") can't select a record, so a lookup sent with it is noise; the record it
   // names stays in argsJson.
@@ -90,10 +105,14 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
     // cannot evade grounding merely by being labelled "choice" instead of "identity".
     if (store && entities.length && field.schema.type === "string") {
       const where = scopedWhere(binding, {}, parent);
+      // A name the question repeats from the message ("What should Dana Whitfield be assigned to?") that no record has
+      // is a fact too: the planner learns nothing matches, rather than asking the user who it is.
       const facts = namedFacts(message, entities, where, registry, store);
+      if (!facts.length) for (const name of sharedNames(message, d.question ?? "")) facts.push({ entity: entities[0]!, name, count: 0, candidates: [], truncated: false });
       // The fullest name the message gives ("zoe costa", not "zoe") matching more than one record is real ambiguity.
       const ambiguous = facts.some((f) => f.count > 1 && !facts.some((g) => g !== f && g.name.includes(f.name)));
-      if (facts.length) return { kind: "facts", ambiguous, digest: JSON.stringify({ action: id, argument: path, matches: facts, instruction: "These are account facts, not permission to choose a target. Preserve the user's full request and plan or clarify actual ambiguity." }) };
+      const none = facts.length && facts.every((f) => !f.count) ? { entity: facts[0]!.entity, name: facts[0]!.name } : undefined;
+      if (facts.length) return { kind: "facts", ambiguous, ...(none ? { none } : {}), digest: JSON.stringify({ action: id, argument: path, matches: facts, instruction: "These are account facts, not permission to choose a target. Preserve the user's full request and plan or clarify actual ambiguity." }) };
     }
   } catch (err) {
     if (err instanceof ParentChoice) return { kind: "identity", lookup: err.lookup, check: err.check };
@@ -104,6 +123,23 @@ export function assessClarification(d: SubmitPlan, registry: Registry, offered: 
 
 const norm = (s: string) => s.normalize("NFKD").toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").replace(/\s+/g, " ").trim();
 const STOP = new Set("a an the it me my we our i you your who which what to for of in on and or is are please".split(" "));
+
+/**
+ * Runs of two or more capitalized words (a person's or company's name) the message and the question both say, as the
+ * message writes them, longest first. "the welcome email" is shared too, but it is not a name nobody has.
+ */
+function sharedNames(message: string, question: string): string[] {
+  const tokens = message.split(/[^\p{L}\p{M}\p{N}'’-]+/u).filter(Boolean).slice(0, 64);
+  const asked = ` ${norm(question)} `;
+  const out: string[] = [];
+  for (let size = Math.min(4, tokens.length); size > 1; size--) for (let n = 0; n <= tokens.length - size; n++) {
+    const span = tokens.slice(n, n + size);
+    const name = span.join(" ");
+    if (span.some((w) => STOP.has(norm(w)) || !/^\p{Lu}/u.test(w)) || !asked.includes(` ${norm(name)} `) || out.some((o) => norm(o).includes(norm(name)))) continue;
+    out.push(name);
+  }
+  return out;
+}
 
 /** Bounded mention scan for the argument's entity only. Never resolves a write target automatically. */
 function namedFacts(message: string, entities: string[], where: Record<string, string>, registry: Registry, store: Store): { entity: string; name: string; count: number; candidates: unknown[]; truncated: boolean }[] {

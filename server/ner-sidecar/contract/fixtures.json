@@ -1,0 +1,159 @@
+{
+  "description": "Shared contract fixtures: each extract response is validated by the sidecar's Pydantic models (tests/test_contract.py) and the Node client's zod schemas (src/retrieval/ner_sidecar_contract.test.ts); both must agree on `valid`.",
+  "extractResponse": [
+    {
+      "name": "good: one unique company link with versions",
+      "kind": "good",
+      "valid": true,
+      "body": {
+        "requestId": "req_1",
+        "spans": [
+          { "text": "Globex", "label": "company", "start": 9, "end": 15, "status": "linked", "linkedId": "co_8", "linkedEntity": "company", "method": "exact", "score": 1.0 }
+        ],
+        "model": "gliner_small-v2.1@4e091416cf7c",
+        "latencyMs": 41.2,
+        "scope": "ask",
+        "versions": { "code": "0.2.0+abc1234", "model": "gliner_small-v2.1@4e091416cf7c", "index": "3f2a9c0d1e4b5a67" }
+      }
+    },
+    {
+      "name": "good: rule email span, miss, minimal fields",
+      "kind": "good",
+      "valid": true,
+      "body": {
+        "requestId": "req_1",
+        "spans": [{ "text": "ana@acme.example", "label": "email", "start": 5, "end": 21, "status": "miss", "method": "rule", "score": 1.0 }]
+      }
+    },
+    {
+      "name": "good: unknown extra fields are ignored",
+      "kind": "good",
+      "valid": true,
+      "body": {
+        "requestId": "req_1",
+        "spans": [{ "text": "Ana Ruiz", "label": "person", "start": 0, "end": 8, "status": "miss", "futureField": 1 }],
+        "futureTopLevel": { "x": 1 }
+      }
+    },
+    {
+      "name": "ambiguous: two Sarah Johnson contacts, no linkedId",
+      "kind": "ambiguous",
+      "valid": true,
+      "body": {
+        "requestId": "req_1",
+        "spans": [
+          {
+            "text": "Sarah Johnson",
+            "label": "person",
+            "start": 6,
+            "end": 19,
+            "status": "ambiguous",
+            "candidates": [
+              { "id": "ct_31", "name": "Sarah Johnson", "score": 1.0, "entity": "contact", "detail": "Brightside" },
+              { "id": "ct_32", "name": "Sarah Johnson", "score": 1.0, "entity": "contact", "detail": "sjohnson@gmail.example" }
+            ],
+            "method": "exact",
+            "score": 1.0
+          }
+        ],
+        "scope": "ask"
+      }
+    },
+    {
+      "name": "ambiguous: one-edit did-you-mean suggestion",
+      "kind": "ambiguous",
+      "valid": true,
+      "body": {
+        "requestId": "req_1",
+        "spans": [
+          { "text": "Globx", "label": "company", "start": 9, "end": 14, "status": "ambiguous", "candidates": [{ "id": "co_8", "name": "Globex", "entity": "company" }], "method": "edit", "score": 0.8 }
+        ]
+      }
+    },
+    {
+      "name": "empty: no spans",
+      "kind": "empty",
+      "valid": true,
+      "body": { "requestId": "req_1", "spans": [], "latencyMs": 0 }
+    },
+    { "name": "malformed: not an object", "kind": "malformed", "valid": false, "body": "Internal Server Error" },
+    { "name": "malformed: spans missing", "kind": "malformed", "valid": false, "body": { "requestId": "req_1" } },
+    { "name": "malformed: spans not an array", "kind": "malformed", "valid": false, "body": { "requestId": "req_1", "spans": {} } },
+    { "name": "malformed: requestId missing", "kind": "malformed", "valid": false, "body": { "spans": [] } },
+    {
+      "name": "malformed: unknown status",
+      "kind": "malformed",
+      "valid": false,
+      "body": { "requestId": "req_1", "spans": [{ "text": "Acme", "label": "company", "start": 0, "end": 4, "status": "maybe" }] }
+    },
+    {
+      "name": "malformed: unknown label",
+      "kind": "malformed",
+      "valid": false,
+      "client": "drops the span",
+      "body": { "requestId": "req_1", "spans": [{ "text": "Acme", "label": "org", "start": 0, "end": 4, "status": "miss" }] }
+    },
+    {
+      "name": "malformed: offset is a string",
+      "kind": "malformed",
+      "valid": false,
+      "body": { "requestId": "req_1", "spans": [{ "text": "Acme", "label": "company", "start": "0", "end": 4, "status": "miss" }] }
+    },
+    {
+      "name": "malformed: fractional offset",
+      "kind": "malformed",
+      "valid": false,
+      "body": { "requestId": "req_1", "spans": [{ "text": "Acme", "label": "company", "start": 0.5, "end": 4, "status": "miss" }] }
+    },
+    {
+      "name": "malformed: optional field sent as null",
+      "kind": "malformed",
+      "valid": false,
+      "body": { "requestId": "req_1", "spans": [{ "text": "Acme", "label": "company", "start": 0, "end": 4, "status": "miss", "linkedId": null }] }
+    },
+    {
+      "name": "malformed: candidate without id",
+      "kind": "malformed",
+      "valid": false,
+      "body": {
+        "requestId": "req_1",
+        "spans": [{ "text": "Acme", "label": "company", "start": 0, "end": 4, "status": "ambiguous", "candidates": [{ "name": "Acme" }] }]
+      }
+    },
+    {
+      "name": "malformed (invariant): linked without linkedId",
+      "kind": "malformed",
+      "valid": false,
+      "body": { "requestId": "req_1", "spans": [{ "text": "Acme", "label": "company", "start": 0, "end": 4, "status": "linked" }] }
+    },
+    {
+      "name": "malformed (invariant): ambiguous carrying a linkedId",
+      "kind": "malformed",
+      "valid": false,
+      "body": {
+        "requestId": "req_1",
+        "spans": [
+          { "text": "Sarah Johnson", "label": "person", "start": 0, "end": 13, "status": "ambiguous", "linkedId": "ct_31", "candidates": [{ "id": "ct_31", "name": "Sarah Johnson" }, { "id": "ct_32", "name": "Sarah Johnson" }] }
+        ]
+      }
+    },
+    {
+      "name": "malformed (invariant): start after end",
+      "kind": "malformed",
+      "valid": false,
+      "body": { "requestId": "req_1", "spans": [{ "text": "Acme", "label": "company", "start": 4, "end": 0, "status": "miss" }] }
+    },
+    {
+      "name": "malformed (invariant): PoC pe_ id leaked onto the wire",
+      "kind": "malformed",
+      "valid": false,
+      "body": { "requestId": "req_1", "spans": [{ "text": "Sarah Johnson", "label": "person", "start": 0, "end": 13, "status": "linked", "linkedId": "pe_2984" }] }
+    }
+  ],
+  "extractRequest": [
+    { "name": "good: scoped ask request", "valid": true, "body": { "requestId": "turn_abc", "utterance": "Email Sarah Johnson", "tier": "fast", "scope": "ask", "scopeVersion": "3f2a9c0d1e4b5a67" } },
+    { "name": "good: minimal", "valid": true, "body": { "requestId": "r", "utterance": "" } },
+    { "name": "malformed: empty requestId", "valid": false, "body": { "requestId": "", "utterance": "hi" } },
+    { "name": "malformed: unknown tier", "valid": false, "body": { "requestId": "r", "utterance": "hi", "tier": "turbo" } }
+  ]
+}

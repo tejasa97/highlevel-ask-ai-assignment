@@ -1,0 +1,1363 @@
+{
+ "summary": {
+  "label": "port-ner-final-infra-rerun2",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/scenarios,eval/brief-scenarios,eval/param-scenarios,eval/module-scenarios/coverage,eval/module-scenarios/wave1,eval/module-scenarios/m45-m47/development,eval/module-scenarios/m45-m47/reporting,eval/module-scenarios/m45-m47/trails,eval/module-scenarios/questions,eval/module-scenarios/role-ids,eval/policy-scenarios/partial-confirmation",
+  "set": "cb816caaf920",
+  "tier": "strong",
+  "scenarios": 3,
+  "repeat": 2,
+  "runs": 6,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 83.3,
+  "allPass": 2,
+  "measured": 3,
+  "flaky": 1,
+  "e2eMs": {
+   "p50": 13921,
+   "p95": 17022
+  },
+  "firstReplyMs": {
+   "p50": 10315,
+   "p95": 17022
+  },
+  "plannerRoundsPerRun": 1.5,
+  "callsPerRun": 3,
+  "clarified": {
+   "runs": 0,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 43275
+ },
+ "runs": [
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Create review request + Send review request for 2 of 2: Cedar onboarding 7, Cedar onboarding 8.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M44.A07",
+      "M45.A02",
+      "M21.A10",
+      "M45.A05",
+      "M28.A08",
+      "M45.A04",
+      "M21.A01",
+      "M47.A09",
+      "M45.A06",
+      "M13.A02",
+      "M21.A07",
+      "M01.A09",
+      "M24.A03",
+      "M06.A03",
+      "M01.A03",
+      "M03.A03",
+      "M48.A03",
+      "M44.A03",
+      "M28.A03",
+      "M47.A03",
+      "M13.A07"
+     ],
+     "planned": [
+      "M21.A03",
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\":\"completed\",\"from\":\"2026-10-19\",\"to\":\"2026-10-25\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"exists\":true}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s2",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A01",
+            "argsJson": "{\"contactId\":\"$item.contactId\",\"subject\":\"Visit feedback\",\"body\":\"Please review your visit.\"}"
+           },
+           {
+            "action": "M45.A02",
+            "argsJson": "{\"requestId\":\"$prev.id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A01",
+          "M45.A02"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 10315,
+     "ms": 10321,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "41227c2bf551",
+       "promptHash": "8bcac0a795f9",
+       "latencyMs": 10191,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14514,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 270,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "44637dbf6022b772",
+       "targetsHash": "1608082604de3657",
+       "reason": "sends something outside the account",
+       "count": 2,
+       "preview": [
+        {
+         "action": "M45.A01",
+         "name": "Create review request",
+         "args": {
+          "contactId": "ct_35",
+          "subject": "Visit feedback",
+          "body": "Please review your visit."
+         },
+         "label": "Cedar onboarding 7"
+        },
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "(from create review request)"
+         },
+         "label": "Cedar onboarding 7"
+        },
+        {
+         "action": "M45.A01",
+         "name": "Create review request",
+         "args": {
+          "contactId": "ct_36",
+          "subject": "Visit feedback",
+          "body": "Please review your visit."
+         },
+         "label": "Cedar onboarding 8"
+        },
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "(from create review request)"
+         },
+         "label": "Cedar onboarding 8"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 10321,
+    "firstReplyMs": 10315,
+    "plannerMs": 10191,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 6,
+    "clarifications": 0,
+    "usage": {
+     "input": 14514,
+     "cachedRead": 6528,
+     "cacheWrite": 0,
+     "output": 270,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "reviews-from-appointments",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Send a review request with subject 'Visit feedback' and body 'Please review your visit.' to each contact whose appointment completed this week, once per contact.",
+     "status": "done",
+     "reply": "Create review request for 2 of 2: Cedar onboarding 7, Cedar onboarding 8.\nSend review request for 2 of 2: #0, #1.",
+     "offered": [
+      "M45.A01",
+      "M45.A07",
+      "M21.A03",
+      "M44.A07",
+      "M45.A02",
+      "M21.A10",
+      "M45.A05",
+      "M28.A08",
+      "M45.A04",
+      "M21.A01",
+      "M47.A09",
+      "M45.A06",
+      "M13.A02",
+      "M21.A07",
+      "M01.A09",
+      "M24.A03",
+      "M06.A03",
+      "M01.A03",
+      "M03.A03",
+      "M48.A03",
+      "M44.A03",
+      "M28.A03",
+      "M47.A03",
+      "M13.A07"
+     ],
+     "planned": [
+      "M21.A03",
+      "M45.A01",
+      "M45.A02"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_35",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M45.A01",
+       "args": {
+        "contactId": "ct_36",
+        "subject": "Visit feedback",
+        "body": "Please review your visit."
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "completed",
+        "from": "2026-10-19",
+        "to": "2026-10-25",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_4"
+       }
+      },
+      {
+       "action": "M45.A02",
+       "args": {
+        "requestId": "rrq_5"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\":\"completed\",\"from\":\"2026-10-19\",\"to\":\"2026-10-25\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"exists\":true}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2",
+          "whereJson": "{\"contactId\":{\"ne\":null}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A01",
+            "argsJson": "{\"contactId\":\"$item.contactId\",\"subject\":\"Visit feedback\",\"body\":\"Please review your visit.\"}"
+           }
+          ]
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s4",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M45.A02",
+            "argsJson": "{\"requestId\":\"$item.id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A01",
+          "M45.A02"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 12247,
+     "ms": 12252,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "41227c2bf551",
+       "promptHash": "8bcac0a795f9",
+       "latencyMs": 12169,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14516,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 361,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "78c94130c63ebde2",
+       "targetsHash": "00b7d72ba17be50b",
+       "reason": "sends something outside the account",
+       "count": 2,
+       "preview": [
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_4"
+         }
+        },
+        {
+         "action": "M45.A02",
+         "name": "Send review request",
+         "args": {
+          "requestId": "rrq_5"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 12252,
+    "firstReplyMs": 12247,
+    "plannerMs": 12169,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 6,
+    "clarifications": 0,
+    "usage": {
+     "input": 14516,
+     "cachedRead": 6528,
+     "cacheWrite": 0,
+     "output": 361,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "ticket-followup-priority",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show support ticket tic_1",
+     "status": "done",
+     "reply": "Portal export fails (ticket): body Please investigate this issue., requester email elodie@cedar.example, priority normal, status open, person name Elodie Mercer.",
+     "offered": [
+      "M47.A01",
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M47.A10",
+      "M47.A06",
+      "M21.A09",
+      "M47.A09",
+      "M47.A05",
+      "M47.A04",
+      "M47.A07",
+      "M03.A01",
+      "M06.A01",
+      "M13.A03",
+      "M12.A03",
+      "M43.A08",
+      "M03.A02",
+      "M06.A02",
+      "M46.A02",
+      "M48.A03",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M47.A02"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A02",
+          "argsJson": "{\"ticketId\":\"tic_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M47.A02"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6929,
+     "ms": 6929,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "41227c2bf551",
+       "promptHash": "6dee79ed4e55",
+       "latencyMs": 6885,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14604,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 105,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "Make that urgent",
+     "status": "done",
+     "reply": "Done: Set ticket priority (Portal export fails).",
+     "offered": [
+      "M06.A07",
+      "M47.A05",
+      "M47.A10",
+      "M47.A03",
+      "M06.A06",
+      "M06.A01",
+      "M06.A09",
+      "M15.A07",
+      "M21.A04",
+      "M22.A03",
+      "M06.A03",
+      "M22.A05",
+      "M47.A02"
+     ],
+     "planned": [
+      "M47.A05"
+     ],
+     "calls": [
+      {
+       "action": "M47.A05",
+       "args": {
+        "ticketId": "tic_1",
+        "priority": "urgent"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A05",
+          "argsJson": "{\"ticketId\":{\"$lookup\":{\"entity\":\"ticket\",\"name\":\"Portal export fails\"}},\"priority\":\"urgent\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7239,
+     "ms": 7239,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "41227c2bf551",
+       "promptHash": "6ceed2cf8256",
+       "latencyMs": 7216,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11920,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 120,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 14168,
+    "firstReplyMs": 6929,
+    "plannerMs": 14101,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 26524,
+     "cachedRead": 13056,
+     "cacheWrite": 0,
+     "output": 225,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "ticket-followup-priority",
+   "category": "followup",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Show support ticket tic_1",
+     "status": "done",
+     "reply": "Portal export fails (ticket): body Please investigate this issue., requester email elodie@cedar.example, priority normal, status open, person name Elodie Mercer.",
+     "offered": [
+      "M47.A01",
+      "M47.A08",
+      "M47.A02",
+      "M47.A03",
+      "M47.A10",
+      "M47.A06",
+      "M21.A09",
+      "M47.A09",
+      "M47.A05",
+      "M47.A04",
+      "M47.A07",
+      "M03.A01",
+      "M06.A01",
+      "M13.A03",
+      "M12.A03",
+      "M43.A08",
+      "M03.A02",
+      "M06.A02",
+      "M46.A02",
+      "M48.A03",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M47.A02"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A02",
+          "argsJson": "{\"ticketId\":\"tic_1\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M47.A02"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 6736,
+     "ms": 6736,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "41227c2bf551",
+       "promptHash": "6dee79ed4e55",
+       "latencyMs": 6699,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14600,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 105,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    },
+    {
+     "user": "Make that urgent",
+     "status": "done",
+     "reply": "Done: Set ticket priority (Portal export fails).",
+     "offered": [
+      "M06.A07",
+      "M47.A05",
+      "M47.A10",
+      "M47.A03",
+      "M06.A06",
+      "M06.A01",
+      "M06.A09",
+      "M15.A07",
+      "M21.A04",
+      "M22.A03",
+      "M06.A03",
+      "M22.A05",
+      "M47.A02"
+     ],
+     "planned": [
+      "M47.A05"
+     ],
+     "calls": [
+      {
+       "action": "M47.A05",
+       "args": {
+        "ticketId": "tic_1",
+        "priority": "urgent"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A05",
+          "argsJson": "{\"ticketId\":{\"$lookup\":{\"entity\":\"ticket\",\"name\":\"Portal export fails\"}},\"priority\":\"urgent\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A05"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7185,
+     "ms": 7185,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "41227c2bf551",
+       "promptHash": "6ceed2cf8256",
+       "latencyMs": 7157,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11918,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 120,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 13921,
+    "firstReplyMs": 6736,
+    "plannerMs": 13856,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 26518,
+     "cachedRead": 13056,
+     "cacheWrite": 0,
+     "output": 225,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "ticket-owner-unavailable",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Assign support ticket tic_1 to Eva Rossi",
+     "status": "failed",
+     "reply": "Couldn't assign ticket owner: Eva Rossi must be available and have tickets.manage to own support tickets.",
+     "offered": [
+      "M47.A04",
+      "M47.A01",
+      "M47.A08",
+      "M47.A05",
+      "M47.A06",
+      "M47.A02",
+      "M21.A06",
+      "M48.A05",
+      "M02.A08",
+      "M40.A07",
+      "M06.A05",
+      "M47.A09",
+      "M47.A03",
+      "M47.A10",
+      "M47.A07",
+      "M48.A02",
+      "M48.A03",
+      "M03.A05",
+      "M03.A01",
+      "M06.A01",
+      "M13.A03",
+      "M12.A03",
+      "M43.A08",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A04",
+       "args": {
+        "ticketId": "tic_1",
+        "ownerId": "us_7"
+       },
+       "error": "CONFLICT: Eva Rossi must be available and have tickets.manage to own support tickets"
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A04",
+          "argsJson": "{\"ticketId\":\"tic_1\",\"ownerId\":{\"$lookup\":{\"entity\":\"user\",\"name\":\"Eva Rossi\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7689,
+     "ms": 7689,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "41227c2bf551",
+       "promptHash": "3c71478ecd89",
+       "latencyMs": 7622,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 15058,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 121,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 7689,
+    "firstReplyMs": 7689,
+    "plannerMs": 7622,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 15058,
+     "cachedRead": 6528,
+     "cacheWrite": 0,
+     "output": 121,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "ticket-owner-unavailable",
+   "category": "failure",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "done, wanted failed|partial"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "Assign support ticket tic_1 to Eva Rossi",
+     "status": "done",
+     "reply": "Couldn't find any tickets matching \"tic_1\", so I didn't assign ticket owner.",
+     "offered": [
+      "M47.A04",
+      "M47.A01",
+      "M47.A08",
+      "M47.A05",
+      "M47.A06",
+      "M47.A02",
+      "M21.A06",
+      "M48.A05",
+      "M02.A08",
+      "M40.A07",
+      "M06.A05",
+      "M47.A09",
+      "M47.A03",
+      "M47.A10",
+      "M47.A07",
+      "M48.A02",
+      "M48.A03",
+      "M03.A05",
+      "M03.A01",
+      "M06.A01",
+      "M13.A03",
+      "M12.A03",
+      "M43.A08",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M47.A04",
+      "M47.A03",
+      "M47.A04"
+     ],
+     "calls": [
+      {
+       "action": "M47.A03",
+       "args": {
+        "query": "tic_1",
+        "limit": 500
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "tic_1",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Eva Rossi",
+          "whereJson": null
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M47.A04",
+          "argsJson": "{\"ticketId\":\"$s1.id\",\"ownerId\":\"$s2.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A03",
+          "argsJson": "{\"query\":\"tic_1\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Eva Rossi",
+          "whereJson": null
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A04",
+            "argsJson": "{\"ticketId\":\"$item.id\",\"ownerId\":\"$s2.id\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A04"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 17022,
+     "ms": 17022,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "41227c2bf551",
+       "promptHash": "3c71478ecd89",
+       "latencyMs": 8166,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 15060,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 161,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "41227c2bf551",
+       "promptHash": "b01d2d74d616",
+       "latencyMs": 8797,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 15243,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 198,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 17022,
+    "firstReplyMs": 17022,
+    "plannerMs": 16963,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 30303,
+     "cachedRead": 13056,
+     "cacheWrite": 0,
+     "output": 359,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

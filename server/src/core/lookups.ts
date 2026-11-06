@@ -22,8 +22,13 @@ export const OTHER_THAN = "otherThan";
  * records. The qualified lookup goes first ("the Brightside one"), or the first argument when neither is; the others
  * skip whatever it found. Two unqualified matches still ask which one, for the first argument.
  */
-function otherThan(steps: Step[], start: number): void {
+function otherThan(steps: Step[], start: number, held: Map<string, Set<string>>): void {
   const lowered = steps.slice(start).filter((s): s is Extract<Step, { kind: "resolve" }> => s.kind === "resolve");
+  // keepId "ct_31" next to duplicateId {$lookup "Sarah Johnson"}: the lookup means the other one.
+  for (const s of lowered) {
+    const ids = held.get(s.entity);
+    if (ids?.size === 1) s.whereJson = JSON.stringify({ ...(s.whereJson ? JSON.parse(s.whereJson) as object : {}), [OTHER_THAN]: [...ids][0] });
+  }
   const groups = new Map<string, typeof lowered>();
   for (const s of lowered) {
     const key = `${s.entity}:${s.name.trim().toLowerCase()}`;
@@ -80,9 +85,19 @@ export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; 
           return `$${id}.id`;
         }
       }
+      // {"$ref": "$s1.items[0].id"} is the JSON-Schema spelling of a ref: the ref is the string inside it.
+      if (object(value) && Object.keys(value).length === 1 && typeof value.$ref === "string" && schema.type === "string") {
+        const ref = value.$ref.trim();
+        return ref.startsWith("$") ? ref : `$${ref}`;
+      }
+      if (typeof value === "string" && ID_SHAPE.test(value.trim()) && !children) {
+        for (const e of argumentEntities(def, path, parsedArgs)) held.set(e, new Set([...(held.get(e) ?? []), value.trim()]));
+      }
       if (object(value) && Object.hasOwn(value, "$lookup") && schema.type === "string" && argumentEntities(def, path, parsedArgs).length) {
         if (!!rule !== children) return value;
         const lookup = value.$lookup;
+        // {"$lookup": {"entity": "review", "name": "rv_2"}}: the "name" is the record's id, so it needs no lookup.
+        if (object(lookup) && typeof lookup.name === "string" && ID_SHAPE.test(lookup.name.trim())) return lookup.name.trim();
         if (Object.keys(value).length !== 1 || !object(lookup) || Object.keys(lookup).some((k) => !["entity", "name", "where"].includes(k)) ||
             typeof lookup.entity !== "string" || typeof lookup.name !== "string" || !lookup.name.trim() ||
             !argumentEntities(def, path, parsedArgs).includes(lookup.entity) ||
@@ -113,10 +128,11 @@ export function lowerLookups(raw: Step[], registry: Registry): { steps: Step[]; 
       return value;
     };
     const start = steps.length;
+    const held = new Map<string, Set<string>>(); // record type → ids the call names outright
     // Parents lower first regardless of JSON key order; children bind to those exact parent results.
     walk(parsedArgs, def.inputSchema, "", false);
     walk(parsedArgs, def.inputSchema, "", true);
-    otherThan(steps, start);
+    otherThan(steps, start, held);
     return JSON.stringify(args);
   };
   for (const step of raw) {

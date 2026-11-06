@@ -12,7 +12,7 @@ before(async () => {
   dir = await mkdtemp(join(tmpdir(), "codex-adapter-test-"));
   executable = join(dir, "fake-codex.mjs");
   await writeFile(executable, `#!/usr/bin/env node
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 const args = process.argv.slice(2);
 const option = name => args[args.indexOf(name) + 1];
 if (args[0] === 'login') {
@@ -37,6 +37,7 @@ else {
   else if (mode === 'auth') { process.stderr.write('Please run codex login'); process.exitCode = 1; }
   else if (mode === 'warning') event({ type: 'item.completed', item: { type: 'error', message: 'unrecognized configuration setting' } });
   else if (mode === 'tool') event({ type: 'item.started', item: { type: 'command_execution' } });
+  else if (mode === 'tool_once' && !existsSync(marker + '.seen')) { writeFileSync(marker + '.seen', ''); event({ type: 'item.started', item: { type: 'collab_tool_call' } }); }
   else if (mode === 'no_completion') event({ type: 'turn.started' });
   else {
     event({ type: 'item.completed', item: { type: 'agent_message', text: 'é' } });
@@ -96,6 +97,11 @@ describe("CodexCliPlanner", () => {
     await assert.rejects(planner().plan(req("ok", { usage: {
       input_tokens: 100, output_tokens: 2, reasoning_output_tokens: 3,
     } })), (err) => kind("provider")(err) && /reasoning tokens exceed total output/.test((err as Error).message));
+  });
+
+  it("retries once when the model reaches for a disabled tool", async () => {
+    const result = await planner().plan(req("tool_once", { marker: join(dir, "tool_once.json") }));
+    assert.equal(result.usage.input, 100);
   });
 
   for (const [mode, expected] of [

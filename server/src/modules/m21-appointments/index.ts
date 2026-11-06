@@ -97,7 +97,7 @@ const getAppointment = defineAction({
 const searchAppointments = defineAction({
   id: "M21.A03",
   description:
-    "Find appointments by contact or lead, host, status (default booked; 'any' for all) and date range. Use it to check whether someone has a meeting booked. Soonest first.",
+    "Find appointments by contact or lead, host, status (default booked; 'any' for all) and date range. Use it to check whether someone has a meeting booked. To check many people, read once without leadId or contactId, then exclude, with set being the leadId or contactId of its items. Soonest first.",
   risk: "read",
   input: z.strictObject({
     ...PersonArgs,

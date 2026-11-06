@@ -3,7 +3,7 @@ import { before, test } from "node:test";
 import { compile } from "../core/compile.js";
 import { loadRegistry, Registry } from "../registry/registry.js";
 import { world } from "../store/world.js";
-import { checkIdentity, emptyTargets, outcomeErrors, selectionReadback } from "./contracts.js";
+import { checkIdentity, emptyTargets, leavesOutError, readLeavesOut, outcomeErrors, selectionReadback } from "./contracts.js";
 import type { SubmitPlan } from "./submit-plan.js";
 
 let registry: Registry;
@@ -18,8 +18,18 @@ function compiled(action: string, args: object) {
 test("a requested change is not satisfied by its prerequisite read or an unrelated change", () => {
   const outcome = { effect: "change" as const, actions: ["M06.A05"], destination: null };
   assert.match(outcomeErrors(compiled("M06.A03", {}), outcome).join("\n"), /only reads/);
-  assert.match(outcomeErrors(compiled("M06.A01", { title: "Other task" }), outcome).join("\n"), /M06.A05 is missing/);
+  assert.match(outcomeErrors(compiled("M06.A01", { title: "Other task" }), outcome).join("\n"), /M06.A05 is not in the plan: add a step that calls M06.A05 with its arguments from the message; M06.A01 does not do it/);
   assert.deepEqual(outcomeErrors(compiled("M06.A05", { taskId: "tk_1", assigneeId: "us_5" }), outcome), []);
+});
+
+test("a read declared next to a change is not required when it only finds the record the change takes", () => {
+  const outcome = { effect: "change" as const, actions: ["M03.A02", "M03.A04"], destination: null };
+  const actionOf = (id: string) => registry.get(id);
+  assert.deepEqual(outcomeErrors(compiled("M03.A04", { leadId: "ld_1", status: "contacted" }), outcome, undefined, actionOf), []);
+  // The change itself is still required.
+  assert.match(outcomeErrors(compiled("M03.A02", { leadId: "ld_1" }), outcome, undefined, actionOf).join("\n"), /only reads/);
+  // A read of something else the request names still has to run.
+  assert.match(outcomeErrors(compiled("M03.A04", { leadId: "ld_1", status: "contacted" }), { ...outcome, actions: ["M06.A03", "M03.A04"] }, undefined, actionOf).join("\n"), /M06.A03/);
 });
 
 test("read-only requests remain valid; a write cannot be smuggled into a read outcome", () => {
@@ -157,4 +167,85 @@ test("the records a change runs on are said back with what each filter or exclud
   // Ids the user wrote are theirs to pick; with nothing looked at and nothing written out there is nothing to say back.
   assert.deepEqual(selectionReadback(plan({ whereJson: JSON.stringify({ id: { nin: ["tk_1", "tk_3"] } }) }), [], "reassign all but tk_1 and tk_3"), []);
   assert.deepEqual(selectionReadback(plan({ op: "exclude", by: "id", set: "$s2.items[*].id" }), [], "reassign the tasks"), []);
+});
+
+test("publishing a course may publish the lesson the same plan made, and nothing else unasked", () => {
+  const steps = (lesson: object) => compile({
+    type: "plan",
+    steps: [
+      { id: "s1", kind: "action", action: "M40.A01", argsJson: JSON.stringify({ title: "Intro" }) },
+      ...(Object.keys(lesson).length ? [{ id: "s2", kind: "action" as const, action: "M41.A01", argsJson: JSON.stringify(lesson) }] : []),
+      { id: "s3", kind: "action", action: "M41.A09", argsJson: JSON.stringify({ lessonId: Object.keys(lesson).length ? "$s2.id" : "lsn_1" }) },
+      { id: "s4", kind: "action", action: "M40.A09", argsJson: JSON.stringify({ courseId: "$s1.id" }) },
+    ],
+    question: null, options: null, reason: null, alternatives: null, query: null, text: null,
+  } satisfies SubmitPlan, registry);
+  const message = "Create a course called Intro with a lesson Welcome and publish it";
+  const outcome = { effect: "change" as const, actions: ["M40.A01", "M41.A01", "M40.A09"], destination: null };
+  const check = (lesson: object, stated = outcome) => {
+    const r = steps(lesson);
+    assert.ok(r.ok);
+    return outcomeErrors(r.plan, stated, { message, offered: [] }, (id) => registry.get(id)).join("\n");
+  };
+  assert.equal(check({ courseId: "$s1.id", title: "Welcome" }), "");
+  // A lesson this plan didn't make, or a course nobody asked to publish, is still left out.
+  assert.match(check({}, { ...outcome, actions: ["M40.A01", "M40.A09"] }), /M41\.A09 sends to Lesson/);
+  assert.match(check({ courseId: "$s1.id", title: "Welcome" }, { ...outcome, actions: ["M40.A01", "M41.A01"] }), /M41\.A09 sends to Lesson/);
+});
+
+test("a read whose own argument leaves records out satisfies the request", () => {
+  const plan = (args: object) => {
+    const r = compile({ type: "plan", steps: [
+      { id: "s1", kind: "action", action: "M28.A10", argsJson: JSON.stringify(args) },
+      { id: "s2", kind: "op", op: "forEach", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M28.A08", argsJson: JSON.stringify({ invoiceId: "$item.invoiceId" }) }] },
+    ], question: null, options: null, reason: null, alternatives: null, query: null, text: null } satisfies SubmitPlan, registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    return r.plan;
+  };
+  const outcome = { effect: "change" as const, actions: [], destination: null, leavesOut: "anyone we already reminded this week" };
+  assert.deepEqual(leavesOutError(plan({ minDaysOverdue: 15, notRemindedSince: "2026-10-19" }), outcome), []);
+  assert.match(leavesOutError(plan({ minDaysOverdue: 15 }), outcome)[0]!, /no step before the change does/);
+});
+
+test("only a not-word argument with a value or a true un-word flag leaves records out", () => {
+  assert.equal(readLeavesOut({ notRemindedSince: "2026-10-19" }), true);
+  assert.equal(readLeavesOut({ unassigned: true }), true);
+  assert.equal(readLeavesOut({ unassigned: false }), false);
+  assert.equal(readLeavesOut({ notRemindedSince: null }), false);
+  assert.equal(readLeavesOut({ unitPrice: 5, until: "2026-11-01" }), false);
+});
+
+test("a request that leaves records out needs a step that does", () => {
+  const plan = (pick: object) => {
+    const r = compile({ type: "plan", steps: [
+      { id: "s1", kind: "action", action: "M06.A03", argsJson: "{}" },
+      { id: "s2", kind: "action", action: "M06.A03", argsJson: JSON.stringify({ status: "open" }) },
+      { id: "s3", kind: "op", op: "filter", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: null, ...pick },
+    ], question: null, options: null, reason: null, alternatives: null, query: null, text: null } satisfies SubmitPlan, registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
+    return r.plan;
+  };
+  const outcome = { effect: "change" as const, actions: [], destination: null, leavesOut: "the open ones" };
+  // "Have not replied" kept by a filter is not the exclusion the request named.
+  const keeps = plan({ whereJson: JSON.stringify({ id: { in: "$s2.items[*].id" } }) });
+  assert.match(leavesOutError(keeps, outcome)[0]!, /leave out "the open ones", but no step before the change does/);
+  assert.deepEqual(leavesOutError(plan({ op: "exclude", by: "id", set: "$s2.items[*].id" }), outcome), []);
+  assert.deepEqual(leavesOutError(plan({ whereJson: JSON.stringify({ id: { nin: "$s2.items[*].id" } }) }), outcome), []);
+  assert.deepEqual(leavesOutError(plan({ whereJson: JSON.stringify({ status: { ne: "open" } }) }), outcome), []);
+  assert.deepEqual(leavesOutError(keeps, { ...outcome, leavesOut: null }), []);
+  assert.deepEqual(leavesOutError(keeps, undefined), []);
+});
+
+test("an exclude after the change keeps no one out of it", () => {
+  const outcome = { effect: "change" as const, actions: ["M06.A01"], destination: null, leavesOut: "the booked ones" };
+  const read = { id: "s1", kind: "action", action: "M03.A03", argsJson: "{}" };
+  const task = { id: "t", kind: "op", op: "forEach", in: "$s1.items", whereJson: null, by: null, set: null, roundRobin: null, do: [{ action: "M06.A01", argsJson: JSON.stringify({ title: "Call", relatedTo: { type: "lead", id: "$item.id" } }) }] };
+  const exclude = (id: string, list: string) => ({ id, kind: "op", op: "exclude", in: list, whereJson: null, by: "id", set: "$s1.items[*].id", roundRobin: null, do: null });
+  const plan = (steps: unknown[]) => {
+    const r = compile({ type: "plan", steps, question: null, options: null, reason: null, alternatives: null, query: null, text: null } as SubmitPlan, registry);
+    assert.ok(r.ok, r.ok ? "" : r.errors.join("; "));
+    return r.plan;
+  };
+  assert.match(leavesOutError(plan([read, task, exclude("e", "$s1.items")]), outcome)[0]!, /no step before the change does/);
+  assert.deepEqual(leavesOutError(plan([read, exclude("e", "$s1.items"), { ...task, in: "$e" }]), outcome), []);
 });

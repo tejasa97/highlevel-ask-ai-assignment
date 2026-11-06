@@ -1,0 +1,2019 @@
+{
+ "summary": {
+  "label": "port-ner-timing-cli-4",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/scenarios,eval/brief-scenarios,eval/param-scenarios,eval/module-scenarios/coverage,eval/module-scenarios/wave1,eval/module-scenarios/m45-m47/development,eval/module-scenarios/m45-m47/reporting,eval/module-scenarios/m45-m47/trails,eval/module-scenarios/questions,eval/module-scenarios/role-ids,eval/policy-scenarios/partial-confirmation",
+  "set": "c4da7d8a1bf1",
+  "tier": "strong",
+  "scenarios": 12,
+  "repeat": 1,
+  "runs": 12,
+  "infraRuns": 0,
+  "notRun": 0,
+  "limitWaits": 0,
+  "passRate": 91.7,
+  "allPass": 11,
+  "measured": 12,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 8908,
+   "p95": 35888
+  },
+  "firstReplyMs": {
+   "p50": 8908,
+   "p95": 35888
+  },
+  "plannerRoundsPerRun": 1.5,
+  "callsPerRun": 1.1,
+  "clarified": {
+   "runs": 0,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 158954
+ },
+ "runs": [
+  {
+   "id": "cov-availability-block-lunch",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Block off the Sales Calls calendar on 2026-10-30 from 12:00 to 13:00, it's the team lunch",
+     "status": "done",
+     "reply": "Done: Block time range.",
+     "offered": [
+      "M22.A06",
+      "M49.A10",
+      "M22.A05",
+      "M49.A03",
+      "M22.A01",
+      "M49.A04",
+      "M21.A05",
+      "M20.A10",
+      "M49.A01",
+      "M49.A06",
+      "M22.A04",
+      "M22.A07",
+      "M49.A09",
+      "M12.A10",
+      "M22.A08",
+      "M20.A02",
+      "M20.A03",
+      "M05.A05"
+     ],
+     "planned": [
+      "M22.A05"
+     ],
+     "calls": [
+      {
+       "action": "M22.A05",
+       "args": {
+        "calendarId": "cal_1",
+        "date": "2026-10-30",
+        "start": "12:00",
+        "end": "13:00",
+        "reason": "team lunch"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "calendar",
+          "name": "Sales Calls",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M22.A05",
+          "argsJson": "{\"calendarId\":\"$s1.id\",\"date\":\"2026-10-30\",\"start\":\"12:00\",\"end\":\"13:00\",\"reason\":\"team lunch\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M22.A05"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 10367,
+     "ms": 10367,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "3176ef3c297f",
+       "latencyMs": 10278,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11774,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 161,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 10367,
+    "firstReplyMs": 10367,
+    "plannerMs": 10278,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11774,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 161,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-media-delete-unused",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Delete old-banner.png, nothing uses it any more",
+     "status": "done",
+     "reply": "Done: Delete unreferenced asset (old-banner.png).",
+     "offered": [
+      "M20.A10",
+      "M12.A10",
+      "M39.A10",
+      "M20.A06",
+      "M08.A05",
+      "M07.A05",
+      "M02.A05",
+      "M09.A10",
+      "M49.A10",
+      "M10.A08",
+      "M05.A09",
+      "M25.A05",
+      "M26.A10",
+      "M16.A06",
+      "M39.A07",
+      "M40.A10",
+      "M13.A10",
+      "M01.A08",
+      "M37.A01",
+      "M38.A01",
+      "M03.A03",
+      "M07.A03"
+     ],
+     "planned": [
+      "M39.A10"
+     ],
+     "calls": [
+      {
+       "action": "M39.A10",
+       "args": {
+        "assetId": "md_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M39.A10",
+          "argsJson": "{\"assetId\":{\"$lookup\":{\"entity\":\"media_asset\",\"name\":\"old-banner.png\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M39.A10"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 8449,
+     "ms": 8452,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "d00ac554e72d",
+       "latencyMs": 8359,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12883,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 122,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "bb4496d0e2f2460e",
+       "targetsHash": "d7d008840a25267d",
+       "reason": "deletes or cancels records",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M39.A10",
+         "name": "Delete unreferenced asset",
+         "args": {
+          "assetId": "md_1"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "media_asset",
+         "id": "md_1",
+         "name": "old-banner.png",
+         "text": "old-banner.png",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-10-21T14:00:00.000Z",
+         "fingerprint": "7c6451cb490f78a9"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8452,
+    "firstReplyMs": 8449,
+    "plannerMs": 8359,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12883,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 122,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-tax-rule-create",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a tax rule called CA Sales Tax at 7.25% for California",
+     "status": "done",
+     "reply": "Done: Create tax rule (CA Sales Tax).",
+     "offered": [
+      "M34.A01",
+      "M34.A02",
+      "M34.A05",
+      "M34.A04",
+      "M34.A09",
+      "M31.A01",
+      "M34.A10",
+      "M25.A01",
+      "M26.A05",
+      "M32.A08",
+      "M33.A04",
+      "M32.A01",
+      "M04.A01",
+      "M05.A10",
+      "M31.A05",
+      "M33.A03"
+     ],
+     "planned": [
+      "M34.A01"
+     ],
+     "calls": [
+      {
+       "action": "M34.A01",
+       "args": {
+        "name": "CA Sales Tax",
+        "rate": 7.25,
+        "region": "US-CA"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M34.A01",
+          "argsJson": "{\"name\":\"CA Sales Tax\",\"rate\":7.25,\"region\":\"US-CA\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M34.A01"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8908,
+     "ms": 8908,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "52653796cd57",
+       "latencyMs": 8585,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11895,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 122,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8908,
+    "firstReplyMs": 8908,
+    "plannerMs": 8585,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11895,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 122,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-card-refund-request",
+   "category": "direct",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "status",
+     "detail": "unsupported, wanted done"
+    },
+    {
+     "kind": "action-missing",
+     "detail": "M33.A01 not planned (was offered; planned: nothing)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM refunds WHERE json_extract(data,'$.contactId')='ct_1' AND json_extract(data,'$.status') IN ('requested','approved','executed') → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM refunds → 0, wanted 1"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "unsupported",
+     "reply": "The available payment actions can find Rosa Ito’s payments and request a refund, but they cannot determine or refund a payment specifically back to her card. The refund request action also requires the payment ID, which is not available from the contact name alone.\nAlternatives: Search Rosa Ito’s payments, then request a refund for a selected payment.",
+     "offered": [
+      "M33.A01",
+      "M33.A09",
+      "M33.A04",
+      "M33.A06",
+      "M33.A08",
+      "M29.A08",
+      "M33.A05",
+      "M29.A03",
+      "M32.A09",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M29.A04",
+      "M28.A06",
+      "M33.A03",
+      "M01.A02",
+      "M01.A03",
+      "M33.A07",
+      "M29.A06",
+      "M28.A03",
+      "M28.A08",
+      "M32.A03",
+      "M33.A02",
+      "M29.A05",
+      "M29.A02",
+      "M29.A09",
+      "M33.A10",
+      "M30.A03",
+      "M28.A02",
+      "M47.A08",
+      "M32.A02",
+      "M32.A08",
+      "M08.A08",
+      "M27.A03",
+      "M11.A02",
+      "M13.A01",
+      "M13.A03",
+      "M13.A07"
+     ],
+     "planned": [],
+     "calls": [],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Find Rosa Ito's most recent payment and initiate a refund back to her card. Search for contact payment records with payment method and transaction ordering, plus refund request creation using the payment ID.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "unsupported",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": "The available payment actions can find Rosa Ito’s payments and request a refund, but they cannot determine or refund a payment specifically back to her card. The refund request action also requires the payment ID, which is not available from the contact name alone.",
+        "alternatives": [
+         "Search Rosa Ito’s payments, then request a refund for a selected payment."
+        ],
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M33.A01"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 17600,
+     "ms": 17600,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "05191aa9d297",
+       "latencyMs": 8747,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13068,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 113,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "a1482f66df46",
+       "latencyMs": 8645,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 17116,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 143,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 17600,
+    "firstReplyMs": 17600,
+    "plannerMs": 17392,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 0,
+    "clarifications": 0,
+    "usage": {
+     "input": 30184,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 256,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m45-08",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Draft this response to review rv_2: 'Thank you. We will improve our waiting times.'",
+     "status": "done",
+     "reply": "Done: Draft review response.",
+     "offered": [
+      "M45.A08",
+      "M22.A06",
+      "M45.A09",
+      "M22.A05",
+      "M45.A01",
+      "M45.A02",
+      "M45.A07",
+      "M45.A04",
+      "M47.A05",
+      "M32.A05",
+      "M47.A10",
+      "M24.A08",
+      "M24.A09",
+      "M28.A06",
+      "M47.A06",
+      "M45.A06"
+     ],
+     "planned": [
+      "M45.A08"
+     ],
+     "calls": [
+      {
+       "action": "M45.A08",
+       "args": {
+        "reviewId": "rv_2",
+        "body": "Thank you. We will improve our waiting times."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M45.A08",
+          "argsJson": "{\"reviewId\":\"rv_2\",\"body\":\"Thank you. We will improve our waiting times.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M45.A08"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8600,
+     "ms": 8600,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "77ac47347f6e",
+       "latencyMs": 8372,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 11904,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 123,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8600,
+    "firstReplyMs": 8600,
+    "plannerMs": 8372,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 11904,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 123,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "m46-10",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Check the directory sync status of listing bl_3",
+     "status": "done",
+     "reply": "Harbor Optics (listing): directory google, status never_published, version 1.",
+     "offered": [
+      "M46.A10",
+      "M46.A09",
+      "M46.A04",
+      "M46.A02",
+      "M09.A03",
+      "M44.A10",
+      "M46.A06",
+      "M46.A08",
+      "M09.A06",
+      "M44.A03",
+      "M05.A03",
+      "M09.A08",
+      "M50.A03",
+      "M48.A03",
+      "M46.A01",
+      "M35.A09",
+      "M37.A09",
+      "M35.A04"
+     ],
+     "planned": [
+      "M46.A10"
+     ],
+     "calls": [
+      {
+       "action": "M46.A10",
+       "args": {
+        "listingId": "bl_3"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M46.A10",
+          "argsJson": "{\"listingId\":\"bl_3\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M46.A10"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8201,
+     "ms": 8201,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "8e39ecf2687e",
+       "latencyMs": 8117,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12792,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 111,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8201,
+    "firstReplyMs": 8201,
+    "plannerMs": 8117,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12792,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 111,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-asset-alt-text",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Set the alt text on hero.jpg to: Team photo at the 2026 summit",
+     "status": "done",
+     "reply": "Done: Set asset alt text (hero.jpg).",
+     "offered": [
+      "M39.A05",
+      "M49.A10",
+      "M12.A04",
+      "M49.A03",
+      "M10.A05",
+      "M04.A05",
+      "M49.A05",
+      "M49.A04",
+      "M44.A04",
+      "M49.A08",
+      "M49.A02",
+      "M37.A08",
+      "M37.A04",
+      "M11.A08",
+      "M35.A08",
+      "M05.A05",
+      "M20.A10",
+      "M13.A04",
+      "M15.A06",
+      "M03.A03",
+      "M12.A07",
+      "M11.A02",
+      "M13.A07"
+     ],
+     "planned": [
+      "M39.A05"
+     ],
+     "calls": [
+      {
+       "action": "M39.A05",
+       "args": {
+        "assetId": "md_1",
+        "altText": "Team photo at the 2026 summit"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M39.A05",
+          "argsJson": "{\"assetId\":{\"$lookup\":{\"entity\":\"media_asset\",\"name\":\"hero.jpg\"}},\"altText\":\"Team photo at the 2026 summit\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M39.A05"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8542,
+     "ms": 8542,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "d5d72fc7eb95",
+       "latencyMs": 8473,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13660,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 134,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8542,
+    "firstReplyMs": 8542,
+    "plannerMs": 8473,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13660,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 134,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-create-event",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create an event called Customer Summit on November 12 from 9am to 5pm at Harbor Hall, capacity 120",
+     "status": "done",
+     "reply": "Done: Create event (Customer Summit).",
+     "offered": [
+      "M10.A01",
+      "M24.A05",
+      "M24.A01",
+      "M49.A09",
+      "M24.A04",
+      "M03.A10",
+      "M01.A01",
+      "M21.A01",
+      "M03.A01",
+      "M24.A06",
+      "M47.A05",
+      "M05.A01",
+      "M04.A01",
+      "M24.A08",
+      "M22.A08",
+      "M18.A04",
+      "M20.A01"
+     ],
+     "planned": [
+      "M24.A01"
+     ],
+     "calls": [
+      {
+       "action": "M24.A01",
+       "args": {
+        "title": "Customer Summit",
+        "startsAt": "2026-11-12T14:00:00.000Z",
+        "endsAt": "2026-11-12T22:00:00.000Z",
+        "location": "Harbor Hall",
+        "capacity": 120
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M24.A01",
+          "argsJson": "{\"title\":\"Customer Summit\",\"startsAt\":\"2026-11-12T09:00:00-05:00\",\"endsAt\":\"2026-11-12T17:00:00-05:00\",\"location\":\"Harbor Hall\",\"capacity\":120}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M24.A01"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8265,
+     "ms": 8265,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "d995669bf74d",
+       "latencyMs": 8132,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12562,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 158,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8265,
+    "firstReplyMs": 8265,
+    "plannerMs": 8132,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 12562,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 158,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-landing-seo",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Set the SEO title on the Webinar signup page to \"Free Growth Webinar\" and the description to \"Join us live on November 5\"",
+     "status": "done",
+     "reply": "Done: Set page SEO metadata (Webinar signup).",
+     "offered": [
+      "M37.A08",
+      "M44.A04",
+      "M35.A08",
+      "M31.A04",
+      "M38.A07",
+      "M23.A04",
+      "M37.A04",
+      "M37.A01",
+      "M35.A06",
+      "M23.A08",
+      "M23.A06",
+      "M06.A04",
+      "M40.A04",
+      "M36.A07",
+      "M37.A09",
+      "M15.A02",
+      "M15.A03",
+      "M08.A02",
+      "M30.A04"
+     ],
+     "planned": [
+      "M37.A08"
+     ],
+     "calls": [
+      {
+       "action": "M37.A08",
+       "args": {
+        "landingPageId": "lp_1",
+        "title": "Free Growth Webinar",
+        "description": "Join us live on November 5"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which Webinar signup page do you mean?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M37.A08"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": "identity",
+        "lookup": {
+         "entity": "landing_page",
+         "name": "Webinar signup page",
+         "whereJson": null
+        },
+        "missing": {
+         "action": "M37.A08",
+         "argument": "landingPageId",
+         "argsJson": "{\"landingPageId\":{\"$lookup\":{\"entity\":\"landing_page\",\"name\":\"Webinar signup page\"}},\"title\":\"Free Growth Webinar\",\"description\":\"Join us live on November 5\"}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after identity check",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M37.A08",
+          "argsJson": "{\"landingPageId\":{\"$lookup\":{\"entity\":\"landing_page\",\"name\":\"Webinar signup page\"}},\"title\":\"Free Growth Webinar\",\"description\":\"Join us live on November 5\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M37.A08"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 18388,
+     "ms": 18388,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "ee48c4c76108",
+       "latencyMs": 9208,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12497,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 159,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after identity check",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "5122ae6e6172",
+       "latencyMs": 9092,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12580,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 18388,
+    "firstReplyMs": 18388,
+    "plannerMs": 18300,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 25077,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 300,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "param-send-email-subject",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Email Tara Larsen with the subject \"Your Q4 renewal\" saying we'd like to book a short call next week to go over it",
+     "status": "done",
+     "reply": "Done: Send email.",
+     "offered": [
+      "M13.A06",
+      "M13.A01",
+      "M13.A10",
+      "M13.A04",
+      "M13.A09",
+      "M13.A03",
+      "M14.A04",
+      "M27.A08",
+      "M14.A09",
+      "M14.A01",
+      "M14.A03",
+      "M47.A08",
+      "M45.A02",
+      "M14.A02",
+      "M15.A05",
+      "M01.A02",
+      "M01.A03",
+      "M12.A06",
+      "M11.A01",
+      "M12.A01",
+      "M28.A08",
+      "M12.A10",
+      "M01.A08",
+      "M13.A07",
+      "M03.A03",
+      "M28.A03",
+      "M45.A04",
+      "M12.A07",
+      "M11.A02"
+     ],
+     "planned": [
+      "M13.A03"
+     ],
+     "calls": [
+      {
+       "action": "M13.A03",
+       "args": {
+        "contactId": "ct_9",
+        "subject": "Your Q4 renewal",
+        "body": "We'd like to book a short call next week to go over it."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M13.A03",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Tara Larsen\"}},\"subject\":\"Your Q4 renewal\",\"body\":\"We'd like to book a short call next week to go over it.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M13.A03"
+         ],
+         "destination": "email",
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 8730,
+     "ms": 8734,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "fb938f538f81",
+       "latencyMs": 8658,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 16058,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 146,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s1",
+       "planHash": "6e664dd158760380",
+       "targetsHash": "8669993ecda9e356",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M13.A03",
+         "name": "Send email",
+         "args": {
+          "contactId": "ct_9",
+          "subject": "Your Q4 renewal",
+          "body": "We'd like to book a short call next week to go over it."
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "contact",
+         "id": "ct_9",
+         "name": "Tara Larsen",
+         "text": "Tara Larsen",
+         "provenance": "exact-unique",
+         "matchReason": "exact-name",
+         "updatedAt": "2026-08-24T15:00:00.000Z",
+         "fingerprint": "4e033e2a0b31da4a"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8734,
+    "firstReplyMs": 8730,
+    "plannerMs": 8658,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 16058,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 146,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "q-appointments-booked",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Does Aisha Bello have any appointments booked?",
+     "status": "done",
+     "reply": "Yes. Aisha Bello is hosting one booked appointment: “Quarterly review - Ben Brown” with Ben Brown on October 27, 2026.\nFound 1 appointment: Quarterly review - Ben Brown: attendees Ben Brown (kind contact), start at 2026-10-27T16:00:00.000Z, end at 2026-10-27T17:00:00.000Z, status booked, person name Ben Brown, host name Aisha Bello.",
+     "offered": [
+      "M21.A01",
+      "M21.A03",
+      "M21.A05",
+      "M21.A07",
+      "M21.A02",
+      "M21.A06",
+      "M23.A01",
+      "M20.A01",
+      "M24.A06",
+      "M22.A10",
+      "M20.A10",
+      "M23.A09",
+      "M24.A01",
+      "M22.A07",
+      "M22.A08",
+      "M48.A02",
+      "M48.A03",
+      "M06.A01",
+      "M22.A09",
+      "M24.A03",
+      "M06.A03",
+      "M06.A10",
+      "M30.A09",
+      "M32.A09",
+      "M24.A07",
+      "M03.A03",
+      "M21.A04",
+      "M20.A08"
+     ],
+     "planned": [
+      "M21.A03",
+      "M21.A03"
+     ],
+     "calls": [
+      {
+       "action": "M21.A03",
+       "args": {
+        "hostId": "us_5",
+        "status": "booked"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "hostId": "us_5",
+        "status": "booked"
+       }
+      }
+     ],
+     "plannerRounds": 4,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Aisha Bello\"}}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M21.A03"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "answer after look",
+       "reply": {
+        "type": "answer",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": "I couldn’t determine whether Aisha Bello has any appointments booked: there’s no matching contact, and the appointment search couldn’t run.",
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M21.A03"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "user",
+          "name": "Aisha Bello",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"hostId\":\"$s1.id\",\"status\":\"booked\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M21.A03"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "answer after look",
+       "reply": {
+        "type": "answer",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": "Yes. Aisha Bello is hosting one booked appointment: “Quarterly review - Ben Brown” with Ben Brown on October 27, 2026.",
+        "outcome": {
+         "effect": "read",
+         "actions": [
+          "M21.A03"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 35888,
+     "ms": 35888,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "4eaf85509e63",
+       "latencyMs": 7943,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14377,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 121,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "answer after look",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "51ef94eed9bb",
+       "latencyMs": 10174,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14546,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 107,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "6871c0c6f1dc",
+       "latencyMs": 8951,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14530,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 141,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "answer after look",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "e270d2793b95",
+       "latencyMs": 8385,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14844,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 111,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 35888,
+    "firstReplyMs": 35888,
+    "plannerMs": 35453,
+    "plannerRounds": 4,
+    "modelCalls": 4,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 58297,
+     "cachedRead": 26624,
+     "cacheWrite": 0,
+     "output": 480,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "q-review-replied",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Has anyone replied to Nisha Khatri's review?",
+     "status": "done",
+     "reply": "No. Nisha Khatri’s review has no published response.\nFound 1 review: Nisha Khatri: rating 5, body Helpful staff and a smooth appointment..",
+     "offered": [
+      "M45.A09",
+      "M45.A02",
+      "M45.A08",
+      "M45.A07",
+      "M45.A01",
+      "M45.A06",
+      "M47.A08",
+      "M43.A08",
+      "M11.A10",
+      "M30.A10",
+      "M13.A02",
+      "M13.A09",
+      "M12.A09",
+      "M15.A10",
+      "M45.A04",
+      "M01.A02",
+      "M01.A03",
+      "M13.A07"
+     ],
+     "planned": [
+      "M45.A06"
+     ],
+     "calls": [
+      {
+       "action": "M45.A06",
+       "args": {
+        "contactId": "ct_37"
+       }
+      },
+      {
+       "action": "M45.A06",
+       "args": {
+        "contactId": "ct_37"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "look",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Nisha Khatri",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M45.A06",
+          "argsJson": "{\"contactId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "read",
+         "actions": [],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after look",
+       "reply": {
+        "type": "answer",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": "No. Nisha Khatri’s review has no published response.",
+        "outcome": {
+         "effect": "read",
+         "actions": [],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 16925,
+     "ms": 16925,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "071f884ff17c",
+       "latencyMs": 8882,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12593,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 133,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after look",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "34d073be2068",
+       "latencyMs": 7984,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12784,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 89,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 16925,
+    "firstReplyMs": 16925,
+    "plannerMs": 16866,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 25377,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 222,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

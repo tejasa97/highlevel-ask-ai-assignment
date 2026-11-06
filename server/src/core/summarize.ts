@@ -1,7 +1,10 @@
 import type { Registry } from "../registry/registry.js";
-import type { CompiledPlan, CStep } from "./compile.js";
+import { argumentRole, type CompiledPlan, type CStep } from "./compile.js";
 import type { RunResult, StepResult } from "./execute.js";
+import { optionLabel } from "./identity.js";
 import { parseRef } from "./refs.js";
+
+const label = (entity: string) => entity.replaceAll("_", " ");
 
 // The reply the user reads. Written by code from the run result, not by the model:
 // no second LLM call, and nothing in it can be a hallucinated success.
@@ -21,7 +24,7 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
 
   for (const r of run.steps) {
     const step = byId.get(r.id)!;
-    const line = describe(step, r, registry, used) ?? (used.has(r.id) || r.status !== "done" ? null : found(step, r.output, nounOf(step, byId, registry)));
+    const line = emptyInput(step, r, byId, registry) ?? describe(step, r, registry, used) ?? (used.has(r.id) || r.status !== "done" ? null : found(step, r.output, nounOf(step, byId, registry)));
     if (line) lines.push(line);
   }
 
@@ -41,21 +44,18 @@ export function summarize(plan: CompiledPlan, run: RunResult, registry: Registry
   }
   if (run.clarification) {
     const c = run.clarification;
-    lines.push(`More than one ${c.entity} matches "${c.name}": ${c.candidates.map((x) => (x.detail ? `${x.name} (${x.detail})` : x.name)).join(", ")}. ${whichOne(plan, c.stepId)}`);
+    const options = c.candidates.map(optionLabel);
+    // Only near misses ("suggest") is a "did you mean", not a choice between matches.
+    if (c.kind === "suggest") lines.push(options.length === 1 ? `No ${label(c.entity)} is named exactly "${c.name}". Did you mean ${options[0]}?` : `No ${label(c.entity)} is named exactly "${c.name}". Did you mean one of these: ${options.join(", ")}?`);
+    else lines.push(`More than one ${label(c.entity)} matches "${c.name}": ${options.join(", ")}. ${whichOne(plan, c.stepId)}`);
   }
   return lines.join("\n");
 }
 
 /** "Which one is the contact that stays?" when the name fills an argument named for its role (a merge's keepId). */
 function whichOne(plan: CompiledPlan, stepId: string): string {
-  for (const s of plan.steps) {
-    for (const call of s.kind === "action" ? [s.call] : s.kind === "forEach" ? s.calls : []) {
-      const key = Object.keys(call.args).find((k) => call.args[k] === `$${stepId}.id` && call.action.idTypes?.[k]);
-      const role = key && ((call.action.inputSchema.properties ?? {}) as Record<string, { description?: string }>)[key]?.description;
-      if (role) return `Which one is ${role}?`;
-    }
-  }
-  return "Which one?";
+  const role = argumentRole(plan, stepId)?.description;
+  return role ? `Which one is ${role}?` : "Which one?";
 }
 
 /** Records the reply talks about, sent with it so the client can show them as cards rather than a sentence. */
@@ -109,6 +109,16 @@ export function shownRecords(plan: CompiledPlan, run: RunResult, registry: Regis
   return out;
 }
 
+/** A step that failed on "$s1.items has 0 items, no [0]", or a loop over a search that found nobody: what the user
+ * reads is that the search found nobody, and what it searched for. */
+function emptyInput(step: CStep, r: StepResult, byId: Map<string, CStep>, registry: Registry): string | null {
+  const ref = r.status === "failed" && r.error ? /^(\$[A-Za-z_]\w*)\S* has 0 items/.exec(r.error.message)?.[1]
+    : step.kind === "forEach" && r.items?.length === 0 && typeof step.in === "string" ? step.in : undefined;
+  const source = ref ? byId.get(rootOf(ref)) : undefined;
+  if (!source || source.kind !== "action" || source.call.action.risk !== "read") return null;
+  return `Couldn't find any ${plural(nounOf(source, byId, registry), 0)}${criteria(source)}, so I didn't ${what(step, registry)}.`;
+}
+
 function describe(step: CStep, r: StepResult, registry: Registry, used: Set<string>): string | null {
   if (r.status === "awaiting_confirmation" || r.status === "needs_clarification") return null;
   if (r.status === "skipped") return `Skipped ${what(step, registry)}: ${r.error?.code === "NOT_RUN" ? r.error.message : "an earlier step didn't complete"}.`;
@@ -120,7 +130,7 @@ function describe(step: CStep, r: StepResult, registry: Registry, used: Set<stri
     const name = titleOf(r.output);
     if (r.existing) return `Used the existing ${name ? `"${name}"` : "record"} (${(r.output as { id?: string }).id}) rather than ${a.name.toLowerCase()} again: ${r.existing.message}.`;
     const caveat = r.output === undefined ? undefined : a.caveat?.(r.output);
-    return `Done: ${a.name}${name ? ` (${name})` : ""}${r.items?.[0]?.replayed ? ", already done earlier" : ""}${caveat ? `, but ${caveat}` : ""}.${firstOf(r)}`;
+    return `Done: ${a.name}${name ? ` (${name})` : ""}${caveat ? `, but ${caveat}` : ""}.${firstOf(r)}`;
   }
   if (step.kind === "forEach" && r.items) {
     const writes = step.calls.filter((c) => c.action.risk !== "read");
@@ -214,7 +224,8 @@ function criteria(step: CStep): string {
   const parts = Object.entries(args)
     // A record id names nothing a user knows, whether passed by $ref or written out ("contact id ct_35").
     .filter(([k, v]) => k !== "limit" && !/Ids?$/.test(k) && shown(v) && !(typeof v === "string" && parseRef(v)))
-    .map(([k, v]) => `${words(k)} ${typeof v === "object" ? JSON.stringify(v) : String(v)}`);
+    // A free-text search is the words the user gave: "matching "Marta Patel"", not "matching query Marta Patel".
+    .map(([k, v]) => (k === "query" && typeof v === "string" ? `"${v}"` : `${words(k)} ${typeof v === "object" ? JSON.stringify(v) : String(v)}`));
   return parts.length ? ` matching ${parts.join(", ")}` : "";
 }
 

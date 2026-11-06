@@ -260,7 +260,7 @@ const receiveSms = defineAction({
 
 const recordSmsOptOut = defineAction({
   id: "M12.A10",
-  description: "Record that a contact or lead doesn't want text messages any more. Future sends to their number are refused. For email, use M13.A10 Record unsubscribe.",
+  description: "Record that a contact or lead doesn't want text messages any more. Future sends to their number are refused. To change other channels (call, email) or do-not-disturb, use M01.A08. For email, use M13.A10 Record unsubscribe.",
   risk: "write",
   input: z.strictObject({ ...PersonArgs }),
   output: OptOut,

@@ -1,0 +1,891 @@
+{
+ "summary": {
+  "label": "port-ner-final-refund-3x",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/scenarios,eval/brief-scenarios,eval/param-scenarios,eval/module-scenarios/coverage,eval/module-scenarios/wave1,eval/module-scenarios/m45-m47/development,eval/module-scenarios/m45-m47/reporting,eval/module-scenarios/m45-m47/trails,eval/module-scenarios/questions,eval/module-scenarios/role-ids,eval/policy-scenarios/partial-confirmation",
+  "set": "c889e2f64ea1",
+  "tier": "strong",
+  "scenarios": 1,
+  "repeat": 3,
+  "runs": 3,
+  "infraRuns": 0,
+  "notRun": 0,
+  "limitWaits": 0,
+  "passRate": 100,
+  "allPass": 1,
+  "measured": 1,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 26637,
+   "p95": 37497
+  },
+  "firstReplyMs": {
+   "p50": 26637,
+   "p95": 37497
+  },
+  "plannerRoundsPerRun": 3,
+  "callsPerRun": 2.3,
+  "clarified": {
+   "runs": 0,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 83816
+ },
+ "runs": [
+  {
+   "id": "direct-card-refund-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "done",
+     "reply": "Done: Create refund request.",
+     "offered": [
+      "M33.A01",
+      "M33.A09",
+      "M33.A04",
+      "M33.A06",
+      "M33.A08",
+      "M29.A08",
+      "M33.A05",
+      "M29.A03",
+      "M32.A09",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M29.A04",
+      "M28.A06",
+      "M33.A03",
+      "M01.A02",
+      "M01.A03",
+      "M33.A07",
+      "M29.A06",
+      "M28.A03",
+      "M32.A03",
+      "M29.A02",
+      "M29.A05",
+      "M33.A02",
+      "M30.A03",
+      "M29.A09",
+      "M47.A03",
+      "M33.A10",
+      "M28.A08",
+      "M28.A02",
+      "M11.A02",
+      "M27.A03",
+      "M45.A04",
+      "M45.A06",
+      "M46.A03",
+      "M30.A02",
+      "M13.A01",
+      "M47.A08",
+      "M50.A04",
+      "M45.A02",
+      "M26.A07",
+      "M45.A03",
+      "M49.A08",
+      "M16.A03",
+      "M28.A07",
+      "M24.A03",
+      "M45.A01",
+      "M22.A09",
+      "M39.A03",
+      "M12.A10",
+      "M03.A03",
+      "M12.A01",
+      "M14.A01",
+      "M13.A03",
+      "M12.A03",
+      "M43.A08",
+      "M09.A05",
+      "M13.A07",
+      "M12.A07"
+     ],
+     "planned": [
+      "M29.A06",
+      "M33.A01"
+     ],
+     "calls": [
+      {
+       "action": "M29.A06",
+       "args": {
+        "contactId": "ct_1"
+       }
+      },
+      {
+       "action": "M29.A06",
+       "args": {
+        "contactId": "ct_1"
+       }
+      },
+      {
+       "action": "M33.A01",
+       "args": {
+        "paymentId": "pay_1"
+       }
+      }
+     ],
+     "plannerRounds": 4,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search payments for Rosa Ito, find her latest payment, and create a refund request for it. Available actions can search payments and request refunds, but the payment search cannot order/filter by card method; need a way to identify the last card payment specifically.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Find Rosa Ito’s latest payment and its payment method, then request a refund to her card (payment methods do not specify a refund destination).",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Rosa Ito",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M29.A06",
+          "argsJson": "{\"contactId\":\"$s1.id\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2.items",
+          "whereJson": "{\"status\":\"succeeded\"}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s3",
+          "whereJson": "{\"method\":\"card\"}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s4",
+          "whereJson": "{\"createdAt\":{\"gte\":\"$s4[0].createdAt\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M33.A01"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after reads",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M33.A01",
+          "argsJson": "{\"paymentId\":\"$s4[0].id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M33.A01"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Find Rosa Ito’s latest payment and its payment method, then request a refund to her card (payment methods do not specify a refund destination).\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 37497,
+     "ms": 37497,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "05191aa9d297",
+       "latencyMs": 8090,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13070,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 126,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "d1265636c1c0",
+       "latencyMs": 8317,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 16272,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 105,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "a6cb4fa7ffc9",
+       "latencyMs": 11297,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 21590,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 286,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after reads",
+       "call": 4,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "de796acf3fd5",
+       "latencyMs": 9274,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 21974,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 115,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 37497,
+    "firstReplyMs": 37497,
+    "plannerMs": 36978,
+    "plannerRounds": 4,
+    "modelCalls": 4,
+    "calls": 3,
+    "clarifications": 0,
+    "usage": {
+     "input": 72906,
+     "cachedRead": 19968,
+     "cacheWrite": 0,
+     "output": 632,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-card-refund-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "done",
+     "reply": "Done: Create refund request.",
+     "offered": [
+      "M33.A01",
+      "M33.A09",
+      "M33.A04",
+      "M33.A06",
+      "M33.A08",
+      "M29.A08",
+      "M33.A05",
+      "M29.A03",
+      "M32.A09",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M29.A04",
+      "M28.A06",
+      "M33.A03",
+      "M01.A02",
+      "M01.A03",
+      "M33.A07",
+      "M29.A06",
+      "M28.A03",
+      "M28.A08",
+      "M29.A02",
+      "M33.A02",
+      "M29.A05",
+      "M33.A10",
+      "M29.A09",
+      "M47.A08",
+      "M47.A03",
+      "M28.A02",
+      "M30.A03",
+      "M22.A09",
+      "M27.A03",
+      "M04.A03",
+      "M06.A03",
+      "M25.A10",
+      "M13.A01",
+      "M13.A03",
+      "M30.A02",
+      "M32.A02",
+      "M13.A07"
+     ],
+     "planned": [
+      "M29.A06",
+      "M33.A01"
+     ],
+     "calls": [
+      {
+       "action": "M29.A06",
+       "args": {
+        "contactId": "ct_1",
+        "status": "succeeded",
+        "method": "card",
+        "limit": 1
+       }
+      },
+      {
+       "action": "M33.A01",
+       "args": {
+        "paymentId": "pay_1"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Find Rosa Ito's most recent payment, then request a refund for that payment back to the original card payment method. Available actions can search payments and request refunds, but no action is offered to ensure or change the refund's payment method.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Rosa Ito",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M29.A06",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"status\":\"succeeded\",\"method\":\"card\",\"limit\":1}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M33.A01",
+          "argsJson": "{\"paymentId\":\"$s2.items[0].id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M33.A01"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 19558,
+     "ms": 19558,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "05191aa9d297",
+       "latencyMs": 9694,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13068,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 123,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "0746f98c8fba",
+       "latencyMs": 9141,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 17524,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 182,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 19558,
+    "firstReplyMs": 19558,
+    "plannerMs": 18835,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 30592,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 305,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "direct-card-refund-request",
+   "category": "direct",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Refund Rosa Ito's last payment back to her card",
+     "status": "done",
+     "reply": "Done: Create refund request.",
+     "offered": [
+      "M33.A01",
+      "M33.A09",
+      "M33.A04",
+      "M33.A06",
+      "M33.A08",
+      "M29.A08",
+      "M33.A05",
+      "M29.A03",
+      "M32.A09",
+      "M29.A07",
+      "M29.A01",
+      "M29.A10",
+      "M29.A04",
+      "M28.A06",
+      "M33.A03",
+      "M01.A02",
+      "M01.A03",
+      "M33.A07",
+      "M29.A06",
+      "M28.A03",
+      "M47.A01",
+      "M47.A02",
+      "M29.A02",
+      "M33.A02",
+      "M33.A10",
+      "M29.A05",
+      "M47.A08",
+      "M29.A09",
+      "M28.A08",
+      "M28.A02",
+      "M47.A09",
+      "M45.A01",
+      "M47.A03",
+      "M45.A02",
+      "M47.A07",
+      "M03.A01",
+      "M06.A01",
+      "M03.A02",
+      "M06.A02",
+      "M46.A02",
+      "M30.A02",
+      "M48.A03",
+      "M45.A04"
+     ],
+     "planned": [
+      "M29.A06",
+      "M33.A01"
+     ],
+     "calls": [
+      {
+       "action": "M29.A06",
+       "args": {
+        "contactId": "ct_1",
+        "status": "succeeded",
+        "method": "card"
+       }
+      },
+      {
+       "action": "M33.A01",
+       "args": {
+        "paymentId": "pay_1"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Find Rosa Ito's latest payment, then create a refund request for that payment specifying card as the refund method, if supported. Current actions can locate payments and request refunds but do not identify or control the refund payment method.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "I can request a refund for Rosa Ito’s latest succeeded card payment. Should I request the full refundable balance?",
+        "options": [
+         "Yes, request the full refundable balance",
+         "No, I’ll specify an amount"
+        ],
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M33.A01"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": "choice",
+        "lookup": null,
+        "missing": {
+         "action": "M33.A01",
+         "argument": "amount",
+         "argsJson": "{\"paymentId\":{\"$lookup\":{\"entity\":\"payment\",\"name\":\"Rosa Ito's last payment\"}}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair clarification binding",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "contact",
+          "name": "Rosa Ito",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M29.A06",
+          "argsJson": "{\"contactId\":\"$s1.id\",\"status\":\"succeeded\",\"method\":\"card\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M33.A01",
+          "argsJson": "{\"paymentId\":\"$s2.items[0].id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M33.A01"
+         ],
+         "destination": null,
+         "leavesOut": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "amount is optional; do not ask for an unspecified optional input"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 26637,
+     "ms": 26637,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "05191aa9d297",
+       "latencyMs": 7436,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13072,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 120,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "5f316dcbb66b",
+       "latencyMs": 9227,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 17813,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 154,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair clarification binding",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "361847b97f89",
+       "promptHash": "795ea7b603d7",
+       "latencyMs": 9804,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 17998,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 179,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 26637,
+    "firstReplyMs": 26637,
+    "plannerMs": 26467,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 48883,
+     "cachedRead": 19968,
+     "cacheWrite": 0,
+     "output": 453,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

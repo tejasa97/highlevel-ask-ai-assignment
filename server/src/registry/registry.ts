@@ -27,6 +27,9 @@ export type Resolver = ((store: Store, name: string, where?: LookupWhere) => Can
   exactMention?: boolean;
   /** At least one of these parent qualifiers must be supplied for child lookup. */
   parentQualifiers?: readonly string[];
+  /** People: a write binds only on an id, an email or the exact name, never on part of a name ("Sarah" for the one
+   *  Sarah on file). Other records are described more than named, so a write binds the one that holds every word said. */
+  strictNames?: boolean;
 };
 
 export interface ModuleExports {

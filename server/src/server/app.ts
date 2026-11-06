@@ -1,5 +1,5 @@
 // The HTTP app behind the web UI: one chat over one database, with everything the debug view needs.
-// POST /api/ask and /api/confirm stream the turn as server-sent events; the rest is plain JSON.
+// POST /api/ask, /api/confirm and /api/clarify stream the turn as server-sent events; the rest is plain JSON.
 // index.ts wires it to the dev database and a real planner; the tests wire it to a scripted one.
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { Planner, Tier } from "../planner/types.js";
@@ -76,6 +76,12 @@ export function createApp({ registry, planner, retriever, openWorld }: AppDeps):
       if (req.method === "POST" && path === "/api/confirm") {
         const b = await body(req);
         return stream(res, (emit) => chat.confirm(String(b.turnId), b.approve === true, String(b.actorId ?? DEFAULT_ACTOR), emit));
+      }
+      // A click on an option of a record question: its id and one opaque option token, or `none` for "none of these".
+      if (req.method === "POST" && path === "/api/clarify") {
+        const b = await body(req);
+        if (typeof b.clarificationId !== "string" || (b.none !== true && typeof b.optionToken !== "string")) return json(res, 400, { error: "clarificationId and optionToken (or none) are required" });
+        return stream(res, (emit) => chat.choose(b.clarificationId as string, b.none === true ? null : (b.optionToken as string), String(b.actorId ?? DEFAULT_ACTOR), emit));
       }
       if (req.method === "GET" && path === "/api/meta") {
         return json(res, 200, {
