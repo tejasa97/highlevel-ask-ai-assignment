@@ -165,6 +165,7 @@ The last full Luna runs turned up these. The first was a real wrong write: a con
 - Funnel steps resolve by name within their funnel, through a `funnel_step` lookup on the step actions.
 - Records resolve by their own id as well as by name, and the custom-field and membership actions declare what type each id argument takes.
 - Prompt rule: a meeting or ticket called by whose it is ("Sarah Johnson's walkthrough") is resolved as that record, without looking the person up first.
+- An answer the turn rejects for having nothing to answer from no longer holds the plan that replaces it to reading: the read outcome it declared goes with it.
 - Action wording: recording a payment sets `invoiceId` when the request mentions an invoice, and "the Facebook campaign" is the lead source `facebook_ads`, with no condition on `campaignId`.
 
 `brief-heldout-quiet-leads` and `brief-heldout-new-leads` were read as failures during this work, so they are development signal now rather than hold-outs. Nothing was tuned against their wording.

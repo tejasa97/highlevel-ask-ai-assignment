@@ -30,6 +30,17 @@ describe("model-independent named arguments", () => {
     assert.ok(ctx.store.get<{ lastRunAt: string }>("saved_reports", report.id)?.lastRunAt);
   });
 
+  test("a custom field value takes the record by name, whichever record type the field belongs to", async () => {
+    const ctx = world();
+    const field = ctx.f.customField();
+    const contact = ctx.f.contact({ firstName: "Zelda", lastName: "Quillfeather" });
+    const p = compiled(plan([action("set", "M10.A09", { fieldId: field.id, recordId: lookup("contact", "Zelda Quillfeather"), value: "2027-03-01" })]), new Set(["M10.A09"]));
+    assert.deepEqual(p.steps.map((s) => s.kind), ["resolve", "action"]);
+    const r = await execute(p, registry, ctx, { executionId: "cfv-lookup" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps));
+    assert.ok(ctx.store.all<{ recordId: string }>("custom_field_values").some((v) => v.recordId === contact.id));
+  });
+
   test("zero matches fails without creating a replacement or writing", async () => {
     const ctx = world();
     const before = ctx.store.all("saved_reports");
