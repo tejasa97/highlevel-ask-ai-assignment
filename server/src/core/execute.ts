@@ -214,45 +214,11 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
     }
     return undefined;
   };
-  /**
-   * A read that lists records, given a list where it takes one id, when no search by name found them ("conversations of
-   * $s1.items[*].id", the leads a date-range search found): the planner meant the read for each. Asking "which one?" of
-   * them would be asking about a choice nobody made.
-   */
-  const fannedOut = (call: Call): { arg: string; values: unknown[] } | undefined => {
-    const at = call.one?.length === 1 && call.one[0]!.length === 1 ? String(call.one[0]![0]) : undefined;
-    if (!at || call.action.risk !== "read" || !("items" in ((call.action.output as { shape?: object }).shape ?? {}))) return undefined;
-    const raw = call.args[at] as string;
-    if (searched.has(rootOf(raw))) return undefined;
-    const values = asList(refValue(raw), raw);
-    return values.length > 1 ? { arg: at, values } : undefined;
-  };
   // Looping a change over a search for one name that found several records with exactly that name.
   const sameNamed = (raw: string, list: unknown[]) => {
     const c = several(raw);
     if (!c || !/\.items$/.test(raw)) return undefined;
     return list.filter((x) => norm(labelOf(x) ?? "") === norm(c.name)).length >= 2 ? c : undefined;
-  };
-  /** Fills each arg the compiler marked as one value of a list, or says why the list doesn't hold exactly one. */
-  const onlyOne = (call: Call): { call: Call } | { error: StepError } | { ask: Clarification } => {
-    if (!call.one?.length) return { call };
-    const args = structuredClone(call.args);
-    for (const at of call.one) {
-      const parent = at.slice(0, -1).reduce<any>((o, k) => o[k], args);
-      const raw = parent[at.at(-1)!] as string;
-      const values = asList(refValue(raw), raw);
-      if (values.length === 1) {
-        parent[at.at(-1)!] = values[0];
-        continue;
-      }
-      if (values.length === 0) return { error: { code: "NOT_FOUND", message: `${raw} found nothing, so there is no ${at.at(-1)} to ${call.action.name.toLowerCase()} with` } };
-      const ref = parseRef(raw)!;
-      const items = asList(valueAt(outputs.get(ref.root), ref.path.slice(0, ref.path.findIndex((p) => "all" in p)), `$${ref.root}`), raw);
-      const candidates = candidatesOf(items.slice(0, 20));
-      const search = searched.get(ref.root);
-      return { ask: { stepId: ref.root, entity: search?.entity ?? call.action.entities?.consumes?.[0] ?? "record", name: search?.query ?? String(at.at(-1)), candidates } };
-    }
-    return { call: { ...call, args } };
   };
   const rootOf = (raw: string) => parseRef(raw)?.root ?? "";
   /**
@@ -416,38 +382,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
         }
 
         case "action": {
-          const fan = fannedOut(step.call);
-          if (fan) {
-            const pages: unknown[] = [];
-            let failure: StepError | undefined;
-            for (const [i, v] of fan.values.entries()) {
-              const call: Call = { action: step.call.action, args: { ...step.call.args, [fan.arg]: v } };
-              const a = concreteArgs(call, lookup());
-              if (!a.ok) {
-                failure = a.error;
-                break;
-              }
-              const r = runItem(ctx, opts.executionId, step.id, String(i), [{ call, args: a.value }]);
-              if (r.status === "failed") {
-                failure = r.error!;
-                break;
-              }
-              pages.push(r.results![0]);
-            }
-            if (failure) fail(failure);
-            else {
-              const items = pages.flatMap((x) => (isPage(x) ? x.items : []));
-              done({ items, total: items.length });
-            }
-            break;
-          }
-          const single = onlyOne(step.call);
-          if ("ask" in single) return ask(step, single.ask);
-          if ("error" in single) {
-            fail(single.error);
-            break;
-          }
-          const args = concreteArgs(single.call, lookup());
+          const args = concreteArgs(step.call, lookup());
           if (!args.ok) {
             fail(args.error);
             break;
@@ -505,7 +440,7 @@ export async function execute(plan: CompiledPlan, registry: Registry, ctx: Actio
             if (step.call.action.risk === "read" && typeof query === "string" && query.trim()) searched.set(step.id, { query, entity: step.call.action.entities?.produces ?? "record" });
             const out = r.results![0];
             if (writeFeeds.has(step.id) && isPage(out) && out.total > out.items.length) cuts.set(step.id, { search: step.id, loaded: out.items.length, total: out.total, asked: !widened });
-            done(r.results![0], { ...(r.replayed ? { items: [r] } : {}), ...(cut ? { capped: cut } : {}) });
+            done(r.results![0], cut ? { capped: cut } : {});
           }
           break;
         }

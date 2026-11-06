@@ -266,6 +266,7 @@ const setValue = defineAction({
   output: CustomFieldValue,
   siblings: ["M09.A05", "M01.A04"],
   entities: { consumes: ["custom_field"] },
+  idTypes: { recordId: ["contact", "lead", "opportunity", "company"] },
   example: (f) => ({ fieldId: f.customField().id, recordId: f.contact().id, value: "hello" }),
   handler: (a, { store, clock }) => {
     const field = mustGet<CustomField>(store, "custom_fields", a.fieldId, "custom field");

@@ -8,7 +8,7 @@ export function card(a: RegisteredAction): string {
     (a.typedIds ? ` named IDs by record type ${JSON.stringify(a.typedIds)}` : "") +
     (a.idTypes ? ` ID record types ${JSON.stringify(a.idTypes)}` : "");
   const alternatives = a.inputAlternatives ? ` requires one input group ${JSON.stringify(a.inputAlternatives)}` : "";
-  const first = a.requires?.length ? ` runs only after ${a.requires.join(", ")} on the same record` : "";
+  const first = a.requires?.length ? ` runs only after ${a.requires.join(", ")} on the same record or one inside it` : "";
   return `${a.id} ${a.name}: ${a.description} args ${sig(a.inputSchema, 0, true)} → ${sig(a.outputSchema, 0, false)}${lookups}${alternatives}${first}`;
 }
 

@@ -6,6 +6,8 @@ All 500 actions are implemented against a simulated backend (SQLite, frozen cloc
 
 **Results** ([BENCHMARK.md](BENCHMARK.md)): 273 scenarios × 3 runs across all 50 modules, on DeepSeek (`deepseek-v4.1-flash-1017` through the Qwen Token Plan). The planner passes 96.9% of runs against 91.6% for a one-call-per-step baseline, with a 1.3 s median direct reply (2.3 s for the baseline), a median of 1 model call per complex task (5 for the baseline), and $0.0043 per successful task ($0.0073) at list rates. One latency target is missed: the direct-reply p95. See [Trade-offs](#latency-cost-and-quality-trade-offs) and [Known limitations](#known-limitations).
 
+**On a small model** ([docs/BENCHMARK-LUNA.md](docs/BENCHMARK-LUNA.md)): GPT-6 Luna at low reasoning passes 98.5% of the 273 scenarios run once each (268/272, plus one provider timeout), at a median of 1 model call per complex task. It misses all four latency targets when called through the Codex CLI (8.6 s median direct reply). See [Luna as the planner](#luna-as-the-planner).
+
 ## Quick start
 
 Needs a Node release with `node:sqlite` (tested on Node 26). Copy `.env.example` to `.env` in the repository root and put a Token Plan key in `QWEN_API_KEY`. Then, in `server/`:
@@ -39,7 +41,7 @@ Each turn is one planner call wrapped in code. The full design is in [docs/PLAN.
 
 1. **Retrieve** (`server/src/retrieval/`, no LLM). BM25 and local embeddings rank about 22 action cards out of 500 (see below). Named records in the message are resolved to typed mentions.
 2. **Plan** (`server/src/planner/`, one LLM call). The model returns a typed JSON plan through `submit_plan`. Steps reference earlier outputs with `$refs`. When the model needs to see data before it can plan, it can return a read-only look first. Each turn allows two looks.
-3. **Validate** (`server/src/core/compile.ts`). Code checks action ids, arguments, refs and required inputs. A plan that fails gets a repair call that sees the errors, and a second one if the first got closer (fewer errors).
+3. **Validate** (`server/src/core/compile.ts`). Code checks action ids, arguments, refs and required inputs. A plan that fails gets a repair call that sees the errors, and a second one if the first got closer (fewer errors, or none of the same ones).
 4. **Execute** (`server/src/core/execute.ts`). A deterministic runner walks the plan's step graph. It runs the registered handlers along with `filter`, `exclude` and `forEach`. If a step fails before anything changed, there is one retry, and that retry sees the failure.
 5. **Summarize** (`server/src/core/summarize.ts`). The reply is built from the step results, not written by the model: the records touched, and which steps completed, failed or are waiting. The one exception is a question about records: after its look, the model writes the verdict (Yes, No, or the number) from what the reads returned, and the looked records are shown under it.
 
@@ -143,6 +145,37 @@ npm run trajectory         # docs/trajectory.html, every recorded planner run ch
 
 Both agents ran at commit `d74874f` on 2026-10-27, over the same scenario files (set `958de2e6710f`). Every run is kept in `eval/results/`, and `eval/results/history.jsonl` lists them; earlier benchmarks (DeepSeek over 86 scenarios, Haiku 5.5 over 23 × 3) are in git history. Each turn's trace (retrieval, planner calls with tokens and latency, every handler call) is in the result files and in the UI's Trace tab.
 
+## Luna as the planner
+
+The aim here is a planner small enough that code carries the load, with a stronger model only for requests the small one fails every time. This run is one pass, on a later commit than the DeepSeek benchmark, so its number doesn't compare directly with DeepSeek's three-run figure.
+
+```bash
+export PLANNER=codex-cli CODEX_MODEL=gpt-6-luna CODEX_FAST_MODEL=gpt-6-luna CODEX_REASONING=low CODEX_FAST_REASONING=low
+npm run eval:scenarios -- --scenario-dir $DIRS --concurrency 2 --label port-ner-release-luna-final
+npm run report -- --label port-ner-release-luna-final --out ../docs/BENCHMARK-LUNA.md
+```
+
+| | GPT-6 Luna, low reasoning |
+|---|---:|
+| Task success | 98.5% (268/272), 1 more run lost to a provider timeout |
+| Action selection | 99.5% (207/208) |
+| Final data correct | 98.9% (264/267) |
+| Direct: first reply p50 / p95 | 8.6 s / 18.9 s (all four latency targets missed) |
+| Complex: end-to-end p50 / p95 | 9.2 s / 33.8 s |
+| Model calls per complex task, median | 1 |
+
+The five scenarios that didn't pass were each rerun three times on the same code (`eval/results/scenarios-port-ner-final-failures.json`). Counts below are passes out of measured runs across both:
+
+| Scenario | Passed | What goes wrong |
+|---|---:|---|
+| `brief-heldout-new-leads` | 1/3 | The vague "help me stay on them" gets one generic task instead of one per new lead. |
+| `brief-heldout-quiet-leads` | 2/4 | A clause is dropped or a filter inverted, so the wrong leads get owners and tasks. The plan is well-formed, so validation can't catch it. |
+| `tickets-from-invoices-messages` | 2/4 | "An inbound reply" becomes email and SMS, one filter after the other. Filters have no "either list", and the run stops with nothing written. |
+| `cov-survey-closed-rejects-response` | 3/4 | It asks for survey answers it was already given, and the turn ends without reaching the "survey is closed" reply. |
+| `report-ticket-reopen` | 3/4 | "Reply" becomes an internal note, so the customer isn't emailed. |
+
+**No scenario fails every time, so none is listed for a stronger fallback model.** A stronger model might still help these five, but that hasn't been measured. The two `brief-heldout-*` scenarios were written as hold-outs. They've now been read as failures during this work, so they count as development signal from here on, and neither was fixed by tuning against it.
+
 ## Latency, cost and quality trade-offs
 
 The targets were committed in [docs/PLAN.md](docs/PLAN.md) on 2026-10-23, before the final runs, and were not relaxed afterwards:
@@ -174,7 +207,9 @@ The targets were committed in [docs/PLAN.md](docs/PLAN.md) on 2026-10-23, before
 - **The direct-reply p95 target is missed:** 4.3 s against 3.0 s. Most of a direct reply is one DeepSeek call, whose speed varies by day.
 - **Multi-step follow-ups are the weak spot.** The brief's suite passes 82.9% of runs for the planner (58.8% for the baseline). Its follow-up "Only include leads from the Facebook campaign, and make those tasks due tomorrow" and the held-out lead-filtering variants fail most. Most of those are model misreads (an inverted filter, a filter read as a field update) that the validator can't catch because the plan is well-formed; one run ended with a plan still invalid after repair. Two question scenarios fail on the reply's wording (a missing leading "no"), not on the data.
 - **Known misses are recorded, not patched.** BENCHMARK.md lists [every failing run](BENCHMARK.md#every-failing-run); no scenario was edited to pass.
-- **The final benchmark is one model.** It ran on DeepSeek only. Earlier Haiku, GPT-6.1 Sol and GPT-6 Luna numbers are on different scenario sets and commits, so they don't compare with it.
+- **The two benchmarks don't compare directly.** DeepSeek's is three runs per scenario, against a baseline, at `d74874f`. [Luna's](docs/BENCHMARK-LUNA.md) is one run per scenario, with no baseline, on later code and a changed scenario set. Earlier Haiku and GPT-6.1 Sol numbers are on other sets and commits too.
+- **Luna through the Codex CLI is slow.** It misses all four latency targets (8.6 s median direct reply against 1.5 s). These numbers don't separate the CLI's overhead from the model's own time.
+- **A filter can't say "in either list".** Conditions chain as "and", so a request satisfied by an email or an SMS can filter down to nothing. That stops with nothing written, but the task isn't done.
 - **Cost is unknown on subscription planners.** The Claude and Codex CLIs and the prepaid Token Plan report no USD cost; the figures here come from list rates.
 - **Retrieval can miss.** Hybrid recall@15 is 97.6%, so about 1 question in 40 doesn't get the right card into the shortlist. The planner can ask for another retrieval round (`search_tools`, up to twice), but it can't use an action it never sees.
 - **Each turn is bounded.** A turn gets two looks, two `search_tools` rounds, one compile repair (two if the first got closer) and one retry after a failed run, within eight planner calls and 180 seconds. Requests that need longer chains of read-then-decide steps stop with an honest partial reply.

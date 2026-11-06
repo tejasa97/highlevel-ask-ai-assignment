@@ -9,7 +9,7 @@ import { Retriever } from "../retrieval/retrieve.js";
 import { frozenClock } from "../store/clock.js";
 import { world } from "../store/world.js";
 import type { SubmitPlan } from "./submit-plan.js";
-import { carryOf, duplicateCreates, inventedIds, inventedTime, isQuestion, oneOfSameNamed, planTurn, staffInQuery, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
+import { carryOf, duplicateCreates, inventedIds, inventedTime, isQuestion, oneOfSameNamed, planTurn, staffInQuery, stillStands, renameReusedIds, unfilledNamedFields, withLookSteps, type TurnDeps, type TurnEvent } from "./turn.js";
 import { type PlanRequest, type Planner, PlannerError } from "./types.js";
 
 let registry: Registry;
@@ -323,7 +323,15 @@ describe("grounded outcomes and clarifications", () => {
     assert.equal(planner.requests.length, 2);
   });
 
-  test("a plan gets a second repair only when the first left fewer errors", async () => {
+  test("a plan gets a second repair when the first fixed its errors and met a new one", async () => {
+    const first = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$nope" }) }], outcome: change });
+    const other = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "Call Ana", color: "red" }) }], outcome: change });
+    const planner = scripted(first, other, createTask());
+    assert.equal((await run("Create a task", planner)).out.kind, "plan");
+    assert.equal(planner.requests.length, 3);
+  });
+
+  test("a plan gets a second repair only when it got closer", async () => {
     const two = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$nope", color: "red" }) }], outcome: change });
     const one = reply({ steps: [{ id: "s1", kind: "action", action: "M06.A01", argsJson: JSON.stringify({ title: "$nope" }) }], outcome: change });
     const closer = scripted(two, one, createTask());
@@ -778,6 +786,23 @@ describe("planTurn", () => {
     assert.match(events.flatMap((e) => (e.type === "retrieval" ? [e.data.query] : []))[1]!, /create a task to call Ana/);
   });
 
+  test("what an unsupported reply says it can do doesn't hold the plan after its search to that", async () => {
+    const drafts = { effect: "change" as const, actions: ["M40.A01", "M41.A01"], destination: null };
+    const publish = reply({
+      steps: [
+        { id: "s1", kind: "action", action: "M40.A01", argsJson: JSON.stringify({ title: "Sales 101" }) },
+        { id: "s2", kind: "action", action: "M41.A01", argsJson: JSON.stringify({ courseId: "$s1.id", title: "Cold Calling Basics" }) },
+        { id: "s3", kind: "action", action: "M41.A09", argsJson: JSON.stringify({ lessonId: "$s2.id" }) },
+        { id: "s4", kind: "action", action: "M40.A09", argsJson: JSON.stringify({ courseId: "$s1.id" }) },
+      ],
+      outcome: { ...drafts, actions: [...drafts.actions, "M41.A09", "M40.A09"] },
+    });
+    const planner = scripted(reply({ type: "unsupported", reason: "Publishing a course requires a published lesson first, and I can't publish a new lesson.", outcome: drafts }), publish);
+    const { out } = await run("Build a course called Sales 101 with a lesson called Cold Calling Basics and publish it", planner);
+    assert.equal(out.kind, "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+  });
+
   test("an unsupported reply stands once the extra retrieval has been spent", async () => {
     const planner = scripted(reply({ type: "search_tools", query: "x" }), reply({ type: "unsupported", reason: "No." }));
     const { out } = await run("have Ana join the follow-up", planner);
@@ -1059,6 +1084,17 @@ describe("planTurn", () => {
     assert.equal(told.requests.length, 1);
   });
 
+  test("a rejected answer's read outcome doesn't hold the plan that replaces it to reading", async () => {
+    // "The deal is now worth $X" answered as prose with a read outcome, then planned as the change it is.
+    const read = { effect: "read" as const, actions: [] as string[], destination: null };
+    const change = { effect: "change" as const, actions: ["M06.A01"], destination: null };
+    const answer = reply({ type: "answer", text: "There is no request to act on here.", outcome: read });
+    const planner = scripted(answer, { ...createTask(), outcome: change });
+    const { out } = await run("Ana's task is now due tomorrow", planner);
+    assert.ok(out.kind === "plan", JSON.stringify(out));
+    assert.equal(planner.requests.length, 2);
+  });
+
   test("the prompt offers the product and invoice actions for adding a product to an invoice", async () => {
     const planner = scripted(reply({ type: "unsupported", reason: "x" }), reply({ type: "unsupported", reason: "x" }));
     await run("add a product called Gold Plan to Priya's invoice", planner);
@@ -1298,5 +1334,30 @@ describe("planner debug log", () => {
     delete process.env.PLANNER_DEBUG;
     const { events } = await run("Add a task to call Ana", scripted(createTask()));
     assert.ok(!events.some((e) => e.type === "planner.debug"));
+  });
+});
+
+describe("an amending plan and what the last turn already ran", () => {
+  const made = [{ id: "tk_1", entity: "task", action: "M06.A01", key: "ld_1", args: {} }] as never;
+  const carry = { prev: ["M03.A05", "M06.A01"], entities: ["lead", "task"], made: ["task"] };
+  const plan = (action: string, args: object) => {
+    const r = compile({ type: "plan", steps: [{ id: "s1", kind: "action", action, argsJson: JSON.stringify(args) }], question: null, options: null, reason: null, alternatives: null, query: null, text: null }, registry);
+    assert.ok(r.ok);
+    return r.plan;
+  };
+  const due = () => plan("M06.A06", { taskId: "tk_1", dueDate: "2026-10-28" });
+
+  test("editing the last turn's records leaves the rest of that turn standing", () => {
+    assert.deepEqual(stillStands(due(), { carry, made, message: "Actually, just the Facebook ones, due tomorrow." }, registry), ["M03.A05", "M06.A01"]);
+  });
+
+  test("an operation the message names again is still required", () => {
+    assert.deepEqual(stillStands(due(), { carry, made, message: "Reassign them to Bob instead, due tomorrow." }, registry), ["M06.A01"]);
+    assert.deepEqual(stillStands(due(), { carry, made, message: "Also add one for Ana." }, registry), []);
+  });
+
+  test("a plan that doesn't touch those records spares nothing", () => {
+    assert.deepEqual(stillStands(plan("M06.A03", {}), { carry, made, message: "Assign them to Bob" }, registry), []);
+    assert.deepEqual(stillStands(plan("M03.A04", { leadId: "ld_1", status: "contacted" }), { carry, made, message: "Mark them contacted" }, registry), []);
   });
 });

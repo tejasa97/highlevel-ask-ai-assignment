@@ -175,6 +175,7 @@ const addEntitlement = defineAction({
   input: z.strictObject({ planId: PlanId, type: z.enum(ENTITLEMENT_TYPES), targetId: z.string() }),
   output: MembershipPlan,
   entities: { consumes: ["membership_plan"] },
+  typedIds: { targetId: "type" },
   example: (f) => ({ planId: f.membershipPlan().id, type: "course", targetId: f.course().id }),
   handler: (a, { store, clock }) => {
     const p = editablePlan(store, a.planId);
@@ -196,6 +197,7 @@ const removeEntitlement = defineAction({
   input: z.strictObject({ planId: PlanId, type: z.enum(ENTITLEMENT_TYPES), targetId: z.string() }),
   output: MembershipPlan,
   entities: { consumes: ["membership_plan"] },
+  typedIds: { targetId: "type" },
   example: (f) => {
     const course = f.course();
     const plan = f.membershipPlan({ entitlements: [{ type: "course", targetId: course.id }] });

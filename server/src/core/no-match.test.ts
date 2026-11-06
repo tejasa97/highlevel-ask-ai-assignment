@@ -135,3 +135,22 @@ test("a second miss ends the turn rather than calling the planner again", async 
   assert.equal(status, "failed");
   w.store.close();
 });
+
+test("a revision that failed before changing anything still knows what the last turn made", async () => {
+  const w = world();
+  const create = (dueDate?: string) => action("s2", "M06.A01", { title: "Follow up", relatedTo: { type: "lead", id: "ld_1" }, ...(dueDate ? { dueDate } : {}) });
+  // The retried plan creates the same lead's task again, which edits the one the first turn made.
+  const replies = [wire([create()]), wire([action("s1", "M06.A03", { query: "Unmatched fixture wording" }), action("s2", "M06.A01", { title: "$s1.items[0].title", relatedTo: { type: "lead", id: "ld_1" }, dueDate: "2026-12-01" })]), wire([create("2026-12-01")])];
+  const planner: Planner = { name: "scripted", plan: async () => {
+    const json = replies.shift(); assert.ok(json);
+    return { model: "fake", json, text: JSON.stringify(json), usage: { input: 0, output: 0, cachedRead: 0, cacheWrite: 0, thinking: 0, costUsd: 0, billing: "none" }, latencyMs: 0, attempts: 1 } as never;
+  } };
+  const chat = new Conversation({ registry, planner, retriever: new Retriever(buildCards(registry)) }, w);
+  await chat.ask("Add a follow up task for lead ld_1", "fast", "us_1", () => {});
+  await chat.ask("Make it due 2026-12-01", "fast", "us_1", () => {});
+  assert.equal(replies.length, 0);
+  const tasks = w.store.all<{ title: string; dueDate?: string; relatedTo?: { id: string } }>("tasks").filter((t) => t.title === "Follow up" && t.relatedTo?.id === "ld_1");
+  assert.equal(tasks.length, 1);
+  assert.equal(tasks[0]!.dueDate, "2026-12-01");
+  w.store.close();
+});

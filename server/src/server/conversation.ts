@@ -271,7 +271,8 @@ export class Conversation {
     emit("run", { status: result.status, ms: Math.round(performance.now() - t), steps: result.steps });
     this.records = rememberRecords(this.records, turn.plan, result);
     const made = turn.prior === undefined ? madeBy(turn.plan, result, this.deps.registry) : [];
-    if (made.length || turn.revise) this.made = made;
+    // A revision replaces what the last turn made once it has run; one that failed or waits for approval leaves it in place.
+    if (made.length || (turn.revise && result.status === "done")) this.made = made;
     if (made.length) this.madeFrom = turn.from;
     const audit = store.audit();
     emit("diff", { changes: diff(before, store), audit: audit.slice(0, audit.length - auditBefore) });

@@ -39,8 +39,11 @@ export function outcomeErrors(plan: CompiledPlan, outcome?: Outcome, request?: {
   // A destination says where a record would go, not that it goes now: "draft reminders" for email stays a draft.
   const sendAsked = !!request && SEND.test(request.message) && !HOLD.test(request.message);
   const deliver = !!request && (sendAsked || (!!outcome.destination && !DRAFT.test(request.message)));
+  // "Build a course with a lesson and publish it": publishing the course takes publishing the lesson this plan just made.
+  const neededFirst = (a: RegisteredAction) => outcome.actions.some((id) => actionOf(id)?.requires?.includes(a.id))
+    && calls.some((c) => c.risk !== "read" && !!c.entities?.produces && !c.entities.consumes?.includes(c.entities.produces) && !!a.entities?.consumes?.includes(c.entities.produces));
   if (request && !deliver) for (const a of calls) {
-    if (a.destination && !outcome.actions.includes(a.id)) errors.push(`${a.id} sends to ${a.destination.label}, but the request doesn't ask to send anything; leave out ${a.id} and keep what was made unsent`);
+    if (a.destination && !outcome.actions.includes(a.id) && !neededFirst(a)) errors.push(`${a.id} sends to ${a.destination.label}, but the request doesn't ask to send anything; leave out ${a.id} and keep what was made unsent`);
   }
   if (request && deliver && !calls.some((a) => a.destination)) {
     // "Send a review request" planned as only creating one: the record exists, but nothing went out.

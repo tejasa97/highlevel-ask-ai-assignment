@@ -22,8 +22,6 @@ const idArg = (entity: string) => `${entity.replace(/_(\w)/g, (_, c: string) => 
 export interface Call {
   action: RegisteredAction;
   args: Record<string, unknown>;
-  /** Arg paths filled from a list ("$s2.items[*].id") that must hold exactly one value when the step runs. */
-  one?: (string | number)[][];
 }
 
 export type CStep = { id: string; deps: string[]; type: JsonSchema } & (
@@ -170,6 +168,10 @@ export function compile(plan: SubmitPlan, registry: Registry, offered?: Readonly
         }
         const literal = s.op === "forEach" ? literalList(oneRecord(s.in, kinds), err) : undefined;
         if (literal === null) continue;
+        if (literal && hasWhere(s.whereJson)) {
+          err(`whereJson can't narrow a written-out list: list only the items this step is for`);
+          continue;
+        }
         const inType = literal ? writtenList(literal, scope, `"in"`, err) : listRef(s.in as string, scope, `"in"`, err);
         if (!inType) continue;
         const item = (unwrap(inType).items ?? ANY) as JsonSchema;
@@ -416,7 +418,7 @@ function rootType(ref: Ref, scope: Scope, err: (m: string) => void): JsonSchema 
       const people = [...scope.ents].filter(([id, e]) => e === "user" && scope.types.get(id)).at(-1)?.[0];
       err(
         ref.root === "item"
-          ? `$item only works inside forEach "do"; the action that runs once per item belongs in that "do", and a step after the loop reads what it made with "$sN[*].results[0].<field>"`
+          ? `$item only works inside forEach "do"; make this step an op forEach, with "in" the list it runs over and this call in its "do", and a step after the loop reads what it made with "$sN[*].results[0].<field>"`
           : `$rr needs "roundRobin" on the forEach: set it to the list to rotate through${people ? `, like "$${people}.items[*].id" (the people $${people} returned)` : `, a $ref like "$s1.items[*].id"`}, or write the ids out as a JSON array`,
       );
     }
@@ -479,9 +481,16 @@ type RawStep = NonNullable<SubmitPlan["steps"]>[number];
  * - a filter with no condition that no step reads does nothing, so it goes;
  * - a step that reads a step listed after it runs after it: the plan is a graph, so the order it was written in is not
  *   the order it must run in. A cycle is left for compile to report.
+ * - a condition on a forEach or exclude becomes a filter ahead of it. It used to be dropped, so a write meant for the
+ *   Sales team ran for every team.
  */
 export function tidy(steps: RawStep[]): RawStep[] {
-  const out = steps.map((s) => {
+  const narrowed = steps.flatMap((s): RawStep[] =>
+    s.kind === "op" && s.op !== "filter" && hasWhere(s.whereJson) && typeof s.in === "string" && s.in.startsWith("$")
+      ? [{ id: `${s.id}_where`, kind: "op", op: "filter", in: s.in, whereJson: s.whereJson, by: null, set: null, roundRobin: null, do: null }, { ...s, in: `$${s.id}_where`, whereJson: null }]
+      : [s],
+  );
+  const out = narrowed.map((s) => {
     if (s.kind === "op" && s.op === "exclude" && s.by && s.set) {
       const written = literalList(s.set, () => {}, "set");
       if (written) return { ...s, op: "filter" as const, whereJson: JSON.stringify({ [s.by]: { nin: written } }), by: null, set: null };
@@ -633,6 +642,25 @@ function checkWhere(where: Record<string, unknown>, item: JsonSchema, scope: Sco
   }
 }
 
+const hasWhere = (json: string | null | undefined) => !!json?.trim() && json.replace(/\s/g, "") !== "{}";
+
+/** The closing brackets a JSON text ends without, innermost first. Told only "invalid", a small model resends the same text. */
+function unclosed(s: string): string {
+  const open: string[] = [];
+  let inString = false;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i]!;
+    if (inString) {
+      if (ch === "\\") i++;
+      else if (ch === '"') inString = false;
+    } else if (ch === '"') inString = true;
+    else if (ch === "{") open.push("}");
+    else if (ch === "[") open.push("]");
+    else if (ch === "}" || ch === "]") open.pop();
+  }
+  return inString ? "" : open.reverse().join("");
+}
+
 function parseObject(s: string | null, what: string, err: (m: string) => void): Record<string, unknown> | null {
   if (s === null) {
     err(`${what} is required here`);
@@ -644,7 +672,8 @@ function parseObject(s: string | null, what: string, err: (m: string) => void): 
     if (v && typeof v === "object" && !Array.isArray(v)) return v as Record<string, unknown>;
   } catch (e) {
     // The parser's message names the position, which a stray brace past the 80-character excerpt needs.
-    why = ` (not valid JSON: ${(e as Error).message})`;
+    const open = unclosed(s);
+    why = ` (not valid JSON: ${(e as Error).message}${open ? `; it ends with brackets still open: close them with ${JSON.stringify(open)}, each where its object or list really ends` : ""})`;
   }
   const quoted = JSON.stringify(s);
   err(`${what} must be a JSON object string${why}, got ${quoted.slice(0, 80)}${quoted.length > 80 ? `…${JSON.stringify(s.slice(-20))}` : ""}`);
@@ -679,7 +708,6 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
 
   // Refs: each must type-check, and its shape must fit the arg it fills.
   const refs = collectRefs(args);
-  const one: (string | number)[][] = [];
   let ok = true;
   for (const r of refs) {
     if (r.template) {
@@ -693,17 +721,10 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
     }
     const want = schemaAt(action.inputSchema, r.at);
     const [have, need] = [kindOf(t), want ? kindOf(want) : "any"];
-    if (have === "array" && need === "scalar" && oneOf(r.ref, t, scope)) {
-      // "the overdue invoice" planned as a search: the step runs only if the search found exactly one.
-      one.push(r.at);
-      continue;
-    }
     if (have !== "any" && need !== "any" && have !== need) {
-      // A search's records where one id belongs: the one-match form is the fix, not [0].
-      const records = have === "array" && need === "scalar" && !r.ref.includes("[") && !!((unwrap(t).items as JsonSchema | undefined)?.properties as Record<string, unknown> | undefined)?.id;
       err(
         `${id} arg ${r.at.join(".")} needs a ${need === "scalar" ? "single value" : need}, but ${r.ref} is ${have === "scalar" ? "a single value" : `a ${have === "array" ? "list" : have}`}` +
-          (records ? `; write ${r.ref}[*].id to use the one record it finds (the step runs only when exactly one matched)` : ""),
+          (have === "array" && need === "scalar" ? `; a record the user named is a $lookup in this arg, not a search; for every record in the list, run ${id} in a forEach step with the arg set to "$item.id" (a read's results are collected in "$sN[*].results[k]")${listsAll(action, r.at) ? `; simpler, ${id} without ${r.at[0]} lists them all, once, for a filter or exclude on its items' ${r.at[0]}` : ""}` : ""),
       );
       ok = false;
       continue;
@@ -744,15 +765,7 @@ function compileCall(id: string, argsJson: string, registry: Registry, scope: Sc
     err(`${id} needs one of these input groups: ${groups.map((g) => g.join(" + ")).join(" or ")}`);
     ok = false;
   }
-  return ok ? { action, args, ...(one.length ? { one } : {}) } : null;
-}
-
-/** A top-level step's ref that picks one field from each item of an earlier step's list. */
-function oneOf(raw: string, t: JsonSchema, scope: Scope): boolean {
-  const ref = parseRef(raw);
-  if (!ref || RESERVED_ROOTS.has(ref.root) || scope.item || ref.path.filter((p) => "all" in p).length !== 1) return false;
-  const items = unwrap(t).items as JsonSchema | undefined;
-  return !!items && kindOf(items) === "scalar";
+  return ok ? { action, args } : null;
 }
 
 /** For an unknown argument name: the action's real argument names, and the closest one. */
@@ -763,6 +776,14 @@ function hint(issue: z.core.$ZodIssue, at: string, schema: JsonSchema): string {
   if (!names.length) return "";
   const close = issue.keys.map((k) => names.find((n) => n.toLowerCase() === k.toLowerCase() || n.toLowerCase().startsWith(k.toLowerCase()) || k.toLowerCase().startsWith(n.toLowerCase()))).filter((n): n is string => !!n);
   return `; arguments: ${names.join(", ")}${close.length ? `; did you mean ${[...new Set(close)].join(" or ")}?` : ""}`;
+}
+
+/** A read that lists records, whose optional arg only narrows the list by a field of those records. */
+function listsAll(action: RegisteredAction, at: (string | number)[]): boolean {
+  const arg = at[0];
+  if (action.risk !== "read" || at.length !== 1 || typeof arg !== "string") return false;
+  const items = schemaAt(action.outputSchema, ["items", 0]);
+  return !!items && !!schemaAt(items, [arg]) && !((unwrap(action.inputSchema).required ?? []) as string[]).includes(arg);
 }
 
 function schemaAt(s: JsonSchema, at: (string | number)[]): JsonSchema | null {

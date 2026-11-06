@@ -32,7 +32,54 @@ const op = (id: string, o: "filter" | "exclude" | "forEach", fields: Partial<{ i
 });
 const action = (id: string, action: string, args: unknown): Step => ({ id, kind: "action", action, argsJson: JSON.stringify(args) });
 
+describe("a condition on a step that doesn't filter", () => {
+  test("a forEach's whereJson narrows its list instead of being dropped", () => {
+    const r = compile(plan([
+      action("s1", "M49.A03", {}),
+      op("s2", "forEach", { in: "$s1.items", where: { name: { contains: "Sales" } }, do: [{ action: "M49.A05", args: { teamId: "$item.id", userId: "us_6" } }] }),
+    ]), registry);
+    assert.ok(r.ok, !r.ok ? r.errors.join("\n") : "");
+    const filter = r.plan.steps.find((s) => s.kind === "filter");
+    assert.deepEqual(filter && "where" in filter ? filter.where : null, { name: { contains: "Sales" } });
+    const loop = r.plan.steps.find((s) => s.kind === "forEach");
+    assert.equal(loop && "in" in loop ? loop.in : null, `$${filter!.id}`);
+  });
+
+  test("an exclude's whereJson narrows its list too, and an empty one adds nothing", () => {
+    const steps = (where: unknown) => [action("s1", "M03.A03", {}), action("s2", "M21.A03", {}), op("s3", "exclude", { in: "$s1.items", where, by: "id", set: "$s2.items[*].leadId" })];
+    const narrowed = compile(plan(steps({ status: "new" })), registry);
+    assert.ok(narrowed.ok, !narrowed.ok ? narrowed.errors.join("\n") : "");
+    assert.ok(narrowed.plan.steps.some((s) => s.kind === "filter"));
+    const plain = compile(plan(steps({})), registry);
+    assert.ok(plain.ok, !plain.ok ? plain.errors.join("\n") : "");
+    assert.ok(!plain.plan.steps.some((s) => s.kind === "filter"));
+  });
+
+  test("a written-out list can't be narrowed: the plan is sent back", () => {
+    const r = compile(plan([op("s1", "forEach", { in: ["tm_1", "tm_2"], where: { name: "Sales" }, do: [{ action: "M49.A05", args: { teamId: "$item", userId: "us_6" } }] })]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /can't narrow a written-out list/);
+  });
+});
+
+describe("argsJson that isn't JSON", () => {
+  test("names the brackets it ends without, so a repair doesn't resend the same text", () => {
+    const r = compile(plan([{ id: "s1", kind: "action", action: "M49.A03", argsJson: '{"a":{"b":"}"}' }]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /close them with "}"/);
+  });
+});
+
 describe("forEach over a literal list", () => {
+  test("a field read off what a search returned is told it is on the search's records", () => {
+    const r = compile(plan([
+      op("s1", "forEach", { in: ["ld_1"], do: [{ action: "M21.A03", args: { leadId: "$item" } }] }),
+      op("s2", "forEach", { in: "$s1[*].results[0].leadId", do: [{ action: "M06.A01", args: { title: "$item" } }] }),
+    ]), registry);
+    assert.ok(!r.ok);
+    assert.match(r.errors.join("\n"), /has no field "leadId"; fields: items, total; it is on each record, so use \$s1\[\*\]\.results\[0\]\.items\[\*\]\.leadId/);
+  });
+
   test("a field read off a forEach's items, not its results, is told where the results are", () => {
     const r = compile(plan([
       op("s1", "forEach", { in: ["literal_alpha", "literal_beta"], do: [{ action: "M06.A01", args: { title: "$item" } }] }),
@@ -282,6 +329,20 @@ describe("ref errors name the legal steps", () => {
     const read = compile(plan([action("s1", "M03.A03", {}), op("s2", "filter", { in: "$s1.items[*].id" }), op("s3", "filter", { in: "$s1.items", where: { id: { in: "$s2" } } })]), registry);
     assert.ok(!read.ok);
     assert.match(read.errors.join("\n"), /step s2: a filter needs whereJson.*keeps all of "\$s1\.items\[\*\]\.id": where a step reads \$s2, write that list instead/);
+  });
+
+  test("a list, from a search or a filter, can't fill a single-ID arg: the repair is a $lookup for a named record or a forEach", () => {
+    const hint = /M21\.A03 arg leadId needs a single value, but \$\w+\.items\[\*\]\.id is a list; a record the user named is a \$lookup.*forEach.*"\$item\.id"/;
+    const filtered = compile(plan([action("s1", "M03.A03", {}), op("s2", "filter", { in: "$s1.items", where: { status: "new" } }), action("s3", "M21.A03", { leadId: "$s2.items[*].id" })]), registry);
+    assert.ok(!filtered.ok);
+    assert.match(filtered.errors.join("\n"), hint);
+    const searched = compile(plan([action("s1", "M03.A03", {}), action("s2", "M21.A03", { leadId: "$s1.items[*].id" })]), registry);
+    assert.ok(!searched.ok);
+    assert.match(searched.errors.join("\n"), hint);
+    assert.match(searched.errors.join("\n"), /simpler, M21\.A03 without leadId lists them all/);
+    const write = compile(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: "$s1.items[*].id", ownerId: "us_2" })]), registry);
+    assert.ok(!write.ok);
+    assert.doesNotMatch(write.errors.join("\n"), /simpler/);
   });
 
   test("a {{template}} holding an expression is refused, since nothing in it would be computed", () => {

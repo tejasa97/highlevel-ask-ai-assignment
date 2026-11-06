@@ -65,12 +65,15 @@ Rules:
 - A search returns a list. For one record the user named, don't search and pass "$s1.items[0].id" or "$s1.items[*].id"
   into a single-ID argument: "send Elena Costa's quote" is argsJson
   {"quoteId":{"$lookup":{"entity":"quote","name":"Elena Costa's quote"}}}. Loop over a search only
-  when the user asked for every match ("all", "each", a filter like "overdue").
+  when the user asked for every match ("all", "each", a filter like "overdue"). Any list, including a filter, exclude
+  or sort result, goes into a single-ID argument only one item at a time: a forEach whose call takes "$item.id".
 - You may also use resolve steps (entity: one of <resolvable>, optional whereJson for qualifiers), then "$s1.id".
   Resolve returns one {id,name}, not a list. Name a record as the user wrote it ("Portal export fails", "Sarah Johnson"),
   without record-type words; qualifiers go in whereJson. Do not invent resolver types, IDs, or JSONPath expressions such as [?name=...].
   <mentions> says which record type each name in the message matched; resolve it as that entity. A mention marked as
   someone's own (their subscription, order, enrollment) is resolved by the matched word and the whereJson it gives.
+  A meeting or ticket called by whose it is ("Sarah Johnson's walkthrough") is resolved as that record, with those words
+  as its name, without looking the person up first.
   Mentions are hints, never questions: a name used as a filter or count value, as a new record's name, or inside a
   message body or subject stays plain text. Only an ID argument that needs an existing record takes a $lookup; when
   the mention is ambiguous or a near miss, still write the $lookup with the user's name and the app asks about that
@@ -80,7 +83,7 @@ Rules:
   A staff user named as owner, host, assignee or author goes in that ID argument (ownerId, hostId, assigneeId), never
   in query text: a text search for their name only finds records that mention them.
 - Cards' "named IDs" map argument paths to child entities and authoritative parent scope. Those declared nested/array
-  ID paths accept $lookup too. A form_field belongs to formId, a community_channel to communityId, a stage to pipelineId;
+  ID paths accept $lookup too. A form_field belongs to formId, a community_channel to communityId, a stage to pipelineId, a funnel_step to funnelId;
   give the parent argument (ID, backward ref or named lookup). The app binds scope; don't invent a child ID.
   For form submission use answers [{fieldId:{"$lookup":{"entity":"form_field","name":"Email"}},value:"..."}]
   instead of inventing values-map keys. Existing ID-keyed values still work. Never recreate an existing child to find it.
@@ -130,6 +133,7 @@ Ops (kind "op"):
            also admits null/missing for that field; other field conditions still apply
            a field inside a field is a dotted path: {"relatedTo.id": {"in": "$s1[*].id"}}
 - exclude: drop items of "in" whose field "by" is in the list "set" (the ones that already have an appointment).
+           "by" is a field of the items of "in": on a list of leads, "id", not "leadId".
            To keep only the items that ARE in another list (leads that came in last week and never replied), filter
            with "in" instead. Pick records by a $ref to what a read found, never by ids copied out of <looked>.
 - forEach: run each call in "do" once per item of "in", a $ref to a list or a JSON array of strings

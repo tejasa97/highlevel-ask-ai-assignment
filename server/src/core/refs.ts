@@ -169,7 +169,9 @@ function walkType(schema: JsonSchema, path: Seg[], label: string): { type: JsonS
         if (through) return walkType(cur, [...through, ...path.slice(i + 1)], here);
         // ".items" on the loop's list was read as the list itself, so the path shown leaves it out.
         const at = here.replace(/\.items(?=\[\*\])/g, "");
-        const tip = loop ? ` (a forEach step's output: "item" is the looped value and results[k] what its do[k] call returned, so a field of what do[0] returned is ${at}.results[0].${seg.field}, or ${at}.results[0].items[*].${seg.field} when it returned a list)` : "";
+        // A search returned {items, total}: the field is on its records.
+        const inItems = !loop && !!props.items && fieldsOf((unwrap(props.items).items ?? ANY) as JsonSchema).includes(seg.field);
+        const tip = loop ? ` (a forEach step's output: "item" is the looped value and results[k] what its do[k] call returned, so a field of what do[0] returned is ${at}.results[0].${seg.field}, or ${at}.results[0].items[*].${seg.field} when it returned a list)` : inItems ? `; it is on each record, so use ${at}.items[*].${seg.field}` : "";
         return { error: `${here} has no field "${seg.field}"; fields: ${Object.keys(props).join(", ")}${tip}` };
       }
       cur = next;
@@ -181,6 +183,10 @@ function walkType(schema: JsonSchema, path: Seg[], label: string): { type: JsonS
         cur = ((s.prefixItems as JsonSchema[] | undefined)?.[seg.index] ?? items) as JsonSchema;
         continue;
       }
+      // "results[*]" has one shape per "do" call: what follows must fit one of them, or it reads nothing at run time.
+      const calls = (s.prefixItems ?? []) as JsonSchema[];
+      const tried = calls.map((c) => walkType(c, path.slice(i + 1), `${here}[*]`));
+      if (tried.length && tried.every((t) => "error" in t)) return tried[0]!;
       const rest = walkType(items, path.slice(i + 1), `${here}[*]`);
       if ("error" in rest) return rest;
       // "[*]" twice ("$s2[*].results[0].items[*].leadId") is one flat list, not a list per item.

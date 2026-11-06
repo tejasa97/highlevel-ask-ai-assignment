@@ -62,6 +62,23 @@ describe("model-independent named arguments", () => {
     assert.deepEqual(registry.resolver("contact")!(ctx.store, "Sarah Johnson", { company: "Unknown" }), []);
   });
 
+  test("funnel step names are scoped by funnel, and removing one still asks first", async () => {
+    const ctx = world();
+    const steps = ["Registration", "Thank You"].map((name, i) => ({ id: `st_${i + 1}`, name, landingPageId: null, visits: 0, advanced: 0 }));
+    const funnel = ctx.f.funnel({ name: "Webinar Signup", steps });
+    ctx.f.funnel({ name: "Other", steps: [{ id: "st_9", name: "Registration", landingPageId: null, visits: 0, advanced: 0 }] });
+    const parent = lookup("funnel", "Webinar Signup");
+    const order = compiled(plan([action("order", "M36.A05", { funnelId: parent, stepIds: [lookup("funnel_step", "Thank You"), lookup("funnel_step", "Registration")] })]), new Set(["M36.A05"]));
+    const r = await execute(order, registry, ctx, { executionId: "funnel-order" });
+    assert.equal(r.status, "done");
+    assert.deepEqual(ctx.store.get<{ steps: { name: string }[] }>("funnels", funnel.id)!.steps.map((s) => s.name), ["Thank You", "Registration"]);
+
+    const drop = compiled(plan([action("drop", "M36.A06", { funnelId: parent, stepId: lookup("funnel_step", "Registration") })]), new Set(["M36.A06"]));
+    const paused = await execute(drop, registry, ctx, { executionId: "funnel-drop" });
+    assert.equal(paused.status, "awaiting_confirmation");
+    assert.equal(ctx.store.get<{ steps: unknown[] }>("funnels", funnel.id)!.steps.length, 2);
+  });
+
   test("nested stage names are scoped by pipeline, including references to an earlier resolve", async () => {
     const ctx = world();
     const pipeline = ctx.f.pipeline({ name: "Partners", stages: [{ id: "st_partner", name: "Proposal", probability: 20 }] });
@@ -219,6 +236,35 @@ describe("model-independent named arguments", () => {
     const p = compiled(plan([action("s1", "M45.A09", { reviewId: lookup("review", "rv_2"), body: "Thank you." })]));
     assert.deepEqual(p.steps.map((s) => s.kind), ["action"]);
     assert.equal((p.steps[0] as unknown as { call: { args: { reviewId: string } } }).call.args.reviewId, "rv_2");
+  });
+
+  test("a resolve step given a record's own id finds that record, for a write too", async () => {
+    const ctx = world();
+    const contact = ctx.store.all<{ id: string }>("contacts")[0]!.id;
+    const made = await execute(compiled(plan([action("s1", "M47.A01", { title: "Login loop", body: "Stuck", contactId: contact })])), registry, ctx, { executionId: "by-id-make" });
+    const ticket = (made.steps[0]!.output as { id: string }).id;
+    const r = await execute(compiled(plan([{ id: "s1", kind: "resolve", entity: "ticket", name: ticket, whereJson: null }, action("s2", "M47.A06", { ticketId: "$s1.id", status: "in_progress" })])), registry, ctx, { executionId: "by-id-write" });
+    assert.equal(r.status, "done", JSON.stringify(r.steps));
+    assert.equal(ctx.store.get<{ status: string }>("tickets", ticket)?.status, "in_progress");
+    for (const [entity, table] of [["contact", "contacts"], ["user", "users"]] as const) {
+      const own = ctx.store.all<{ id: string }>(table)[0]!.id;
+      const read = await execute(compiled(plan([{ id: "s1", kind: "resolve", entity, name: own, whereJson: null }])), registry, ctx, { executionId: `by-id-${entity}` });
+      assert.equal(read.status, "done", entity);
+      assert.equal((read.steps[0]!.output as { id: string }).id, own);
+    }
+  });
+
+  test("an ID that can be several kinds of record takes a lookup of any of them, and no other kind", () => {
+    const set = (entity: string) => plan([action("s1", "M10.A09", { fieldId: "cf_1", recordId: lookup(entity, "Sarah Johnson"), value: "x" })]);
+    for (const entity of ["contact", "lead", "opportunity", "company"]) assert.ok(compile(set(entity), registry).ok, entity);
+    const wrong = compile(set("course"), registry);
+    assert.ok(!wrong.ok);
+    assert.match(wrong.errors.join("\n"), /arg recordId: invalid \$lookup/);
+  });
+
+  test("an entitlement's target is looked up as the kind its type names", () => {
+    const add = (type: string) => plan([action("s1", "M44.A05", { planId: "mp_1", type, targetId: lookup(type, "Starter") })]);
+    for (const type of ["course", "community"]) assert.ok(compile(add(type), registry).ok, type);
   });
 
   test("the same name twice with no qualifier asks which one fills the first argument, by its role", async () => {

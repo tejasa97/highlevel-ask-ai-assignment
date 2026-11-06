@@ -1,0 +1,983 @@
+{
+ "summary": {
+  "label": "port-ner-repeat-fix3",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/scenarios,eval/brief-scenarios,eval/param-scenarios,eval/module-scenarios/coverage,eval/module-scenarios/wave1,eval/module-scenarios/m45-m47/development,eval/module-scenarios/m45-m47/reporting,eval/module-scenarios/m45-m47/trails,eval/module-scenarios/questions,eval/module-scenarios/role-ids,eval/policy-scenarios/partial-confirmation",
+  "set": "a056c9d13a64",
+  "tier": "strong",
+  "scenarios": 1,
+  "repeat": 4,
+  "runs": 4,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 100,
+  "allPass": 1,
+  "measured": 1,
+  "flaky": 0,
+  "e2eMs": {
+   "p50": 9103,
+   "p95": 33610
+  },
+  "firstReplyMs": {
+   "p50": 9094,
+   "p95": 33600
+  },
+  "plannerRoundsPerRun": 1.5,
+  "callsPerRun": 4,
+  "clarified": {
+   "runs": 0,
+   "passed": 0
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 42658
+ },
+ "runs": [
+  {
+   "id": "w1-course-build",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a course called Sales 101, add a lesson called Cold Calling Basics to it, and publish the course",
+     "status": "done",
+     "reply": "Done: Create course (Sales 101), already done earlier.\nDone: Create lesson (Cold Calling Basics), already done earlier.\nDone: Publish lesson (Cold Calling Basics), already done earlier.\nDone: Publish course (Sales 101).",
+     "offered": [
+      "M05.A01",
+      "M41.A01",
+      "M40.A09",
+      "M40.A01",
+      "M41.A05",
+      "M40.A10",
+      "M40.A05",
+      "M41.A06",
+      "M42.A01",
+      "M41.A09",
+      "M41.A10",
+      "M40.A07",
+      "M41.A04",
+      "M42.A08",
+      "M42.A10",
+      "M49.A02",
+      "M49.A03",
+      "M04.A01",
+      "M36.A01",
+      "M37.A09",
+      "M38.A09"
+     ],
+     "planned": [
+      "M40.A01",
+      "M41.A01",
+      "M41.A09",
+      "M40.A09"
+     ],
+     "calls": [
+      {
+       "action": "M40.A01",
+       "args": {
+        "title": "Sales 101"
+       }
+      },
+      {
+       "action": "M41.A01",
+       "args": {
+        "courseId": "crs_1",
+        "title": "Cold Calling Basics"
+       }
+      },
+      {
+       "action": "M41.A09",
+       "args": {
+        "lessonId": "lsn_1"
+       }
+      },
+      {
+       "action": "M40.A09",
+       "args": {
+        "courseId": "crs_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M40.A01",
+          "argsJson": "{\"title\":\"Sales 101\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M41.A01",
+          "argsJson": "{\"courseId\":\"$s1.id\",\"title\":\"Cold Calling Basics\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M41.A09",
+          "argsJson": "{\"lessonId\":\"$s2.id\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M40.A09",
+          "argsJson": "{\"courseId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M40.A01",
+          "M41.A01",
+          "M41.A09",
+          "M40.A09"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 8918,
+     "ms": 8925,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "5d694acfc0f7",
+       "promptHash": "ce072d8764d3",
+       "latencyMs": 8828,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12343,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 215,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "f0efb3bde374c3af",
+       "targetsHash": "77bc8344e45fb1cb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M41.A09",
+         "name": "Publish lesson",
+         "args": {
+          "lessonId": "lsn_1"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s4",
+       "planHash": "f0efb3bde374c3af",
+       "targetsHash": "1af3af5e5f93198e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M40.A09",
+         "name": "Publish course",
+         "args": {
+          "courseId": "crs_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8925,
+    "firstReplyMs": 8918,
+    "plannerMs": 8828,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 4,
+    "clarifications": 0,
+    "usage": {
+     "input": 12343,
+     "cachedRead": 0,
+     "cacheWrite": 0,
+     "output": 215,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-course-build",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a course called Sales 101, add a lesson called Cold Calling Basics to it, and publish the course",
+     "status": "done",
+     "reply": "Done: Create course (Sales 101), already done earlier.\nDone: Create lesson (Cold Calling Basics), already done earlier.\nDone: Publish lesson (Cold Calling Basics), already done earlier.\nDone: Publish course (Sales 101).",
+     "offered": [
+      "M05.A01",
+      "M41.A01",
+      "M40.A09",
+      "M40.A01",
+      "M41.A05",
+      "M40.A10",
+      "M40.A05",
+      "M41.A06",
+      "M42.A01",
+      "M41.A09",
+      "M41.A10",
+      "M40.A07",
+      "M41.A04",
+      "M42.A08",
+      "M42.A10",
+      "M49.A02",
+      "M49.A03",
+      "M04.A01",
+      "M36.A01",
+      "M37.A09",
+      "M38.A09"
+     ],
+     "planned": [
+      "M40.A01",
+      "M41.A01",
+      "M41.A09",
+      "M40.A09"
+     ],
+     "calls": [
+      {
+       "action": "M40.A01",
+       "args": {
+        "title": "Sales 101"
+       }
+      },
+      {
+       "action": "M41.A01",
+       "args": {
+        "courseId": "crs_1",
+        "title": "Cold Calling Basics"
+       }
+      },
+      {
+       "action": "M41.A09",
+       "args": {
+        "lessonId": "lsn_1"
+       }
+      },
+      {
+       "action": "M40.A09",
+       "args": {
+        "courseId": "crs_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M40.A01",
+          "argsJson": "{\"title\":\"Sales 101\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M41.A01",
+          "argsJson": "{\"courseId\":\"$s1.id\",\"title\":\"Cold Calling Basics\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M41.A09",
+          "argsJson": "{\"lessonId\":\"$s2.id\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M40.A09",
+          "argsJson": "{\"courseId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M40.A01",
+          "M41.A01",
+          "M41.A09",
+          "M40.A09"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 8962,
+     "ms": 8966,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "5d694acfc0f7",
+       "promptHash": "ce072d8764d3",
+       "latencyMs": 8866,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12339,
+        "cachedRead": 3328,
+        "cacheWrite": 0,
+        "output": 215,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "f0efb3bde374c3af",
+       "targetsHash": "77bc8344e45fb1cb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M41.A09",
+         "name": "Publish lesson",
+         "args": {
+          "lessonId": "lsn_1"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s4",
+       "planHash": "f0efb3bde374c3af",
+       "targetsHash": "1af3af5e5f93198e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M40.A09",
+         "name": "Publish course",
+         "args": {
+          "courseId": "crs_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 8966,
+    "firstReplyMs": 8962,
+    "plannerMs": 8866,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 4,
+    "clarifications": 0,
+    "usage": {
+     "input": 12339,
+     "cachedRead": 3328,
+     "cacheWrite": 0,
+     "output": 215,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-course-build",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a course called Sales 101, add a lesson called Cold Calling Basics to it, and publish the course",
+     "status": "done",
+     "reply": "Done: Create course (Sales 101), already done earlier.\nDone: Create lesson (Cold Calling Basics), already done earlier.\nDone: Publish lesson (Cold Calling Basics), already done earlier.\nDone: Publish course (Sales 101).",
+     "offered": [
+      "M05.A01",
+      "M41.A01",
+      "M40.A09",
+      "M40.A01",
+      "M41.A05",
+      "M40.A10",
+      "M40.A05",
+      "M41.A06",
+      "M42.A01",
+      "M41.A09",
+      "M41.A10",
+      "M40.A07",
+      "M41.A04",
+      "M42.A08",
+      "M42.A10",
+      "M49.A02",
+      "M49.A03",
+      "M04.A01",
+      "M36.A01",
+      "M37.A09",
+      "M38.A09"
+     ],
+     "planned": [
+      "M40.A01",
+      "M41.A01",
+      "M41.A09",
+      "M40.A09"
+     ],
+     "calls": [
+      {
+       "action": "M40.A01",
+       "args": {
+        "title": "Sales 101"
+       }
+      },
+      {
+       "action": "M41.A01",
+       "args": {
+        "courseId": "crs_1",
+        "title": "Cold Calling Basics"
+       }
+      },
+      {
+       "action": "M41.A09",
+       "args": {
+        "lessonId": "lsn_1"
+       }
+      },
+      {
+       "action": "M40.A09",
+       "args": {
+        "courseId": "crs_1"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M40.A01",
+          "argsJson": "{\"title\":\"Sales 101\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M41.A01",
+          "argsJson": "{\"courseId\":\"$s1.id\",\"title\":\"Cold Calling Basics\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M41.A09",
+          "argsJson": "{\"lessonId\":\"$s2.id\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M40.A09",
+          "argsJson": "{\"courseId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M40.A01",
+          "M41.A01",
+          "M41.A09",
+          "M40.A09"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 9094,
+     "ms": 9103,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "5d694acfc0f7",
+       "promptHash": "ce072d8764d3",
+       "latencyMs": 9038,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12341,
+        "cachedRead": 3328,
+        "cacheWrite": 0,
+        "output": 215,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "f0efb3bde374c3af",
+       "targetsHash": "77bc8344e45fb1cb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M41.A09",
+         "name": "Publish lesson",
+         "args": {
+          "lessonId": "lsn_1"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s4",
+       "planHash": "f0efb3bde374c3af",
+       "targetsHash": "1af3af5e5f93198e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M40.A09",
+         "name": "Publish course",
+         "args": {
+          "courseId": "crs_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 9103,
+    "firstReplyMs": 9094,
+    "plannerMs": 9038,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 4,
+    "clarifications": 0,
+    "usage": {
+     "input": 12341,
+     "cachedRead": 3328,
+     "cacheWrite": 0,
+     "output": 215,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "w1-course-build",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Create a course called Sales 101, add a lesson called Cold Calling Basics to it, and publish the course",
+     "status": "done",
+     "reply": "Done: Create course (Sales 101), already done earlier.\nDone: Create lesson (Cold Calling Basics), already done earlier.\nDone: Publish lesson (Cold Calling Basics), already done earlier.\nDone: Publish course (Sales 101).",
+     "offered": [
+      "M05.A01",
+      "M41.A01",
+      "M40.A09",
+      "M40.A01",
+      "M41.A05",
+      "M40.A10",
+      "M40.A05",
+      "M41.A06",
+      "M42.A01",
+      "M41.A09",
+      "M41.A10",
+      "M40.A07",
+      "M41.A04",
+      "M42.A08",
+      "M42.A10",
+      "M49.A02",
+      "M49.A03",
+      "M04.A01",
+      "M36.A01",
+      "M37.A09",
+      "M38.A09",
+      "M40.A04",
+      "M41.A07",
+      "M41.A02",
+      "M41.A03",
+      "M07.A01",
+      "M36.A09",
+      "M03.A01",
+      "M41.A08",
+      "M40.A06",
+      "M40.A02",
+      "M37.A05",
+      "M15.A01",
+      "M01.A01",
+      "M32.A01",
+      "M34.A01",
+      "M44.A04"
+     ],
+     "planned": [
+      "M40.A01",
+      "M41.A01",
+      "M41.A09",
+      "M40.A09"
+     ],
+     "calls": [
+      {
+       "action": "M40.A01",
+       "args": {
+        "title": "Sales 101"
+       }
+      },
+      {
+       "action": "M41.A01",
+       "args": {
+        "courseId": "crs_1",
+        "title": "Cold Calling Basics"
+       }
+      },
+      {
+       "action": "M41.A09",
+       "args": {
+        "lessonId": "lsn_1"
+       }
+      },
+      {
+       "action": "M40.A09",
+       "args": {
+        "courseId": "crs_1"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "unsupported",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": "The available actions can create a course and add a lesson, but publishing a course requires at least one published lesson. There is no action available to publish the new lesson.",
+        "alternatives": [
+         "Create the Sales 101 course and add the Cold Calling Basics lesson as a draft."
+        ],
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M40.A01",
+          "M41.A01",
+          "M40.A09"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "What should the “Cold Calling Basics” lesson cover?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M40.A01",
+          "M41.A01",
+          "M40.A09"
+         ],
+         "destination": null
+        },
+        "clarification": "content",
+        "lookup": null,
+        "missing": {
+         "action": "M41.A01",
+         "argument": "body",
+         "argsJson": "{\"courseId\":\"$s1.id\",\"title\":\"Cold Calling Basics\"}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair clarification binding",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M40.A01",
+          "argsJson": "{\"title\":\"Sales 101\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M41.A01",
+          "argsJson": "{\"courseId\":\"$s1.id\",\"title\":\"Cold Calling Basics\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M41.A09",
+          "argsJson": "{\"lessonId\":\"$s2.id\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M40.A09",
+          "argsJson": "{\"courseId\":\"$s1.id\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M40.A01",
+          "M41.A01",
+          "M40.A09"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "body is optional; do not ask for an unspecified optional input"
+     ],
+     "errors": [],
+     "approvals": 2,
+     "firstReplyMs": 33600,
+     "ms": 33610,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "5d694acfc0f7",
+       "promptHash": "ce072d8764d3",
+       "latencyMs": 11678,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12339,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 134,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "5d694acfc0f7",
+       "promptHash": "44966b508a00",
+       "latencyMs": 9501,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 15025,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 127,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair clarification binding",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "5d694acfc0f7",
+       "promptHash": "4e0ab0e3baf3",
+       "latencyMs": 12240,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 15218,
+        "cachedRead": 6528,
+        "cacheWrite": 0,
+        "output": 210,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "f0efb3bde374c3af",
+       "targetsHash": "77bc8344e45fb1cb",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M41.A09",
+         "name": "Publish lesson",
+         "args": {
+          "lessonId": "lsn_1"
+         }
+        }
+       ]
+      },
+      {
+       "stepId": "s4",
+       "planHash": "f0efb3bde374c3af",
+       "targetsHash": "1af3af5e5f93198e",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M40.A09",
+         "name": "Publish course",
+         "args": {
+          "courseId": "crs_1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 33610,
+    "firstReplyMs": 33600,
+    "plannerMs": 33419,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 4,
+    "clarifications": 0,
+    "usage": {
+     "input": 42582,
+     "cachedRead": 19584,
+     "cacheWrite": 0,
+     "output": 471,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}

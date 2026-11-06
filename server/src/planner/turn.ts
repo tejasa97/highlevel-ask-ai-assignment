@@ -369,15 +369,17 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
   let verdict: TurnOutcome | undefined;
   let repaired = false;
   let plannedFromQuestion = false;
-  // A plan that doesn't compile gets one repair, and a second when the first got closer (fewer errors): a weaker model
-  // fixes a long plan a few mistakes at a time. Any other repair already spent counts as the first.
+  // A plan that doesn't compile gets one repair, and a second when the first got closer (fewer errors, or it fixed them
+  // all and met new ones): a weaker model fixes a long plan a few mistakes at a time. Any other repair already spent
+  // counts as the first.
   let planRepairs = 0;
-  let lastErrors = Infinity;
+  let lastErrors: string[] | undefined;
   const mayRepair = (errors: string[]) => {
-    if (repaired && !(planRepairs === 1 && errors.length < lastErrors)) return false;
+    const closer = !!lastErrors && (errors.length < lastErrors.length || !errors.some((e) => lastErrors!.includes(e)));
+    if (repaired && !(planRepairs === 1 && closer)) return false;
     repaired = true;
     planRepairs++;
-    lastErrors = errors.length;
+    lastErrors = errors;
     return true;
   };
   let clarifyRepaired = false;
@@ -465,7 +467,8 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
     }
     // Freeze the first stated outcome across all subsequent reads, searches and repairs. A search may
     // initially lack action IDs; fill those once discovered, but never downgrade a change into a read.
-    if (!outcome && d.outcome) { outcome = d.outcome; outcomeFrom = reply; }
+    // An unsupported reply states what it thinks it can do, which isn't what was asked: the plan after its search states that.
+    if (!outcome && d.outcome && d.type !== "unsupported") { outcome = d.outcome; outcomeFrom = reply; }
     else if (restate && outcome?.effect === "change" && d.outcome?.effect === "change" && d.outcome.actions.length) { outcome = { ...outcome, actions: d.outcome.actions }; outcomeFrom = reply; }
     // A look that called its own reads the outcome, for a message that also tells ("Which leads never replied? Split
     // them between the reps"), described the look: the change the reply after it states is the request's, when the message
@@ -629,7 +632,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       // What the look found is new to the planner: the plan after it gets its own repair, not the one a reply before it spent.
       repaired = false;
       planRepairs = 0;
-      lastErrors = Infinity;
+      lastErrors = undefined;
       restate = true;
       user = prompt();
       reply = await call(user, "plan after look");
@@ -665,6 +668,9 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
       const errors = ["there is no <context> or <looked> to answer from; if a listed action reads or checks what was asked, plan it (its result is the answer); otherwise reply answer again"];
       emit({ type: "compile.errors", data: { errors } });
       repaired = true;
+      // The reply sent back for having nothing to answer from also stated a read outcome ("no request here"): that
+      // outcome must not hold the plan that replaces it to reading, when the message is a change.
+      unfreezeRejected();
       reply = await call(repairBlock(user, reply.json, errors), "repair");
       continue;
     }
@@ -697,7 +703,7 @@ async function planTurnUnguarded(input: TurnInput, deps: TurnDeps, emit: (e: Tur
         : compiled.plan.steps.some((s) => callsOf(s).length)
           ? [
               // A revision runs the edits and undoes its creates stand for (core/revise.ts).
-              ...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }, (id) => registry.get(id)).filter((e) => !revisedBy(compiled.plan, input.made, registry).some((id) => e.startsWith(`requested operation ${id} `))),
+              ...outcomeErrors(compiled.plan, outcome, { message: input.message, offered }, (id) => registry.get(id)).filter((e) => ![...revisedBy(compiled.plan, input.made, registry), ...stillStands(compiled.plan, input, registry)].some((id) => e.startsWith(`requested operation ${id} `))),
               // Without a stated outcome, the message's own verbs are the only sign a write was asked for. A read outcome
               // this reply states for a message that asks, then tells, may describe only the asking.
               ...(outcome && !(outcomeFrom === reply && outcome.effect === "read") ? [] : readOnlyIntentError(input.message, compiled.plan, offered, registry)),
@@ -817,13 +823,15 @@ function remadeBy(actions: RegisteredAction[], input: Pick<TurnInput, "carry" | 
   });
 }
 
+const ADDS_MORE = /\b(also|too|another|more|as well|again|new)\b/i;
+
 /**
  * The other way a weaker model plans a narrowing follow-up: edits to the records the last turn made, which leaves the
  * ones now left out as they were. Revisable records are better planned as the whole request again (core/revise.ts), so
  * such a plan is sent back once; resubmitted, it runs as written ("move Ben's task to Friday").
  */
 export function editsMade(plan: CompiledPlan, input: Pick<TurnInput, "made" | "message">): string[] {
-  if (!input.made?.length || /\b(also|too|another|more|as well|again|new)\b/i.test(input.message)) return [];
+  if (!input.made?.length || ADDS_MORE.test(input.message)) return [];
   const calls = plan.steps.flatMap(callsOf).filter((a) => a.risk !== "read");
   return [...new Set(input.made.map((m) => m.entity))].flatMap((entity) => {
     const of = input.made!.filter((m) => m.entity === entity);
@@ -1230,6 +1238,21 @@ function roleQuestion(registry: Registry, missing: SubmitPlan["missing"]): strin
 /** "5 task (M06.A01)": the last turn's revisable records, for <last_made>. */
 function lastMade(made: Made[]): string {
   return [...new Set(made.map((m) => m.action))].map((a) => { const of = made.filter((m) => m.action === a); return `${of.length} ${of[0]!.entity.replace(/_/g, " ")} (${a})`; }).join(", ");
+}
+
+/**
+ * "Actually, just the Facebook ones": a plan that edits what the last turn made leaves the rest of that turn standing,
+ * so an operation that turn ran isn't asked for again, unless this message names it ("assign them to Bob instead").
+ */
+export function stillStands(plan: CompiledPlan, input: Pick<TurnInput, "carry" | "made" | "message">, registry: Registry): string[] {
+  if (!input.made?.length || ADDS_MORE.test(input.message)) return [];
+  const entities = new Set(input.made.map((m) => m.entity));
+  if (!plan.steps.flatMap(callsOf).some((a) => a.risk !== "read" && a.entities?.consumes?.some((e) => entities.has(e)))) return [];
+  const message = input.message.toLowerCase();
+  return (input.carry?.prev ?? []).filter((id) => {
+    const verb = registry.get(id)?.name.split(" ")[0]?.toLowerCase();
+    return !!verb && !message.includes(verb);
+  });
 }
 
 /** The edit and undo actions a plan's creates stand for when it revises what the last turn made. */

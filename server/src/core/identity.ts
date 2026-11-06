@@ -202,10 +202,7 @@ export function resolveIdentity(q: IdentityQuery, deps: { registry: Registry; st
 
   // 1. Exact id.
   if (ID.test(text)) {
-    const table = tableOfId(text);
-    const row = table === tableOf(q.entity) && table ? deps.store.get<Doc>(table, text) : undefined;
-    const label = row && typeof row.name === "string" ? row.name : undefined;
-    const c = label ? inScope(text, label) : undefined;
+    const c = inScope(text, text);
     if (c) add(c, "id");
   }
   // 2. Name: the store resolver's own match, split into exact normalized names and the looser tiers (word, prefix).

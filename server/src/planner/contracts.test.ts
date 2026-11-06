@@ -168,3 +168,27 @@ test("the records a change runs on are said back with what each filter or exclud
   assert.deepEqual(selectionReadback(plan({ whereJson: JSON.stringify({ id: { nin: ["tk_1", "tk_3"] } }) }), [], "reassign all but tk_1 and tk_3"), []);
   assert.deepEqual(selectionReadback(plan({ op: "exclude", by: "id", set: "$s2.items[*].id" }), [], "reassign the tasks"), []);
 });
+
+test("publishing a course may publish the lesson the same plan made, and nothing else unasked", () => {
+  const steps = (lesson: object) => compile({
+    type: "plan",
+    steps: [
+      { id: "s1", kind: "action", action: "M40.A01", argsJson: JSON.stringify({ title: "Intro" }) },
+      ...(Object.keys(lesson).length ? [{ id: "s2", kind: "action" as const, action: "M41.A01", argsJson: JSON.stringify(lesson) }] : []),
+      { id: "s3", kind: "action", action: "M41.A09", argsJson: JSON.stringify({ lessonId: Object.keys(lesson).length ? "$s2.id" : "lsn_1" }) },
+      { id: "s4", kind: "action", action: "M40.A09", argsJson: JSON.stringify({ courseId: "$s1.id" }) },
+    ],
+    question: null, options: null, reason: null, alternatives: null, query: null, text: null,
+  } satisfies SubmitPlan, registry);
+  const message = "Create a course called Intro with a lesson Welcome and publish it";
+  const outcome = { effect: "change" as const, actions: ["M40.A01", "M41.A01", "M40.A09"], destination: null };
+  const check = (lesson: object, stated = outcome) => {
+    const r = steps(lesson);
+    assert.ok(r.ok);
+    return outcomeErrors(r.plan, stated, { message, offered: [] }, (id) => registry.get(id)).join("\n");
+  };
+  assert.equal(check({ courseId: "$s1.id", title: "Welcome" }), "");
+  // A lesson this plan didn't make, or a course nobody asked to publish, is still left out.
+  assert.match(check({}, { ...outcome, actions: ["M40.A01", "M40.A09"] }), /M41\.A09 sends to Lesson/);
+  assert.match(check({ courseId: "$s1.id", title: "Welcome" }, { ...outcome, actions: ["M40.A01", "M41.A01"] }), /M41\.A09 sends to Lesson/);
+});

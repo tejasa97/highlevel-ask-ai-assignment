@@ -431,6 +431,7 @@ export default {
     ticket: (store, name) =>
       candidates(
         store.all<Ticket>("tickets").filter((t) =>
+          t.id === name.trim() ||
           norm(name)
             .split(" ")
             .some((w) => norm(t.title).split(" ").includes(w)),

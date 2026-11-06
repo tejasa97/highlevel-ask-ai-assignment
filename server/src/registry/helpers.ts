@@ -51,6 +51,9 @@ export function candidates<T extends { id: string }>(
   inactive?: (d: T) => string | undefined,
 ): Candidate[] {
   const out = (ds: T[]) => ds.map((d) => ({ id: d.id, name: label(d), ...(detail ? { detail: detail(d) } : {}), ...(inactive?.(d) ? { inactive: inactive(d) } : {}) }));
+  // A record named by its own id ("tic_1") is that record, whatever its label says.
+  const byId = docs.filter((d) => d.id === name.trim());
+  if (byId.length) return out(byId);
   if (!inactive) return out(matchByName(docs, name, label));
   const usable = matchByName(docs.filter((d) => !inactive(d)), name, label);
   return out(usable.length ? usable : matchByName(docs.filter((d) => inactive(d)), name, label));

@@ -1,4 +1,4 @@
-import { tableResolver } from "../../registry/lookup.js";
+import { namedResolver, tableResolver } from "../../registry/lookup.js";
 import "./fixtures.js";
 import { z } from "zod";
 import { ActionError, defineAction, mustGet } from "../../registry/define.js";
@@ -131,6 +131,7 @@ const reorderSteps = defineAction({
     "Put a funnel's steps in a new journey order. Pass every step id exactly once. This does not add or remove steps; those are M36.A04 and M36.A06.",
   risk: "write",
   input: z.strictObject({ funnelId: FunnelId, stepIds: z.array(z.string()).describe("every step id, in the new order") }),
+  argumentLookups: { "stepIds[]": { entity: "funnel_step", scope: { funnelId: "funnelId" } } },
   output: Funnel,
   entities: { consumes: ["funnel"] },
   example: (f) => {
@@ -167,6 +168,7 @@ const removeStep = defineAction({
     "Remove one step from a funnel. A published funnel must keep at least one step. If the step is the conversion goal, set a different goal with M36.A08 first.",
   risk: "destructive",
   input: z.strictObject({ funnelId: FunnelId, stepId: z.string().describe("step id on this funnel") }),
+  argumentLookups: { stepId: { entity: "funnel_step", scope: { funnelId: "funnelId" } } },
   output: Funnel,
   entities: { consumes: ["funnel"] },
   example: (f) => {
@@ -206,6 +208,7 @@ const linkPage = defineAction({
     stepId: z.string().describe("step id on this funnel"),
     landingPageId: z.string().describe("published landing page id (lp_…)"),
   }),
+  argumentLookups: { stepId: { entity: "funnel_step", scope: { funnelId: "funnelId" } } },
   output: Funnel,
   siblings: ["M37.A09"],
   entities: { consumes: ["funnel", "landing_page"] },
@@ -231,6 +234,7 @@ const setGoal = defineAction({
     "Set the funnel's conversion goal to one of its steps and a type (form submit, purchase or booking). The step must already be on the funnel. This does not publish the funnel (M36.A09).",
   risk: "write",
   input: z.strictObject({ funnelId: FunnelId, type: GoalType, stepId: z.string().describe("step id that counts as the conversion") }),
+  argumentLookups: { stepId: { entity: "funnel_step", scope: { funnelId: "funnelId" } } },
   output: Funnel,
   entities: { consumes: ["funnel"] },
   example: (f) => {
@@ -319,6 +323,11 @@ const metrics = defineAction({
 export default {
   resolvers: {
     funnel: tableResolver("funnels"),
+    funnel_step: namedResolver({
+      records: (store) => store.all<Funnel>("funnels").flatMap((f) => f.steps.map((s) => ({ ...s, funnelId: f.id, funnel: f.name }))),
+      name: (s) => s.name, detail: (s) => s.funnel,
+      qualifiers: { funnelId: (s) => s.funnelId, funnel: (s) => s.funnel },
+    }),
   },
   actions: [createFunnel, getFunnel, listFunnels, addStep, reorderSteps, removeStep, linkPage, setGoal, publishFunnel, metrics],
 } satisfies ModuleExports;

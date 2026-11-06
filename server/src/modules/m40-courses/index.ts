@@ -246,6 +246,7 @@ const publishCourse = defineAction({
   input: z.strictObject({ courseId: CourseId }),
   output: Course,
   siblings: ["M42.A01", "M42.A08", "M42.A10"],
+  requires: ["M41.A09"],
   entities: { consumes: ["course"] },
   example: (f) => {
     const created = f.course();

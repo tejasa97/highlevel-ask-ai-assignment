@@ -95,7 +95,7 @@ const getLead = defineAction({
 const searchLeads = defineAction({
   id: "M03.A03",
   description:
-    "Find leads (prospects, not yet customers) by when they were created, source, status, owner or score. Dates are inclusive.",
+    "Find leads (prospects, not yet customers) by when they were created, source, status, owner or score. Dates are inclusive. \"The Facebook campaign\" is source facebook_ads, with no condition on campaignId.",
   risk: "read",
   input: z.strictObject({
     createdFrom: z.iso.date().optional(),
@@ -171,7 +171,7 @@ const updateLead = defineAction({
 
 const assignLeadOwner = defineAction({
   id: "M03.A05",
-  description: "Make a staff user the owner of a lead. To follow up with a lead without changing its owner, create a to-do with M06.A01. For contacts, use M01.A07 Assign contact owner.",
+  description: "Make a staff user the owner of a lead. Splitting leads between people means this for each lead, even when they also get tasks for them. To follow up with a lead without changing its owner, create a to-do with M06.A01. For contacts, use M01.A07 Assign contact owner.",
   synonyms: ["distribute leads", "split leads between reps", "round-robin leads", "hand leads to sales"],
   risk: "write",
   input: z.strictObject({ leadId: LeadId, ownerId: z.string().describe("user id") }),

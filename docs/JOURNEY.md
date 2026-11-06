@@ -610,3 +610,12 @@ exclude or filter checks against refuses the write.
 the repo are gone. It says that filtering and joins run in memory over loaded records, and what real data volumes
 would need instead. Provider detail moved to `docs/PROVIDERS.md` and build history to `docs/IMPLEMENTATION-NOTES.md`,
 with sections on what is real and what is mocked, and the trade-offs.
+
+## 36. Luna at low reasoning over the full release set
+`4c22c61` plus the fixes in this commit · 2026-11-06 · runs: port-ner-release-luna-clean → port-ner-release-luna-final
+
+**Question.** Can GPT-6 Luna at low reasoning be the planner, with code carrying the load?
+
+**Change.** See PLANNER-CHANGES section 8. One fix was for a real wrong write: a condition on a `forEach` was dropped, so an update went to every team.
+
+**Result.** First clean run 264/273 (96.7%). After the fixes, 268/272 (98.5%) with one provider timeout, written up in `docs/BENCHMARK-LUNA.md`. All four latency targets are missed through the Codex CLI. Rerunning the five that did not pass, three times each (`eval/results/scenarios-port-ner-final-failures.json`), passed 11 of 15 and every scenario passed at least once, so no scenario qualifies for a stronger fallback model.

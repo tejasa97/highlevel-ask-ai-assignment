@@ -90,7 +90,7 @@ accept `low`, `medium`, `high` or `xhigh` (default `low`; fast inherits strong i
 Model access depends on your account. `CODEX_BIN` optionally selects an executable;
 `CODEX_HOME` may select your existing CLI authentication directory.
 Card generation stays on Claude so its provenance stamp remains accurate.
-GPT-6.1 Sol and GPT-6 Luna were used through it during development; the benchmark numbers are DeepSeek's.
+GPT-6.1 Sol was used through it during development. GPT-6 Luna at low reasoning has its own full run in [BENCHMARK-LUNA.md](BENCHMARK-LUNA.md); the numbers in the main [BENCHMARK.md](../BENCHMARK.md) are DeepSeek's.
 
 The adapter uses the Codex runtime, rather than raw model API calls. It supplies our planner
 instructions, request and output schema, while Codex adds runtime framing. **The captured request

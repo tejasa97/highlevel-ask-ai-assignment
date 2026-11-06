@@ -215,10 +215,6 @@ describe("compile errors the planner can act on", () => {
   });
 
   test("a filter's result is the list itself, and .items on it reads as that list", () => {
-    const p = plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.items[*].id", ownerId: "us_2" })]);
-    const one = compile(p, registry);
-    assert.ok(one.ok, "a list in a single-value arg must hold exactly one value when it runs");
-    assert.deepEqual(one.ok && one.plan.steps[2]!.kind === "action" ? one.plan.steps[2]!.call.one : null, [["leadId"]]);
     assert.equal(compile(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), op("g", "filter", { in: "$f.items", where: { score: { gte: 0 } } })]), registry).ok, true);
     const e = errs(plan([action("s1", "M03.A03", {}), op("f", "filter", { in: "$s1.items", where: { score: { gte: 0 } } }), action("s2", "M03.A05", { leadId: "$f.nope", ownerId: "us_2" })]));
     assert.match(e, /already the list of records/);
@@ -235,7 +231,7 @@ describe("compile errors the planner can act on", () => {
   });
 
   test("list where a single value is needed", () => {
-    assert.match(errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: "$s1.items", ownerId: "us_2" })])), /needs a single value, but \$s1\.items is a list; write \$s1\.items\[\*\]\.id/);
+    assert.match(errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: "$s1.items", ownerId: "us_2" })])), /needs a single value, but \$s1\.items is a list; a record the user named is a \$lookup/);
     const wrapped = errs(plan([action("s1", "M03.A03", {}), action("s2", "M03.A05", { leadId: { $ref: "$s1.items" }, ownerId: "us_2" })]));
     assert.match(wrapped, /\$s1\.items is a list/, "a {$ref} object is read as the ref inside it");
     assert.doesNotMatch(wrapped, /expected string, received object/);
@@ -251,7 +247,7 @@ describe("compile errors the planner can act on", () => {
         op("s3", "forEach", { in: "$s1.items", do: [{ action: "M03.A05", args: { leadId: "$item.id", ownerId: "$rr.userId" } }] }),
       ]),
     );
-    assert.match(e, /\$item only works inside forEach/);
+    assert.match(e, /\$item only works inside forEach.*make this step an op forEach.*\$sN\[\*\]\.results\[0\]/);
     assert.match(e, /\$rr needs "roundRobin"/);
   });
 
@@ -463,57 +459,27 @@ describe("runtime outcomes", () => {
   });
 });
 
-describe("one value of a list in a single-ID argument", () => {
-  const assign = (where: unknown) => compiled(plan([
-    action("s1", "M03.A03", {}),
-    op("s2", "filter", { in: "$s1.items", where }),
-    action("s3", "M03.A05", { leadId: "$s2[*].id", ownerId: "us_2" }),
-  ]));
-
-  test("runs when the list holds exactly one", async () => {
+describe("a run resumed after approval", () => {
+  test("reports what it did before the approval as done, without calling it earlier work", async () => {
     const w = fresh();
-    const lead = w.store.all<{ id: string }>("leads")[0]!;
-    const r = await execute(assign({ id: lead.id }), registry, w, { executionId: "one-lead" });
-    assert.equal(r.status, "done", JSON.stringify(r));
-    assert.equal(w.store.get<{ ownerId: string }>("leads", lead.id)!.ownerId, "us_2");
-  });
-
-  test("asks which when the list holds several, and fails without changes when it holds none", async () => {
-    const w = fresh();
-    const several = await execute(assign({}), registry, w, { executionId: "many-leads" });
-    assert.equal(several.status, "needs_clarification");
-    assert.ok(several.clarification!.candidates.length > 1);
-    const none = await execute(assign({ id: "nope" }), registry, w, { executionId: "no-lead" });
-    assert.equal(none.status, "failed");
-    assert.match(JSON.stringify(none.steps.at(-1)!.error), /NOT_FOUND.*found nothing/);
-  });
-
-  test("two records with the same name are told apart by what differs, not by their name's parts", async () => {
-    const w = fresh();
-    const [a, b] = w.store.all<{ id: string; company: string }>("leads");
-    w.store.update("leads", a!.id, { firstName: "Kai", lastName: "Morgan", company: "Globex" });
-    w.store.update("leads", b!.id, { firstName: "Kai", lastName: "Morgan", company: "Initech" });
-    const r = await execute(assign({ lastName: "Morgan" }), registry, w, { executionId: "two-kais" });
-    assert.equal(r.status, "needs_clarification");
-    const details = r.clarification!.candidates.map((c) => c.detail ?? "");
-    assert.ok(details.every((d) => !/\bKai\b|\bMorgan\b/.test(d)), JSON.stringify(details));
-    assert.ok(details.some((d) => d.includes("Globex")) && details.some((d) => d.includes("Initech")), JSON.stringify(details));
-  });
-});
-
-describe("a list-reading action given the leads a search found", () => {
-  test("reads for each lead instead of asking which one", async () => {
-    const w = fresh();
-    const leads = w.store.all<{ id: string }>("leads").slice(0, 3);
     const p = compiled(plan([
-      action("s1", "M03.A03", {}),
-      op("s2", "filter", { in: "$s1.items", where: { id: { in: leads.map((l) => l.id) } } }),
-      action("s3", "M21.A03", { leadId: "$s2[*].id" }),
+      action("s1", "M40.A01", { title: "Sales 101" }),
+      action("s2", "M41.A01", { courseId: "$s1.id", title: "Cold Calling Basics" }),
+      action("s3", "M41.A09", { lessonId: "$s2.id" }),
+      action("s4", "M40.A09", { courseId: "$s1.id" }),
     ]));
-    const r = await execute(p, registry, w, { executionId: "fan-reads" });
+    let r = await execute(p, registry, w, { executionId: "course" });
+    const approvals = [];
+    while (r.status === "awaiting_confirmation") {
+      approvals.push(r.pending!);
+      r = await execute(p, registry, w, { executionId: "course", approvals });
+    }
     assert.equal(r.status, "done", JSON.stringify(r));
-    const out = r.steps.find((x) => x.id === "s3")!;
-    assert.equal(out.status, "done");
+    assert.ok(approvals.length > 0, "the publish waits for approval");
+    const text = summarize(p, r, registry);
+    assert.match(text, /Done: Create course \(Sales 101\)\./);
+    assert.match(text, /Done: Publish course \(Sales 101\)\./);
+    assert.doesNotMatch(text, /already done/);
   });
 });
 

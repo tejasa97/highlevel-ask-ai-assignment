@@ -60,7 +60,7 @@ export interface ActionDef<I extends z.ZodType = z.ZodType, O extends z.ZodType 
   destination?: { id: string; label: string };
   /** Look-alike actions in other modules, always retrieved together. */
   siblings?: string[];
-  /** Actions that must run on the same record first (approve before execute): retrieved whenever this one is. */
+  /** Actions that must run first on the same record or one inside it (approve before execute, publish a lesson before its course): retrieved whenever this one is. */
   requires?: string[];
   /**
    * For a create a follow-up may narrow ("only the Facebook ones, due tomorrow"): `key` is the argument that says which

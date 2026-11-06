@@ -1,0 +1,4638 @@
+{
+ "summary": {
+  "label": "port-ner-final-failures",
+  "planner": "codex-cli",
+  "model": "gpt-6-luna",
+  "scenarioDir": "eval/scenarios,eval/brief-scenarios,eval/param-scenarios,eval/module-scenarios/coverage,eval/module-scenarios/wave1,eval/module-scenarios/m45-m47/development,eval/module-scenarios/m45-m47/reporting,eval/module-scenarios/m45-m47/trails,eval/module-scenarios/questions,eval/module-scenarios/role-ids,eval/policy-scenarios/partial-confirmation",
+  "set": "dfdd4e46ccde",
+  "tier": "strong",
+  "scenarios": 5,
+  "repeat": 3,
+  "runs": 15,
+  "infraRuns": 0,
+  "notRun": 0,
+  "passRate": 73.3,
+  "allPass": 2,
+  "measured": 5,
+  "flaky": 3,
+  "e2eMs": {
+   "p50": 21355,
+   "p95": 44045
+  },
+  "firstReplyMs": {
+   "p50": 21355,
+   "p95": 44045
+  },
+  "plannerRoundsPerRun": 2,
+  "callsPerRun": 6.5,
+  "clarified": {
+   "runs": 2,
+   "passed": 2
+  },
+  "costUsd": {
+   "perRun": null,
+   "total": null
+  },
+  "wallMs": 161757
+ },
+ "runs": [
+  {
+   "id": "brief-heldout-new-leads",
+   "category": "indirect",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "New leads keep slipping through the cracks on my end. Can you help me stay on them?",
+     "status": "done",
+     "reply": "Create task for 1 of 1: Wen Okafor.",
+     "offered": [
+      "M06.A01",
+      "M10.A05",
+      "M03.A01",
+      "M10.A04",
+      "M04.A01",
+      "M03.A05",
+      "M03.A09",
+      "M03.A04",
+      "M03.A10",
+      "M03.A08",
+      "M01.A01",
+      "M05.A06",
+      "M04.A05",
+      "M30.A06",
+      "M36.A07",
+      "M07.A01",
+      "M21.A01",
+      "M47.A01",
+      "M02.A01",
+      "M03.A03",
+      "M40.A07",
+      "M11.A10",
+      "M48.A05",
+      "M06.A05",
+      "M06.A03",
+      "M49.A07",
+      "M11.A02",
+      "M01.A07",
+      "M06.A09",
+      "M04.A06",
+      "M11.A03",
+      "M01.A03",
+      "M27.A03",
+      "M06.A02",
+      "M02.A03",
+      "M04.A03",
+      "M24.A03",
+      "M47.A03",
+      "M38.A05",
+      "M40.A03",
+      "M48.A03",
+      "M49.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-21",
+        "status": "new",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Wen Okafor about new lead",
+        "description": "Follow up with this new lead so they don’t slip through the cracks.",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_6"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A01",
+          "argsJson": "{}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search for new leads and create a follow-up task for each, assigned to the current user.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-21\",\"status\":\"new\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s1.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}} about new lead\",\"description\":\"Follow up with this new lead so they don’t slip through the cracks.\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s1: M03.A01 arg firstName: Invalid input: expected string, received undefined"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 24743,
+     "ms": 24743,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "f1dfa92ba78b",
+       "latencyMs": 7594,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13636,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 97,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "3ff9f591e945",
+       "latencyMs": 6531,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 13769,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 89,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "6fff98146afd",
+       "latencyMs": 10482,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 18638,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 213,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 24743,
+    "firstReplyMs": 24743,
+    "plannerMs": 24607,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 46043,
+     "cachedRead": 19968,
+     "cacheWrite": 0,
+     "output": 399,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-new-leads",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M03.A03 not planned (not offered; planned: M06.A01)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) > 0 FROM tasks t WHERE json_extract(t.data,'$.createdAt') >= '2026-10-21' AND json_extract(t.data,'$.relatedTo.id') IN (SELECT id FROM leads WHERE json_extract(data,'$.status')='new') → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks t WHERE json_extract(t.data,'$.createdAt') >= '2026-10-21' AND (json_extract(t.data,'$.relatedTo.id') IS NULL OR json_extract(t.data,'$.relatedTo.id') NOT IN (SELECT id FROM leads WHERE json_extract(data,'$.status')='new')) → 1, wanted 0"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "New leads keep slipping through the cracks on my end. Can you help me stay on them?",
+     "status": "done",
+     "reply": "Done: Create task (Follow up on new leads).",
+     "offered": [
+      "M06.A01",
+      "M10.A05",
+      "M03.A01",
+      "M10.A04",
+      "M04.A01",
+      "M03.A05",
+      "M03.A09",
+      "M03.A04",
+      "M03.A10",
+      "M03.A08",
+      "M01.A01",
+      "M05.A06",
+      "M04.A05",
+      "M30.A06",
+      "M36.A07",
+      "M07.A01",
+      "M21.A01",
+      "M47.A01",
+      "M02.A01"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up on new leads",
+        "description": "Review and follow up with new leads."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M06.A01",
+          "argsJson": "{\"title\":\"Follow up on new leads\",\"description\":\"Review and follow up with new leads.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7611,
+     "ms": 7611,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "f1dfa92ba78b",
+       "latencyMs": 7558,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13636,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 116,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 7611,
+    "firstReplyMs": 7611,
+    "plannerMs": 7558,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13636,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 116,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-new-leads",
+   "category": "indirect",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "action-missing",
+     "detail": "M03.A03 not planned (not offered; planned: M06.A01)"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) > 0 FROM tasks t WHERE json_extract(t.data,'$.createdAt') >= '2026-10-21' AND json_extract(t.data,'$.relatedTo.id') IN (SELECT id FROM leads WHERE json_extract(data,'$.status')='new') → 0, wanted 1"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks t WHERE json_extract(t.data,'$.createdAt') >= '2026-10-21' AND (json_extract(t.data,'$.relatedTo.id') IS NULL OR json_extract(t.data,'$.relatedTo.id') NOT IN (SELECT id FROM leads WHERE json_extract(data,'$.status')='new')) → 1, wanted 0"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "New leads keep slipping through the cracks on my end. Can you help me stay on them?",
+     "status": "done",
+     "reply": "Done: Create task (Follow up on new leads).",
+     "offered": [
+      "M06.A01",
+      "M10.A05",
+      "M03.A01",
+      "M10.A04",
+      "M04.A01",
+      "M03.A05",
+      "M03.A09",
+      "M03.A04",
+      "M03.A10",
+      "M03.A08",
+      "M01.A01",
+      "M05.A06",
+      "M04.A05",
+      "M30.A06",
+      "M36.A07",
+      "M07.A01",
+      "M21.A01",
+      "M47.A01",
+      "M02.A01"
+     ],
+     "planned": [
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up on new leads",
+        "description": "Follow up on new leads so they don't slip through the cracks.",
+        "priority": "high"
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M06.A01",
+          "argsJson": "{\"title\":\"Follow up on new leads\",\"description\":\"Follow up on new leads so they don't slip through the cracks.\",\"priority\":\"high\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 7713,
+     "ms": 7713,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "f1dfa92ba78b",
+       "latencyMs": 7663,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13634,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 127,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 7713,
+    "firstReplyMs": 7713,
+    "plannerMs": 7663,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 1,
+    "clarifications": 0,
+    "usage": {
+     "input": 13634,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 127,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-quiet-leads",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tasks WHERE json_extract(data,'$.createdAt') >= '2026-10-21' AND (json_extract(data,'$.relatedTo.id') IS NULL OR json_extract(data,'$.relatedTo.id') NOT IN ('ld_3','ld_10','ld_24','ld_41','ld_42','ld_43','ld_44')) → 1, wanted 0"
+    },
+    {
+     "kind": "state",
+     "detail": "SELECT json_extract(data,'$.ownerId') FROM leads WHERE id='ld_1' → \"us_2\", wanted \"us_5\""
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "Which leads that came in last week never got back to us? Leave out anyone who already has an appointment booked, split the rest between the sales reps who are available, and give each of them a follow-up task.",
+     "status": "done",
+     "reply": "Assign lead owner + Create task for 6 of 6: Hiro Reyes, Ben Nguyen, Victor Larsen, Marco Brown, Femi Silva and 1 more.",
+     "offered": [
+      "M03.A06",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A03",
+      "M21.A05",
+      "M04.A06",
+      "M06.A05",
+      "M21.A03",
+      "M21.A07",
+      "M21.A09",
+      "M21.A01",
+      "M21.A04",
+      "M11.A10",
+      "M24.A09",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M04.A03",
+      "M06.A03",
+      "M01.A03",
+      "M24.A03",
+      "M11.A02",
+      "M49.A08",
+      "M03.A01",
+      "M03.A10",
+      "M03.A04",
+      "M03.A09",
+      "M03.A08",
+      "M49.A07",
+      "M03.A07",
+      "M22.A07",
+      "M21.A06",
+      "M13.A07",
+      "M13.A04",
+      "M49.A09",
+      "M22.A09",
+      "M13.A03",
+      "M01.A01",
+      "M02.A01",
+      "M04.A01",
+      "M47.A01",
+      "M27.A10",
+      "M49.A03",
+      "M20.A03",
+      "M28.A03",
+      "M15.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M48.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_1",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Hiro Reyes",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_1"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_3",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Nguyen",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_3"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads created during a date range with no reply (leads where the team wrote last and is waiting on the lead), find booked appointments for each matching lead, and split the remaining leads among available sales users with round-robin assignment while creating a follow-up task for each lead assigned to a rep.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s4.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 27136,
+     "ms": 27142,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "aba034a359f7",
+       "latencyMs": 13685,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 30773,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 151,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "44f4ef5294af",
+       "latencyMs": 13245,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 42375,
+        "cachedRead": 27520,
+        "cacheWrite": 0,
+        "output": 376,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s5",
+       "planHash": "6c9965d57a3eb318",
+       "targetsHash": "887800ab8f7bd857",
+       "reason": "changes 6 records at once",
+       "count": 6,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_1",
+          "ownerId": "us_2"
+         },
+         "label": "Hiro Reyes"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Hiro Reyes",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_1"
+          }
+         },
+         "label": "Hiro Reyes"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_3",
+          "ownerId": "us_4"
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Nguyen",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_3"
+          }
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_5"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "assigneeId": "us_5",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_2"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_4"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 27142,
+    "firstReplyMs": 27136,
+    "plannerMs": 26930,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 18,
+    "clarifications": 0,
+    "usage": {
+     "input": 73148,
+     "cachedRead": 34176,
+     "cacheWrite": 0,
+     "output": 527,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-quiet-leads",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Which leads that came in last week never got back to us? Leave out anyone who already has an appointment booked, split the rest between the sales reps who are available, and give each of them a follow-up task.",
+     "status": "done",
+     "reply": "Assign lead owner + Create task for 5 of 5: Ben Nguyen, Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A06",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A03",
+      "M21.A05",
+      "M04.A06",
+      "M06.A05",
+      "M21.A03",
+      "M21.A07",
+      "M21.A09",
+      "M21.A01",
+      "M21.A04",
+      "M11.A10",
+      "M24.A09",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M04.A03",
+      "M06.A03",
+      "M01.A03",
+      "M24.A03",
+      "M11.A02",
+      "M05.A03",
+      "M34.A03",
+      "M49.A08",
+      "M03.A01",
+      "M03.A10",
+      "M03.A04",
+      "M03.A02",
+      "M03.A09",
+      "M21.A06",
+      "M01.A01",
+      "M13.A07",
+      "M49.A07",
+      "M22.A09",
+      "M12.A07",
+      "M21.A08",
+      "M36.A03",
+      "M49.A03",
+      "M28.A03",
+      "M15.A03",
+      "M20.A03",
+      "M50.A05",
+      "M13.A04",
+      "M22.A07",
+      "M24.A01",
+      "M13.A10",
+      "M23.A03",
+      "M12.A04",
+      "M22.A10",
+      "M03.A08",
+      "M13.A03",
+      "M22.A08",
+      "M49.A09",
+      "M09.A01",
+      "M27.A03",
+      "M20.A06",
+      "M15.A06",
+      "M50.A03",
+      "M02.A03"
+     ],
+     "planned": [
+      "M03.A03",
+      "M11.A10",
+      "M21.A03",
+      "M48.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_1"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_3"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_1"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_3"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_41"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_42"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_43"
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "leadId": "ld_44"
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_3",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Nguyen",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_3"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search leads and appointments by lead, find open conversations where the contact or lead never replied (last message from our team), list available sales reps, exclude leads with booked appointments, assign lead owners round-robin, and create a follow-up task for each lead assigned to an available sales rep.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Find leads created in a date range who have not replied to our last message, find booked appointments for a list of leads, and assign eligible leads round-robin among available sales users while creating a follow-up task for each assigned lead.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"id\":{\"in\":\"$s2.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M21.A03",
+            "argsJson": "{\"leadId\":\"$item.id\"}"
+           }
+          ]
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s3",
+          "whereJson": null,
+          "by": "id",
+          "set": "$s4.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"available\":true}"
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s5",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s6.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Find leads created in a date range who have not replied to our last message, find booked appointments for a list of leads, and assign eligible leads round-robin among available sales users while creating a follow-up task for each assigned lead.\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 34032,
+     "ms": 34039,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "aba034a359f7",
+       "latencyMs": 10325,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 15287,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 128,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "d639e90b3673",
+       "latencyMs": 8767,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 19739,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 117,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "f37dcc060351",
+       "latencyMs": 14625,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 23644,
+        "cachedRead": 0,
+        "cacheWrite": 0,
+        "output": 467,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s7",
+       "planHash": "2421b89fdb5ba478",
+       "targetsHash": "1dbe0bbd77a3bb63",
+       "reason": "changes 5 records at once",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_3",
+          "ownerId": "us_2"
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Nguyen",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_3"
+          }
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_4"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_5"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "assigneeId": "us_5",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_2"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_4"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 34039,
+    "firstReplyMs": 34032,
+    "plannerMs": 33717,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 28,
+    "clarifications": 0,
+    "usage": {
+     "input": 58670,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 712,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "brief-heldout-quiet-leads",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Which leads that came in last week never got back to us? Leave out anyone who already has an appointment booked, split the rest between the sales reps who are available, and give each of them a follow-up task.",
+     "status": "done",
+     "reply": "Assign lead owner + Create task for 5 of 5: Ben Nguyen, Victor Larsen, Marco Brown, Femi Silva, Dev Kim.",
+     "offered": [
+      "M03.A06",
+      "M23.A01",
+      "M03.A05",
+      "M06.A01",
+      "M03.A03",
+      "M21.A05",
+      "M04.A06",
+      "M06.A05",
+      "M21.A03",
+      "M21.A07",
+      "M21.A09",
+      "M21.A01",
+      "M21.A04",
+      "M11.A10",
+      "M24.A09",
+      "M37.A01",
+      "M20.A01",
+      "M01.A07",
+      "M02.A08",
+      "M11.A03",
+      "M47.A04",
+      "M48.A03",
+      "M04.A03",
+      "M06.A03",
+      "M01.A03",
+      "M24.A03",
+      "M11.A02"
+     ],
+     "planned": [
+      "M11.A10",
+      "M03.A03",
+      "M21.A03",
+      "M48.A03",
+      "M03.A05",
+      "M06.A01"
+     ],
+     "calls": [
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M11.A10",
+       "args": {
+        "waitingOn": "contact",
+        "personType": "lead",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M03.A03",
+       "args": {
+        "createdFrom": "2026-10-12",
+        "createdTo": "2026-10-18",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M21.A03",
+       "args": {
+        "status": "booked",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M48.A03",
+       "args": {
+        "role": "sales",
+        "status": "active",
+        "available": true
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_3",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Ben Nguyen",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_3"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_41",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Victor Larsen",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_41"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_42",
+        "ownerId": "us_5"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Marco Brown",
+        "assigneeId": "us_5",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_42"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_43",
+        "ownerId": "us_2"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Femi Silva",
+        "assigneeId": "us_2",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_43"
+        }
+       }
+      },
+      {
+       "action": "M03.A05",
+       "args": {
+        "leadId": "ld_44",
+        "ownerId": "us_4"
+       }
+      },
+      {
+       "action": "M06.A01",
+       "args": {
+        "title": "Follow up with Dev Kim",
+        "assigneeId": "us_4",
+        "relatedTo": {
+         "type": "lead",
+         "id": "ld_44"
+        }
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2.items",
+          "whereJson": "{\"id\":{\"in\":\"$s1.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"leadId\":\"$s3.items[*].id\",\"status\":\"booked\"}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s3.items",
+          "whereJson": null,
+          "by": "id",
+          "set": "$s4.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s5.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s6.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M11.A10",
+          "argsJson": "{\"waitingOn\":\"contact\",\"personType\":\"lead\"}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M03.A03",
+          "argsJson": "{\"createdFrom\":\"2026-10-12\",\"createdTo\":\"2026-10-18\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2.items",
+          "whereJson": "{\"id\":{\"in\":\"$s1.items[*].leadId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M21.A03",
+          "argsJson": "{\"status\":\"booked\"}"
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "exclude",
+          "in": "$s3.items",
+          "whereJson": null,
+          "by": "id",
+          "set": "$s4.items[*].leadId",
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "action",
+          "action": "M48.A03",
+          "argsJson": "{\"role\":\"sales\",\"status\":\"active\",\"available\":true}"
+         },
+         {
+          "id": "s7",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s5.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": "$s6.items",
+          "do": [
+           {
+            "action": "M03.A05",
+            "argsJson": "{\"leadId\":\"$item.id\",\"ownerId\":\"$rr.id\"}"
+           },
+           {
+            "action": "M06.A01",
+            "argsJson": "{\"title\":\"Follow up with {{$item.name}}\",\"assigneeId\":\"$rr.id\",\"relatedTo\":{\"type\":\"lead\",\"id\":\"$item.id\"}}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M03.A05",
+          "M06.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "step s4: M21.A03 arg leadId needs a single value, but $s3.items[*].id is a list; a record the user named is a $lookup in this arg, not a search; for every record in the list, run M21.A03 in a forEach step with the arg set to \"$item.id\" (a read's results are collected in \"$sN[*].results[k]\"); simpler, M21.A03 without leadId lists them all, once, for a filter or exclude on its items' leadId"
+     ],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 28405,
+     "ms": 28411,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "aba034a359f7",
+       "latencyMs": 15034,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 30633,
+        "cachedRead": 21760,
+        "cacheWrite": 0,
+        "output": 487,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "4a1e8e5b5289",
+       "latencyMs": 13287,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 15863,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 437,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s7",
+       "planHash": "008f9474ff6ae825",
+       "targetsHash": "1dbe0bbd77a3bb63",
+       "reason": "changes 5 records at once",
+       "count": 5,
+       "preview": [
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_3",
+          "ownerId": "us_2"
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Ben Nguyen",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_3"
+          }
+         },
+         "label": "Ben Nguyen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_41",
+          "ownerId": "us_4"
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Victor Larsen",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_41"
+          }
+         },
+         "label": "Victor Larsen"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_42",
+          "ownerId": "us_5"
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Marco Brown",
+          "assigneeId": "us_5",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_42"
+          }
+         },
+         "label": "Marco Brown"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_43",
+          "ownerId": "us_2"
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Femi Silva",
+          "assigneeId": "us_2",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_43"
+          }
+         },
+         "label": "Femi Silva"
+        },
+        {
+         "action": "M03.A05",
+         "name": "Assign lead owner",
+         "args": {
+          "leadId": "ld_44",
+          "ownerId": "us_4"
+         },
+         "label": "Dev Kim"
+        },
+        {
+         "action": "M06.A01",
+         "name": "Create task",
+         "args": {
+          "title": "Follow up with Dev Kim",
+          "assigneeId": "us_4",
+          "relatedTo": {
+           "type": "lead",
+           "id": "ld_44"
+          }
+         },
+         "label": "Dev Kim"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 28411,
+    "firstReplyMs": 28405,
+    "plannerMs": 28321,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 18,
+    "clarifications": 0,
+    "usage": {
+     "input": 46496,
+     "cachedRead": 28416,
+     "cacheWrite": 0,
+     "output": 924,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-survey-closed-rejects-response",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Submit a test response to the Customer Satisfaction survey with a rating of 5",
+     "status": "failed",
+     "reply": "Couldn't submit simulated survey response: Survey \"Customer Satisfaction\" is closed; can only take responses when open.",
+     "offered": [
+      "M19.A09",
+      "M45.A05",
+      "M18.A09",
+      "M45.A09",
+      "M45.A08",
+      "M45.A10",
+      "M19.A10",
+      "M45.A06",
+      "M45.A07",
+      "M19.A04",
+      "M19.A07",
+      "M47.A08",
+      "M19.A01",
+      "M18.A10",
+      "M19.A08",
+      "M19.A02",
+      "M19.A03",
+      "M01.A03",
+      "M45.A04",
+      "M26.A10",
+      "M29.A01",
+      "M26.A09",
+      "M45.A01",
+      "M45.A02",
+      "M19.A05",
+      "M25.A05",
+      "M31.A10",
+      "M14.A05"
+     ],
+     "planned": [
+      "M19.A02",
+      "M19.A09"
+     ],
+     "calls": [
+      {
+       "action": "M19.A02",
+       "args": {
+        "surveyId": "sv_1"
+       }
+      },
+      {
+       "action": "M19.A09",
+       "args": {
+        "surveyId": "sv_1",
+        "answers": {
+         "rating": 5
+        }
+       },
+       "error": "CONFLICT: Survey \"Customer Satisfaction\" is closed; can only take responses when open"
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which rating question should I answer with 5, and what should I put for any other required survey questions?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M19.A09"
+         ],
+         "destination": null
+        },
+        "clarification": "content",
+        "lookup": null,
+        "missing": {
+         "action": "M19.A09",
+         "argument": "answers",
+         "argsJson": "{\"surveyId\":{\"$lookup\":{\"entity\":\"survey\",\"name\":\"Customer Satisfaction\"}}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M19.A02",
+          "argsJson": "{\"surveyId\":{\"$lookup\":{\"entity\":\"survey\",\"name\":\"Customer Satisfaction\"}}}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M19.A09",
+          "argsJson": "{\"surveyId\":\"$s1.id\",\"answers\":{\"rating\":5}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M19.A09"
+         ],
+         "destination": "survey"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 11412,
+     "ms": 18791,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "dd0421a172fe",
+       "latencyMs": 11379,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12235,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 129,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "d3b52c92e072",
+       "latencyMs": 7306,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12589,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 150,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "clarified": {
+      "question": "Which rating question should I answer with 5, and what should I put for any other required survey questions?",
+      "answer": "That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say."
+     }
+    }
+   ],
+   "metrics": {
+    "ms": 18791,
+    "firstReplyMs": 11412,
+    "plannerMs": 18685,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 2,
+    "clarifications": 1,
+    "usage": {
+     "input": 24824,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 279,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-survey-closed-rejects-response",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Submit a test response to the Customer Satisfaction survey with a rating of 5",
+     "status": "failed",
+     "reply": "Couldn't submit simulated survey response: Survey \"Customer Satisfaction\" is closed; can only take responses when open.",
+     "offered": [
+      "M19.A09",
+      "M45.A05",
+      "M18.A09",
+      "M45.A09",
+      "M45.A08",
+      "M45.A10",
+      "M19.A10",
+      "M45.A06",
+      "M45.A07",
+      "M19.A04",
+      "M19.A07",
+      "M47.A08",
+      "M19.A01",
+      "M18.A10",
+      "M19.A08",
+      "M19.A02",
+      "M19.A03",
+      "M01.A03",
+      "M45.A04",
+      "M26.A10",
+      "M29.A01",
+      "M26.A09",
+      "M45.A01",
+      "M45.A02",
+      "M19.A05",
+      "M25.A05",
+      "M31.A10",
+      "M14.A05"
+     ],
+     "planned": [
+      "M19.A09"
+     ],
+     "calls": [
+      {
+       "action": "M19.A09",
+       "args": {
+        "surveyId": "sv_1",
+        "answers": {
+         "rating": 5
+        }
+       },
+       "error": "CONFLICT: Survey \"Customer Satisfaction\" is closed; can only take responses when open"
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "Which survey question should receive the rating of 5?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M19.A09"
+         ],
+         "destination": null
+        },
+        "clarification": "content",
+        "lookup": null,
+        "missing": {
+         "action": "M19.A09",
+         "argument": "answers",
+         "argsJson": "{\"surveyId\":{\"$lookup\":{\"entity\":\"survey\",\"name\":\"Customer Satisfaction\"}}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M19.A09",
+          "argsJson": "{\"surveyId\":{\"$lookup\":{\"entity\":\"survey\",\"name\":\"Customer Satisfaction\"}},\"answers\":{\"rating\":5}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M19.A09"
+         ],
+         "destination": "survey"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 8600,
+     "ms": 16553,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "dd0421a172fe",
+       "latencyMs": 8571,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12237,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 118,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "c9f5a18b5fef",
+       "latencyMs": 7881,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12580,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 121,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "clarified": {
+      "question": "Which survey question should receive the rating of 5?",
+      "answer": "That's everything I have. Please go ahead with what I asked, using sensible defaults for anything I didn't say."
+     }
+    }
+   ],
+   "metrics": {
+    "ms": 16553,
+    "firstReplyMs": 8600,
+    "plannerMs": 16452,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 1,
+    "clarifications": 1,
+    "usage": {
+     "input": 24817,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 239,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "cov-survey-closed-rejects-response",
+   "category": "failure",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Submit a test response to the Customer Satisfaction survey with a rating of 5",
+     "status": "partial",
+     "reply": "Customer Satisfaction (survey): status closed, published at 2026-10-10T10:00:00.000Z, closed at 2026-10-18T10:00:00.000Z.\nCouldn't submit simulated survey response: Survey \"Customer Satisfaction\" is closed; can only take responses when open.",
+     "offered": [
+      "M19.A09",
+      "M45.A05",
+      "M18.A09",
+      "M45.A09",
+      "M45.A08",
+      "M45.A10",
+      "M19.A10",
+      "M45.A06",
+      "M45.A07",
+      "M19.A04",
+      "M19.A07",
+      "M47.A08",
+      "M19.A01",
+      "M18.A10",
+      "M19.A08",
+      "M19.A02",
+      "M19.A03",
+      "M01.A03",
+      "M45.A04"
+     ],
+     "planned": [
+      "M19.A02",
+      "M19.A09"
+     ],
+     "calls": [
+      {
+       "action": "M19.A02",
+       "args": {
+        "surveyId": "sv_1"
+       }
+      },
+      {
+       "action": "M19.A09",
+       "args": {
+        "surveyId": "sv_1",
+        "answers": {
+         "rating": 5
+        }
+       },
+       "error": "CONFLICT: Survey \"Customer Satisfaction\" is closed; can only take responses when open"
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "clarify",
+        "steps": null,
+        "question": "What other answers should I include in the test response?",
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M19.A09"
+         ],
+         "destination": null
+        },
+        "clarification": "content",
+        "lookup": null,
+        "missing": {
+         "action": "M19.A09",
+         "argument": "answers",
+         "argsJson": "{\"surveyId\":{\"$lookup\":{\"entity\":\"survey\",\"name\":\"Customer Satisfaction\"}},\"answers\":{}}"
+        }
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "repair clarification binding",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "survey",
+          "name": "Customer Satisfaction",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M19.A02",
+          "argsJson": "{\"surveyId\":\"$s1.id\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M19.A09",
+          "argsJson": "{\"surveyId\":\"$s1.id\",\"answers\":{\"rating\":5}}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M19.A09"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "answers is already supplied; use plan/look to validate or inspect it, not clarify"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 25086,
+     "ms": 25086,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "dd0421a172fe",
+       "latencyMs": 7644,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 12237,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 123,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "repair clarification binding",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "f6a004bb578e",
+       "latencyMs": 17400,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": true,
+       "usage": {
+        "input": 25029,
+        "cachedRead": 18944,
+        "cacheWrite": 0,
+        "output": 186,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 25086,
+    "firstReplyMs": 25086,
+    "plannerMs": 25044,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 2,
+    "clarifications": 0,
+    "usage": {
+     "input": 37266,
+     "cachedRead": 25600,
+     "cacheWrite": 0,
+     "output": 309,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "report-ticket-reopen",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reopen Dorian Vale's Receipt download ticket and reply 'We are taking another look.'",
+     "status": "done",
+     "reply": "Update ticket status + Reply to ticket requester for 1 of 1: Receipt download.",
+     "offered": [
+      "M29.A09",
+      "M43.A08",
+      "M47.A06",
+      "M47.A08",
+      "M47.A03",
+      "M29.A08",
+      "M47.A10",
+      "M47.A09",
+      "M47.A07",
+      "M47.A02",
+      "M04.A10",
+      "M47.A05",
+      "M06.A09",
+      "M11.A02",
+      "M11.A10",
+      "M11.A08",
+      "M06.A08",
+      "M11.A06",
+      "M29.A06"
+     ],
+     "planned": [
+      "M47.A03",
+      "M47.A06",
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A03",
+       "args": {
+        "query": "Receipt download",
+        "contactId": "ct_36",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M47.A03",
+       "args": {
+        "query": "Receipt download",
+        "contactId": "ct_36",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M47.A06",
+       "args": {
+        "ticketId": "tic_2",
+        "status": "open"
+       }
+      },
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_2",
+        "body": "We are taking another look."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M47.A03",
+          "argsJson": "{\"query\":\"Receipt download\",\"contactId\":{\"$lookup\":{\"entity\":\"contact\",\"name\":\"Dorian Vale\"}}}"
+         },
+         {
+          "id": "s2",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"personName\":{\"contains\":\"Dorian Vale\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s2",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A06",
+            "argsJson": "{\"ticketId\":\"$item.id\",\"status\":\"open\"}"
+           },
+           {
+            "action": "M47.A08",
+            "argsJson": "{\"ticketId\":\"$item.id\",\"body\":\"We are taking another look.\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A06",
+          "M47.A08"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 11545,
+     "ms": 11552,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "606845ac2037",
+       "latencyMs": 11488,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13240,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 272,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s3",
+       "planHash": "73d9cc7cb784c31f",
+       "targetsHash": "d0e914f0c77160df",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A06",
+         "name": "Update ticket status",
+         "args": {
+          "ticketId": "tic_2",
+          "status": "open"
+         },
+         "label": "Receipt download"
+        },
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_2",
+          "body": "We are taking another look."
+         },
+         "label": "Receipt download"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 11552,
+    "firstReplyMs": 11545,
+    "plannerMs": 11488,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 4,
+    "clarifications": 0,
+    "usage": {
+     "input": 13240,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 272,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "report-ticket-reopen",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reopen Dorian Vale's Receipt download ticket and reply 'We are taking another look.'",
+     "status": "done",
+     "reply": "Done: Update ticket status (Receipt download).\nDone: Reply to ticket requester (Receipt download).",
+     "offered": [
+      "M29.A09",
+      "M43.A08",
+      "M47.A06",
+      "M47.A08",
+      "M47.A03",
+      "M29.A08",
+      "M47.A10",
+      "M47.A09",
+      "M47.A07",
+      "M47.A02",
+      "M04.A10",
+      "M47.A05",
+      "M06.A09",
+      "M11.A02",
+      "M11.A10",
+      "M11.A08",
+      "M06.A08",
+      "M11.A06",
+      "M29.A06"
+     ],
+     "planned": [
+      "M47.A02",
+      "M47.A06",
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_2"
+       }
+      },
+      {
+       "action": "M47.A06",
+       "args": {
+        "ticketId": "tic_2",
+        "status": "open"
+       }
+      },
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_2"
+       }
+      },
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_2",
+        "body": "We are taking another look."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "Dorian Vale's Receipt download",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A02",
+          "argsJson": "{\"ticketId\":\"$s1.id\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M47.A06",
+          "argsJson": "{\"ticketId\":\"$s2.id\",\"status\":\"open\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\":\"$s3.id\",\"body\":\"We are taking another look.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A06",
+          "M47.A08"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 10948,
+     "ms": 10952,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "606845ac2037",
+       "latencyMs": 10856,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13242,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 211,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s4",
+       "planHash": "243e55c405cd61c0",
+       "targetsHash": "b81facfc8dbcffaf",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_2",
+          "body": "We are taking another look."
+         },
+         "target": {
+          "ticketId": "tic_2",
+          "contactId": "ct_36",
+          "to": "dorian@cedar.example"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 10952,
+    "firstReplyMs": 10948,
+    "plannerMs": 10856,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 4,
+    "clarifications": 0,
+    "usage": {
+     "input": 13242,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 211,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "report-ticket-reopen",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "Reopen Dorian Vale's Receipt download ticket and reply 'We are taking another look.'",
+     "status": "done",
+     "reply": "Receipt download (ticket): body Please investigate this issue., requester email dorian@cedar.example, priority normal, status open, first response at 2026-10-19T15:00:00.000Z, first response due at 2026-10-20T14:00:00.000Z.\nDone: Update ticket status (Receipt download).\nDone: Reply to ticket requester (Receipt download).",
+     "offered": [
+      "M29.A09",
+      "M43.A08",
+      "M47.A06",
+      "M47.A08",
+      "M47.A03",
+      "M29.A08",
+      "M47.A10",
+      "M47.A09",
+      "M47.A07",
+      "M47.A02",
+      "M04.A10",
+      "M47.A05",
+      "M06.A09",
+      "M11.A02",
+      "M11.A10",
+      "M11.A08",
+      "M06.A08",
+      "M11.A06",
+      "M29.A06"
+     ],
+     "planned": [
+      "M47.A02",
+      "M47.A06",
+      "M47.A08"
+     ],
+     "calls": [
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_2"
+       }
+      },
+      {
+       "action": "M47.A06",
+       "args": {
+        "ticketId": "tic_2",
+        "status": "open"
+       }
+      },
+      {
+       "action": "M47.A02",
+       "args": {
+        "ticketId": "tic_2"
+       }
+      },
+      {
+       "action": "M47.A08",
+       "args": {
+        "ticketId": "tic_2",
+        "body": "We are taking another look."
+       }
+      }
+     ],
+     "plannerRounds": 1,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "resolve",
+          "entity": "ticket",
+          "name": "Dorian Vale Receipt",
+          "whereJson": null
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M47.A02",
+          "argsJson": "{\"ticketId\":\"$s1.id\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M47.A06",
+          "argsJson": "{\"ticketId\":\"$s1.id\",\"status\":\"open\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "action",
+          "action": "M47.A08",
+          "argsJson": "{\"ticketId\":\"$s1.id\",\"body\":\"We are taking another look.\"}"
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A06",
+          "M47.A08"
+         ],
+         "destination": "email"
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 1,
+     "firstReplyMs": 10555,
+     "ms": 10561,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "606845ac2037",
+       "latencyMs": 10500,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 13240,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 209,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ],
+     "confirmations": [
+      {
+       "stepId": "s4",
+       "planHash": "83041f868a03ee7d",
+       "targetsHash": "b81facfc8dbcffaf",
+       "reason": "sends something outside the account",
+       "count": 1,
+       "preview": [
+        {
+         "action": "M47.A08",
+         "name": "Reply to ticket requester",
+         "args": {
+          "ticketId": "tic_2",
+          "body": "We are taking another look."
+         },
+         "target": {
+          "ticketId": "tic_2",
+          "contactId": "ct_36",
+          "to": "dorian@cedar.example"
+         }
+        }
+       ],
+       "identities": [
+        {
+         "entity": "ticket",
+         "id": "tic_2",
+         "name": "Receipt download Dorian Vale",
+         "text": "Dorian Vale Receipt",
+         "provenance": "lookup",
+         "matchReason": "name",
+         "updatedAt": "2026-10-19T14:00:00.000Z",
+         "fingerprint": "25ffbb7decca7b18"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 10561,
+    "firstReplyMs": 10555,
+    "plannerMs": 10500,
+    "plannerRounds": 1,
+    "modelCalls": 1,
+    "calls": 4,
+    "clarifications": 0,
+    "usage": {
+     "input": 13240,
+     "cachedRead": 6656,
+     "cacheWrite": 0,
+     "output": 209,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "tickets-from-invoices-messages",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "For contacts who have an overdue invoice and an inbound reply in the last 7 days, open one support ticket per contact titled 'Overdue invoice follow-up' with description 'Check the invoice and recent reply.'",
+     "status": "done",
+     "reply": "Found 1 email: Sarah Johnson: to hello@ourco.example, from sarah.johnson@brightside.example, subject Re: Following up on our call - what does the Agency plan cost?, body Re: Following up on our call - what does the Agency plan cost?, kind general, direction inbound.\nCreate support ticket for 1 of 1: INV-1006.",
+     "offered": [
+      "M28.A03",
+      "M13.A09",
+      "M28.A08",
+      "M43.A08",
+      "M28.A10",
+      "M12.A09",
+      "M28.A02",
+      "M47.A08",
+      "M28.A07",
+      "M11.A10",
+      "M47.A09",
+      "M47.A02",
+      "M28.A01",
+      "M47.A10",
+      "M11.A02",
+      "M27.A03",
+      "M32.A03",
+      "M30.A03",
+      "M31.A03",
+      "M13.A01",
+      "M13.A03",
+      "M13.A07",
+      "M47.A03",
+      "M47.A01",
+      "M01.A03",
+      "M47.A07",
+      "M01.A01",
+      "M47.A06",
+      "M47.A04",
+      "M47.A05",
+      "M21.A03",
+      "M29.A06",
+      "M01.A09",
+      "M06.A03",
+      "M01.A10",
+      "M01.A05",
+      "M01.A02",
+      "M03.A03",
+      "M46.A03",
+      "M03.A01",
+      "M06.A01",
+      "M02.A03",
+      "M02.A10",
+      "M08.A08",
+      "M09.A01",
+      "M09.A06",
+      "M48.A03",
+      "M04.A03"
+     ],
+     "planned": [
+      "M28.A10",
+      "M13.A07",
+      "M47.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "limit": 500
+       }
+      },
+      {
+       "action": "M13.A07",
+       "args": {
+        "direction": "inbound",
+        "from": "2026-10-15",
+        "to": "2026-10-21",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M47.A01",
+       "args": {
+        "title": "Overdue invoice follow-up",
+        "body": "Check the invoice and recent reply.",
+        "contactId": "ct_31"
+       }
+      }
+     ],
+     "plannerRounds": 2,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search support tickets by contact or status and create a support ticket with a title and description for each contact. Need also search inbound email replies by invoice contacts within a date range, and create one support ticket per matched contact.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M13.A07",
+          "argsJson": "{\"direction\":\"inbound\",\"from\":\"2026-10-15\",\"to\":\"2026-10-21\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"in\":\"$s2.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s2.items",
+          "whereJson": "{\"contactId\":{\"in\":\"$s3.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s3.items",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A01",
+            "argsJson": "{\"title\":\"Overdue invoice follow-up\",\"body\":\"Check the invoice and recent reply.\",\"contactId\":\"$item.contactId\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 21355,
+     "ms": 21355,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "b0b7f8c95401",
+       "latencyMs": 8556,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14630,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 114,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "065be0b41748",
+       "latencyMs": 12628,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 20868,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 339,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 21355,
+    "firstReplyMs": 21355,
+    "plannerMs": 21184,
+    "plannerRounds": 2,
+    "modelCalls": 2,
+    "calls": 3,
+    "clarifications": 0,
+    "usage": {
+     "input": 35498,
+     "cachedRead": 13312,
+     "cacheWrite": 0,
+     "output": 453,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "tickets-from-invoices-messages",
+   "category": "multi",
+   "pass": true,
+   "failures": [],
+   "failureClass": null,
+   "turns": [
+    {
+     "user": "For contacts who have an overdue invoice and an inbound reply in the last 7 days, open one support ticket per contact titled 'Overdue invoice follow-up' with description 'Check the invoice and recent reply.'",
+     "status": "done",
+     "reply": "Create support ticket for 1 of 1: INV-1006.",
+     "offered": [
+      "M28.A03",
+      "M13.A09",
+      "M28.A08",
+      "M43.A08",
+      "M28.A10",
+      "M12.A09",
+      "M28.A02",
+      "M47.A08",
+      "M28.A07",
+      "M11.A10",
+      "M47.A09",
+      "M47.A02",
+      "M28.A01",
+      "M47.A10",
+      "M11.A02",
+      "M27.A03",
+      "M32.A03",
+      "M30.A03",
+      "M31.A03",
+      "M13.A01",
+      "M13.A03",
+      "M13.A07",
+      "M47.A03",
+      "M37.A08",
+      "M44.A04",
+      "M47.A01",
+      "M38.A07",
+      "M06.A03",
+      "M41.A03",
+      "M01.A03",
+      "M06.A04",
+      "M38.A03",
+      "M24.A03",
+      "M21.A03",
+      "M29.A06",
+      "M40.A03",
+      "M47.A07",
+      "M03.A03",
+      "M46.A03",
+      "M35.A08",
+      "M40.A04",
+      "M30.A04",
+      "M31.A04",
+      "M48.A03",
+      "M01.A05",
+      "M01.A01",
+      "M12.A07",
+      "M01.A09",
+      "M01.A06",
+      "M02.A10",
+      "M08.A08",
+      "M13.A10",
+      "M42.A03",
+      "M01.A10",
+      "M01.A02",
+      "M02.A03",
+      "M02.A06",
+      "M27.A08",
+      "M13.A04",
+      "M02.A05",
+      "M05.A05",
+      "M03.A01",
+      "M02.A01",
+      "M48.A01"
+     ],
+     "planned": [
+      "M28.A10",
+      "M13.A07",
+      "M47.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "limit": 500
+       }
+      },
+      {
+       "action": "M13.A07",
+       "args": {
+        "direction": "inbound",
+        "from": "2026-10-15",
+        "to": "2026-10-21",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M47.A01",
+       "args": {
+        "title": "Overdue invoice follow-up",
+        "body": "Check the invoice and recent reply.",
+        "contactId": "ct_31"
+       }
+      }
+     ],
+     "plannerRounds": 3,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search support tickets or create a support ticket per contact, with a title and description/body, and search inbound email replies filtered to contacts with overdue invoices in the last 7 days.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search inbound email messages from the last 7 days and retrieve their contact IDs; search overdue invoices to identify invoice contact IDs; create one support ticket per matching contact.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M13.A07",
+          "argsJson": "{\"direction\":\"inbound\",\"from\":\"2026-10-15\",\"to\":\"2026-10-21\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"in\":\"$s2.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s3",
+          "whereJson": "{\"contactId\":{\"exists\":true}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s4",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A01",
+            "argsJson": "{\"contactId\":\"$item.contactId\",\"title\":\"Overdue invoice follow-up\",\"body\":\"Check the invoice and recent reply.\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Search inbound email messages from the last 7 days and retrieve their contact IDs; search overdue invoices to identify invoice contact IDs; create one support ticket per matching contact.\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 26751,
+     "ms": 26751,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "b0b7f8c95401",
+       "latencyMs": 6672,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14632,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 106,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "f854486a2b46",
+       "latencyMs": 7102,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 19462,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 103,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "3cb768c673cb",
+       "latencyMs": 12799,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 23791,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 327,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 26751,
+    "firstReplyMs": 26751,
+    "plannerMs": 26573,
+    "plannerRounds": 3,
+    "modelCalls": 3,
+    "calls": 3,
+    "clarifications": 0,
+    "usage": {
+     "input": 57885,
+     "cachedRead": 19968,
+     "cacheWrite": 0,
+     "output": 536,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  },
+  {
+   "id": "tickets-from-invoices-messages",
+   "category": "multi",
+   "pass": false,
+   "failures": [
+    {
+     "kind": "state",
+     "detail": "SELECT count(*) FROM tickets WHERE json_extract(data,'$.title')='Overdue invoice follow-up' AND json_extract(data,'$.contactId')='ct_31' → 0, wanted 1"
+    }
+   ],
+   "failureClass": "other",
+   "turns": [
+    {
+     "user": "For contacts who have an overdue invoice and an inbound reply in the last 7 days, open one support ticket per contact titled 'Overdue invoice follow-up' with description 'Check the invoice and recent reply.'",
+     "status": "failed",
+     "reply": "Couldn't create support ticket: the filter s5 kept none of the 1 records found, so nothing was changed; check its conditions against the found records.",
+     "offered": [
+      "M28.A03",
+      "M13.A09",
+      "M28.A08",
+      "M43.A08",
+      "M28.A10",
+      "M12.A09",
+      "M28.A02",
+      "M47.A08",
+      "M28.A07",
+      "M11.A10",
+      "M47.A09",
+      "M47.A02",
+      "M28.A01",
+      "M47.A10",
+      "M11.A02",
+      "M27.A03",
+      "M32.A03",
+      "M30.A03",
+      "M31.A03",
+      "M13.A01",
+      "M13.A03",
+      "M13.A07",
+      "M21.A03",
+      "M47.A01",
+      "M44.A04",
+      "M02.A06",
+      "M01.A03",
+      "M47.A03",
+      "M01.A01",
+      "M01.A09",
+      "M02.A10",
+      "M29.A06",
+      "M01.A05",
+      "M01.A02",
+      "M01.A06",
+      "M06.A03",
+      "M02.A07",
+      "M24.A03",
+      "M03.A01",
+      "M06.A01",
+      "M40.A04",
+      "M30.A04",
+      "M31.A04",
+      "M03.A03",
+      "M48.A03",
+      "M12.A07",
+      "M12.A03",
+      "M12.A04",
+      "M13.A10",
+      "M12.A01",
+      "M12.A10",
+      "M01.A10",
+      "M45.A06",
+      "M13.A04",
+      "M01.A08",
+      "M47.A07",
+      "M14.A03",
+      "M15.A05",
+      "M12.A06",
+      "M29.A07",
+      "M15.A06",
+      "M47.A06",
+      "M47.A05"
+     ],
+     "planned": [
+      "M28.A10",
+      "M13.A07",
+      "M12.A07",
+      "M47.A01",
+      "M28.A10",
+      "M13.A07",
+      "M12.A07",
+      "M47.A01"
+     ],
+     "calls": [
+      {
+       "action": "M28.A10",
+       "args": {
+        "limit": 500
+       }
+      },
+      {
+       "action": "M13.A07",
+       "args": {
+        "direction": "inbound",
+        "from": "2026-10-15",
+        "to": "2026-10-21",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M12.A07",
+       "args": {
+        "direction": "inbound",
+        "from": "2026-10-15",
+        "to": "2026-10-21",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M28.A10",
+       "args": {
+        "limit": 500
+       }
+      },
+      {
+       "action": "M13.A07",
+       "args": {
+        "direction": "inbound",
+        "from": "2026-10-15",
+        "to": "2026-10-21",
+        "limit": 500
+       }
+      },
+      {
+       "action": "M12.A07",
+       "args": {
+        "direction": "inbound",
+        "from": "2026-10-15",
+        "to": "2026-10-21",
+        "limit": 500
+       }
+      }
+     ],
+     "plannerRounds": 4,
+     "planner": [
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search contacts with overdue invoices and inbound email replies in the last 7 days, find the unique contacts meeting both conditions, and create one support ticket per contact with a specified title, description, and contact link.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after search_tools",
+       "reply": {
+        "type": "search_tools",
+        "steps": null,
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": "Search inbound email messages and inbound SMS by date range and retrieve contacts who have at least one inbound reply in the last 7 days; combine with overdue invoice contacts, then create a support ticket per matching contact.",
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan after second search_tools",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M13.A07",
+          "argsJson": "{\"direction\":\"inbound\",\"from\":\"2026-10-15\",\"to\":\"2026-10-21\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M12.A07",
+          "argsJson": "{\"direction\":\"inbound\",\"from\":\"2026-10-15\",\"to\":\"2026-10-21\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"in\":\"$s2.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s4",
+          "whereJson": "{\"contactId\":{\"in\":\"$s3.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s5",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A01",
+            "argsJson": "{\"title\":\"Overdue invoice follow-up\",\"body\":\"Check the invoice and recent reply.\",\"contactId\":\"$item.contactId\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      },
+      {
+       "tier": "strong",
+       "round": "plan",
+       "reply": {
+        "type": "plan",
+        "steps": [
+         {
+          "id": "s1",
+          "kind": "action",
+          "action": "M28.A10",
+          "argsJson": "{}"
+         },
+         {
+          "id": "s2",
+          "kind": "action",
+          "action": "M13.A07",
+          "argsJson": "{\"direction\":\"inbound\",\"from\":\"2026-10-15\",\"to\":\"2026-10-21\"}"
+         },
+         {
+          "id": "s3",
+          "kind": "action",
+          "action": "M12.A07",
+          "argsJson": "{\"direction\":\"inbound\",\"from\":\"2026-10-15\",\"to\":\"2026-10-21\"}"
+         },
+         {
+          "id": "s4",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s1.items",
+          "whereJson": "{\"contactId\":{\"in\":\"$s2.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s5",
+          "kind": "op",
+          "op": "filter",
+          "in": "$s4",
+          "whereJson": "{\"contactId\":{\"in\":\"$s3.items[*].contactId\"}}",
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": null
+         },
+         {
+          "id": "s6",
+          "kind": "op",
+          "op": "forEach",
+          "in": "$s5",
+          "whereJson": null,
+          "by": null,
+          "set": null,
+          "roundRobin": null,
+          "do": [
+           {
+            "action": "M47.A01",
+            "argsJson": "{\"title\":\"Overdue invoice follow-up\",\"body\":\"Check the invoice and recent reply.\",\"contactId\":\"$item.contactId\"}"
+           }
+          ]
+         }
+        ],
+        "question": null,
+        "options": null,
+        "reason": null,
+        "alternatives": null,
+        "query": null,
+        "text": null,
+        "outcome": {
+         "effect": "change",
+         "actions": [
+          "M47.A01"
+         ],
+         "destination": null
+        },
+        "clarification": null,
+        "lookup": null,
+        "missing": null
+       }
+      }
+     ],
+     "compileErrors": [
+      "search_tools ran again for \"Search inbound email messages and inbound SMS by date range and retrieve contacts who have at least one inbound reply in the last 7 days; combine with overdue invoice contacts, then create a support ticket per matching contact.\"; whatever it found is now in <actions>. Matching, combining or de-duplicating lists is done with filter/exclude ops over those actions' results, not by an action. Plan with <actions>, or reply unsupported naming the missing capability"
+     ],
+     "errors": [],
+     "approvals": 0,
+     "firstReplyMs": 44045,
+     "ms": 44045,
+     "plannerCalls": [
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "b0b7f8c95401",
+       "latencyMs": 8647,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 14632,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 112,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after search_tools",
+       "call": 2,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "d6a15526adc6",
+       "latencyMs": 10281,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 40104,
+        "cachedRead": 26496,
+        "cacheWrite": 0,
+        "output": 145,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan after second search_tools",
+       "call": 3,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "16489e77a7e1",
+       "latencyMs": 12494,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 23584,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 382,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      },
+      {
+       "label": "plan",
+       "call": 1,
+       "model": "gpt-6-luna",
+       "systemHash": "84165867dd6f",
+       "promptHash": "acd518d15f59",
+       "latencyMs": 12302,
+       "attempts": 1,
+       "modelCalls": 1,
+       "repair": false,
+       "usage": {
+        "input": 16631,
+        "cachedRead": 6656,
+        "cacheWrite": 0,
+        "output": 382,
+        "thinking": 0,
+        "billing": "subscription",
+        "costUsd": null
+       }
+      }
+     ]
+    }
+   ],
+   "metrics": {
+    "ms": 44045,
+    "firstReplyMs": 44045,
+    "plannerMs": 43724,
+    "plannerRounds": 4,
+    "modelCalls": 4,
+    "calls": 6,
+    "clarifications": 0,
+    "usage": {
+     "input": 94951,
+     "cachedRead": 46464,
+     "cacheWrite": 0,
+     "output": 1021,
+     "thinking": 0,
+     "costUsd": null,
+     "billing": "subscription"
+    }
+   },
+   "models": [
+    "gpt-6-luna"
+   ]
+  }
+ ]
+}
