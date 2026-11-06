@@ -46,12 +46,18 @@ export class CodexAppServerPlanner implements Planner {
       }, signal);
       threadId = thread.thread.id as string;
       const watch = conn.watch(threadId);
-      const turn = await conn.request("turn/start", {
+      const aborted = new Promise<never>((_, reject) => {
+        const stop = () => reject(new PlannerError("Codex request cancelled or timed out", "timeout"));
+        if (signal.aborted) stop(); else signal.addEventListener("abort", stop, { once: true });
+      });
+      aborted.catch(() => {}); // a call that fails some other way never waits on this
+      // No signal on this request: a turn the server starts after an abort still needs its id, to be interrupted, or it runs on with nobody waiting.
+      const starting = conn.request("turn/start", {
         threadId, input: [{ type: "text", text: req.user }], outputSchema: req.schema,
         effort: this.options.reasoning?.[req.tier] ?? "low",
-      }, signal);
-      turnId = turn.turn.id as string;
-      const aborted = new Promise<never>((_, reject) => signal.addEventListener("abort", () => reject(new PlannerError("Codex request cancelled or timed out", "timeout")), { once: true }));
+      });
+      starting.then((t) => { if (signal.aborted) conn!.request("turn/interrupt", { threadId, turnId: t.turn.id }).catch(() => {}); }, () => {});
+      turnId = (await Promise.race([starting, aborted])).turn.id as string;
       const { text, usage } = await Promise.race([watch.finished, aborted]);
       let json: unknown;
       try {

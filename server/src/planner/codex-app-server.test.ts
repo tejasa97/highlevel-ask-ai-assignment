@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { tmpdir } from "node:os";
 import { promisify } from "node:util";
@@ -33,6 +33,7 @@ createInterface({ input: process.stdin }).on('line', line => {
     const threadId = m.params.threadId, thread = threads.get(threadId);
     const { mode = 'ok', marker } = JSON.parse(m.params.input[0].text);
     thread.marker = marker;
+    if (mode === 'late_reply') { writeFileSync(marker, 'started'); setTimeout(() => reply({ turn: { id: 'tu' + count } }), 200); return; }
     reply({ turn: { id: 'tu' + count } });
     const note = (method, params) => out({ method, params: { threadId, ...params } });
     const finish = (status = 'completed', error = null) => note('turn/completed', { turn: { id: 'tu', status, error } });
@@ -43,7 +44,7 @@ createInterface({ input: process.stdin }).on('line', line => {
       finish();
     };
     const final = { pid: process.pid, args, system: thread.baseInstructions, model: thread.model, sandbox: thread.sandbox, ephemeral: thread.ephemeral, schema: m.params.outputSchema, effort: m.params.effort };
-    if (mode === 'hang') return;
+    if (mode === 'hang') { if (marker) writeFileSync(marker, 'started'); return; }
     if (mode === 'crash') process.exit(3);
     if (mode === 'rate') finish('failed', { message: 'exceeded retry limit, last status: 429 Too Many Requests' });
     else if (mode === 'tool') note('item/completed', { item: { type: 'commandExecution' } });
@@ -68,6 +69,14 @@ const planner = () => {
 after(async () => { await Promise.all(open.map((p) => p.close())); });
 const req = (mode = "ok", extra: object = {}) => ({ tier: "fast" as const, system: "App system instructions", user: JSON.stringify({ mode, ...extra }), schema: { type: "object" } });
 const kind = (expected: PlannerError["kind"]) => (e: unknown) => e instanceof PlannerError && e.kind === expected;
+const markerSays = async (file: string, text: string) => {
+  let got = "";
+  for (let i = 0; i < 500 && got !== text; i++) {
+    got = await readFile(file, "utf8").catch(() => "");
+    if (got !== text) await new Promise((r) => setTimeout(r, 20));
+  }
+  assert.equal(got, text);
+};
 
 describe("CodexAppServerPlanner", () => {
   it("runs each call as an ephemeral read-only thread with the system prompt, schema, model and effort, and reports subscription tokens", async () => {
@@ -125,10 +134,20 @@ describe("CodexAppServerPlanner", () => {
     const marker = join(dir, "interrupt-marker");
     const controller = new AbortController();
     const call = planner().plan({ ...req("hang", { marker }), signal: controller.signal });
-    setTimeout(() => controller.abort(), 100);
+    await markerSays(marker, "started");
+    controller.abort();
     await assert.rejects(call, kind("timeout"));
-    for (let i = 0; i < 50 && !(await access(marker).then(() => true, () => false)); i++) await new Promise((r) => setTimeout(r, 20));
-    assert.equal(await readFile(marker, "utf8"), "interrupted");
+    await markerSays(marker, "interrupted");
+  });
+
+  it("interrupts a turn whose id only arrives after the caller aborted", async () => {
+    const marker = join(dir, "late-reply-marker");
+    const controller = new AbortController();
+    const call = planner().plan({ ...req("late_reply", { marker }), signal: controller.signal });
+    await markerSays(marker, "started");
+    controller.abort();
+    await assert.rejects(call, kind("timeout"));
+    await markerSays(marker, "interrupted");
   });
 
   it("refuses an API-key login without touching it", async () => {
