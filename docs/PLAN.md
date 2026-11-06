@@ -241,7 +241,7 @@ Retrieval, `<context>` rebuilding, the plan grammar, validation, execution, the 
 
 ```ts
 interface Planner {
-  readonly name: string                     // "qwen" | "claude-cli" | "codex-cli"
+  readonly name: string                     // "qwen" | "claude-cli" | "codex-cli" | "codex-app-server"
   plan(req: { tier: "fast" | "strong"; system: string; user: string; schema: object; signal?: AbortSignal })
     : Promise<{ model: string; json: unknown; text: string; usage: Usage; latencyMs: number }>
 }
@@ -256,6 +256,7 @@ type Usage = { input: number; cachedRead: number; cacheWrite: number; output: nu
   | `qwen` (default with a Token Plan key) | `deepseek-v4.1-flash-1017` on the Token Plan's OpenAI-compatible endpoint | `json_schema` strict where the model accepts it. DeepSeek rejects it (HTTP 400, checked 2026-10-25), so it gets `json_object` with the schema appended to the system prompt. Thinking off, `max_tokens` 8192, one retry |
   | `claude-cli` (default without a key) | `claude-haiku-5-5` | `claude -p --json-schema`, with no tools, MCP, settings or hooks, an empty cwd and our system prompt. ~0.7 s of process start per call |
   | `codex-cli` (opt-in) | `gpt-6.1-sol`, reasoning low | `codex exec --output-schema` |
+  | `codex-app-server` (opt-in) | same settings as `codex-cli` | one long-running `codex app-server`, a new ephemeral thread per call, with `outputSchema` on the turn |
 
 - **Why not a unified SDK:** it would hide the things the benchmark needs, which are exact cache-token fields and raw requests for traces.
 - **Caching is mostly the layout, not adapter code.** The Token Plan caches a matching prefix automatically, in 1,024-token blocks, with no `cache_control`; the CLIs place their own breakpoints. The static-first layout suits all three.
@@ -322,7 +323,7 @@ What each turn carries forward (`server/src/server/conversation.ts`, `records.ts
 ```
 server/src/
   core/        compile, execute, refs, lookups, summarize, no-match, datetimes
-  planner/     turn, prompt, submit-plan, qwen, claude-cli, codex-cli, index, types, usage
+  planner/     turn, prompt, submit-plan, qwen, claude-cli, codex-cli, codex-app-server, index, types, usage
   retrieval/   cards.json, cards, embed, mentions, retrieve, text, eval
   server/      app (node:http + SSE), conversation, baseline, records, diff
   registry/    define, registry, invoke, helpers, lookup, arguments, catalog.json, smoke.test.ts

@@ -6,7 +6,7 @@ All 500 actions are implemented against a simulated backend (SQLite, frozen cloc
 
 **Results** ([BENCHMARK.md](BENCHMARK.md)): 273 scenarios × 3 runs across all 50 modules, on DeepSeek (`deepseek-v4.1-flash-1017` through the Qwen Token Plan). The planner passes 96.9% of runs against 91.6% for a one-call-per-step baseline, with a 1.3 s median direct reply (2.3 s for the baseline), a median of 1 model call per complex task (5 for the baseline), and $0.0043 per successful task ($0.0073) at list rates. One latency target is missed: the direct-reply p95. See [Trade-offs](#latency-cost-and-quality-trade-offs) and [Known limitations](#known-limitations).
 
-**On a small model** ([docs/BENCHMARK-LUNA.md](docs/BENCHMARK-LUNA.md)): GPT-6 Luna at low reasoning passes 98.5% of the 273 scenarios run once each (268/272, plus one provider timeout), at a median of 1 model call per complex task. It misses all four latency targets when called through the Codex CLI (8.6 s median direct reply). See [Luna as the planner](#luna-as-the-planner).
+**On a small model** ([docs/BENCHMARK-LUNA.md](docs/BENCHMARK-LUNA.md)): GPT-6 Luna at low reasoning passes all 273 scenarios run once each (273/273), at a median of 1 model call per complex task. One pass doesn't show the misses are gone: nine scenarios that had failed earlier, rerun three times each on the same code, passed 25 of 27. It misses all four latency targets when called through the Codex CLI (9.0 s median direct reply). See [Luna as the planner](#luna-as-the-planner).
 
 ## Quick start
 
@@ -151,32 +151,34 @@ The aim here is a planner small enough that code carries the load, with a strong
 
 ```bash
 export PLANNER=codex-cli CODEX_MODEL=gpt-6-luna CODEX_FAST_MODEL=gpt-6-luna CODEX_REASONING=low CODEX_FAST_REASONING=low
-npm run eval:scenarios -- --scenario-dir $DIRS --concurrency 2 --label port-ner-release-luna-final
-npm run report -- --label port-ner-release-luna-final --out ../docs/BENCHMARK-LUNA.md
+npm run eval:scenarios -- --scenario-dir $DIRS --concurrency 1 --wait-on-limit 10 --label port-ner-release-luna-final3
+npm run report -- --label port-ner-release-luna-final3 --out ../docs/BENCHMARK-LUNA.md
 ```
+
+`--wait-on-limit 10` waits 10 minutes when the Codex account's short-term rate limit hits, then runs that scenario again. This run needed six waits, and nothing was lost to them.
 
 | | GPT-6 Luna, low reasoning |
 |---|---:|
-| Task success | 98.5% (268/272), 1 more run lost to a provider timeout |
-| Action selection | 99.5% (207/208) |
-| Final data correct | 98.9% (264/267) |
-| Direct: first reply p50 / p95 | 8.6 s / 18.9 s (all four latency targets missed) |
-| Complex: end-to-end p50 / p95 | 9.2 s / 33.8 s |
+| Task success | 100% (273/273), no runs lost outside the app |
+| Action selection | 100% (209/209) |
+| Final data correct | 100% (268/268) |
+| Direct: first reply p50 / p95 | 9.0 s / 19.0 s (all four latency targets missed) |
+| Complex: end-to-end p50 / p95 | 9.7 s / 19.5 s |
 | Model calls per complex task, median | 1 |
 
-The five scenarios that didn't pass were each rerun three times on the same code (`eval/results/scenarios-port-ner-final-failures.json`). Counts below are passes out of measured runs across both:
+**273/273 is one good pass, not proof that nothing fails.** The previous full run, on slightly earlier code, was 268/272, and some of that difference is chance. So nine scenarios that had failed earlier were run three more times each on the same planner code (`eval/results/scenarios-port-ner-final-intermittent-3x.json`, `eval/results/scenarios-port-ner-final-refund-3x.json`). Two of them also fell among the 12 used for the timing below. Passes out of all runs on this code:
 
-| Scenario | Passed | What goes wrong |
+| Scenario | Passed | What goes wrong when it fails |
 |---|---:|---|
-| `brief-heldout-new-leads` | 1/3 | The vague "help me stay on them" gets one generic task instead of one per new lead. |
-| `brief-heldout-quiet-leads` | 2/4 | A clause is dropped or a filter inverted, so the wrong leads get owners and tasks. The plan is well-formed, so validation can't catch it. |
-| `tickets-from-invoices-messages` | 2/4 | "An inbound reply" becomes email and SMS, one filter after the other. Filters have no "either list", and the run stops with nothing written. |
-| `cov-survey-closed-rejects-response` | 3/4 | It asks for survey answers it was already given, and the turn ends without reaching the "survey is closed" reply. |
-| `report-ticket-reopen` | 3/4 | "Reply" becomes an internal note, so the customer isn't emailed. |
+| `brief-heldout-new-leads` | 3/4 | The vague "help me stay on them" gets one generic task instead of one per new lead. |
+| `tickets-from-invoices-messages` | 3/4 | It decides it can't match overdue invoices to inbound replies, and stops with nothing written. |
+| `direct-card-refund-request` | 7/8 | It says it can't refund "back to her card" and offers alternatives, instead of requesting the refund. |
+| `q-appointments-booked` | 7/8 | The data is right, but the reply doesn't start with "yes". |
+| `brief-heldout-quiet-leads`, `brief-complex-quiet-leads`, `report-ticket-reopen`, `cov-survey-closed-rejects-response`, `indirect-chase-late-payers` | 4/4 each | Each failed earlier today, before the latest fixes. Four runs each is too few to call them fixed. |
 
-**No scenario fails every time, so none is listed for a stronger fallback model.** A stronger model might still help these five, but that hasn't been measured. The two `brief-heldout-*` scenarios were written as hold-outs. They've now been read as failures during this work, so they count as development signal from here on, and neither was fixed by tuning against it.
+**No scenario fails every time, so none is listed for a stronger fallback model.** A stronger model might still help these, but that hasn't been measured. The quiet-leads scenarios are the ones to watch, because a misread there can write to the wrong leads: the plan is well-formed, and the check added for this catches a plan that drops what the request says to leave out, not every misreading. The `brief-heldout-*` scenarios were written as hold-outs, but they've been read as failures during this work, and the check above was built with the quiet-leads failure in view. They count as development signal now, not as an untouched test.
 
-One fix went in after this run: a revision that changes something and then fails no longer forgets the other records it was revising. It only affects follow-ups, so the 20 multi-turn scenarios were rerun on the final code instead of the whole suite, and all 20 passed (`eval/results/scenarios-port-ner-revision-check.json`).
+**How much of the wait is the CLI?** About 2.5 s. `PLANNER=codex-app-server` keeps one Codex process running instead of starting one per call. Over 12 direct scenarios, run twice through each planner in turn (`eval/results/scenarios-port-ner-timing-*.json`), its median first reply was 6.3 s against 8.9 s, and each planner passed 23 of 24. The app's own work is about 0.1 s of that; the rest is the planner call. These runs don't separate Codex's time from the model's. The app server is opt-in, so the benchmark above still uses the CLI, and it hasn't had a full run of its own.
 
 ## Latency, cost and quality trade-offs
 
@@ -210,7 +212,7 @@ The targets were committed in [docs/PLAN.md](docs/PLAN.md) on 2026-10-23, before
 - **Multi-step follow-ups are the weak spot.** The brief's suite passes 82.9% of runs for the planner (58.8% for the baseline). Its follow-up "Only include leads from the Facebook campaign, and make those tasks due tomorrow" and the held-out lead-filtering variants fail most. Most of those are model misreads (an inverted filter, a filter read as a field update) that the validator can't catch because the plan is well-formed; one run ended with a plan still invalid after repair. Two question scenarios fail on the reply's wording (a missing leading "no"), not on the data.
 - **Known misses are recorded, not patched.** BENCHMARK.md lists [every failing run](BENCHMARK.md#every-failing-run); no scenario was edited to pass.
 - **The two benchmarks don't compare directly.** DeepSeek's is three runs per scenario, against a baseline, at `d74874f`. [Luna's](docs/BENCHMARK-LUNA.md) is one run per scenario, with no baseline, on later code and a changed scenario set. Earlier Haiku and GPT-6.1 Sol numbers are on other sets and commits too.
-- **Luna through the Codex CLI is slow.** It misses all four latency targets (8.6 s median direct reply against 1.5 s). These numbers don't separate the CLI's overhead from the model's own time.
+- **Luna through the Codex CLI is slow.** It misses all four latency targets (9.0 s median direct reply against 1.5 s). Keeping one Codex process running saves about 2.5 s ([details](#luna-as-the-planner)), which still leaves it near 6 s. These runs don't separate Codex's time from the model's.
 - **A filter can't say "in either list".** Conditions chain as "and", so a request satisfied by an email or an SMS can filter down to nothing. That stops with nothing written, but the task isn't done.
 - **Cost is unknown on subscription planners.** The Claude and Codex CLIs and the prepaid Token Plan report no USD cost; the figures here come from list rates.
 - **Retrieval can miss.** Hybrid recall@15 is 97.6%, so about 1 question in 40 doesn't get the right card into the shortlist. The planner can ask for another retrieval round (`search_tools`, up to twice), but it can't use an action it never sees.

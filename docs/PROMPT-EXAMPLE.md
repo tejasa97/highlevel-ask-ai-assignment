@@ -1,8 +1,10 @@
 # Prompt structure: a worked example
 
-What the planner call looks like over two turns of the brief's showcase request. The prompts below are the ones today's code builds (`server/src/planner/prompt.ts`), rendered offline from the benchmark's seeded account. The replies, token counts and timings come from the release benchmark run (`eval/results/scenarios-release-deepseek-planner-3x.json`, commit `d74874f`, DeepSeek `deepseek-v4.1-flash-1017` through the Qwen Token Plan). Nothing here is invented or estimated unless it says so.
+What the planner call looks like over two turns of the brief's showcase request. The prompts below are the ones `server/src/planner/prompt.ts` built at commit `27a7abf`, rendered offline from the benchmark's seeded account. The replies, token counts and timings come from the release benchmark run (`eval/results/scenarios-release-deepseek-planner-3x.json`, commit `d74874f`, DeepSeek `deepseek-v4.1-flash-1017` through the Qwen Token Plan). Nothing here is invented or estimated unless it says so.
 
 The prompt was rendered by replaying the recorded replies through the real turn loop with a stand-in planner, so every round is built by the same code that built it in the benchmark. The system prompt hashes to the same value the benchmark recorded (`7d0e8b09bebf`). The user block is about 150 tokens longer than the one the benchmark sent, because a later commit reworded the `limit` hint on search cards. That hint matters below.
+
+**Since then.** The Luna work added rules to `SYSTEM`, which grew from 11,526 to 14,112 characters, a `leavesOut` field on the reply's `outcome`, and a `<last_made>` block on follow-ups ([PLANNER-CHANGES](PLANNER-CHANGES.md) section 8). The layout below is the same. This example isn't re-rendered, because its replies, tokens and timings belong to the DeepSeek run on the shorter prompt, and the longer prompt hasn't been measured on DeepSeek.
 
 ## The layout
 

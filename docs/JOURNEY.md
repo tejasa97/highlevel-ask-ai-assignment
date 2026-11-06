@@ -619,3 +619,12 @@ with sections on what is real and what is mocked, and the trade-offs.
 **Change.** See PLANNER-CHANGES section 8. One fix was for a real wrong write: a condition on a `forEach` was dropped, so an update went to every team.
 
 **Result.** First clean run 264/273 (96.7%). After the fixes, 268/272 (98.5%) with one provider timeout, written up in `docs/BENCHMARK-LUNA.md`. All four latency targets are missed through the Codex CLI. Rerunning the five that did not pass, three times each (`eval/results/scenarios-port-ner-final-failures.json`), passed 11 of 15 and every scenario passed at least once, so no scenario qualifies for a stronger fallback model.
+
+## 37. The leftover branches brought in, and Luna at 273 of 273
+`7ea0cc3` · 2026-11-06 · runs: port-ner-release-luna-final3, port-ner-final-intermittent-3x
+
+**Question.** Do the changes left on other branches hold up on Luna, and how much of its latency is the CLI?
+
+**Change.** Brought in the remaining local work: the workspace-zone offset fix, near-miss name suggestions, `PLANNER=codex-app-server` and the check that a plan leaves out what the request says to leave out. See PLANNER-CHANGES section 8. The eval runner gained `--wait-on-limit`, which waits out a short-term rate limit and runs the scenario again.
+
+**Result.** 273 of 273 on one pass, with no runs lost outside the app, written up in `docs/BENCHMARK-LUNA.md`. That is one pass, so nine scenarios that had failed earlier ran three more times each on the same code: 25 of 27. `brief-heldout-new-leads` and `tickets-from-invoices-messages` still fail about one run in four, so 273 of 273 doesn't mean the misses are gone. All four latency targets are still missed. Keeping one Codex process running took the median first reply from 8.9 s to 6.3 s over 12 direct scenarios run twice each, so about 2.5 s of the wait is the CLI starting up.
